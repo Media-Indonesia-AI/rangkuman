@@ -1,9 +1,13 @@
 /**
  * Tiny fetch wrapper for the Berita Investor API.
  * All endpoints are namespaced under BASE_URL.
+ *
+ * In Next.js, NEXT_PUBLIC_* vars are inlined into the browser bundle at
+ * build time and also available at runtime via process.env.
  */
 
-export const API_BASE_URL = "http://145.79.8.90:3007/v1/";
+export const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";
 
 export interface ApiError {
   status: number;
