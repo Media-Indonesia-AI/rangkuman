@@ -3,52 +3,90 @@
 import { useState, useEffect, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { TopTicker } from "@/components/TopTicker";
-import { loginWithEmail, loginWithGoogle } from "@/lib/auth";
+import { loginWithIdentifier, loginWithGoogle } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
+
+type FieldErrors = {
+  identifier?: string;
+  password?: string;
+};
 
 export default function LoginPage() {
   const router = useRouter();
   const user = useCurrentUser();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errors, setErrors] = useState<FieldErrors>({});
 
   // If already logged in, jump straight to /watchlist.
   useEffect(() => {
     if (user) router.replace("/watchlist");
   }, [user, router]);
 
-  const handleEmailLogin = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
+    const next: FieldErrors = {};
+    if (!identifier.trim()) next.identifier = "Email atau username wajib diisi";
+    if (!password) next.password = "Password wajib diisi";
+    else if (password.length < 6) next.password = "Password minimal 6 karakter";
+    setErrors(next);
+    if (Object.keys(next).length > 0) return;
+
     setLoading(true);
     try {
-      loginWithEmail(email, password);
+      await loginWithIdentifier(identifier, password);
       router.push("/watchlist");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal masuk");
+      const msg = err instanceof Error ? err.message : "Gagal masuk";
+      // Server usually returns one generic "wrong credentials" message —
+      // route it to the password field (that's the more common culprit UX-wise).
+      const lower = msg.toLowerCase();
+      if (lower.includes("identifier") || lower.includes("email") || lower.includes("username")) {
+        setErrors({ identifier: msg });
+      } else {
+        setErrors({ password: msg });
+      }
       setLoading(false);
     }
   };
 
   const handleGoogleLogin = () => {
-    setError(null);
+    setErrors({});
     setLoading(true);
     try {
       loginWithGoogle();
       router.push("/watchlist");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal masuk");
+      const msg = err instanceof Error ? err.message : "Gagal masuk";
+      setErrors({ password: msg });
       setLoading(false);
     }
   };
+
+  const clearError = (field: keyof FieldErrors) =>
+    setErrors((prev) => ({ ...prev, [field]: undefined }));
+
+  const inputClass = (field: keyof FieldErrors) =>
+    cn(
+      "h-10 w-full rounded-md border bg-bg-input pl-8 pr-3 text-[13px] text-text-primary placeholder:text-text-faint focus:outline-none",
+      errors[field]
+        ? "border-bearish focus:border-bearish"
+        : "border-border focus:border-brand",
+    );
+
+  const FieldError = ({ id, message }: { id: string; message?: string }) =>
+    message ? (
+      <p id={id} role="alert" className="mt-1 font-mono text-[11px] text-bearish">
+        ⚠ {message}
+      </p>
+    ) : null;
 
   return (
     <>
@@ -95,14 +133,14 @@ export default function LoginPage() {
               <span className="h-px flex-1 bg-border" />
             </div>
 
-            {/* Email form */}
-            <form onSubmit={handleEmailLogin} className="space-y-3">
+            {/* Email / Username form */}
+            <form onSubmit={handleSubmit} className="space-y-3" noValidate>
               <div>
                 <label
-                  htmlFor="email"
+                  htmlFor="identifier"
                   className="mb-1 block font-mono text-[10px] font-semibold uppercase tracking-widest text-text-muted"
                 >
-                  Email
+                  Email atau Username
                 </label>
                 <div className="relative">
                   <Mail
@@ -110,16 +148,25 @@ export default function LoginPage() {
                     aria-hidden
                   />
                   <input
-                    id="email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="kamu@email.com"
-                    autoComplete="email"
-                    required
-                    className="h-10 w-full rounded-md border border-border bg-bg-input pl-8 pr-3 text-[13px] text-text-primary placeholder:text-text-faint focus:border-brand focus:outline-none"
+                    id="identifier"
+                    type="text"
+                    inputMode="email"
+                    value={identifier}
+                    onChange={(e) => {
+                      setIdentifier(e.target.value);
+                      clearError("identifier");
+                    }}
+                    placeholder="kamu@email.com atau username"
+                    autoComplete="username"
+                    aria-invalid={!!errors.identifier}
+                    aria-describedby={errors.identifier ? "identifier-error" : undefined}
+                    className={inputClass("identifier")}
                   />
                 </div>
+                <p className="mt-1 font-mono text-[10.5px] text-text-faint">
+                  Bisa pakai email atau username yang terdaftar.
+                </p>
+                <FieldError id="identifier-error" message={errors.identifier} />
               </div>
 
               <div>
@@ -138,21 +185,20 @@ export default function LoginPage() {
                     id="password"
                     type="password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      clearError("password");
+                    }}
                     placeholder="••••••••"
                     autoComplete="current-password"
-                    required
+                    aria-invalid={!!errors.password}
+                    aria-describedby={errors.password ? "password-error" : undefined}
                     minLength={6}
-                    className="h-10 w-full rounded-md border border-border bg-bg-input pl-8 pr-3 text-[13px] text-text-primary placeholder:text-text-faint focus:border-brand focus:outline-none"
+                    className={inputClass("password")}
                   />
                 </div>
+                <FieldError id="password-error" message={errors.password} />
               </div>
-
-              {error && (
-                <p className="rounded-md border border-bearish-line bg-bearish-soft px-2.5 py-1.5 font-mono text-[11px] text-bearish">
-                  ⚠ {error}
-                </p>
-              )}
 
               <button
                 type="submit"
@@ -175,7 +221,7 @@ export default function LoginPage() {
               </button>
 
               <p className="text-center font-mono text-[10.5px] text-text-muted">
-                Demo mode: <span className="text-text-secondary">email valid + password ≥ 6 char</span> udah cukup buat masuk.
+                Demo mode: <span className="text-text-secondary">email/username valid + password ≥ 6 char</span> udah cukup buat masuk.
               </p>
             </form>
           </div>

@@ -19,6 +19,12 @@ export interface RegisterRequest {
   name: string;
 }
 
+export interface LoginRequest {
+  /** Either the user's email or username. The server resolves which one it is. */
+  identifier: string;
+  password: string;
+}
+
 export interface RegisterResponseUser {
   id: string;
   email: string;
@@ -74,6 +80,12 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 export const api = {
   register(body: RegisterRequest): Promise<RegisterResponse> {
     return request<RegisterResponse>("auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+  login(body: LoginRequest): Promise<RegisterResponse> {
+    return request<RegisterResponse>("auth/login", {
       method: "POST",
       body: JSON.stringify(body),
     });

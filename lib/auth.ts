@@ -85,25 +85,52 @@ export function isLoggedIn(): boolean {
 }
 
 /**
- * Demo email login (mock).
- * Real backend login lives at `POST /v1/auth/login` and is not yet wired up.
+ * Login against the remote API. `identifier` can be either email or username —
+ * the server resolves which one it is.
+ * - Validates locally first.
+ * - POSTs to `auth/login`.
+ * - On success, persists the returned user as the active session AND saves the
+ *   setupToken (Basic Auth on subsequent requests).
+ * - Throws on validation failure or API error.
  */
-export function loginWithEmail(email: string, _password: string): MockUser {
-  if (!email || !email.includes("@")) {
-    throw new Error("Email tidak valid");
+export async function loginWithIdentifier(
+  identifier: string,
+  password: string,
+): Promise<MockUser> {
+  const id = identifier.trim();
+  const pw = password;
+
+  if (!id) throw new Error("Email atau username wajib diisi");
+  if (!pw || pw.length < 6) throw new Error("Password minimal 6 karakter");
+  if (/\s/.test(pw)) throw new Error("Password tidak boleh mengandung spasi");
+  if (pw.length > 128) throw new Error("Password maksimal 128 karakter");
+
+  let response: RegisterResponse;
+  try {
+    response = await api.login({ identifier: id, password: pw });
+  } catch (err) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401) {
+      throw new Error("Email/username atau password salah");
+    }
+    if (apiErr?.status === 400) {
+      throw new Error(apiErr.message || "Data login tidak valid");
+    }
+    throw new Error(apiErr?.message ?? "Gagal terhubung ke server");
   }
-  if (!_password || _password.length < 6) {
-    throw new Error("Password minimal 6 karakter");
-  }
-  const user: MockUser = {
-    email,
-    username: email.split("@")[0],
-    name: email.split("@")[0],
-    loggedInAt: new Date().toISOString(),
+
+  const session: MockUser = {
+    id: response.user.id,
+    email: response.user.email,
+    username: response.user.username,
+    name: response.user.name,
+    loggedInAt: response.user.createdAt,
     provider: "email",
+    isEmailVerified: response.user.isEmailVerified,
   };
-  writeJson(USER_KEY, user);
-  return user;
+  writeJson(USER_KEY, session);
+  if (response.setupToken) writeJson(SETUP_TOKEN_KEY, response.setupToken);
+  return session;
 }
 
 /** Demo Google login (mock) — preserves the prior one-click sign-in. */
