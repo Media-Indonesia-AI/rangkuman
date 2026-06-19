@@ -1,14 +1,19 @@
 /**
- * Mock auth + watchlist — all client-side, persisted to localStorage.
- * No backend; do NOT use in production. The session is just a JSON blob.
+ * Auth + watchlist — backed by the remote API (lib/api.ts) for register.
+ * Watchlist stays local (no backend yet).
+ * The active session is persisted to localStorage so it survives reloads.
  */
 
+import { api, type ApiError, type RegisterResponse } from "./api";
+
 const USER_KEY = "beritainvestor:user";
-const USERS_KEY = "beritainvestor:users";
+const SETUP_TOKEN_KEY = "beritainvestor:setupToken";
 const WATCHLIST_KEY = "beritainvestor:watchlist";
 const MAX_WATCHLIST = 10;
 
 export interface MockUser {
+  /** Server-assigned user id (MongoDB-style). Empty for legacy local sessions. */
+  id?: string;
   email: string;
   username: string;
   name: string;
@@ -16,15 +21,8 @@ export interface MockUser {
   loggedInAt: string;
   /** Provider used at sign-in: "email" | "google". */
   provider: "email" | "google";
-}
-
-/** Stored credential record (kept separately from the active session). */
-interface RegisteredUser {
-  username: string;
-  name: string;
-  email: string;
-  password: string;
-  registeredAt: string;
+  /** Whether the user has verified their email (from server). */
+  isEmailVerified?: boolean;
 }
 
 export interface WatchlistSnapshot {
@@ -51,7 +49,9 @@ function writeJson(key: string, value: unknown): void {
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
     // Tell other tabs / hook subscribers that storage changed.
-    window.dispatchEvent(new CustomEvent("beritainvestor:storage", { detail: { key } }));
+    window.dispatchEvent(
+      new CustomEvent("beritainvestor:storage", { detail: { key } }),
+    );
   } catch {
     // Quota exceeded / storage disabled — fail silently.
   }
@@ -61,10 +61,17 @@ function removeKey(key: string): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.removeItem(key);
-    window.dispatchEvent(new CustomEvent("beritainvestor:storage", { detail: { key } }));
+    window.dispatchEvent(
+      new CustomEvent("beritainvestor:storage", { detail: { key } }),
+    );
   } catch {
     /* noop */
   }
+}
+
+/** RFC-5322-lite: at least one char, "@", at least one char, ".", at least one char. No whitespace. */
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 // ─── AUTH ─────────────────────────────────────────────────────────
@@ -77,23 +84,21 @@ export function isLoggedIn(): boolean {
   return getCurrentUser() !== null;
 }
 
+/**
+ * Demo email login (mock).
+ * Real backend login lives at `POST /v1/auth/login` and is not yet wired up.
+ */
 export function loginWithEmail(email: string, _password: string): MockUser {
-  // Validate credentials against the registered users store.
   if (!email || !email.includes("@")) {
     throw new Error("Email tidak valid");
   }
   if (!_password || _password.length < 6) {
     throw new Error("Password minimal 6 karakter");
   }
-  const registered = readJson<RegisteredUser[]>(USERS_KEY) ?? [];
-  const match = registered.find(
-    (u) => u.email.toLowerCase() === email.toLowerCase(),
-  );
-  // Demo: if no registered user exists, accept anyway (preserves demo-mode login).
   const user: MockUser = {
     email,
-    username: match?.username ?? email.split("@")[0],
-    name: match?.name ?? email.split("@")[0],
+    username: email.split("@")[0],
+    name: email.split("@")[0],
     loggedInAt: new Date().toISOString(),
     provider: "email",
   };
@@ -101,8 +106,8 @@ export function loginWithEmail(email: string, _password: string): MockUser {
   return user;
 }
 
+/** Demo Google login (mock) — preserves the prior one-click sign-in. */
 export function loginWithGoogle(): MockUser {
-  // Pretend to do an OAuth round-trip and come back authenticated.
   const user: MockUser = {
     email: "investor.berita@gmail.com",
     username: "investor.berita",
@@ -114,17 +119,26 @@ export function loginWithGoogle(): MockUser {
   return user;
 }
 
-export function registerUser(input: {
+/**
+ * Register a new account against the remote API.
+ * - Validates locally first (instant feedback).
+ * - POSTs to `auth/register`.
+ * - On success, persists the returned user as the active session AND saves the
+ *   setupToken for subsequent HTTP Basic Auth requests.
+ * - Throws on validation failure or API error.
+ */
+export async function registerUser(input: {
   username: string;
   name: string;
   email: string;
   password: string;
-}): MockUser {
+}): Promise<MockUser> {
   const username = input.username.trim();
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
   const password = input.password;
 
+  // ---- Local validation (mirrors the form's client checks) ----
   if (!username) throw new Error("Username wajib diisi");
   if (/\s/.test(username)) throw new Error("Username tidak boleh mengandung spasi");
   if (username.length < 6) throw new Error("Username minimal 6 karakter");
@@ -143,41 +157,45 @@ export function registerUser(input: {
     throw new Error("Password maksimal 128 karakter");
   }
 
-  const existing = readJson<RegisteredUser[]>(USERS_KEY) ?? [];
-  if (existing.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
-    throw new Error("Username sudah dipakai");
-  }
-  if (existing.some((u) => u.email.toLowerCase() === email)) {
-    throw new Error("Email sudah terdaftar");
+  // ---- Remote call ----
+  let response: RegisterResponse;
+  try {
+    response = await api.register({ email, username, password, name });
+  } catch (err) {
+    const apiErr = err as ApiError;
+    // Map known status codes to friendlier messages.
+    if (apiErr?.status === 409) {
+      throw new Error("Username atau email sudah terdaftar");
+    }
+    if (apiErr?.status === 400) {
+      throw new Error(apiErr.message || "Data pendaftaran tidak valid");
+    }
+    throw new Error(apiErr?.message ?? "Gagal terhubung ke server");
   }
 
-  const record: RegisteredUser = {
-    username,
-    name,
-    email,
-    password,
-    registeredAt: new Date().toISOString(),
-  };
-  writeJson(USERS_KEY, [...existing, record]);
-
+  // ---- Persist session + setupToken ----
   const session: MockUser = {
-    email,
-    username,
-    name,
-    loggedInAt: new Date().toISOString(),
+    id: response.user.id,
+    email: response.user.email,
+    username: response.user.username,
+    name: response.user.name,
+    loggedInAt: response.user.createdAt,
     provider: "email",
+    isEmailVerified: response.user.isEmailVerified,
   };
   writeJson(USER_KEY, session);
+  writeJson(SETUP_TOKEN_KEY, response.setupToken);
   return session;
 }
 
 export function logout(): void {
   removeKey(USER_KEY);
+  removeKey(SETUP_TOKEN_KEY);
 }
 
-/** RFC-5322-lite: at least one char, "@", at least one char, ".", at least one char. No whitespace. */
-function isValidEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+/** Read the one-time setupToken returned by `POST /auth/register`. */
+export function getSetupToken(): string | null {
+  return readJson<string>(SETUP_TOKEN_KEY);
 }
 
 // ─── WATCHLIST ───────────────────────────────────────────────────

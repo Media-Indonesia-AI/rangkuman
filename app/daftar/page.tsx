@@ -62,7 +62,7 @@ export default function DaftarPage() {
     return next;
   }
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     const found = validate();
     setErrors(found);
@@ -70,17 +70,25 @@ export default function DaftarPage() {
 
     setLoading(true);
     try {
-      registerUser({ username: username.trim(), name: name.trim(), email: email.trim(), password });
+      await registerUser({
+        username: username.trim(),
+        name: name.trim(),
+        email: email.trim(),
+        password,
+      });
       router.push("/watchlist");
     } catch (err) {
-      // Map server-side errors back to the relevant field when possible.
+      // Map server-side / network errors back to the relevant field when possible.
       const msg = err instanceof Error ? err.message : "Gagal daftar";
       const lower = msg.toLowerCase();
       if (lower.includes("username")) {
         setErrors({ username: msg });
       } else if (lower.includes("email")) {
         setErrors({ email: msg });
+      } else if (lower.includes("password")) {
+        setErrors({ password: msg });
       } else {
+        // Network / unknown error — show under the submit button as a form-level message
         setErrors({ password: msg });
       }
       setLoading(false);

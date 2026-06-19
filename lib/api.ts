@@ -1,0 +1,81 @@
+/**
+ * Tiny fetch wrapper for the Berita Investor API.
+ * All endpoints are namespaced under BASE_URL.
+ */
+
+export const API_BASE_URL = "http://145.79.8.90:3007/v1/";
+
+export interface ApiError {
+  status: number;
+  message: string;
+  /** Raw response body if available, for debugging. */
+  body?: unknown;
+}
+
+export interface RegisterRequest {
+  email: string;
+  username: string;
+  password: string;
+  name: string;
+}
+
+export interface RegisterResponseUser {
+  id: string;
+  email: string;
+  username: string;
+  name: string;
+  googleId: string | null;
+  isEmailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RegisterResponse {
+  user: RegisterResponseUser;
+  setupToken: string;
+  message: string;
+}
+
+async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const url = `${API_BASE_URL}${path}`;
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      ...init,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(init.headers ?? {}),
+      },
+    });
+  } catch (err) {
+    const message =
+      err instanceof Error ? err.message : "Gagal terhubung ke server";
+    throw { status: 0, message: `Network error: ${message}` } satisfies ApiError;
+  }
+
+  if (!res.ok) {
+    let body: unknown;
+    let message = `Request failed with status ${res.status}`;
+    try {
+      body = await res.json();
+      const m = (body as { message?: string; error?: string }).message
+        ?? (body as { error?: string }).error;
+      if (m) message = m;
+    } catch {
+      /* non-JSON body — keep generic message */
+    }
+    throw { status: res.status, message, body } satisfies ApiError;
+  }
+
+  return (await res.json()) as T;
+}
+
+export const api = {
+  register(body: RegisterRequest): Promise<RegisterResponse> {
+    return request<RegisterResponse>("auth/register", {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  },
+};
