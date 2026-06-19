@@ -4,16 +4,27 @@
  */
 
 const USER_KEY = "beritainvestor:user";
+const USERS_KEY = "beritainvestor:users";
 const WATCHLIST_KEY = "beritainvestor:watchlist";
 const MAX_WATCHLIST = 10;
 
 export interface MockUser {
   email: string;
+  username: string;
   name: string;
   /** ISO timestamp of when the session was created. */
   loggedInAt: string;
   /** Provider used at sign-in: "email" | "google". */
   provider: "email" | "google";
+}
+
+/** Stored credential record (kept separately from the active session). */
+interface RegisteredUser {
+  username: string;
+  name: string;
+  email: string;
+  password: string;
+  registeredAt: string;
 }
 
 export interface WatchlistSnapshot {
@@ -67,16 +78,22 @@ export function isLoggedIn(): boolean {
 }
 
 export function loginWithEmail(email: string, _password: string): MockUser {
-  // Pretend to validate. In reality any non-empty email + password works.
+  // Validate credentials against the registered users store.
   if (!email || !email.includes("@")) {
     throw new Error("Email tidak valid");
   }
-  if (!_password || _password.length < 4) {
-    throw new Error("Password minimal 4 karakter");
+  if (!_password || _password.length < 6) {
+    throw new Error("Password minimal 6 karakter");
   }
+  const registered = readJson<RegisteredUser[]>(USERS_KEY) ?? [];
+  const match = registered.find(
+    (u) => u.email.toLowerCase() === email.toLowerCase(),
+  );
+  // Demo: if no registered user exists, accept anyway (preserves demo-mode login).
   const user: MockUser = {
     email,
-    name: email.split("@")[0],
+    username: match?.username ?? email.split("@")[0],
+    name: match?.name ?? email.split("@")[0],
     loggedInAt: new Date().toISOString(),
     provider: "email",
   };
@@ -88,6 +105,7 @@ export function loginWithGoogle(): MockUser {
   // Pretend to do an OAuth round-trip and come back authenticated.
   const user: MockUser = {
     email: "investor.berita@gmail.com",
+    username: "investor.berita",
     name: "Investor Berita",
     loggedInAt: new Date().toISOString(),
     provider: "google",
@@ -96,8 +114,70 @@ export function loginWithGoogle(): MockUser {
   return user;
 }
 
+export function registerUser(input: {
+  username: string;
+  name: string;
+  email: string;
+  password: string;
+}): MockUser {
+  const username = input.username.trim();
+  const name = input.name.trim();
+  const email = input.email.trim().toLowerCase();
+  const password = input.password;
+
+  if (!username) throw new Error("Username wajib diisi");
+  if (/\s/.test(username)) throw new Error("Username tidak boleh mengandung spasi");
+  if (username.length < 6) throw new Error("Username minimal 6 karakter");
+  if (username.length > 32) throw new Error("Username maksimal 32 karakter");
+  if (!/^[a-zA-Z0-9_.-]+$/.test(username)) {
+    throw new Error("Username hanya boleh huruf, angka, _ . -");
+  }
+  if (!name) throw new Error("Nama wajib diisi");
+  if (/\s/.test(email)) throw new Error("Email tidak boleh mengandung spasi");
+  if (!isValidEmail(email)) throw new Error("Format email tidak valid");
+  if (/\s/.test(password)) throw new Error("Password tidak boleh mengandung spasi");
+  if (!password || password.length < 6) {
+    throw new Error("Password minimal 6 karakter");
+  }
+  if (password.length > 128) {
+    throw new Error("Password maksimal 128 karakter");
+  }
+
+  const existing = readJson<RegisteredUser[]>(USERS_KEY) ?? [];
+  if (existing.some((u) => u.username.toLowerCase() === username.toLowerCase())) {
+    throw new Error("Username sudah dipakai");
+  }
+  if (existing.some((u) => u.email.toLowerCase() === email)) {
+    throw new Error("Email sudah terdaftar");
+  }
+
+  const record: RegisteredUser = {
+    username,
+    name,
+    email,
+    password,
+    registeredAt: new Date().toISOString(),
+  };
+  writeJson(USERS_KEY, [...existing, record]);
+
+  const session: MockUser = {
+    email,
+    username,
+    name,
+    loggedInAt: new Date().toISOString(),
+    provider: "email",
+  };
+  writeJson(USER_KEY, session);
+  return session;
+}
+
 export function logout(): void {
   removeKey(USER_KEY);
+}
+
+/** RFC-5322-lite: at least one char, "@", at least one char, ".", at least one char. No whitespace. */
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
 // ─── WATCHLIST ───────────────────────────────────────────────────

@@ -30,16 +30,8 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
     try {
-      // Simulate network delay so the button feels real.
-      setTimeout(() => {
-        try {
-          loginWithEmail(email, password);
-          router.push("/watchlist");
-        } catch (err) {
-          setError(err instanceof Error ? err.message : "Gagal masuk");
-          setLoading(false);
-        }
-      }, 400);
+      loginWithEmail(email, password);
+      router.push("/watchlist");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Gagal masuk");
       setLoading(false);
@@ -49,10 +41,13 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     setError(null);
     setLoading(true);
-    setTimeout(() => {
+    try {
       loginWithGoogle();
       router.push("/watchlist");
-    }, 400);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Gagal masuk");
+      setLoading(false);
+    }
   };
 
   return (
@@ -147,7 +142,7 @@ export default function LoginPage() {
                     placeholder="••••••••"
                     autoComplete="current-password"
                     required
-                    minLength={4}
+                    minLength={6}
                     className="h-10 w-full rounded-md border border-border bg-bg-input pl-8 pr-3 text-[13px] text-text-primary placeholder:text-text-faint focus:border-brand focus:outline-none"
                   />
                 </div>
@@ -180,7 +175,7 @@ export default function LoginPage() {
               </button>
 
               <p className="text-center font-mono text-[10.5px] text-text-muted">
-                Demo mode: <span className="text-text-secondary">email valid + password ≥ 4 char</span> udah cukup buat masuk.
+                Demo mode: <span className="text-text-secondary">email valid + password ≥ 6 char</span> udah cukup buat masuk.
               </p>
             </form>
           </div>
@@ -188,8 +183,8 @@ export default function LoginPage() {
 
         <p className="mt-4 text-center text-[11.5px] text-text-muted">
           Belum punya akun?{" "}
-          <Link href="/" className="font-semibold text-brand hover:text-brand-hover">
-            Balik ke beranda dulu
+          <Link href="/daftar" className="font-semibold text-brand hover:text-brand-hover">
+            Daftar dulu
           </Link>
         </p>
       </main>
