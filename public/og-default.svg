@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0e14"/>
+      <stop offset="100%" stop-color="#11151c"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0%" stop-color="#00c853" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#00c853" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="line" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00c853" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#00c853" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#00c853" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGrad)"/>
+  <ellipse cx="600" cy="315" rx="600" ry="300" fill="url(#glow)"/>
+
+  <!-- Subtle grid pattern -->
+  <g stroke="#1a1f29" stroke-width="0.5" opacity="0.5">
+    <line x1="0" y1="105" x2="1200" y2="105"/>
+    <line x1="0" y1="210" x2="1200" y2="210"/>
+    <line x1="0" y1="315" x2="1200" y2="315"/>
+    <line x1="0" y1="420" x2="1200" y2="420"/>
+    <line x1="0" y1="525" x2="1200" y2="525"/>
+    <line x1="200" y1="0" x2="200" y2="630"/>
+    <line x1="400" y1="0" x2="400" y2="630"/>
+    <line x1="600" y1="0" x2="600" y2="630"/>
+    <line x1="800" y1="0" x2="800" y2="630"/>
+    <line x1="1000" y1="0" x2="1000" y2="630"/>
+  </g>
+
+  <!-- Top label -->
+  <g transform="translate(600, 165)">
+    <text x="0" y="0" text-anchor="middle" fill="#525252" font-family="ui-monospace, SFMono-Regular, monospace" font-size="18" letter-spacing="3">
+      BUSINESS &amp; EKONOMI INDONESIA
+    </text>
+  </g>
+
+  <!-- Decorative lines -->
+  <line x1="200" y1="195" x2="500" y2="195" stroke="url(#line)" stroke-width="1.5"/>
+  <line x1="700" y1="195" x2="1000" y2="195" stroke="url(#line)" stroke-width="1.5"/>
+
+  <!-- Brand name — main title -->
+  <g transform="translate(600, 290)">
+    <text x="0" y="0" text-anchor="middle" fill="#00c853" font-family="ui-sans-serif, system-ui, -apple-system" font-size="96" font-weight="800" letter-spacing="-2">
+      Rangkuman
+    </text>
+  </g>
+
+  <!-- Underline accent -->
+  <rect x="450" y="320" width="300" height="3" rx="1.5" fill="#00c853"/>
+
+  <!-- Subtitle -->
+  <g transform="translate(600, 380)">
+    <text x="0" y="0" text-anchor="middle" fill="#fafafa" font-family="ui-sans-serif, system-ui, -apple-system" font-size="32" font-weight="500">
+      Sorotan harian
+    </text>
+    <text x="0" y="40" text-anchor="middle" fill="#a3a3a3" font-family="ui-sans-serif, system-ui, -apple-system" font-size="20" font-weight="400">
+      64 sumber · 1× layar · briefing pagi
+    </text>
+  </g>
+
+  <!-- Bottom row: ticker symbols (decorative) -->
+  <g transform="translate(600, 510)" font-family="ui-monospace, SFMono-Regular, monospace" font-size="14" font-weight="600" letter-spacing="2">
+    <text x="-360" y="0" fill="#16C784" text-anchor="start">▲ BBCA 9,875</text>
+    <text x="-200" y="0" fill="#16C784" text-anchor="start">▲ TLKM 3,420</text>
+    <text x="-50" y="0" fill="#16C784" text-anchor="start">▲ BMRI 6,750</text>
+    <text x="100" y="0" fill="#EA3943" text-anchor="start">▼ ANTM 1,815</text>
+    <text x="250" y="0" fill="#16C784" text-anchor="start">▲ BBRI 5,420</text>
+  </g>
+
+  <!-- Bottom divider line -->
+  <line x1="100" y1="555" x2="1100" y2="555" stroke="#1a1f29" stroke-width="1"/>
+
+  <!-- Footer -->
+  <g transform="translate(600, 590)">
+    <text x="-450" y="0" text-anchor="start" fill="#525252" font-family="ui-monospace, SFMono-Regular, monospace" font-size="16" letter-spacing="1.5">
+      rangkuman.news
+    </text>
+    <text x="450" y="0" text-anchor="end" fill="#525252" font-family="ui-monospace, SFMono-Regular, monospace" font-size="16" letter-spacing="1.5">
+      © 2026 · Jakarta
+    </text>
+  </g>
+
+  <!-- Corner accents -->
+  <g stroke="#00c853" stroke-width="2" fill="none" opacity="0.5">
+    <path d="M 40 40 L 40 70 M 40 40 L 70 40"/>
+    <path d="M 1160 40 L 1160 70 M 1160 40 L 1130 40"/>
+    <path d="M 40 590 L 40 560 M 40 590 L 70 590"/>
+    <path d="M 1160 590 L 1160 560 M 1160 590 L 1130 590"/>
+  </g>
+</svg>

@@ -1,0 +1,317 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: light;
+  }
+
+  /* Light mode is the default (:root) — white with light-navy tones */
+  :root {
+    --bg-primary: #FFFFFF;
+    --bg-secondary: #F1F5F9;
+    --bg-tertiary: #DBEAFE;
+    --bg-elevated: #FFFFFF;
+    --bg-input: #FFFFFF;
+
+    --text-primary: #0B1220;
+    --text-secondary: #1E293B;
+    --text-muted: #475569;
+    --text-faint: #64748B;
+
+    --border: #CBD5E1;
+    --border-strong: #94A3B8;
+    --border-glow: rgba(247, 147, 26, 0.20);
+
+    --brand: #F7931A;
+    --brand-hover: #E07F0F;
+    --brand-soft: #FEF3C7;
+    --brand-line: rgba(247, 147, 26, 0.30);
+
+    /* Logo accent — navy in light, brand orange in dark */
+    --logo-accent: #1E3A8A;
+
+    --bullish: #15803D;
+    --bullish-soft: #DCFCE7;
+    --bullish-line: #86EFAC;
+    --bullish-bg: #F0FDF4;
+    --bearish: #B91C1C;
+    --bearish-soft: #FEE2E2;
+    --bearish-line: #FCA5A5;
+    --bearish-bg: #FEF2F2;
+    --mixed: #B45309;
+    --mixed-soft: #FEF3C7;
+    --mixed-line: #FDE68A;
+    --mixed-bg: #FFFBEB;
+
+    --cat-ekonomi: #0284C7;
+    --cat-ekonomi-soft: #E0F2FE;
+    --cat-ekonomi-line: #7DD3FC;
+    --cat-pemerintah: #6D28D9;
+    --cat-pemerintah-soft: #EDE9FE;
+    --cat-pemerintah-line: #C4B5FD;
+    --cat-politik: #BE185D;
+    --cat-politik-soft: #FCE7F3;
+    --cat-politik-line: #F9A8D4;
+    --cat-emiten: #0D9488;
+    --cat-emiten-soft: #CCFBF1;
+    --cat-emiten-line: #5EEAD4;
+    --cat-global: #B45309;
+    --cat-global-soft: #FEF3C7;
+    --cat-global-line: #FDE68A;
+
+    /* Highlight categories (Rangkuman rebrand — 6 categories)
+       Note: cat-ekonomi-2 to avoid conflict with existing cat-ekonomi */
+    --cat-saham: #047857;
+    --cat-saham-soft: #D1FAE5;
+    --cat-saham-line: #6EE7B7;
+    --cat-bisnis: #1D4ED8;
+    --cat-bisnis-soft: #DBEAFE;
+    --cat-bisnis-line: #93C5FD;
+    --cat-ekonomi-2: #C2410C;
+    --cat-ekonomi-2-soft: #FFEDD5;
+    --cat-ekonomi-2-line: #FDBA74;
+    --cat-kebijakan: #B91C1C;
+    --cat-kebijakan-soft: #FEE2E2;
+    --cat-kebijakan-line: #FCA5A5;
+    --cat-komoditas: #78350F;
+    --cat-komoditas-soft: #FEF3C7;
+    --cat-komoditas-line: #D97706;
+
+    --shadow-card-hover: 0 8px 24px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(247, 147, 26, 0.10);
+    --shadow-card-glow: 0 0 0 1px rgba(247, 147, 26, 0.30), 0 0 20px -4px rgba(247, 147, 26, 0.20);
+  }
+
+  /* Dark mode — applied by .dark class on <html> */
+  :root.dark {
+    color-scheme: dark;
+    --bg-primary: #0A0A0B;
+    --bg-secondary: #131316;
+    --bg-tertiary: #1C1C20;
+    --bg-elevated: #25252A;
+    --bg-input: #0E0E10;
+
+    --text-primary: #FAFAFA;
+    --text-secondary: #A3A3A3;
+    --text-muted: #737373;
+    --text-faint: #525252;
+
+    --border: #262626;
+    --border-strong: #3F3F46;
+    --border-glow: rgba(247, 147, 26, 0.20);
+
+    --brand: #F7931A;
+    --brand-hover: #FFA940;
+    --brand-soft: rgba(247, 147, 26, 0.10);
+    --brand-line: rgba(247, 147, 26, 0.30);
+
+    --bullish: #16C784;
+    --bullish-soft: rgba(22, 199, 132, 0.10);
+    --bullish-line: rgba(22, 199, 132, 0.30);
+    --bullish-bg: #0E2A21;
+    --bearish: #EA3943;
+    --bearish-soft: rgba(234, 57, 67, 0.10);
+    --bearish-line: rgba(234, 57, 67, 0.30);
+    --bearish-bg: #2A1214;
+    --mixed: #FFB020;
+    --mixed-soft: rgba(255, 176, 32, 0.10);
+    --mixed-line: rgba(255, 176, 32, 0.30);
+    --mixed-bg: #2A1F0E;
+
+    --cat-ekonomi: #38BDF8;
+    --cat-ekonomi-soft: rgba(56, 189, 248, 0.10);
+    --cat-ekonomi-line: rgba(56, 189, 248, 0.30);
+    --cat-pemerintah: #A78BFA;
+    --cat-pemerintah-soft: rgba(167, 139, 250, 0.10);
+    --cat-pemerintah-line: rgba(167, 139, 250, 0.30);
+    --cat-politik: #F472B6;
+    --cat-politik-soft: rgba(244, 114, 182, 0.10);
+    --cat-politik-line: rgba(244, 114, 182, 0.30);
+    --cat-emiten: #2DD4BF;
+    --cat-emiten-soft: rgba(45, 212, 191, 0.10);
+    --cat-emiten-line: rgba(45, 212, 191, 0.30);
+    --cat-global: #FBBF24;
+    --cat-global-soft: rgba(251, 191, 36, 0.10);
+    --cat-global-line: rgba(251, 191, 36, 0.30);
+
+    /* Highlight categories — dark mode */
+    --cat-saham: #34D399;
+    --cat-saham-soft: rgba(52, 211, 153, 0.10);
+    --cat-saham-line: rgba(52, 211, 153, 0.30);
+    --cat-bisnis: #60A5FA;
+    --cat-bisnis-soft: rgba(96, 165, 250, 0.10);
+    --cat-bisnis-line: rgba(96, 165, 250, 0.30);
+    --cat-ekonomi-2: #FB923C;
+    --cat-ekonomi-2-soft: rgba(251, 146, 60, 0.10);
+    --cat-ekonomi-2-line: rgba(251, 146, 60, 0.30);
+    --cat-kebijakan: #F87171;
+    --cat-kebijakan-soft: rgba(248, 113, 113, 0.10);
+    --cat-kebijakan-line: rgba(248, 113, 113, 0.30);
+    --cat-komoditas: #D97706;
+    --cat-komoditas-soft: rgba(217, 119, 6, 0.10);
+    --cat-komoditas-line: rgba(217, 119, 6, 0.30);
+
+    --shadow-card-hover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(247, 147, 26, 0.10);
+    --shadow-card-glow: 0 0 0 1px rgba(247, 147, 26, 0.30), 0 0 20px -4px rgba(247, 147, 26, 0.20);
+
+    --logo-accent: #F7931A;
+  }
+
+  html {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    @apply bg-bg-primary text-text-primary;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Always-tabular numbers for prices, counts, etc. */
+  .num-tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Focus ring */
+  *:focus-visible {
+    @apply outline-none ring-2 ring-brand ring-offset-2;
+    --tw-ring-offset-color: var(--bg-primary);
+  }
+
+  /* Subtle ambient gradient — only in dark mode */
+  :root.dark body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+      radial-gradient(circle at 0% 0%, rgba(247, 147, 26, 0.04) 0%, transparent 40%),
+      radial-gradient(circle at 100% 100%, rgba(22, 199, 132, 0.02) 0%, transparent 40%);
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--text-faint);
+  }
+
+  /* Selection */
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--text-primary);
+  }
+}
+
+@layer components {
+  /* Card — flat, dark/light aware, subtle border */
+  .card {
+    @apply rounded-lg border border-border bg-bg-secondary transition-all duration-200;
+  }
+  .card-hover {
+    @apply hover:border-border-strong hover:bg-bg-tertiary;
+  }
+
+  /* Category badge */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest;
+  }
+  .badge-bullish {
+    @apply bg-bullish-bg text-bullish border border-bullish-line;
+  }
+  .badge-bearish {
+    @apply bg-bearish-bg text-bearish border border-bearish-line;
+  }
+  .badge-mixed {
+    @apply bg-mixed-bg text-mixed border border-mixed-line;
+  }
+
+  /* Mono caps labels */
+  .label {
+    @apply font-mono text-[10px] uppercase tracking-widest text-text-muted;
+  }
+
+  /* Hide scrollbar utility (for marquee/ticker) */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* =========================================================
+     Hero gradient backgrounds per category (Sorotan section)
+     Subtle: opacity handled by parent, not here.
+     ========================================================= */
+  .bg-hero-ekonomi {
+    background: linear-gradient(135deg, #0f1f3d 0%, #1e3a5f 50%, #2d5a8a 100%);
+  }
+  .bg-hero-bisnis {
+    background: linear-gradient(135deg, #061a1a 0%, #0d3b3b 50%, #115e59 100%);
+  }
+  .bg-hero-kebijakan {
+    background: linear-gradient(135deg, #1a0a0a 0%, #3b0a0a 50%, #5c1010 100%);
+  }
+  .bg-hero-saham {
+    background: linear-gradient(135deg, #051a05 0%, #0a2e0a 50%, #0f4411 100%);
+  }
+  .bg-hero-global {
+    background: linear-gradient(135deg, #0e0620 0%, #1a0a3e 50%, #2d1060 100%);
+  }
+  .bg-hero-komoditas {
+    background: linear-gradient(135deg, #1a0f05 0%, #2d1a0a 50%, #452710 100%);
+  }
+
+  /* Glass morphism card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Dot grid pattern overlay (for Sorotan section background) */
+  .pattern-dot-grid {
+    background-image: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0.04) 1px,
+      transparent 1px
+    );
+    background-size: 24px 24px;
+  }
+
+  /* Subtle noise texture (inline SVG) for hero areas */
+  .pattern-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
+  }
+
+  /* Geometric pattern (chart-line subtle) */
+  .pattern-chart-line {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 100' preserveAspectRatio='none'%3E%3Cpolyline points='0,80 30,60 60,70 100,40 130,55 170,30 200,35' fill='none' stroke='rgba(255,255,255,0.04)' stroke-width='1.5'/%3E%3C/svg%3E");
+    background-size: 100% 100%;
+  }
+
+  /* Gradient divider (for section separation) */
+  .divider-gradient {
+    height: 1px;
+    background: linear-gradient(
+      to right,
+      transparent 0%,
+      rgba(255, 255, 255, 0.12) 50%,
+      transparent 100%
+    );
+  }
+}

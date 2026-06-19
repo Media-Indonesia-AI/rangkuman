@@ -1,0 +1,179 @@
+import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
+import type { Sentimen } from "@/lib/mock/recaps";
+import { cn } from "@/lib/utils";
+import { SparklineChart } from "./SparklineChart";
+import { GaugeChart } from "./GaugeChart";
+import { ProgressBarChart } from "./ProgressBarChart";
+
+interface MarketMoodProps {
+  sentiment: Sentimen;
+  sentimentLabel: string;
+  summary: string;
+  factors: MarketFactor[];
+  widgets: MarketWidget[];
+}
+
+const sentimentConfig: Record<Sentimen, { label: string; bg: string; text: string; border: string; Icon: typeof TrendingUp }> = {
+  positif: { label: "Positif", bg: "bg-bullish-soft", text: "text-bullish", border: "border-bullish-line", Icon: TrendingUp },
+  netral: { label: "Netral", bg: "bg-mixed-soft", text: "text-mixed", border: "border-mixed-line", Icon: Minus },
+  negatif: { label: "Negatif", bg: "bg-bearish-soft", text: "text-bearish", border: "border-bearish-line", Icon: TrendingDown },
+};
+
+const factorSentimentColors: Record<Sentimen, string> = {
+  positif: "text-bullish",
+  negatif: "text-bearish",
+  netral: "text-mixed",
+};
+
+export function MarketMood({
+  sentiment,
+  sentimentLabel,
+  summary,
+  factors,
+  widgets,
+}: MarketMoodProps) {
+  const sc = sentimentConfig[sentiment];
+  const Icon = sc.Icon;
+  const topFactors = factors.slice(0, 3);
+
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      aria-label="Market mood IHSG"
+    >
+      <div className="flex flex-col divide-y divide-border lg:flex-row lg:divide-x lg:divide-y-0">
+        {/* Left: title + sentiment badge — narrow column on desktop */}
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3 py-1.5 lg:w-[200px] lg:border-b-0 lg:py-2.5">
+          <div className="flex items-center gap-1.5">
+            <Activity className="h-3 w-3 text-brand" aria-hidden />
+            <span className="label">Market Mood</span>
+          </div>
+          <span
+            className={cn(
+              "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest",
+              sc.bg, sc.text, sc.border, "border",
+            )}
+          >
+            <Icon className="h-2.5 w-2.5" aria-hidden />
+            {sentimentLabel}
+          </span>
+        </div>
+
+        {/* 4 compact widget cells */}
+        <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-border md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+          {widgets.map((w) => (
+            <CompactWidgetCell key={w.id} widget={w} />
+          ))}
+        </div>
+      </div>
+
+      {/* Single-line summary + top factors */}
+      <div className="border-t border-border bg-bg-tertiary px-3 py-1.5">
+        <p className="text-[11.5px] leading-[1.5] text-text-secondary">
+          {summary}{" "}
+          <span className="hidden sm:inline">
+            {topFactors.map((f, i) => (
+              <span key={f.label} className="whitespace-nowrap">
+                <span className={cn("font-mono font-semibold", factorSentimentColors[f.sentiment])}>
+                  {f.label} {f.value}
+                </span>
+                {i < topFactors.length - 1 ? " · " : ""}
+              </span>
+            ))}
+          </span>
+        </p>
+      </div>
+    </section>
+  );
+}
+
+function CompactWidgetCell({ widget }: { widget: MarketWidget }) {
+  const positive = widget.changePercent >= 0;
+  const trendPositive = widget.type === "sparkline" ? positive : true;
+
+  return (
+    <div className="flex items-center gap-2 px-2.5 py-1.5 lg:gap-3 lg:px-3">
+      {/* Label column — narrow */}
+      <div className="flex min-w-[60px] shrink-0 flex-col gap-0.5">
+        <span className="label text-[9px]">{widget.label}</span>
+        <div className="flex items-baseline gap-1">
+          <p className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular lg:text-[17px]">
+            {widget.value}
+          </p>
+        </div>
+        {widget.type === "sparkline" ? (
+          <span
+            className={cn(
+              "font-mono text-[9.5px] font-semibold leading-none num-tabular",
+              positive ? "text-bullish" : "text-bearish",
+            )}
+          >
+            {positive ? "▲ +" : "▼ "}
+            {Math.abs(widget.changePercent).toFixed(2)}%
+          </span>
+        ) : widget.type === "gauge" ? (
+          <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
+            {widget.gaugeLabel}
+          </span>
+        ) : widget.type === "static" ? (
+          <span
+            className={cn(
+              "font-mono text-[9.5px] font-semibold leading-none",
+              widget.staticBadge === "bullish" && "text-bullish",
+              widget.staticBadge === "bearish" && "text-bearish",
+              widget.staticBadge === "mixed" && "text-mixed",
+              !widget.staticBadge && "text-text-muted",
+            )}
+          >
+            {widget.staticSubLabel}
+          </span>
+        ) : (
+          <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
+            Harian
+          </span>
+        )}
+      </div>
+
+      {/* Visualization column — fills the rest */}
+      <div className="flex-1 min-w-0">
+        {widget.type === "sparkline" && widget.sparklineData && (
+          <SparklineChart
+            data={widget.sparklineData}
+            positive={trendPositive}
+            height={24}
+            showArea
+            showDots
+          />
+        )}
+        {widget.type === "gauge" && widget.gaugeValue !== undefined && (
+          <GaugeChart value={widget.gaugeValue} />
+        )}
+        {widget.type === "bar" && widget.barValue !== undefined && (
+          <ProgressBarChart
+            value={widget.barValue}
+            leftLabel={widget.barLeftLabel}
+            rightLabel={widget.barRightLabel}
+            compact
+          />
+        )}
+        {widget.type === "static" && (
+          <div className="flex h-[24px] items-center justify-end gap-1.5 pr-0.5">
+            <span
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded border px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest opacity-80",
+                widget.staticBadge === "bullish" && "border-bullish-line text-bullish",
+                widget.staticBadge === "bearish" && "border-bearish-line text-bearish",
+                widget.staticBadge === "mixed" && "border-mixed-line text-mixed",
+                !widget.staticBadge && "border-border text-text-muted",
+              )}
+            >
+              <span className="h-1 w-1 rounded-full bg-current" aria-hidden />
+              {widget.staticSubLabel}
+            </span>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
