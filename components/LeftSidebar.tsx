@@ -1,45 +1,64 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, ArrowDown } from "lucide-react";
-import { api, type TopStockItem } from "@/lib/api";
+import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from "lucide-react";
+import { api, type ApiError, type TopStockItem } from "@/lib/api";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
 /** Skeleton row count per group — matches the 10-row layout shown in the design (5 gainers + 5 losers). */
 const SKELETON_ROWS = 5;
 
+type LoadState =
+  | { kind: "loading" }
+  | { kind: "ready"; gainers: TopStockItem[]; losers: TopStockItem[] }
+  | { kind: "error"; message: string };
+
 /**
  * Left rail — Top Movers (gainers + losers). Visible on desktop only.
- * Fetches live data from /stocks/top-stocks; renders a shimmer skeleton
- * (10 rows) while loading or when the request fails so the rail never
- * flashes to an empty state.
+ * Fetches live data from /stocks/top-stocks. Renders:
+ * - Skeleton (10 rows) while loading
+ * - Error message + retry when the request fails
+ * - Real rows once data arrives
+ *
+ * Re-fetches automatically when the user logs in/out (the `user` dep).
  */
 export function LeftSidebar() {
-  const [gainers, setGainers] = useState<TopStockItem[] | null>(null);
-  const [losers, setLosers] = useState<TopStockItem[] | null>(null);
+  const user = useCurrentUser();
+  const [state, setState] = useState<LoadState>({ kind: "loading" });
 
-  useEffect(() => {
-    let cancelled = false;
-    api
-      .getTopStocks()
-      .then((res) => {
-        if (cancelled) return;
-        setGainers(res.find((g) => g.type === "top-gainer")?.stocks ?? []);
-        setLosers(res.find((g) => g.type === "top-looser")?.stocks ?? []);
-      })
-      .catch(() => {
-        // Leave state null → shimmer stays
+  const fetchOnce = useCallback(async () => {
+    setState({ kind: "loading" });
+    try {
+      const res = await api.getTopStocks();
+      // Backend wraps the array in `{ data: [...] }`.
+      const groups = res.data ?? [];
+      const gainers =
+        groups.find((g) => g.type === "top-gainer")?.stocks ?? [];
+      const losers = groups.find((g) => g.type === "top-looser")?.stocks ?? [];
+      setState({ kind: "ready", gainers, losers });
+    } catch (err) {
+      const apiErr = err as ApiError;
+      setState({
+        kind: "error",
+        message:
+          apiErr?.message
+            ? `Gagal memuat top movers: ${apiErr.message}`
+            : "Gagal memuat top movers.",
       });
-    return () => {
-      cancelled = true;
-    };
+    }
   }, []);
 
-  const loading = gainers === null || losers === null;
-  const total = loading
-    ? SKELETON_ROWS * 2
-    : gainers.length + losers.length;
+  // Refetch when the user changes (login / logout).
+  useEffect(() => {
+    void fetchOnce();
+  }, [user, fetchOnce]);
+
+  const total =
+    state.kind === "ready"
+      ? state.gainers.length + state.losers.length
+      : SKELETON_ROWS * 2;
 
   return (
     <aside className="space-y-4" aria-label="Top movers kiri">
@@ -50,23 +69,33 @@ export function LeftSidebar() {
         <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3 py-2">
           <h3 className="label">Top Movers · IDX</h3>
           <span className="font-mono text-[10px] text-text-muted num-tabular">
-            {total} saham
+            {state.kind === "ready"
+              ? `${total} saham`
+              : state.kind === "loading"
+                ? "…"
+                : "gagal"}
           </span>
         </header>
 
-        <MoverList
-          title="Gainers"
-          direction="up"
-          loading={loading}
-          rows={gainers ?? []}
-        />
-        <div className="border-t border-border" />
-        <MoverList
-          title="Losers"
-          direction="down"
-          loading={loading}
-          rows={losers ?? []}
-        />
+        {state.kind === "error" ? (
+          <ErrorState message={state.message} onRetry={fetchOnce} />
+        ) : (
+          <>
+            <MoverList
+              title="Gainers"
+              direction="up"
+              loading={state.kind === "loading"}
+              rows={state.kind === "ready" ? state.gainers : []}
+            />
+            <div className="border-t border-border" />
+            <MoverList
+              title="Losers"
+              direction="down"
+              loading={state.kind === "loading"}
+              rows={state.kind === "ready" ? state.losers : []}
+            />
+          </>
+        )}
       </section>
     </aside>
   );
@@ -85,12 +114,7 @@ function MoverList({ title, direction, loading, rows }: MoverListProps) {
 
   return (
     <div className="px-3 py-2">
-      <p
-        className={cn(
-          "label mb-1.5 flex items-center gap-1",
-          colorClass,
-        )}
-      >
+      <p className={cn("label mb-1.5 flex items-center gap-1", colorClass)}>
         <Icon className="h-2.5 w-2.5" aria-hidden /> {title}
       </p>
       <ul className="space-y-0.5">
@@ -98,7 +122,11 @@ function MoverList({ title, direction, loading, rows }: MoverListProps) {
           ? Array.from({ length: SKELETON_ROWS }).map((_, i) => (
               <SkeletonRow key={i} />
             ))
-          : rows.map((s) => <Row key={s.ticker} stock={s} colorClass={colorClass} />)}
+          : rows.length === 0
+            ? null
+            : rows.map((s) => (
+                <Row key={s.ticker} stock={s} colorClass={colorClass} />
+              ))}
       </ul>
     </div>
   );
@@ -158,5 +186,28 @@ function SkeletonRow() {
         <div className="h-2.5 w-10 animate-pulse rounded bg-bg-tertiary/60" />
       </div>
     </li>
+  );
+}
+
+function ErrorState({
+  message,
+  onRetry,
+}: {
+  message: string;
+  onRetry: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center gap-2 px-3 py-4 text-center">
+      <AlertCircle className="h-4 w-4 text-bearish" aria-hidden />
+      <p className="font-mono text-[11px] text-bearish">{message}</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-1 inline-flex items-center gap-1.5 rounded border border-border bg-bg-tertiary px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary"
+      >
+        <RefreshCw className="h-3 w-3" aria-hidden />
+        Coba lagi
+      </button>
+    </div>
   );
 }

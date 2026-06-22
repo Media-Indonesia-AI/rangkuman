@@ -62,7 +62,10 @@ export interface TopStockGroup {
   stocks: TopStockItem[];
 }
 
-export type TopStocksResponse = TopStockGroup[];
+/** Wire format the backend actually returns: `{ data: [...] }`. */
+export interface TopStocksResponse {
+  data: TopStockGroup[];
+}
 
 /**
  * Build the HTTP Basic auth header from the active session stored in
