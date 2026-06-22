@@ -65,15 +65,29 @@ export interface TopStockGroup {
 export type TopStocksResponse = TopStockGroup[];
 
 /**
- * Read the setupToken from localStorage (saved by lib/auth.ts on register/login)
- * and build the Authorization header. Safe to call on the server — returns {}.
+ * Build the HTTP Basic auth header from the active session stored in
+ * localStorage. The session object is written by `lib/auth.ts` on
+ * register/login and includes the plaintext password — required because
+ * the backend's auth scheme is `Authorization: Basic base64(email:password)`.
+ *
+ * Safe to call on the server — returns {} (no auth header).
  */
 function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
-    const token = window.localStorage.getItem("beritainvestor:setupToken");
-    if (!token) return {};
-    return { Authorization: `Bearer ${token}` };
+    const raw = window.localStorage.getItem("beritainvestor:user");
+    if (!raw) return {};
+    const session = JSON.parse(raw) as {
+      email?: string;
+      password?: string;
+    };
+    if (!session.email || !session.password) return {};
+    const credentials = `${session.email}:${session.password}`;
+    const encoded =
+      typeof btoa === "function"
+        ? btoa(credentials)
+        : Buffer.from(credentials, "utf-8").toString("base64");
+    return { Authorization: `Basic ${encoded}` };
   } catch {
     return {};
   }

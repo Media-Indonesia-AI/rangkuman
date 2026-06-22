@@ -17,6 +17,9 @@ export interface MockUser {
   email: string;
   username: string;
   name: string;
+  /** Plaintext password — kept so we can build HTTP Basic auth on every request.
+   *  Demo-only: the real app would use HTTP-only session cookies. */
+  password?: string;
   /** ISO timestamp of when the session was created. */
   loggedInAt: string;
   /** Provider used at sign-in: "email" | "google". */
@@ -124,6 +127,7 @@ export async function loginWithIdentifier(
     email: response.user.email,
     username: response.user.username,
     name: response.user.name,
+    password: pw, // keep around for HTTP Basic auth on subsequent requests
     loggedInAt: response.user.createdAt,
     provider: "email",
     isEmailVerified: response.user.isEmailVerified,
@@ -206,6 +210,7 @@ export async function registerUser(input: {
     email: response.user.email,
     username: response.user.username,
     name: response.user.name,
+    password, // keep around for HTTP Basic auth on subsequent requests
     loggedInAt: response.user.createdAt,
     provider: "email",
     isEmailVerified: response.user.isEmailVerified,
