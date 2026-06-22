@@ -46,6 +46,39 @@ export interface RegisterResponse {
   message: string;
 }
 
+// ─── TOP STOCKS ──────────────────────────────────────────────────
+
+export interface TopStockItem {
+  ticker: string;
+  company_name: string;
+  price: number;
+  percent_change: number;
+}
+
+export type TopStockGroupType = "top-gainer" | "top-looser";
+
+export interface TopStockGroup {
+  type: TopStockGroupType;
+  stocks: TopStockItem[];
+}
+
+export type TopStocksResponse = TopStockGroup[];
+
+/**
+ * Read the setupToken from localStorage (saved by lib/auth.ts on register/login)
+ * and build the Authorization header. Safe to call on the server — returns {}.
+ */
+function getAuthHeader(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const token = window.localStorage.getItem("beritainvestor:setupToken");
+    if (!token) return {};
+    return { Authorization: `Bearer ${token}` };
+  } catch {
+    return {};
+  }
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   let res: Response;
@@ -55,6 +88,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...getAuthHeader(),
         ...(init.headers ?? {}),
       },
     });
@@ -93,5 +127,13 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     });
+  },
+  /** Fetch top gainers and top loosers. `limit` controls how many per group (default 5). */
+  getTopStocks(limit = 5): Promise<TopStocksResponse> {
+    const params = new URLSearchParams({ limit: String(limit) });
+    return request<TopStocksResponse>(
+      `stocks/top-stocks?${params.toString()}`,
+      { method: "GET" },
+    );
   },
 };
