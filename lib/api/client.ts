@@ -6,66 +6,17 @@
  * build time and also available at runtime via process.env.
  */
 
+import type {
+  ApiError,
+  LoginRequest,
+  RegisterRequest,
+  RegisterResponse,
+  TickersResponse,
+  TopStocksResponse,
+} from "./types";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";
-
-export interface ApiError {
-  status: number;
-  message: string;
-  /** Raw response body if available, for debugging. */
-  body?: unknown;
-}
-
-export interface RegisterRequest {
-  email: string;
-  username: string;
-  password: string;
-  name: string;
-}
-
-export interface LoginRequest {
-  /** Either the user's email or username. The server resolves which one it is. */
-  identifier: string;
-  password: string;
-}
-
-export interface RegisterResponseUser {
-  id: string;
-  email: string;
-  username: string;
-  name: string;
-  googleId: string | null;
-  isEmailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface RegisterResponse {
-  user: RegisterResponseUser;
-  setupToken: string;
-  message: string;
-}
-
-// ─── TOP STOCKS ──────────────────────────────────────────────────
-
-export interface TopStockItem {
-  ticker: string;
-  company_name: string;
-  price: number;
-  percent_change: number;
-}
-
-export type TopStockGroupType = "top-gainer" | "top-looser";
-
-export interface TopStockGroup {
-  type: TopStockGroupType;
-  stocks: TopStockItem[];
-}
-
-/** Wire format the backend actually returns: `{ data: [...] }`. */
-export interface TopStocksResponse {
-  data: TopStockGroup[];
-}
 
 /**
  * Build the HTTP Basic auth header from the active session stored in
@@ -152,5 +103,9 @@ export const api = {
       `stocks/top-stocks?${params.toString()}`,
       { method: "GET" },
     );
+  },
+  /** Fetch the full ticker catalog with latest price and day change. */
+  getTickers(): Promise<TickersResponse> {
+    return request<TickersResponse>("stocks/ticker", { method: "GET" });
   },
 };
