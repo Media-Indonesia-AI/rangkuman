@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
 import { ToastContainer } from "@/components/Toast";
+import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import "./globals.css";
 
 const inter = Inter({
@@ -94,6 +95,7 @@ export default function RootLayout({
         {children}
         <NewsletterFloatingPill />
         <ToastContainer />
+        <GuestLoginDialog />
       </body>
     </html>
   );
