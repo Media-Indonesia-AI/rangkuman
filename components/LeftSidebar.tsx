@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from "lucide-react";
 import { api, type ApiError, type TopStockItem } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { LoginPromptOverlay } from "./LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
 /** Skeleton row count per group — matches the 10-row layout shown in the design (5 gainers + 5 losers). */
@@ -63,7 +64,7 @@ export function LeftSidebar() {
   return (
     <aside className="space-y-4" aria-label="Top movers kiri">
       <section
-        className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+        className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary"
         aria-label="Top movers"
       >
         <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3 py-2">
@@ -73,29 +74,32 @@ export function LeftSidebar() {
               ? `${total} saham`
               : state.kind === "loading"
                 ? "…"
-                : "gagal"}
+                : "-"}
           </span>
         </header>
 
-        {state.kind === "error" ? (
-          <ErrorState message={state.message} onRetry={fetchOnce} />
-        ) : (
-          <>
-            <MoverList
-              title="Gainers"
-              direction="up"
-              loading={state.kind === "loading"}
-              rows={state.kind === "ready" ? state.gainers : []}
-            />
-            <div className="border-t border-border" />
-            <MoverList
-              title="Losers"
-              direction="down"
-              loading={state.kind === "loading"}
-              rows={state.kind === "ready" ? state.losers : []}
-            />
-          </>
-        )}
+        <div className="relative min-h-[360px]">
+          {state.kind === "error" ? (
+            <ErrorState message={state.message} onRetry={fetchOnce} />
+          ) : (
+            <>
+              <MoverList
+                title="Gainers"
+                direction="up"
+                loading={state.kind === "loading"}
+                rows={state.kind === "ready" ? state.gainers : []}
+              />
+              <div className="border-t border-border" />
+              <MoverList
+                title="Losers"
+                direction="down"
+                loading={state.kind === "loading"}
+                rows={state.kind === "ready" ? state.losers : []}
+              />
+            </>
+          )}
+          <LoginPromptOverlay />
+        </div>
       </section>
     </aside>
   );

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUp, ArrowDown, TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
 import { api, type ApiError, type TopStockItem } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { LoginPromptOverlay } from "./LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
 type LoadState =
@@ -59,7 +60,7 @@ export function MobileTopMovers() {
 
   return (
     <section
-      className="overflow-hidden rounded-lg border border-border bg-bg-secondary xl:hidden"
+      className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary xl:hidden"
       aria-label="Top Movers"
     >
       <header className="flex items-center gap-1.5 border-b border-border bg-bg-tertiary px-3 py-1.5">
@@ -70,31 +71,34 @@ export function MobileTopMovers() {
             ? `${total} saham`
             : state.kind === "loading"
               ? "…"
-              : "gagal"}
+              : "-"}
         </span>
       </header>
 
-      {state.kind === "error" ? (
-        <ErrorState message={state.message} onRetry={fetchOnce} />
-      ) : (
-        <>
-          <MoverRow
-            title="Gainers"
-            Icon={ArrowUp}
-            direction="up"
-            loading={state.kind === "loading"}
-            rows={state.kind === "ready" ? state.gainers : []}
-          />
-          <div className="border-t border-border" />
-          <MoverRow
-            title="Losers"
-            Icon={ArrowDown}
-            direction="down"
-            loading={state.kind === "loading"}
-            rows={state.kind === "ready" ? state.losers : []}
-          />
-        </>
-      )}
+      <div className="relative">
+        {state.kind === "error" ? (
+          <ErrorState message={state.message} onRetry={fetchOnce} />
+        ) : (
+          <>
+            <MoverRow
+              title="Gainers"
+              Icon={ArrowUp}
+              direction="up"
+              loading={state.kind === "loading"}
+              rows={state.kind === "ready" ? state.gainers : []}
+            />
+            <div className="border-t border-border" />
+            <MoverRow
+              title="Losers"
+              Icon={ArrowDown}
+              direction="down"
+              loading={state.kind === "loading"}
+              rows={state.kind === "ready" ? state.losers : []}
+            />
+          </>
+        )}
+        <LoginPromptOverlay />
+      </div>
     </section>
   );
 }
