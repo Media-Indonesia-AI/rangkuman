@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowUp, ArrowDown, TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
 import { api, type ApiError, type TopStockItem } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { MOCK_TOP_STOCKS } from "@/lib/mock/top-stocks";
 import { LoginPromptOverlay } from "./LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
@@ -38,6 +39,18 @@ export function MobileTopMovers() {
       setState({ kind: "ready", gainers, losers });
     } catch (err) {
       const apiErr = err as ApiError;
+      // 401 = the endpoint requires auth and the user is logged out. Show
+      // a static mock list under the LoginPromptOverlay rather than an
+      // error — the list itself is secondary to the login prompt.
+      if (apiErr?.status === 401) {
+        const groups = MOCK_TOP_STOCKS.data;
+        setState({
+          kind: "ready",
+          gainers: groups.find((g) => g.type === "top-gainer")?.stocks ?? [],
+          losers: groups.find((g) => g.type === "top-looser")?.stocks ?? [],
+        });
+        return;
+      }
       setState({
         kind: "error",
         message:

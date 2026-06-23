@@ -61,6 +61,16 @@ export function GuestLoginDialog() {
     return () => window.clearTimeout(t);
   }, [shouldArmTimer, pathname, resetKey]);
 
+  // The component instance persists across login/logout cycles (the
+  // `if (!showDialog) return null` early return doesn't unmount it),
+  // so transient states like `loading` and `error` from a previous
+  // session would otherwise leak into the next session. Reset them
+  // whenever the auth user changes.
+  useEffect(() => {
+    setLoading(null);
+    setError(null);
+  }, [user]);
+
   // Escape-to-dismiss. Same effect as clicking the X / backdrop —
   // resets the timer by bumping resetKey.
   useEffect(() => {
