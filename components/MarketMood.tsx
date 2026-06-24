@@ -1,4 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { type InterestRate } from "@/lib/api";
+import { loadInterestRate } from "@/lib/api/cache";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
@@ -26,6 +31,51 @@ const factorSentimentColors: Record<Sentimen, string> = {
   netral: "text-mixed",
 };
 
+/** Format a rate number as Indonesian-style "5,75%". */
+function formatRate(rate: number): string {
+  return `${rate.toString().replace(".", ",")}%`;
+}
+
+/** Format a signed bps value as "+25 bps" / "-25 bps" / "0 bps". */
+function formatBps(bps: number): string {
+  if (bps === 0) return "0 bps";
+  return `${bps > 0 ? "+" : ""}${bps} bps`;
+}
+
+/**
+ * Map the rate change to a market-color badge:
+ *   rate cut (bps < 0) → bullish (dovish, supportive of equities)
+ *   rate hike (bps > 0) → bearish (hawkish, headwind for equities)
+ *   unchanged (bps = 0) → mixed
+ */
+function bpsBadge(bps: number): NonNullable<MarketWidget["staticBadge"]> {
+  if (bps < 0) return "bullish";
+  if (bps > 0) return "bearish";
+  return "mixed";
+}
+
+/**
+ * Replace the `bi-rate` widget in the list with live data from the API.
+ * The mock widget is kept as a fallback until the fetch resolves, and
+ * stays in place if the request fails (auth, network, etc.).
+ */
+function mergeBiRate(
+  widgets: MarketWidget[],
+  biRate: InterestRate | null,
+): MarketWidget[] {
+  if (!biRate) return widgets;
+  return widgets.map((w) =>
+    w.id === "bi-rate"
+      ? {
+          ...w,
+          value: formatRate(biRate.rate),
+          staticSubLabel: formatBps(biRate.bps),
+          staticBadge: bpsBadge(biRate.bps),
+        }
+      : w,
+  );
+}
+
 export function MarketMood({
   sentiment,
   sentimentLabel,
@@ -36,6 +86,26 @@ export function MarketMood({
   const sc = sentimentConfig[sentiment];
   const Icon = sc.Icon;
   const topFactors = factors.slice(0, 3);
+
+  // Live BI Rate for the bi-rate widget. Null = not yet loaded or failed
+  // (in which case the mock widget stays put as the fallback).
+  const [biRate, setBiRate] = useState<InterestRate | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadInterestRate()
+      .then((data) => {
+        if (!cancelled) setBiRate(data);
+      })
+      .catch(() => {
+        // Swallow — the mock bi-rate widget is the fallback.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const effectiveWidgets = mergeBiRate(widgets, biRate);
 
   return (
     <section
@@ -62,7 +132,7 @@ export function MarketMood({
 
         {/* 4 compact widget cells */}
         <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-border md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-          {widgets.map((w) => (
+          {effectiveWidgets.map((w) => (
             <CompactWidgetCell key={w.id} widget={w} />
           ))}
         </div>

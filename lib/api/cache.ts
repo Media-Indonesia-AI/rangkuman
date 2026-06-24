@@ -13,7 +13,7 @@
  */
 
 import { api } from "./client";
-import type { TickersResponse, TopStocksResponse } from "./types";
+import type { InterestRate, TickersResponse, TopStocksResponse } from "./types";
 
 let cachedTopStocks: TopStocksResponse | null = null;
 let inflightTopStocks: Promise<TopStocksResponse> | null = null;
@@ -56,4 +56,47 @@ export function loadTickers(): Promise<TickersResponse> {
       throw err;
     });
   return inflightTickers;
+}
+
+// ─── INTEREST RATE ──────────────────────────────────────────────
+
+/** Per-date cache for `getInterestRate`. Different dates get different slots. */
+const cachedInterestRates = new Map<string, InterestRate>();
+const inflightInterestRates = new Map<string, Promise<InterestRate>>();
+
+/** Local-tz today in `YYYY-MM-DD` — default date when caller passes none. */
+function todayIsoDate(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+/**
+ * Fetch the BI Rate snapshot for a given date, with request-level dedup.
+ * Concurrent and subsequent callers for the same date share one network
+ * round-trip. Only successful responses are cached; errors clear the
+ * in-flight slot so the next mount can retry.
+ *
+ * @param date ISO date string `YYYY-MM-DD`. Defaults to today (local TZ).
+ */
+export function loadInterestRate(date?: string): Promise<InterestRate> {
+  const d = date ?? todayIsoDate();
+  const cached = cachedInterestRates.get(d);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightInterestRates.get(d);
+  if (inflight) return inflight;
+  const promise = api
+    .getInterestRate(d)
+    .then((res) => {
+      cachedInterestRates.set(d, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightInterestRates.delete(d); // allow retry on next mount
+      throw err;
+    });
+  inflightInterestRates.set(d, promise);
+  return promise;
 }

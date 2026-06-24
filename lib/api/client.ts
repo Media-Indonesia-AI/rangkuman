@@ -109,8 +109,24 @@ export const api = {
   getTickers(): Promise<TickersResponse> {
     return request<TickersResponse>("stocks/ticker", { method: "GET" });
   },
-  /** Fetch the latest BI Rate snapshot (current rate + change in bps). */
-  getInterestRate(): Promise<InterestRate> {
-    return request<InterestRate>("interest-rate", { method: "GET" });
+  /**
+   * Fetch the BI Rate snapshot for a given date.
+   * @param date ISO date string `YYYY-MM-DD`. Defaults to today (local TZ).
+   */
+  getInterestRate(date?: string): Promise<InterestRate> {
+    const params = new URLSearchParams({ date: date ?? todayIsoDate() });
+    return request<InterestRate>(
+      `interest-rate?${params.toString()}`,
+      { method: "GET" },
+    );
   },
 };
+
+/** Local-tz today in `YYYY-MM-DD` — used as the default `date` query param. */
+function todayIsoDate(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
