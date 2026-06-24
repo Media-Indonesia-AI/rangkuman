@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowUp, ArrowDown, RefreshCw, AlertCircle } from "lucide-react";
-import { api, type ApiError, type TopStockItem } from "@/lib/api";
+import { type ApiError, type TopStockItem } from "@/lib/api";
+import { loadTopStocks } from "@/lib/api/cache";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { MOCK_TOP_STOCKS } from "@/lib/mock/top-stocks";
 import { LoginPromptOverlay } from "./LoginPromptOverlay";
@@ -33,7 +34,7 @@ export function LeftSidebar() {
   const fetchOnce = useCallback(async () => {
     setState({ kind: "loading" });
     try {
-      const res = await api.getTopStocks();
+      const res = await loadTopStocks();
       // Backend wraps the array in `{ data: [...] }`.
       const groups = res.data ?? [];
       const gainers =
