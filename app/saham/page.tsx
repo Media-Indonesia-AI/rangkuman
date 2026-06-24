@@ -5,7 +5,6 @@ import { Flame, Inbox, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { DatePicker } from "@/components/DatePicker";
 import { StockCard } from "@/components/StockCard";
 import { Sidebar } from "@/components/Sidebar";
@@ -38,7 +37,6 @@ export default function SahamPage() {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       {/* FIX 4: Sr-only H1 for SEO */}

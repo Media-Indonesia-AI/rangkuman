@@ -2,7 +2,6 @@ import Link from "next/link";
 import { ArrowRight, Flame, ClipboardList, BookOpen } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { BrandSlogan } from "@/components/BrandSlogan";
 import { StoryHero } from "@/components/StoryHero";
 import { StoryEditorial } from "@/components/StoryEditorial";
@@ -18,7 +17,6 @@ export default function HomePage() {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-6xl lg:px-8">

@@ -7,7 +7,6 @@ import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { loginWithIdentifier, loginWithGoogle } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -90,7 +89,6 @@ export default function LoginPage() {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-md px-4 pb-16 pt-10 sm:px-6">

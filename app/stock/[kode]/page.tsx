@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { SourceBar } from "@/components/SourceBar";
 import { EmptyState } from "@/components/EmptyState";
@@ -75,7 +74,6 @@ export default function StockDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6">

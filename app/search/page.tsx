@@ -7,7 +7,6 @@ import Link from "next/link";
 import { ArrowLeft, Search, Clock, ArrowUpRight, TrendingUp, Hash } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { searchResults, searchAll, type SearchResult, type SearchItem } from "@/lib/mock/search";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +101,6 @@ function SearchPageContent() {
 export default function SearchPage() {
   return (
     <>
-      <TopTicker />
       <Navbar />
       <Suspense fallback={<div className="mx-auto max-w-3xl px-4 py-10 text-text-muted">Memuat…</div>}>
         <SearchPageContent />
