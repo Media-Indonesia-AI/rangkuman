@@ -70,5 +70,7 @@ export interface TickerItem {
   percent_change: number;
 }
 
-/** GET stocks/ticker returns the list directly (not wrapped in `{ data }`). */
-export type TickersResponse = TickerItem[];
+/** Wire format the backend actually returns: `{ data: [...] }`. */
+export interface TickersResponse {
+  data: TickerItem[];
+}
