@@ -8,6 +8,7 @@
 
 import type {
   ApiError,
+  InterestRate,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -107,5 +108,9 @@ export const api = {
   /** Fetch the full ticker catalog with latest price and day change. */
   getTickers(): Promise<TickersResponse> {
     return request<TickersResponse>("stocks/ticker", { method: "GET" });
+  },
+  /** Fetch the latest BI Rate snapshot (current rate + change in bps). */
+  getInterestRate(): Promise<InterestRate> {
+    return request<InterestRate>("interest-rate", { method: "GET" });
   },
 };

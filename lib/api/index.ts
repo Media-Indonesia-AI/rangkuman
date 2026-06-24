@@ -5,6 +5,7 @@
 export { api, API_BASE_URL } from "./client";
 export type {
   ApiError,
+  InterestRate,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,

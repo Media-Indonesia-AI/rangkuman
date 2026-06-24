@@ -74,3 +74,17 @@ export interface TickerItem {
 export interface TickersResponse {
   data: TickerItem[];
 }
+
+// ─── INTEREST RATE ──────────────────────────────────────────────
+
+/** Latest BI Rate snapshot returned by `GET interest-rate`. */
+export interface InterestRate {
+  /** ISO timestamp of the previous rate decision (the one being compared against). */
+  last_rate_date: string;
+  /** ISO timestamp of when this snapshot was generated. */
+  date: string;
+  /** Current BI Rate in percent (e.g. `5.75` = 5,75%). */
+  rate: number;
+  /** Change vs. the previous decision, in basis points (signed). */
+  bps: number;
+}
