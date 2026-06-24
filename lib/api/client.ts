@@ -8,6 +8,7 @@
 
 import type {
   ApiError,
+  ExchangeRateResponse,
   InterestRate,
   LoginRequest,
   RegisterRequest,
@@ -117,6 +118,19 @@ export const api = {
     const params = new URLSearchParams({ date: date ?? todayIsoDate() });
     return request<InterestRate>(
       `interest-rate?${params.toString()}`,
+      { method: "GET" },
+    );
+  },
+  /**
+   * Fetch the latest exchange-rate snapshot. `base` is the base currency
+   * code passed as a query param (defaults to `"idr"`). The response is
+   * wrapped in `{ data: [snapshot] }` — read the first element to get
+   * the per-currency rates.
+   */
+  getExchangeRate(base = "idr"): Promise<ExchangeRateResponse> {
+    const params = new URLSearchParams({ base });
+    return request<ExchangeRateResponse>(
+      `exchange-rate?${params.toString()}`,
       { method: "GET" },
     );
   },
