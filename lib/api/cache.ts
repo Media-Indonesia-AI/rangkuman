@@ -13,7 +13,12 @@
  */
 
 import { api } from "./client";
-import type { InterestRate, TickersResponse, TopStocksResponse } from "./types";
+import type {
+  ExchangeRateResponse,
+  InterestRate,
+  TickersResponse,
+  TopStocksResponse,
+} from "./types";
 
 let cachedTopStocks: TopStocksResponse | null = null;
 let inflightTopStocks: Promise<TopStocksResponse> | null = null;
@@ -98,5 +103,39 @@ export function loadInterestRate(date?: string): Promise<InterestRate> {
       throw err;
     });
   inflightInterestRates.set(d, promise);
+  return promise;
+}
+
+// ─── EXCHANGE RATE ──────────────────────────────────────────────
+
+/** Per-base cache for `getExchangeRate`. Different bases get different slots. */
+const cachedExchangeRates = new Map<string, ExchangeRateResponse>();
+const inflightExchangeRates = new Map<string, Promise<ExchangeRateResponse>>();
+
+/**
+ * Fetch the latest exchange-rate snapshot, with request-level dedup.
+ * Concurrent and subsequent callers for the same base share one network
+ * round-trip. Only successful responses are cached; errors clear the
+ * in-flight slot so the next mount can retry.
+ *
+ * @param base Base currency code (default `"idr"`). The response wraps
+ *             one snapshot per base — see `ExchangeRateResponse`.
+ */
+export function loadExchangeRate(base = "idr"): Promise<ExchangeRateResponse> {
+  const cached = cachedExchangeRates.get(base);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightExchangeRates.get(base);
+  if (inflight) return inflight;
+  const promise = api
+    .getExchangeRate(base)
+    .then((res) => {
+      cachedExchangeRates.set(base, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightExchangeRates.delete(base); // allow retry on next mount
+      throw err;
+    });
+  inflightExchangeRates.set(base, promise);
   return promise;
 }

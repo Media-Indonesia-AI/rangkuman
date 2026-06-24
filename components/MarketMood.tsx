@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { type InterestRate } from "@/lib/api";
-import { loadInterestRate } from "@/lib/api/cache";
+import { type ExchangeRate, type InterestRate } from "@/lib/api";
+import { loadExchangeRate, loadInterestRate } from "@/lib/api/cache";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
@@ -76,6 +76,36 @@ function mergeBiRate(
   );
 }
 
+/**
+ * Format an exchange-rate value (IDR per unit of foreign currency) as
+ * Indonesian-locale with no decimals, matching the existing `USD/IDR`
+ * mock display style ("16.320", "17.950", etc.). The value is rounded
+ * to a whole number since exchange rates are typically shown without
+ * fractional rupiah in the strip.
+ */
+function formatIdrRate(value: number): string {
+  return Math.round(value).toLocaleString("id-ID");
+}
+
+/**
+ * Replace the `usd-idr` widget with the live USD rate from the exchange
+ * snapshot. The mock widget stays in place until the fetch resolves and
+ * on any error (auth, network, missing key in the response, etc.).
+ */
+function mergeUsdIdr(
+  widgets: MarketWidget[],
+  exchangeRate: ExchangeRate | null,
+): MarketWidget[] {
+  if (!exchangeRate) return widgets;
+  const usd = exchangeRate.USD;
+  if (typeof usd !== "number") return widgets;
+  return widgets.map((w) =>
+    w.id === "usd-idr"
+      ? { ...w, value: formatIdrRate(usd) }
+      : w,
+  );
+}
+
 export function MarketMood({
   sentiment,
   sentimentLabel,
@@ -90,6 +120,9 @@ export function MarketMood({
   // Live BI Rate for the bi-rate widget. Null = not yet loaded or failed
   // (in which case the mock widget stays put as the fallback).
   const [biRate, setBiRate] = useState<InterestRate | null>(null);
+  // Live exchange-rate snapshot for the usd-idr widget. Null = not yet
+  // loaded or failed (mock widget stays as the fallback).
+  const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -100,12 +133,28 @@ export function MarketMood({
       .catch(() => {
         // Swallow — the mock bi-rate widget is the fallback.
       });
+    void loadExchangeRate()
+      .then((res) => {
+        // Response is wrapped in `{ data: [snapshot] }`; the snapshot is
+        // a single object keyed by currency code.
+        const snapshot = res.data[0];
+        if (!cancelled) setExchangeRate(snapshot ?? null);
+      })
+      .catch(() => {
+        // Swallow — the mock usd-idr widget is the fallback.
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  const effectiveWidgets = mergeBiRate(widgets, biRate);
+  // Compose both merges. Each function is a no-op when its data source
+  // is null, and each only mutates the widget it owns — so order is
+  // safe and either source can land first.
+  const effectiveWidgets = mergeBiRate(
+    mergeUsdIdr(widgets, exchangeRate),
+    biRate,
+  );
 
   return (
     <section

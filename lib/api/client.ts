@@ -128,7 +128,7 @@ export const api = {
    * the per-currency rates.
    */
   getExchangeRate(base = "idr"): Promise<ExchangeRateResponse> {
-    const params = new URLSearchParams({ base });
+    const params = new URLSearchParams({ currency: base });
     return request<ExchangeRateResponse>(
       `exchange-rate?${params.toString()}`,
       { method: "GET" },
