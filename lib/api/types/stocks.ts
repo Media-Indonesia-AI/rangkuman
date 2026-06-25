@@ -74,3 +74,20 @@ export interface ForeignStocksResponse {
   /** Per-ticker foreign flow, one entry per stock. */
   rows: ForeignStockFlow[];
 }
+
+// ─── COMPOSITE CHART ──────────────────────────────────────────
+
+/**
+ * One OHLC-light data point on the composite-chart series.
+ *
+ * `dateTime` is an ISO 8601 timestamp from the server (UTC, e.g.
+ * `"2026-06-24T08:00:00.000Z"`). `price` is a float; consumers
+ * should not assume a fixed decimal precision.
+ */
+export interface CompositeChartPoint {
+  dateTime: string;
+  price: number;
+}
+
+/** Wire format for `GET stocks/composite-chart` — a bare array, no wrapper. */
+export type CompositeChartResponse = CompositeChartPoint[];

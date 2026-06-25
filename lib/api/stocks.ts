@@ -12,6 +12,7 @@
 
 import { request, todayIsoDate } from "./client";
 import type {
+  CompositeChartResponse,
   ForeignStocksResponse,
   TickersResponse,
   TopStocksResponse,
@@ -46,6 +47,23 @@ export function getForeignStocks(
   });
   return request<ForeignStocksResponse>(
     `stocks/foreign-stocks?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the composite-chart price series for a given period.
+ * @param period Time-window code (default `"1D"`). Common values:
+ *               `"1D"`, `"5D"`, `"1M"`, `"3M"`, `"6M"`, `"1Y"`, `"YTD"`, `"ALL"`,
+ *               plus intraday like `"1H"`. Exact accepted values are
+ *               determined by the backend.
+ */
+export function getCompositeChart(
+  period = "1D",
+): Promise<CompositeChartResponse> {
+  const params = new URLSearchParams({ period });
+  return request<CompositeChartResponse>(
+    `stocks/composite-chart?${params.toString()}`,
     { method: "GET" },
   );
 }

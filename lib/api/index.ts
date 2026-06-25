@@ -22,6 +22,8 @@ export type {
 
 // Stocks
 export type {
+  CompositeChartPoint,
+  CompositeChartResponse,
   ForeignStockFlow,
   ForeignStocksResponse,
   TickerItem,
