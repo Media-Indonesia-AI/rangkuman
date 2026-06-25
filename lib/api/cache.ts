@@ -18,6 +18,7 @@ import type {
   InterestRate,
 } from "./types/market";
 import type {
+  CompositeChartResponse,
   ForeignStocksResponse,
   TickersResponse,
   TopStocksResponse,
@@ -202,6 +203,48 @@ function fetchForeignStocksWithFallback(
     }
     throw err;
   });
+}
+
+// ─── COMPOSITE CHART ──────────────────────────────────────────
+
+/** Per-period cache for `getCompositeChart`. Different periods get
+ *  different slots; concurrent calls for the same period share one
+ *  network round-trip. */
+const cachedCompositeCharts = new Map<string, CompositeChartResponse>();
+const inflightCompositeCharts = new Map<
+  string,
+  Promise<CompositeChartResponse>
+>();
+
+/**
+ * Fetch the composite-chart price series for a given period, with
+ * request-level dedup. Concurrent and subsequent callers for the
+ * same period share one network round-trip. Only successful responses
+ * are cached; errors clear the in-flight slot so the next mount can
+ * retry.
+ *
+ * @param period Time-window code (default `"1D"`). Exact accepted
+ *               values are determined by the backend.
+ */
+export function loadCompositeChart(
+  period = "1D",
+): Promise<CompositeChartResponse> {
+  const cached = cachedCompositeCharts.get(period);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightCompositeCharts.get(period);
+  if (inflight) return inflight;
+  const promise = api
+    .getCompositeChart(period)
+    .then((res) => {
+      cachedCompositeCharts.set(period, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightCompositeCharts.delete(period); // allow retry on next mount
+      throw err;
+    });
+  inflightCompositeCharts.set(period, promise);
+  return promise;
 }
 
 /**

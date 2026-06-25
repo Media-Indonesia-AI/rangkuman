@@ -17,6 +17,7 @@
 import { login, register } from "./auth";
 import { getExchangeRate, getInterestRate } from "./market";
 import {
+  getCompositeChart,
   getForeignStocks,
   getTickers,
   getTopStocks,
@@ -120,6 +121,7 @@ export const api = {
   getTopStocks,
   getTickers,
   getForeignStocks,
+  getCompositeChart,
   // Market
   getInterestRate,
   getExchangeRate,

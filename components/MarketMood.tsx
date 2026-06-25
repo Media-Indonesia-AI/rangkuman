@@ -2,8 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { type ExchangeRate, type ForeignStocksResponse, type InterestRate } from "@/lib/api";
 import {
+  type CompositeChartPoint,
+  type ExchangeRate,
+  type ForeignStocksResponse,
+  type InterestRate,
+} from "@/lib/api";
+import {
+  loadCompositeChart,
   loadExchangeRate,
   loadForeignStocks,
   loadInterestRate,
@@ -198,6 +204,39 @@ function mergeForeignFlow(
   });
 }
 
+/**
+ * Format a composite-chart `price` as Indonesian-locale with two
+ * decimal places, matching the existing IHSG mock display style
+ * ("7.245,50", "608,42", etc.).
+ */
+function formatIhsgPrice(price: number): string {
+  return price.toLocaleString("id-ID", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+}
+
+/**
+ * Replace the `ihsg` widget's `value` with the price from the **last**
+ * data point of the composite-chart series. The widget's other fields
+ * (`changePercent`, `sparklineData`, `label`, etc.) are preserved from
+ * the mock — the sparkline keeps its deterministic mock shape for now.
+ *
+ * Falls back to the mock value when the chart is missing or empty.
+ */
+function mergeIhsg(
+  widgets: MarketWidget[],
+  chart: CompositeChartPoint[] | null,
+): MarketWidget[] {
+  if (!chart || chart.length === 0) return widgets;
+  const last = chart[chart.length - 1];
+  return widgets.map((w) =>
+    w.id === "ihsg"
+      ? { ...w, value: formatIhsgPrice(last.price) }
+      : w,
+  );
+}
+
 export function MarketMood({
   sentiment,
   sentimentLabel,
@@ -218,6 +257,9 @@ export function MarketMood({
   // Live foreign-flow snapshot for the foreign-flow widget. Null = not
   // yet loaded or failed (mock widget stays as the fallback).
   const [foreignFlow, setForeignFlow] = useState<ForeignStocksResponse | null>(null);
+  // Live composite-chart series for the IHSG widget. Null = not yet
+  // loaded or failed (mock widget stays as the fallback).
+  const [compositeChart, setCompositeChart] = useState<CompositeChartPoint[] | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -245,17 +287,27 @@ export function MarketMood({
       .catch(() => {
         // Swallow — the mock foreign-flow widget is the fallback.
       });
+    void loadCompositeChart()
+      .then((data) => {
+        if (!cancelled) setCompositeChart(data);
+      })
+      .catch(() => {
+        // Swallow — the mock IHSG widget stays as the fallback.
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Compose all three merges. Each function is a no-op when its data
+  // Compose all four merges. Each function is a no-op when its data
   // source is null, and each only mutates the widget it owns — so
   // order is safe and any source can land first.
-  const effectiveWidgets = mergeBiRate(
-    mergeForeignFlow(mergeUsdIdr(widgets, exchangeRate), foreignFlow),
-    biRate,
+  const effectiveWidgets = mergeIhsg(
+    mergeBiRate(
+      mergeForeignFlow(mergeUsdIdr(widgets, exchangeRate), foreignFlow),
+      biRate,
+    ),
+    compositeChart,
   );
 
   return (
