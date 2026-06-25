@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { type ExchangeRate, type InterestRate } from "@/lib/api";
+import { api, type ExchangeRate, type InterestRate, type ForeignStocksResponse } from "@/lib/api";
 import { loadExchangeRate, loadInterestRate } from "@/lib/api/cache";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
@@ -106,6 +106,94 @@ function mergeUsdIdr(
   );
 }
 
+/**
+ * Compact IDR formatter with Indonesian suffix scale.
+ *
+ * Used for large monetary values that don't fit in a widget cell at full
+ * precision. Picks the largest unit that keeps the leading number below
+ * 1000, then appends the matching suffix:
+ *
+ *   | 1.000           → "1,0 rb"   (ribu / thousand)
+ *   | 1.000.000       → "1,0 jt"   (juta / million)
+ *   | 1.000.000.000   → "1,0 M"    (miliar / billion)
+ *   | 1.000.000.000.000 → "1,0 T"  (triliun / trillion)
+ *   | 10^15+         → "1,0 Kd"   (kuadriliun / quadrillion)
+ *
+ * Decimal separator is `,` (Indonesian locale). One decimal place —
+ * enough for visual precision in a 12-17px widget, not so much that
+ * the digits overflow the cell. Sign prefix: `+` for positive, `-` for
+ * negative, nothing for zero.
+ */
+function formatCompactIdr(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? "-" : value > 0 ? "+" : "";
+
+  const fmt = (divisor: number, suffix: string): string =>
+    `${sign}${(abs / divisor).toFixed(1).replace(".", ",")} ${suffix}`;
+
+  if (abs >= 1e15) return fmt(1e15, "Kd");
+  if (abs >= 1e12) return fmt(1e12, "T");
+  if (abs >= 1e9) return fmt(1e9, "M");
+  if (abs >= 1e6) return fmt(1e6, "jt");
+  if (abs >= 1e3) return fmt(1e3, "rb");
+  return `${sign}${abs}`;
+}
+
+/**
+ * Compute the bar position (0–100, where 100 = fully buy, 0 = fully sell)
+ * from the absolute buy and sell volumes. Returns `undefined` when either
+ * volume is missing or both are zero (avoids division by zero).
+ */
+function buyRatioPercent(buyVolume: number, sellVolume: number): number | undefined {
+  const total = buyVolume + sellVolume;
+  if (total <= 0) return undefined;
+  return Math.round((buyVolume / total) * 100);
+}
+
+/**
+ * `true` when the summary has no meaningful flow to display — either
+ * the snapshot hasn't loaded (`null`) or the buy/sell/net values are
+ * all zero (no trading activity). In either case the widget should
+ * show `'-'` instead of a formatted number that would read as "+0,0 rb"
+ * or hide the fact that nothing happened.
+ */
+function isEmptyForeignFlow(
+  flow: ForeignStocksResponse | null,
+): boolean {
+  if (!flow) return true;
+  const s = flow.summary;
+  return s.buy_value === 0 && s.sell_value === 0 && s.net_value === 0;
+}
+
+/**
+ * Replace the `foreign-flow` widget with live data from the
+ * `/stocks/foreign-stocks` summary row. Updates both `value` (formatted
+ * net_value) and `barValue` (buy-volume ratio, used by the progress
+ * bar to indicate the buy/sell balance visually).
+ *
+ * Falls back to `'-'` when the snapshot is missing or has no flow to
+ * display (all zero). The mock widget's other fields (`label`, `type`,
+ * `barLeftLabel`, `barRightLabel`, etc.) are preserved either way.
+ */
+function mergeForeignFlow(
+  widgets: MarketWidget[],
+  foreignFlow: ForeignStocksResponse | null,
+): MarketWidget[] {
+  return widgets.map((w) => {
+    if (w.id !== "foreign-flow") return w;
+    if (isEmptyForeignFlow(foreignFlow)) {
+      return { ...w, value: "-", barValue: undefined };
+    }
+    const s = foreignFlow!.summary;
+    const barValue = buyRatioPercent(s.buy_volume, s.sell_volume);
+    return {
+      ...w,
+      value: formatCompactIdr(s.net_value),
+      ...(barValue !== undefined ? { barValue } : {}),
+    };
+  });
+}
+
 export function MarketMood({
   sentiment,
   sentimentLabel,
@@ -123,6 +211,9 @@ export function MarketMood({
   // Live exchange-rate snapshot for the usd-idr widget. Null = not yet
   // loaded or failed (mock widget stays as the fallback).
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
+  // Live foreign-flow snapshot for the foreign-flow widget. Null = not
+  // yet loaded or failed (mock widget stays as the fallback).
+  const [foreignFlow, setForeignFlow] = useState<ForeignStocksResponse | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -143,16 +234,24 @@ export function MarketMood({
       .catch(() => {
         // Swallow — the mock usd-idr widget is the fallback.
       });
+    void api
+      .getForeignStocks()
+      .then((data) => {
+        if (!cancelled) setForeignFlow(data);
+      })
+      .catch(() => {
+        // Swallow — the mock foreign-flow widget is the fallback.
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  // Compose both merges. Each function is a no-op when its data source
-  // is null, and each only mutates the widget it owns — so order is
-  // safe and either source can land first.
+  // Compose all three merges. Each function is a no-op when its data
+  // source is null, and each only mutates the widget it owns — so
+  // order is safe and any source can land first.
   const effectiveWidgets = mergeBiRate(
-    mergeUsdIdr(widgets, exchangeRate),
+    mergeForeignFlow(mergeUsdIdr(widgets, exchangeRate), foreignFlow),
     biRate,
   );
 
