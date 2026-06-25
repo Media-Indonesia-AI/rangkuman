@@ -218,21 +218,44 @@ function formatIhsgPrice(price: number): string {
 
 /**
  * Replace the `ihsg` widget's `value` with the price from the **last**
- * data point of the composite-chart series. The widget's other fields
- * (`changePercent`, `sparklineData`, `label`, etc.) are preserved from
- * the mock — the sparkline keeps its deterministic mock shape for now.
+ * data point of the composite-chart series, and feed the full price
+ * series into its `sparklineData` so the SparklineChart renders the
+ * real intraday curve instead of the deterministic mock shape.
  *
- * Falls back to the mock value when the chart is missing or empty.
+ * The widget's other fields (`changePercent`, `label`, `type`, etc.)
+ * are preserved from the mock.
+ *
+ * Falls back to the mock value + mock sparkline when the chart is
+ * missing or has fewer than 2 points (SparklineChart's own guard —
+ * below that it would render an empty placeholder).
  */
 function mergeIhsg(
   widgets: MarketWidget[],
   chart: CompositeChartPoint[] | null,
 ): MarketWidget[] {
-  if (!chart || chart.length === 0) return widgets;
-  const last = chart[chart.length - 1];
+  // SparklineChart needs ≥2 points to render anything (returns an
+  // empty placeholder otherwise). Below that, keep the deterministic
+  // mock sparkline so the widget still shows a curve during the brief
+  // loading window before the first retry returns enough data.
+  if (!chart || chart.length < 2) return widgets;
+
+  // Sort by dateTime to be robust against the backend's ordering.
+  // For "1D" the chart is hourly (~24 points); for "5D"/"1M" it's
+  // daily. Either way the cost of sorting is negligible. `slice()`
+  // first so we don't mutate the cached API response.
+  const sparklineData = chart
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime(),
+    )
+    .map((p) => p.price);
+
+  const last = sparklineData[sparklineData.length - 1];
+
   return widgets.map((w) =>
     w.id === "ihsg"
-      ? { ...w, value: formatIhsgPrice(last.price) }
+      ? { ...w, value: formatIhsgPrice(last), sparklineData }
       : w,
   );
 }
