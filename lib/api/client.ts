@@ -1,28 +1,27 @@
 /**
- * Tiny fetch wrapper for the Berita Investor API.
- * All endpoints are namespaced under BASE_URL.
+ * Base HTTP transport for the Berita Investor API.
  *
- * In Next.js, NEXT_PUBLIC_* vars are inlined into the browser bundle at
- * build time and also available at runtime via process.env.
+ * Everything below this is the wire-level plumbing — base URL, auth
+ * header, the generic `request<T>` wrapper, and the typed `ApiError`
+ * it throws on non-2xx responses. Endpoint logic lives in category
+ * modules:
  *
- * Endpoint modules:
- *   - `./stocks`   — getTopStocks, getTickers, getForeignStocks
- *   - `./client`   — auth (register/login) + market data (interest/exchange)
+ *   - `./auth`    — register, login
+ *   - `./stocks`  — getTopStocks, getTickers, getForeignStocks
+ *   - `./market`  — getInterestRate, getExchangeRate
+ *
+ * The `api` object at the bottom composes those into one namespace so
+ * existing call sites (`api.getTopStocks()`, etc.) keep working.
  */
 
+import { login, register } from "./auth";
+import { getExchangeRate, getInterestRate } from "./market";
 import {
   getForeignStocks,
   getTickers,
   getTopStocks,
 } from "./stocks";
-import type {
-  ApiError,
-  ExchangeRateResponse,
-  InterestRate,
-  LoginRequest,
-  RegisterRequest,
-  RegisterResponse,
-} from "./types";
+import type { ApiError } from "./types";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";
@@ -58,8 +57,8 @@ function getAuthHeader(): Record<string, string> {
 
 /**
  * Low-level fetch wrapper used by every endpoint module. Exported so
- * `stocks.ts` (and any future endpoint module) can build requests
- * without duplicating auth header / error normalization.
+ * category modules (`./auth`, `./stocks`, `./market`) can build
+ * requests without duplicating auth header / error normalization.
  */
 export async function request<T>(
   path: string,
@@ -100,7 +99,7 @@ export async function request<T>(
   return (await res.json()) as T;
 }
 
-/** Local-tz today in `YYYY-MM-DD` — used as the default `date` query param. */
+/** Local-tz today in `YYYY-MM-DD` — used as the default date param. */
 export function todayIsoDate(): string {
   const d = new Date();
   const yyyy = d.getFullYear();
@@ -109,46 +108,19 @@ export function todayIsoDate(): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+/**
+ * Composite API namespace. Auth + stocks + market endpoints, all
+ * reached through the same `request<T>` transport above.
+ */
 export const api = {
-  // Stocks — implemented in `./stocks`
+  // Auth
+  register,
+  login,
+  // Stocks
   getTopStocks,
   getTickers,
   getForeignStocks,
-  // Auth
-  register(body: RegisterRequest): Promise<RegisterResponse> {
-    return request<RegisterResponse>("auth/register", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
-  login(body: LoginRequest): Promise<RegisterResponse> {
-    return request<RegisterResponse>("auth/login", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
-  /**
-   * Fetch the BI Rate snapshot for a given date.
-   * @param date ISO date string `YYYY-MM-DD`. Defaults to today (local TZ).
-   */
-  getInterestRate(date?: string): Promise<InterestRate> {
-    const params = new URLSearchParams({ date: date ?? todayIsoDate() });
-    return request<InterestRate>(
-      `interest-rate?${params.toString()}`,
-      { method: "GET" },
-    );
-  },
-  /**
-   * Fetch the latest exchange-rate snapshot. `base` is the base currency
-   * code passed as a query param (defaults to `"idr"`). The response is
-   * wrapped in `{ data: [snapshot] }` — read the first element to get
-   * the per-currency rates.
-   */
-  getExchangeRate(base = "idr"): Promise<ExchangeRateResponse> {
-    const params = new URLSearchParams({ currency: base });
-    return request<ExchangeRateResponse>(
-      `exchange-rate?${params.toString()}`,
-      { method: "GET" },
-    );
-  },
+  // Market
+  getInterestRate,
+  getExchangeRate,
 };
