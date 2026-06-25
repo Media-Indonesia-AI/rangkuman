@@ -68,16 +68,28 @@ function bpsBadge(bps: number): NonNullable<MarketWidget["staticBadge"]> {
  * Replace the `bi-rate` widget in the list with live data from the API.
  * The mock widget is kept as a fallback until the fetch resolves, and
  * stays in place if the request fails (auth, network, etc.).
+ *
+ * While `loading === true` the widget is flagged for shimmer rendering
+ * via `widget.loading` — the label stays visible but the value /
+ * sub-label / badge slot is replaced by a placeholder until the fetch
+ * completes (success or error).
  */
 function mergeBiRate(
   widgets: MarketWidget[],
   biRate: InterestRate | null,
+  loading: boolean,
 ): MarketWidget[] {
+  if (loading) {
+    return widgets.map((w) =>
+      w.id === "bi-rate" ? { ...w, loading: true } : w,
+    );
+  }
   if (!biRate) return widgets;
   return widgets.map((w) =>
     w.id === "bi-rate"
       ? {
           ...w,
+          loading: false,
           value: formatRate(biRate.rate),
           staticSubLabel: formatBps(biRate.bps),
           staticBadge: bpsBadge(biRate.bps),
@@ -101,17 +113,25 @@ function formatIdrRate(value: number): string {
  * Replace the `usd-idr` widget with the live USD rate from the exchange
  * snapshot. The mock widget stays in place until the fetch resolves and
  * on any error (auth, network, missing key in the response, etc.).
+ *
+ * While `loading === true` the widget is flagged for shimmer rendering.
  */
 function mergeUsdIdr(
   widgets: MarketWidget[],
   exchangeRate: ExchangeRate | null,
+  loading: boolean,
 ): MarketWidget[] {
+  if (loading) {
+    return widgets.map((w) =>
+      w.id === "usd-idr" ? { ...w, loading: true } : w,
+    );
+  }
   if (!exchangeRate) return widgets;
   const usd = exchangeRate.USD;
   if (typeof usd !== "number") return widgets;
   return widgets.map((w) =>
     w.id === "usd-idr"
-      ? { ...w, value: formatIdrRate(usd) }
+      ? { ...w, loading: false, value: formatIdrRate(usd) }
       : w,
   );
 }
@@ -184,20 +204,25 @@ function isEmptyForeignFlow(
  * Falls back to `'-'` when the snapshot is missing or has no flow to
  * display (all zero). The mock widget's other fields (`label`, `type`,
  * `barLeftLabel`, `barRightLabel`, etc.) are preserved either way.
+ *
+ * While `loading === true` the widget is flagged for shimmer rendering.
  */
 function mergeForeignFlow(
   widgets: MarketWidget[],
   foreignFlow: ForeignStocksResponse | null,
+  loading: boolean,
 ): MarketWidget[] {
   return widgets.map((w) => {
     if (w.id !== "foreign-flow") return w;
+    if (loading) return { ...w, loading: true };
     if (isEmptyForeignFlow(foreignFlow)) {
-      return { ...w, value: "-", barValue: undefined };
+      return { ...w, loading: false, value: "-", barValue: undefined };
     }
     const s = foreignFlow!.summary;
     const barValue = buyRatioPercent(s.buy_volume, s.sell_volume);
     return {
       ...w,
+      loading: false,
       value: formatCompactIdr(s.net_value),
       ...(barValue !== undefined ? { barValue } : {}),
     };
@@ -228,11 +253,20 @@ function formatIhsgPrice(price: number): string {
  * Falls back to the mock value + mock sparkline when the chart is
  * missing or has fewer than 2 points (SparklineChart's own guard —
  * below that it would render an empty placeholder).
+ *
+ * While `loading === true` the widget is flagged for shimmer rendering
+ * (label stays visible, value + sparkline are placeholders).
  */
 function mergeIhsg(
   widgets: MarketWidget[],
   chart: CompositeChartPoint[] | null,
+  loading: boolean,
 ): MarketWidget[] {
+  if (loading) {
+    return widgets.map((w) =>
+      w.id === "ihsg" ? { ...w, loading: true } : w,
+    );
+  }
   // SparklineChart needs ≥2 points to render anything (returns an
   // empty placeholder otherwise). Below that, keep the deterministic
   // mock sparkline so the widget still shows a curve during the brief
@@ -255,7 +289,7 @@ function mergeIhsg(
 
   return widgets.map((w) =>
     w.id === "ihsg"
-      ? { ...w, value: formatIhsgPrice(last), sparklineData }
+      ? { ...w, loading: false, value: formatIhsgPrice(last), sparklineData }
       : w,
   );
 }
@@ -274,48 +308,68 @@ export function MarketMood({
   // Live BI Rate for the bi-rate widget. Null = not yet loaded or failed
   // (in which case the mock widget stays put as the fallback).
   const [biRate, setBiRate] = useState<InterestRate | null>(null);
+  const [isBiRateLoading, setIsBiRateLoading] = useState(true);
   // Live exchange-rate snapshot for the usd-idr widget. Null = not yet
   // loaded or failed (mock widget stays as the fallback).
   const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
+  const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(true);
   // Live foreign-flow snapshot for the foreign-flow widget. Null = not
   // yet loaded or failed (mock widget stays as the fallback).
   const [foreignFlow, setForeignFlow] = useState<ForeignStocksResponse | null>(null);
+  const [isForeignFlowLoading, setIsForeignFlowLoading] = useState(true);
   // Live composite-chart series for the IHSG widget. Null = not yet
   // loaded or failed (mock widget stays as the fallback).
   const [compositeChart, setCompositeChart] = useState<CompositeChartPoint[] | null>(null);
+  const [isIHSGLoading, setIsIHSGLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     void loadInterestRate()
       .then((data) => {
-        if (!cancelled) setBiRate(data);
+        if (!cancelled) {
+          setBiRate(data);
+          setIsBiRateLoading(false);
+        }
       })
       .catch(() => {
         // Swallow — the mock bi-rate widget is the fallback.
+        if (!cancelled) setIsBiRateLoading(false);
       });
     void loadExchangeRate()
       .then((res) => {
         // Response is wrapped in `{ data: [snapshot] }`; the snapshot is
         // a single object keyed by currency code.
         const snapshot = res.data[0];
-        if (!cancelled) setExchangeRate(snapshot ?? null);
+        if (!cancelled) {
+          setExchangeRate(snapshot ?? null);
+          setIsExchangeRateLoading(false);
+        }
       })
       .catch(() => {
         // Swallow — the mock usd-idr widget is the fallback.
+        if (!cancelled) setIsExchangeRateLoading(false);
       });
     void loadForeignStocks()
       .then((data) => {
-        if (!cancelled) setForeignFlow(data);
+        if (!cancelled) {
+          setForeignFlow(data);
+          setIsForeignFlowLoading(false);
+        }
       })
       .catch(() => {
         // Swallow — the mock foreign-flow widget is the fallback.
+        if (!cancelled) setIsForeignFlowLoading(false);
       });
     void loadCompositeChart()
       .then((data) => {
-        if (!cancelled) setCompositeChart(data);
+        if (!cancelled) {
+          setCompositeChart(data);
+          setIsIHSGLoading(false);
+        }
       })
       .catch(() => {
         // Swallow — the mock IHSG widget stays as the fallback.
+        if (!cancelled) setIsIHSGLoading(false);
       });
     return () => {
       cancelled = true;
@@ -327,10 +381,16 @@ export function MarketMood({
   // order is safe and any source can land first.
   const effectiveWidgets = mergeIhsg(
     mergeBiRate(
-      mergeForeignFlow(mergeUsdIdr(widgets, exchangeRate), foreignFlow),
+      mergeForeignFlow(
+        mergeUsdIdr(widgets, exchangeRate, isExchangeRateLoading),
+        foreignFlow,
+        isForeignFlowLoading,
+      ),
       biRate,
+      isBiRateLoading,
     ),
     compositeChart,
+    isIHSGLoading,
   );
 
   return (
@@ -394,11 +454,17 @@ function CompactWidgetCell({ widget }: { widget: MarketWidget }) {
       <div className="flex min-w-[60px] shrink-0 flex-col gap-0.5">
         <span className="label text-[9px]">{widget.label}</span>
         <div className="flex items-baseline gap-1">
-          <p className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular lg:text-[17px]">
-            {widget.value}
-          </p>
+          {widget.loading ? (
+            <Shimmer className="h-4 w-16 lg:h-5 lg:w-20" />
+          ) : (
+            <p className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular lg:text-[17px]">
+              {widget.value}
+            </p>
+          )}
         </div>
-        {widget.type === "sparkline" ? (
+        {widget.loading ? (
+          <Shimmer className="h-2 w-12" />
+        ) : widget.type === "sparkline" ? (
           <span
             className={cn(
               "font-mono text-[9.5px] font-semibold leading-none num-tabular",
@@ -433,43 +499,73 @@ function CompactWidgetCell({ widget }: { widget: MarketWidget }) {
 
       {/* Visualization column — fills the rest */}
       <div className="flex-1 min-w-0">
-        {widget.type === "sparkline" && widget.sparklineData && (
-          <SparklineChart
-            data={widget.sparklineData}
-            positive={trendPositive}
-            height={24}
-            showArea
-            showDots
-          />
-        )}
-        {widget.type === "gauge" && widget.gaugeValue !== undefined && (
-          <GaugeChart value={widget.gaugeValue} />
-        )}
-        {widget.type === "bar" && widget.barValue !== undefined && (
-          <ProgressBarChart
-            value={widget.barValue}
-            leftLabel={widget.barLeftLabel}
-            rightLabel={widget.barRightLabel}
-            compact
-          />
-        )}
-        {widget.type === "static" && (
-          <div className="flex h-[24px] items-center justify-end gap-1.5 pr-0.5">
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded border px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest opacity-80",
-                widget.staticBadge === "bullish" && "border-bullish-line text-bullish",
-                widget.staticBadge === "bearish" && "border-bearish-line text-bearish",
-                widget.staticBadge === "mixed" && "border-mixed-line text-mixed",
-                !widget.staticBadge && "border-border text-text-muted",
-              )}
-            >
-              <span className="h-1 w-1 rounded-full bg-current" aria-hidden />
-              {widget.staticSubLabel}
-            </span>
-          </div>
+        {widget.loading ? (
+          <Shimmer className="h-6 w-full" />
+        ) : (
+          <>
+            {widget.type === "sparkline" && widget.sparklineData && (
+              <SparklineChart
+                data={widget.sparklineData}
+                positive={trendPositive}
+                height={24}
+                showArea
+                showDots
+              />
+            )}
+            {widget.type === "gauge" && widget.gaugeValue !== undefined && (
+              <GaugeChart value={widget.gaugeValue} />
+            )}
+            {widget.type === "bar" && widget.barValue !== undefined && (
+              <ProgressBarChart
+                value={widget.barValue}
+                leftLabel={widget.barLeftLabel}
+                rightLabel={widget.barRightLabel}
+                compact
+              />
+            )}
+            {widget.type === "static" && (
+              <div className="flex h-[24px] items-center justify-end gap-1.5 pr-0.5">
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-0.5 rounded border px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest opacity-80",
+                    widget.staticBadge === "bullish" && "border-bullish-line text-bullish",
+                    widget.staticBadge === "bearish" && "border-bearish-line text-bearish",
+                    widget.staticBadge === "mixed" && "border-mixed-line text-mixed",
+                    !widget.staticBadge && "border-border text-text-muted",
+                  )}
+                >
+                  <span className="h-1 w-1 rounded-full bg-current" aria-hidden />
+                  {widget.staticSubLabel}
+                </span>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Subtle pulsing placeholder used by `CompactWidgetCell` while a
+ * widget's backing fetch is in flight. Three sizes are used in the
+ * strip:
+ *   - `h-4 w-16 lg:h-5 lg:w-20`  — replaces the bold value (15–17px)
+ *   - `h-2 w-12`                  — replaces the sub-label / arrow row
+ *   - `h-6 w-full`                — replaces the visualization column
+ *
+ * Uses solid `bg-bg-tertiary` (not `/60` opacity) — the project
+ * defines `--bg-tertiary` as a hex value, and Tailwind's `/60`
+ * opacity modifier doesn't apply to hex-valued CSS variables in
+ * this setup. The solid color matches the existing
+ * `SkeletonRow` / `SkeletonCard` pattern in `LeftSidebar` and
+ * `MobileTopMovers`, which work correctly.
+ */
+function Shimmer({ className }: { className?: string }) {
+  return (
+    <div
+      aria-hidden
+      className={cn("animate-pulse rounded bg-bg-tertiary", className)}
+    />
   );
 }
