@@ -4,18 +4,24 @@
  *
  * In Next.js, NEXT_PUBLIC_* vars are inlined into the browser bundle at
  * build time and also available at runtime via process.env.
+ *
+ * Endpoint modules:
+ *   - `./stocks`   — getTopStocks, getTickers, getForeignStocks
+ *   - `./client`   — auth (register/login) + market data (interest/exchange)
  */
 
+import {
+  getForeignStocks,
+  getTickers,
+  getTopStocks,
+} from "./stocks";
 import type {
   ApiError,
   ExchangeRateResponse,
-  ForeignStocksResponse,
   InterestRate,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
-  TickersResponse,
-  TopStocksResponse,
 } from "./types";
 
 export const API_BASE_URL =
@@ -50,7 +56,15 @@ function getAuthHeader(): Record<string, string> {
   }
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+/**
+ * Low-level fetch wrapper used by every endpoint module. Exported so
+ * `stocks.ts` (and any future endpoint module) can build requests
+ * without duplicating auth header / error normalization.
+ */
+export async function request<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const url = `${API_BASE_URL}${path}`;
   let res: Response;
   try {
@@ -86,7 +100,21 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   return (await res.json()) as T;
 }
 
+/** Local-tz today in `YYYY-MM-DD` — used as the default `date` query param. */
+export function todayIsoDate(): string {
+  const d = new Date();
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd}`;
+}
+
 export const api = {
+  // Stocks — implemented in `./stocks`
+  getTopStocks,
+  getTickers,
+  getForeignStocks,
+  // Auth
   register(body: RegisterRequest): Promise<RegisterResponse> {
     return request<RegisterResponse>("auth/register", {
       method: "POST",
@@ -98,18 +126,6 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     });
-  },
-  /** Fetch top gainers and top loosers. `limit` controls how many per group (default 5). */
-  getTopStocks(limit = 5): Promise<TopStocksResponse> {
-    const params = new URLSearchParams({ limit: String(limit) });
-    return request<TopStocksResponse>(
-      `stocks/top-stocks?${params.toString()}`,
-      { method: "GET" },
-    );
-  },
-  /** Fetch the full ticker catalog with latest price and day change. */
-  getTickers(): Promise<TickersResponse> {
-    return request<TickersResponse>("stocks/ticker", { method: "GET" });
   },
   /**
    * Fetch the BI Rate snapshot for a given date.
@@ -135,31 +151,4 @@ export const api = {
       { method: "GET" },
     );
   },
-  /**
-   * Fetch foreign-investor buy/sell flow over a date range.
-   * @param startDate ISO date string `YYYY-MM-DD`. Defaults to today.
-   * @param endDate ISO date string `YYYY-MM-DD`. Defaults to today.
-   */
-  getForeignStocks(
-    startDate?: string,
-    endDate?: string,
-  ): Promise<ForeignStocksResponse> {
-    const params = new URLSearchParams({
-      startDate: startDate ?? todayIsoDate(),
-      endDate: endDate ?? todayIsoDate(),
-    });
-    return request<ForeignStocksResponse>(
-      `stocks/foreign-stocks?${params.toString()}`,
-      { method: "GET" },
-    );
-  },
 };
-
-/** Local-tz today in `YYYY-MM-DD` — used as the default `date` query param. */
-function todayIsoDate(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
