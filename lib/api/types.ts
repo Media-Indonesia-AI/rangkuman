@@ -107,3 +107,37 @@ export type ExchangeRate = Record<string, number>;
 export interface ExchangeRateResponse {
   data: ExchangeRate[];
 }
+
+// ─── FOREIGN FLOW ───────────────────────────────────────────────
+
+/**
+ * One row of foreign-flow data — either an aggregate `summary` (with
+ * `stock_code = ""`) or a per-ticker `rows[]` entry.
+ *
+ * Values are in shares (volume) and IDR (value). `net_*` fields are
+ * signed: positive = net foreign buy, negative = net foreign sell.
+ */
+export interface ForeignStockFlow {
+  /** Ticker code (e.g. `"BBCA"`); empty string `""` for the summary row. */
+  stock_code: string;
+  /** Shares bought by foreign investors. */
+  buy_volume: number;
+  /** IDR value of foreign buys. */
+  buy_value: number;
+  /** Shares sold by foreign investors. */
+  sell_volume: number;
+  /** IDR value of foreign sells. */
+  sell_value: number;
+  /** Buy volume − sell volume (signed). */
+  net_volume: number;
+  /** Buy value − sell value (signed). */
+  net_value: number;
+}
+
+/** Wire format for `GET stocks/foreign-stocks`. */
+export interface ForeignStocksResponse {
+  /** Aggregate foreign flow across all tickers. */
+  summary: ForeignStockFlow;
+  /** Per-ticker foreign flow, one entry per stock. */
+  rows: ForeignStockFlow[];
+}

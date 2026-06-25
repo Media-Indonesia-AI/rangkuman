@@ -9,6 +9,7 @@
 import type {
   ApiError,
   ExchangeRateResponse,
+  ForeignStocksResponse,
   InterestRate,
   LoginRequest,
   RegisterRequest,
@@ -133,6 +134,12 @@ export const api = {
       `exchange-rate?${params.toString()}`,
       { method: "GET" },
     );
+  },
+  /** Fetch foreign-investor buy/sell flow: aggregate `summary` + per-ticker `rows`. */
+  getForeignStocks(): Promise<ForeignStocksResponse> {
+    return request<ForeignStocksResponse>("stocks/foreign-stocks", {
+      method: "GET",
+    });
   },
 };
 

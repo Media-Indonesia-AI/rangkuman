@@ -7,6 +7,8 @@ export type {
   ApiError,
   ExchangeRate,
   ExchangeRateResponse,
+  ForeignStockFlow,
+  ForeignStocksResponse,
   InterestRate,
   LoginRequest,
   RegisterRequest,
