@@ -15,7 +15,7 @@ import type {
   ForeignStocksResponse,
   TickersResponse,
   TopStocksResponse,
-} from "./types";
+} from "./types/stocks";
 
 /** Fetch top gainers and top loosers. `limit` controls how many per group (default 5). */
 export function getTopStocks(limit = 5): Promise<TopStocksResponse> {

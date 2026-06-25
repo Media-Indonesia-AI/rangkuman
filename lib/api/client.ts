@@ -21,7 +21,7 @@ import {
   getTickers,
   getTopStocks,
 } from "./stocks";
-import type { ApiError } from "./types";
+import type { ApiError } from "./types/error";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";

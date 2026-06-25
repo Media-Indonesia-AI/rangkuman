@@ -11,7 +11,7 @@ import type {
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
-} from "./types";
+} from "./types/auth";
 
 export function register(
   body: RegisterRequest,

@@ -16,9 +16,11 @@ import { api } from "./client";
 import type {
   ExchangeRateResponse,
   InterestRate,
+} from "./types/market";
+import type {
   TickersResponse,
   TopStocksResponse,
-} from "./types";
+} from "./types/stocks";
 
 let cachedTopStocks: TopStocksResponse | null = null;
 let inflightTopStocks: Promise<TopStocksResponse> | null = null;

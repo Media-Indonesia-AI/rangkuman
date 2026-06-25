@@ -10,7 +10,7 @@ import { request, todayIsoDate } from "./client";
 import type {
   ExchangeRateResponse,
   InterestRate,
-} from "./types";
+} from "./types/market";
 
 /**
  * Fetch the BI Rate snapshot for a given date.
