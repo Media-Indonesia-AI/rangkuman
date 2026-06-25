@@ -135,11 +135,23 @@ export const api = {
       { method: "GET" },
     );
   },
-  /** Fetch foreign-investor buy/sell flow: aggregate `summary` + per-ticker `rows`. */
-  getForeignStocks(): Promise<ForeignStocksResponse> {
-    return request<ForeignStocksResponse>("stocks/foreign-stocks", {
-      method: "GET",
+  /**
+   * Fetch foreign-investor buy/sell flow over a date range.
+   * @param startDate ISO date string `YYYY-MM-DD`. Defaults to today.
+   * @param endDate ISO date string `YYYY-MM-DD`. Defaults to today.
+   */
+  getForeignStocks(
+    startDate?: string,
+    endDate?: string,
+  ): Promise<ForeignStocksResponse> {
+    const params = new URLSearchParams({
+      startDate: startDate ?? todayIsoDate(),
+      endDate: endDate ?? todayIsoDate(),
     });
+    return request<ForeignStocksResponse>(
+      `stocks/foreign-stocks?${params.toString()}`,
+      { method: "GET" },
+    );
   },
 };
 
