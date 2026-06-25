@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
-import { api, type ExchangeRate, type InterestRate, type ForeignStocksResponse } from "@/lib/api";
-import { loadExchangeRate, loadInterestRate } from "@/lib/api/cache";
+import { type ExchangeRate, type ForeignStocksResponse, type InterestRate } from "@/lib/api";
+import {
+  loadExchangeRate,
+  loadForeignStocks,
+  loadInterestRate,
+} from "@/lib/api/cache";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
@@ -129,7 +133,7 @@ function formatCompactIdr(value: number): string {
   const sign = value < 0 ? "-" : value > 0 ? "+" : "";
 
   const fmt = (divisor: number, suffix: string): string =>
-    `${sign}${(abs / divisor).toFixed(1).replace(".", ",")} ${suffix}`;
+    `${sign}${(abs / divisor).toFixed(1).replace(".", ",")}${suffix}`;
 
   if (abs >= 1e15) return fmt(1e15, "Kd");
   if (abs >= 1e12) return fmt(1e12, "T");
@@ -234,8 +238,7 @@ export function MarketMood({
       .catch(() => {
         // Swallow — the mock usd-idr widget is the fallback.
       });
-    void api
-      .getForeignStocks()
+    void loadForeignStocks()
       .then((data) => {
         if (!cancelled) setForeignFlow(data);
       })
