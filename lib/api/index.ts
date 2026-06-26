@@ -3,7 +3,7 @@
  * `@/lib/api` and get the `api` runtime object plus all types.
  *
  * Types live in `lib/api/types/<category>/` — auth, stocks, market,
- * error — and are re-exported here so consumer imports stay flat:
+ * story, error — and are re-exported here so consumer imports stay flat:
  *
  *   import { api, type InterestRate, type TopStockItem } from "@/lib/api";
  */
@@ -40,3 +40,12 @@ export type {
   ExchangeRateResponse,
   InterestRate,
 } from "./types/market";
+
+// Story
+export type {
+  TrendingArticle,
+  TrendingMedia,
+  TrendingSentiment,
+  TrendingStoriesResponse,
+  TrendingStory,
+} from "./types/story";
