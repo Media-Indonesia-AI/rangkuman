@@ -1,6 +1,7 @@
 "use client";
 
-import { Flame } from "lucide-react";
+import { ArrowUpRight, Flame } from "lucide-react";
+import Link from "next/link";
 import type { TrendingStory, TrendingSentiment } from "@/lib/api";
 import type { DailyRecap, Sentimen } from "@/lib/mock/recaps";
 import { Shimmer } from "./Shimmer";
@@ -19,13 +20,19 @@ import { StockCard } from "./StockCard";
  * The parent page does the fetch + mapping and passes the resolved
  * `TrendingStory[]` + loading flag in. This component is purely
  * presentational — it knows about the section header, the loading
- * skeleton, and the empty state, nothing else.
+ * skeleton, the empty state, and the "see all" link, nothing else.
  *
  * Three render branches:
  *   - loading → 3 stacked skeleton cards (matches feed's `space-y-2.5` rhythm)
- *   - loaded, has data → one `<StockCard>` per item, ranked `#01`–`#20`
+ *   - loaded, has data → top 10 `<StockCard>` items, ranked `#01`–`#10`
+ *     (the underlying fetch returns 20; we cap the visible list to 10
+ *     and show a "Lihat 20 teratas" link when more are available)
  *   - loaded, no data → header only, card area collapses
  */
+
+/** How many trending cards to render inline. The full 20 are still
+ *  fetched in the background; the rest live behind /trending. */
+const VISIBLE_TRENDING_LIMIT = 10;
 
 interface PalingBanyakDiberitakanProps {
   trending: TrendingStory[];
@@ -117,7 +124,7 @@ export function PalingBanyakDiberitakan({
         </div>
       ) : trending.length > 0 ? (
         <div className="space-y-2.5">
-          {trending.map((story, i) => (
+          {trending.slice(0, VISIBLE_TRENDING_LIMIT).map((story, i) => (
             <StockCard
               key={story.ticker}
               recap={mapTrendingStoryToRecap(story)}
@@ -127,6 +134,24 @@ export function PalingBanyakDiberitakan({
           ))}
         </div>
       ) : null}
+
+      {/* "See all" link — always visible once the section is loaded,
+          regardless of how many items the API returned. The full
+          list lives behind /trending; the cache holds it either way. */}
+      {!trendingLoading && (
+        <div className="flex justify-center pt-1">
+          <Link
+            href="/trending"
+            className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand"
+          >
+            Lihat 20 teratas
+            <ArrowUpRight
+              className="h-3 w-3 transition-transform group-hover:-translate-y-px group-hover:translate-x-px"
+              aria-hidden
+            />
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
