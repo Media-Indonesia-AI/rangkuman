@@ -1,12 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Flame, Inbox, ArrowUpRight } from "lucide-react";
+import { Inbox, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { DatePicker } from "@/components/DatePicker";
 import { StockCard } from "@/components/StockCard";
+import { MostReported } from "@/components/MostReported";
 import { Sidebar } from "@/components/Sidebar";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketMood } from "@/components/MarketMood";
@@ -32,7 +33,6 @@ export default function SahamPage() {
   const mood = useMemo(() => getMarketMoodByDate(isoDate), [isoDate]);
 
   const isToday = isoDate === TODAY_ISO;
-  const featured = isToday ? recaps[0] : undefined;
   const rest = isToday ? recaps.slice(1) : recaps;
 
   return (
@@ -92,17 +92,7 @@ export default function SahamPage() {
               </span>
             </div>
 
-            {featured && (
-              <section aria-label="Featured recap">
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Flame className="h-3.5 w-3.5 text-brand" aria-hidden />
-                  <span className="label text-text-secondary">
-                    Paling banyak diberitakan
-                  </span>
-                </div>
-                <StockCard recap={featured} variant="featured" rank={1} />
-              </section>
-            )}
+            <MostReported />
 
             {/* Feed */}
             {rest.length === 0 ? (
