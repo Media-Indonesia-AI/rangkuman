@@ -16,7 +16,6 @@ import { SahamSubTabs } from "@/components/SahamSubTabs";
 import { SektorSection } from "@/components/SektorSection";
 import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
 import { todayIsoDate } from "@/lib/api/client";
-import { getRecapsByDate } from "@/lib/mock/recaps";
 import { getMarketMoodByDate } from "@/lib/mock/market-mood";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
@@ -29,7 +28,6 @@ export default function SahamPage() {
   // still navigate back via the DatePicker.
   const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
 
-  const recaps = useMemo(() => getRecapsByDate(isoDate), [isoDate]);
   const mood = useMemo(() => getMarketMoodByDate(isoDate), [isoDate]);
 
   // "Paling banyak diberitakan" — live API, independent of the date
@@ -90,7 +88,7 @@ export default function SahamPage() {
                     maxLookbackDays={30}
                   />
                   <span className="font-mono text-[10.5px] text-text-faint">
-                    {recaps.length} recap · {formatTanggalIndonesia(isoDate)}
+                    {trending.length} recap · {formatTanggalIndonesia(isoDate)}
                   </span>
                 </div>
 
