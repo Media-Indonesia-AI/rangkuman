@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, type TrendingStory } from "@/lib/api";
+import { type TrendingStory } from "@/lib/api";
+import { loadTrendingStories } from "@/lib/api/cache";
 
 /**
  * Data hook for the "Paling banyak diberitakan" section on `/saham`.
- * Wraps `api.getTrendingStories()` with React state + a cancel-on-unmount
- * guard. The endpoint is deduped by [lib/api/cache.ts] if/when a cache
- * wrapper is added.
+ * Wraps `loadTrendingStories()` (the request-deduping cache wrapper)
+ * with React state + a cancel-on-unmount guard.
  *
- * Returns the first 20 stories by default, matching the API's own
- * default. The same limit applies to the dedup key in the cache
- * layer — two mounts with the same `(limit, source)` tuple share one
- * network round-trip.
+ * Concurrent mounts of the component (e.g. React 18 strict-mode
+ * double-invoke, or two `<PalingBanyakDiberitakan />` instances on
+ * the same page) share a single network round-trip — the second call
+ * gets the same `Promise<TrendingStoriesResponse>` back from the
+ * `inflightTrendingStories` Map. After resolution, both callers
+ * receive the same array.
+ *
+ * The first 20 stories by default, matching the API's own default.
+ * The same `(limit, source)` tuple applies to the dedup key — two
+ * mounts with different limits or sources each get their own fetch.
  *
  * @param limit  How many stories to fetch (default 20).
  * @param source Source identifier for the feed (default `"sahamrakyat"`).
@@ -27,8 +33,7 @@ export function useTrendingStories(
   useEffect(() => {
     let cancelled = false;
 
-    void api
-      .getTrendingStories(limit, source)
+    void loadTrendingStories(limit, source)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })
