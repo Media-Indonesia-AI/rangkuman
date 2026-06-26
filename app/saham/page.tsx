@@ -15,15 +15,19 @@ import { WatchlistSection } from "@/components/WatchlistSection";
 import { SahamSubTabs } from "@/components/SahamSubTabs";
 import { SektorSection } from "@/components/SektorSection";
 import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
-import { getRecapsByDate, TODAY_ISO } from "@/lib/mock/recaps";
+import { todayIsoDate } from "@/lib/api/client";
+import { getRecapsByDate } from "@/lib/mock/recaps";
 import { getMarketMoodByDate } from "@/lib/mock/market-mood";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
 export default function SahamPage() {
   /** Sub-tab active: "recap" (default) | "sektor" */
   const [subTab, setSubTab] = useState<"recap" | "sektor">("recap");
-  // Selected date — drives the date-picker recap count display.
-  const [isoDate, setIsoDate] = useState<string>(TODAY_ISO);
+  // Selected date — defaults to actual local-tz today via lazy
+  // initialization (so the user always lands on the current day on
+  // first visit, not the hardcoded mock "2026-06-07"). The user can
+  // still navigate back via the DatePicker.
+  const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
 
   const recaps = useMemo(() => getRecapsByDate(isoDate), [isoDate]);
   const mood = useMemo(() => getMarketMoodByDate(isoDate), [isoDate]);
@@ -82,7 +86,7 @@ export default function SahamPage() {
                   <DatePicker
                     value={isoDate}
                     onChange={setIsoDate}
-                    todayIso={TODAY_ISO}
+                    todayIso={todayIsoDate()}
                     maxLookbackDays={30}
                   />
                   <span className="font-mono text-[10.5px] text-text-faint">
