@@ -53,7 +53,7 @@ export function Navbar() {
         <Brand logoSize={32} />
 
         {/* Main links — visible on tablet+ */}
-        <ul className="hidden items-center gap-0.5 sm:flex">
+        <ul className="hidden items-center gap-0.5 md:flex">
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
             return (
@@ -61,19 +61,13 @@ export function Navbar() {
                 <Link
                   href={link.href}
                   className={cn(
-                    "relative rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+                    "rounded-md px-2.5 py-1.5 text-[13px] font-medium transition-colors",
                     active
                       ? "bg-bg-tertiary text-text-primary"
                       : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
                   )}
                 >
                   {link.label}
-                  {active && (
-                    <span
-                      aria-hidden
-                      className="absolute inset-x-3 -bottom-[6px] h-0.5 bg-brand"
-                    />
-                  )}
                 </Link>
               </li>
             );
@@ -131,7 +125,7 @@ export function Navbar() {
             aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong sm:hidden"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden"
           >
             {menuOpen ? (
               <X className="h-4 w-4" aria-hidden />
@@ -146,7 +140,7 @@ export function Navbar() {
       <div
         id="mobile-menu"
         className={cn(
-          "overflow-hidden border-t border-border bg-bg-secondary transition-[max-height,opacity] duration-200 sm:hidden",
+          "overflow-hidden border-t border-border bg-bg-secondary transition-[max-height,opacity] duration-200 md:hidden",
           menuOpen ? "max-h-[480px] opacity-100" : "max-h-0 opacity-0",
         )}
       >
