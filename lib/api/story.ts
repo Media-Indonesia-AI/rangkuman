@@ -7,7 +7,11 @@
  */
 
 import { request } from "./client";
-import type { TrendingStoriesResponse } from "./types/story";
+import type {
+  StoryFilter,
+  StoryResponse,
+  TrendingStoriesResponse,
+} from "./types/story";
 
 /**
  * Fetch the current trending-ticker stories.
@@ -27,6 +31,36 @@ export function getTrendingStories(
   });
   return request<TrendingStoriesResponse>(
     `story/trending?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the story list, with optional structured filters.
+ *
+ * @param limit   How many stories to return (default 10).
+ * @param skip    How many stories to skip from the start of the result
+ *                set, for pagination (default 0).
+ * @param filters Structured `{ field, operator, value }` filters to
+ *                narrow the result set (default `[]`). The list is
+ *                JSON-encoded into a single `filters` query param, e.g.
+ *                `filters=[{"field":"primary_ticker_code","operator":"eq","value":"IHSG"}]`.
+ *                Empty list omits the param entirely.
+ */
+export function getStory(
+  limit = 10,
+  skip = 0,
+  filters: StoryFilter[] = [],
+): Promise<StoryResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    skip: String(skip),
+  });
+  if (filters.length > 0) {
+    params.set("filters", JSON.stringify(filters));
+  }
+  return request<StoryResponse>(
+    `story?${params.toString()}`,
     { method: "GET" },
   );
 }

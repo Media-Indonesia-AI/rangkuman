@@ -50,3 +50,79 @@ export interface TrendingStory {
 export interface TrendingStoriesResponse {
   data: TrendingStory[];
 }
+
+// ─── STORY LIST ────────────────────────────────────────────────
+
+/**
+ * One structured filter applied to the story list query. Composed into
+ * the `filters` query param as a JSON-encoded array — e.g.
+ *   `filters=[{"field":"primary_ticker_code","operator":"eq","value":"IHSG"}]`.
+ *
+ * `operator` is whatever the backend accepts for the chosen `field`
+ * (e.g. `"eq"`, `"ne"`, `"in"`, `"gt"`, `"lt"`). The list is intentionally
+ * open — we don't enumerate operators here because the backend may add
+ * new ones at any time.
+ */
+export interface StoryFilter {
+  /** Field name to filter on (e.g. `"primary_ticker_code"`). */
+  field: string;
+  /** Comparison operator (e.g. `"eq"`). Exact accepted values are
+   *  determined by the backend. */
+  operator: string;
+  /** Value to compare against. */
+  value: string;
+}
+
+/** Net sentiment direction for a single story. */
+export type StorySentiment = "positive" | "negative" | "neutral";
+
+/** One article surfaced for the story. */
+export interface StoryArticle {
+  /** Headline of the article. */
+  title: string;
+  /** Hostname or canonical URL of the publisher (e.g. `market.bisnis.com`). */
+  source_url: string;
+  /** Display name of the publisher (usually matches `source_url`). */
+  source_name: string;
+}
+
+/** The topic this story is filed under. */
+export interface StoryTopic {
+  /** Topic ID. */
+  id: string;
+  /** URL-safe topic slug. */
+  slug: string;
+  /** Display name of the topic. */
+  name: string;
+}
+
+/** One story in the response from `GET story`. */
+export interface StoryItem {
+  /** Story ID. */
+  id: string;
+  /** Headline. */
+  headline: string;
+  /** One-paragraph summary of the story. */
+  summary: string;
+  /** ID of the primary topic this story is filed under. */
+  primary_topic_slug: string;
+  /** Primary ticker code mentioned (e.g. `"IHSG"`). */
+  primary_ticker_code: string;
+  /** Net sentiment direction for this story. */
+  primary_sentiment: StorySentiment;
+  /** ISO timestamp of when this recap was generated. */
+  recap_date: string;
+  /** Articles surfaced for this story, in display order. */
+  articles: StoryArticle[];
+  /** Topic this story is filed under. */
+  topic: StoryTopic;
+  /** ISO timestamp of when the record was created. */
+  created_at: string;
+  /** ISO timestamp of when the record was last updated. */
+  updated_at: string;
+}
+
+/** Wire format the backend actually returns: `{ data: [...] }`. */
+export interface StoryResponse {
+  data: StoryItem[];
+}

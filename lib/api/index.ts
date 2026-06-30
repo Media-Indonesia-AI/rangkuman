@@ -48,4 +48,10 @@ export type {
   TrendingSentiment,
   TrendingStoriesResponse,
   TrendingStory,
+  StoryArticle,
+  StoryFilter,
+  StoryItem,
+  StoryResponse,
+  StorySentiment,
+  StoryTopic,
 } from "./types/story";
