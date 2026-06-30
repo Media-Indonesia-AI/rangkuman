@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import type {
   CompositeChartPoint,
-  ExchangeRate,
+  ExchangeRateChartResponse,
   ForeignStocksResponse,
   InterestRate,
 } from "@/lib/api";
@@ -31,7 +31,7 @@ export interface LoadingFlags {
 
 export interface UseMarketMoodDataResult {
   biRate: InterestRate | null;
-  exchangeRate: ExchangeRate | null;
+  exchangeRate: ExchangeRateChartResponse | null;
   foreignFlow: ForeignStocksResponse | null;
   compositeChart: CompositeChartPoint[] | null;
   /** Per-source loading flags. `true` while the matching fetch is in
@@ -63,7 +63,9 @@ export interface UseMarketMoodDataResult {
  */
 export function useMarketMoodData(): UseMarketMoodDataResult {
   const [biRate, setBiRate] = useState<InterestRate | null>(null);
-  const [exchangeRate, setExchangeRate] = useState<ExchangeRate | null>(null);
+  const [exchangeRate, setExchangeRate] = useState<ExchangeRateChartResponse | null>(
+    null,
+  );
   const [foreignFlow, setForeignFlow] = useState<ForeignStocksResponse | null>(
     null,
   );
@@ -93,12 +95,12 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
       });
 
     void loadExchangeRate()
-      .then((res) => {
-        // Response is wrapped in `{ data: [snapshot] }`; the snapshot is
-        // a single object keyed by currency code.
-        const snapshot = res.data[0];
+      .then((data) => {
+        // Response is wrapped in `{ data: [{ date, rate }, ...] }`.
+        // mergeUsdIdr reads `res.data` and uses the last point for the
+        // live value and the full list for the sparkline.
         if (!cancelled) {
-          setExchangeRate(snapshot ?? null);
+          setExchangeRate(data);
           setIsExchangeRateLoading(false);
         }
       })

@@ -36,8 +36,8 @@ export type {
 
 // Market
 export type {
-  ExchangeRate,
-  ExchangeRateResponse,
+  ExchangeRateChartPoint,
+  ExchangeRateChartResponse,
   InterestRate,
 } from "./types/market";
 

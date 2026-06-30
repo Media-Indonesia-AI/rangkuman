@@ -14,7 +14,7 @@
 
 import { api } from "./client";
 import type {
-  ExchangeRateResponse,
+  ExchangeRateChartResponse,
   InterestRate,
 } from "./types/market";
 import type {
@@ -113,35 +113,51 @@ export function loadInterestRate(date?: string): Promise<InterestRate> {
 
 // ─── EXCHANGE RATE ──────────────────────────────────────────────
 
-/** Per-base cache for `getExchangeRate`. Different bases get different slots. */
-const cachedExchangeRates = new Map<string, ExchangeRateResponse>();
-const inflightExchangeRates = new Map<string, Promise<ExchangeRateResponse>>();
+/** Per-(initialCurrency, exchange) cache for `getExchangeRate`. Different
+ *  currency pairs get different slots; concurrent calls for the same pair
+ *  share one network round-trip. */
+const cachedExchangeRates = new Map<string, ExchangeRateChartResponse>();
+const inflightExchangeRates = new Map<
+  string,
+  Promise<ExchangeRateChartResponse>
+>();
+
+/** Cache key for a given currency pair. */
+function exchangeRateKey(initialCurrency: string, exchange: string): string {
+  return `${initialCurrency}|${exchange}`;
+}
 
 /**
- * Fetch the latest exchange-rate snapshot, with request-level dedup.
- * Concurrent and subsequent callers for the same base share one network
- * round-trip. Only successful responses are cached; errors clear the
- * in-flight slot so the next mount can retry.
+ * Fetch the historical exchange-rate series for a currency pair, with
+ * request-level dedup. Concurrent and subsequent callers for the same
+ * pair share one network round-trip. Only successful responses are
+ * cached; errors clear the in-flight slot so the next mount can retry.
  *
- * @param base Base currency code (default `"idr"`). The response wraps
- *             one snapshot per base — see `ExchangeRateResponse`.
+ * @param initialCurrency Base currency code (default `"idr"`).
+ * @param exchange       Counter currency code (default `"usd"`).
+ *                       The response is a time series of `{ date, rate }`
+ *                       points — see `ExchangeRateChartResponse`.
  */
-export function loadExchangeRate(base = "idr"): Promise<ExchangeRateResponse> {
-  const cached = cachedExchangeRates.get(base);
+export function loadExchangeRate(
+  initialCurrency = "idr",
+  exchange = "usd",
+): Promise<ExchangeRateChartResponse> {
+  const key = exchangeRateKey(initialCurrency, exchange);
+  const cached = cachedExchangeRates.get(key);
   if (cached) return Promise.resolve(cached);
-  const inflight = inflightExchangeRates.get(base);
+  const inflight = inflightExchangeRates.get(key);
   if (inflight) return inflight;
   const promise = api
-    .getExchangeRate(base)
+    .getExchangeRate(initialCurrency, exchange)
     .then((res) => {
-      cachedExchangeRates.set(base, res);
+      cachedExchangeRates.set(key, res);
       return res;
     })
     .catch((err) => {
-      inflightExchangeRates.delete(base); // allow retry on next mount
+      inflightExchangeRates.delete(key); // allow retry on next mount
       throw err;
     });
-  inflightExchangeRates.set(base, promise);
+  inflightExchangeRates.set(key, promise);
   return promise;
 }
 

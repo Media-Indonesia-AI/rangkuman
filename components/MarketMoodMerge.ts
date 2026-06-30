@@ -14,7 +14,7 @@
 
 import type {
   CompositeChartPoint,
-  ExchangeRate,
+  ExchangeRateChartResponse,
   ForeignStocksResponse,
   InterestRate,
 } from "@/lib/api";
@@ -65,15 +65,24 @@ export function mergeBiRate(
 }
 
 /**
- * Replace the `usd-idr` widget with the live USD rate from the exchange
- * snapshot. The mock widget stays in place until the fetch resolves and
- * on any error (auth, network, missing key in the response, etc.).
+ * Replace the `usd-idr` widget with live data from the exchange-rate
+ * series. `value` is set from the last point's `rate` and `sparklineData`
+ * is fed the full series of `rate` values so the existing sparkline
+ * slot renders the real curve.
+ *
+ * The response comes wrapped in the standard `{ data: [...] }` envelope
+ * (matching every other endpoint in this codebase). Like `mergeIhsg`, we
+ * sort by the point date so we're robust against the backend's ordering
+ * — `slice()` first so we don't mutate the cached response.
+ *
+ * The mock widget stays in place until the fetch resolves and on any
+ * error (auth, network, empty series, etc.).
  *
  * While `loading === true` the widget is flagged for shimmer rendering.
  */
 export function mergeUsdIdr(
   widgets: MarketWidget[],
-  exchangeRate: ExchangeRate | null,
+  res: ExchangeRateChartResponse | null,
   loading: boolean,
 ): MarketWidget[] {
   if (loading) {
@@ -81,12 +90,21 @@ export function mergeUsdIdr(
       w.id === "usd-idr" ? { ...w, loading: true } : w,
     );
   }
-  if (!exchangeRate) return widgets;
-  const usd = exchangeRate.USD;
-  if (typeof usd !== "number") return widgets;
+  const points = res?.data;
+  // SparklineChart needs ≥2 points to render anything; below that, keep
+  // the deterministic mock sparkline. Same guard threshold as mergeIhsg.
+  if (!points || points.length < 2) return widgets;
+
+  const sortedRates = points
+    .slice()
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .map((p) => p.rate);
+
+  const last = sortedRates[sortedRates.length - 1];
+
   return widgets.map((w) =>
     w.id === "usd-idr"
-      ? { ...w, loading: false, value: formatIdrRate(usd) }
+      ? { ...w, loading: false, value: formatIdrRate(last), sparklineData: sortedRates }
       : w,
   );
 }

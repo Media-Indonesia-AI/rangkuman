@@ -1,5 +1,5 @@
 /**
- * Types for `/interest-rate` and `/exchange-rate` endpoints.
+ * Types for `/interest-rate` and `/exchange-rate/chart` endpoints.
  * Consumed by `../market.ts` (request functions) and `MarketMood`.
  */
 
@@ -33,5 +33,9 @@ export interface ExchangeRateChartPoint {
   rate: number;
 }
 
-/** Time series of exchange-rate points returned by `GET exchange-rate/chart`. */
-export type ExchangeRateChartResponse = ExchangeRateChartPoint[];
+/** Time series of exchange-rate points returned by `GET exchange-rate/chart`,
+ *  wrapped in the standard `{ data: [...] }` envelope used by every other
+ *  endpoint in this codebase. */
+export interface ExchangeRateChartResponse {
+  data: ExchangeRateChartPoint[];
+}
