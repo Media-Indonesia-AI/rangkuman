@@ -8,7 +8,7 @@
 
 import { request, todayIsoDate } from "./client";
 import type {
-  ExchangeRateResponse,
+  ExchangeRateChartResponse,
   InterestRate,
 } from "./types/market";
 
@@ -27,17 +27,18 @@ export function getInterestRate(
 }
 
 /**
- * Fetch the latest exchange-rate snapshot. `base` is the base currency
- * code passed as a query param (defaults to `"idr"`). The response is
- * wrapped in `{ data: [snapshot] }` — read the first element to get
- * the per-currency rates.
+ * Fetch the historical exchange-rate series. `initialCurrency` is the
+ * base currency code (defaults to `"idr"`) and `exchange` is the
+ * counter currency code (defaults to `"usd"`). The response is a time
+ * series of `{ date, rate }` points — see `ExchangeRateChartResponse`.
  */
 export function getExchangeRate(
-  base = "idr",
-): Promise<ExchangeRateResponse> {
-  const params = new URLSearchParams({ currency: base });
-  return request<ExchangeRateResponse>(
-    `exchange-rate?${params.toString()}`,
+  initialCurrency = "idr",
+  exchange = "usd",
+): Promise<ExchangeRateChartResponse> {
+  const params = new URLSearchParams({ initialCurrency, exchange });
+  return request<ExchangeRateChartResponse>(
+    `exchange-rate/chart?${params.toString()}`,
     { method: "GET" },
   );
 }

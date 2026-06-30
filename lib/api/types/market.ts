@@ -20,18 +20,18 @@ export interface InterestRate {
 // ─── EXCHANGE RATE ──────────────────────────────────────────────
 
 /**
- * One snapshot of cross-rates — each key is an ISO 4217 currency code,
- * each value is the rate in IDR per 1 unit of that currency
- * (e.g. `USD: 17950.1` means 1 USD = 17,950.1 IDR).
- *
- * Keys are not enumerated — the backend may add or remove currencies
- * at any time, so the type is intentionally open. Consumers that read
- * a specific currency should still handle the absent case
- * (e.g. `rates.USD ?? 0`).
+ * One data point in the exchange-rate time series returned by
+ * `GET exchange-rate/chart`. Each point is a (timestamp, rate) pair —
+ * `rate` is the counter-currency value of 1 unit of the base currency
+ * (e.g. for `initialCurrency=idr&exchange=usd`, `rate` is the USD
+ * price of 1 IDR).
  */
-export type ExchangeRate = Record<string, number>;
-
-/** Wire format the backend actually returns: `{ data: [snapshot] }`. */
-export interface ExchangeRateResponse {
-  data: ExchangeRate[];
+export interface ExchangeRateChartPoint {
+  /** ISO timestamp for the data point. */
+  date: string;
+  /** Exchange rate at `date`. */
+  rate: number;
 }
+
+/** Time series of exchange-rate points returned by `GET exchange-rate/chart`. */
+export type ExchangeRateChartResponse = ExchangeRateChartPoint[];
