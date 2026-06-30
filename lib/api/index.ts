@@ -54,4 +54,5 @@ export type {
   StoryResponse,
   StorySentiment,
   StoryTopic,
+  TopicResponse,
 } from "./types/story";

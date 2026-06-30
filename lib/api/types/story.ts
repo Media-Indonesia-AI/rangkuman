@@ -126,3 +126,12 @@ export interface StoryItem {
 export interface StoryResponse {
   data: StoryItem[];
 }
+
+/** Wire format `GET topic` returns: `{ data: [StoryTopic, ...] }`.
+ *  Items reuse the `StoryTopic` shape (embedded in stories) since
+ *  the standalone list resource and the embedded form have
+ *  identical fields today. If they diverge later, split this into
+ *  its own `Topic` interface. */
+export interface TopicResponse {
+  data: StoryTopic[];
+}
