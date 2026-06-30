@@ -27,6 +27,7 @@ import type {
   TrendingStoriesResponse,
   StoryFilter,
   StoryResponse,
+  TopicResponse,
 } from "./types/story";
 
 let cachedTopStocks: TopStocksResponse | null = null;
@@ -402,5 +403,59 @@ export function loadStory(
       throw err;
     });
   inflightStories.set(key, promise);
+  return promise;
+}
+
+// ─── TOPIC LIST ────────────────────────────────────────────────
+
+/** Per-(limit, skip, filters) cache for `getTopic`. Same shape as the
+ *  story-list cache; isolated so its keys can't collide with stories. */
+const cachedTopics = new Map<string, TopicResponse>();
+const inflightTopics = new Map<string, Promise<TopicResponse>>();
+
+/** Cache key for a given (limit, skip, filters) tuple. Mirrors
+ *  `storyKey` so callers with structurally-equal filters share a slot. */
+function topicKey(
+  limit: number,
+  skip: number,
+  filters: StoryFilter[],
+): string {
+  return `${limit}|${skip}|${JSON.stringify(filters)}`;
+}
+
+/**
+ * Fetch the topic list for a (limit, skip, filters) tuple, with
+ * request-level dedup. Concurrent and subsequent callers for the same
+ * tuple share one network round-trip. Only successful responses are
+ * cached; errors clear the in-flight slot so the next mount can retry.
+ *
+ * @param limit   How many topics to return (default 10).
+ * @param skip    How many topics to skip (default 0, matching the
+ *                backend's `getTopic` default after the latest spec
+ *                change).
+ * @param filters Structured `{ field, operator, value }` filters
+ *                (default `[]`).
+ */
+export function loadTopic(
+  limit = 10,
+  skip = 0,
+  filters: StoryFilter[] = [],
+): Promise<TopicResponse> {
+  const key = topicKey(limit, skip, filters);
+  const cached = cachedTopics.get(key);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightTopics.get(key);
+  if (inflight) return inflight;
+  const promise = api
+    .getTopic(limit, skip, filters)
+    .then((res) => {
+      cachedTopics.set(key, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightTopics.delete(key); // allow retry on next mount
+      throw err;
+    });
+  inflightTopics.set(key, promise);
   return promise;
 }
