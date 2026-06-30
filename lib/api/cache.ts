@@ -23,7 +23,11 @@ import type {
   TickersResponse,
   TopStocksResponse,
 } from "./types/stocks";
-import type { TrendingStoriesResponse } from "./types/story";
+import type {
+  TrendingStoriesResponse,
+  StoryFilter,
+  StoryResponse,
+} from "./types/story";
 
 let cachedTopStocks: TopStocksResponse | null = null;
 let inflightTopStocks: Promise<TopStocksResponse> | null = null;
@@ -342,5 +346,61 @@ export function loadForeignStocks(
       throw err;
     });
   inflightForeignStocks.set(key, promise);
+  return promise;
+}
+
+// ─── STORY LIST ────────────────────────────────────────────────
+
+/** Per-(limit, skip, filters) cache for `getStory`. Different tuples
+ *  get different slots; concurrent calls for the same tuple share one
+ *  network round-trip. */
+const cachedStories = new Map<string, StoryResponse>();
+const inflightStories = new Map<string, Promise<StoryResponse>>();
+
+/** Cache key for a given (limit, skip, filters) tuple. The filter list
+ *  is JSON-encoded into the key so callers with structurally-equal
+ *  filters share a slot. */
+function storyKey(
+  limit: number,
+  skip: number,
+  filters: StoryFilter[],
+): string {
+  return `${limit}|${skip}|${JSON.stringify(filters)}`;
+}
+
+/**
+ * Fetch the story list for a (limit, skip, filters) tuple, with
+ * request-level dedup. Concurrent and subsequent callers for the same
+ * tuple share one network round-trip. Only successful responses are
+ * cached; errors clear the in-flight slot so the next mount can retry.
+ *
+ * @param limit   How many stories to return (default 10).
+ * @param skip    How many stories to skip from the start of the result
+ *                set, for pagination (default 0).
+ * @param filters Structured `{ field, operator, value }` filters
+ *                (default `[]`). Same list passed twice always lands on
+ *                the same cache slot.
+ */
+export function loadStory(
+  limit = 10,
+  skip = 0,
+  filters: StoryFilter[] = [],
+): Promise<StoryResponse> {
+  const key = storyKey(limit, skip, filters);
+  const cached = cachedStories.get(key);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightStories.get(key);
+  if (inflight) return inflight;
+  const promise = api
+    .getStory(limit, skip, filters)
+    .then((res) => {
+      cachedStories.set(key, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightStories.delete(key); // allow retry on next mount
+      throw err;
+    });
+  inflightStories.set(key, promise);
   return promise;
 }

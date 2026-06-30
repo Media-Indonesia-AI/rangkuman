@@ -36,7 +36,7 @@ export function getExchangeRate(
   initialCurrency = "idr",
   exchange = "usd",
 ): Promise<ExchangeRateChartResponse> {
-  const params = new URLSearchParams({ initialCurrency, exchange });
+  const params = new URLSearchParams({ initial_currency: initialCurrency, exchange });
   return request<ExchangeRateChartResponse>(
     `exchange-rate/chart?${params.toString()}`,
     { method: "GET" },
