@@ -107,9 +107,9 @@ export default function SahamPage() {
             </div>
 
             {/* General news feed — ekonomi, pemerintah, politik (below the stock recap feed) */}
-            <div className="mt-10">
+            {/* <div className="mt-10">
               <GeneralNewsFeed isoDate={isoDate} />
-            </div>
+            </div> */}
           </main>
           <Footer />
         </>
