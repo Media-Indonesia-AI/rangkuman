@@ -25,6 +25,7 @@ import type {
 } from "./types/stocks";
 import type {
   TrendingStoriesResponse,
+  HeadlineDetail,
   StoryFilter,
   StoryResponse,
   TopicResponse,
@@ -455,5 +456,43 @@ export function loadTopic(
       throw err;
     });
   inflightTopics.set(key, promise);
+  return promise;
+}
+
+// ─── HEADLINE DETAIL ───────────────────────────────────────────
+
+/** Per-`id` cache for `getHeadlineById`. Different IDs get different
+ *  slots; concurrent calls for the same ID share one network
+ *  round-trip. */
+const cachedHeadlineDetails = new Map<string, HeadlineDetail>();
+const inflightHeadlineDetails = new Map<string, Promise<HeadlineDetail>>();
+
+/**
+ * Fetch a single headline's full detail (with related stories) by
+ * ID, with request-level dedup. Concurrent and subsequent callers
+ * for the same ID share one network round-trip. Only successful
+ * responses are cached; errors clear the in-flight slot so the next
+ * mount can retry.
+ *
+ * @param id Headline ID (e.g. mongo-style hash from a list response).
+ */
+export function loadHeadlineById(
+  id: string,
+): Promise<HeadlineDetail> {
+  const cached = cachedHeadlineDetails.get(id);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightHeadlineDetails.get(id);
+  if (inflight) return inflight;
+  const promise = api
+    .getHeadlineById(id)
+    .then((res) => {
+      cachedHeadlineDetails.set(id, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightHeadlineDetails.delete(id); // allow retry on next mount
+      throw err;
+    });
+  inflightHeadlineDetails.set(id, promise);
   return promise;
 }

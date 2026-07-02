@@ -48,6 +48,8 @@ export type {
   TrendingSentiment,
   TrendingStoriesResponse,
   TrendingStory,
+  EmbeddedStory,
+  HeadlineDetail,
   StoryArticle,
   StoryFilter,
   StoryItem,

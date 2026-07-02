@@ -3,12 +3,14 @@
  *
  * Hits `/story/*` and `/topic`. Re-exports are composed into the
  * top-level `api` object in `./client` so existing call sites
- * (`api.getTrendingStories()`, `api.getHeadlines()`, `api.getTopic()`)
+ * (`api.getTrendingStories()`, `api.getHeadlines()`,
+ * `api.getHeadlineById()`, `api.getTopic()`)
  * keep working.
  */
 
 import { request } from "./client";
 import type {
+  HeadlineDetail,
   StoryFilter,
   StoryResponse,
   TopicResponse,
@@ -58,6 +60,26 @@ export function getHeadlines(
   }
   return request<StoryResponse>(
     `headlines?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch a single headline by ID, with its related stories.
+ *
+ * Returns a flat object (no `{ data: ... }` wrapper) — see
+ * `HeadlineDetail` for the wire shape. The `id` is path-encoded with
+ * `encodeURIComponent` so callers can pass any string the backend
+ * hands out (e.g. mongo-style hashes) without worrying about
+ * reserved characters.
+ *
+ * @param id Headline ID — opaque string from a list response.
+ */
+export function getHeadlineById(
+  id: string,
+): Promise<HeadlineDetail> {
+  return request<HeadlineDetail>(
+    `headlines/${encodeURIComponent(id)}`,
     { method: "GET" },
   );
 }
