@@ -14,7 +14,7 @@ import { StockCard } from "./StockCard";
  * the live trending-stories API.
  *
  * Data flow (lives in the parent page, not here):
- *   `useTrendingStories(20, "sahamrakyat")` → `api.getTrendingStories()` →
+ *   `useTrendingStories(20)` → `api.getTrendingStories()` →
  *   `GET /story/trending?…` → `mapTrendingStoryToRecap` → `<StockCard>`.
  *
  * The parent page does the fetch + mapping and passes the resolved
@@ -50,31 +50,27 @@ const trendingSentimentToSentimen: Record<TrendingSentiment, Sentimen> = {
  * `StockCard` consumes). Only the fields `StockCard` reads are
  * filled in; everything else is left at its default.
  *
- * - `ticker`           → `sahamKode`
- * - `brief_summary`    → `ringkasan`
- * - `recap_date`       → `tanggal`
- * - `sentiment` (en)   → `sentimen` (id) via the lookup table above
- * - `medias[]`         → `sumber[]` (logo left empty — `<SourceBar>`
- *                         renders the avatar from `initialsOf(media)`)
- * - `medias[].count` summed → `jumlahBerita`
+ * - `id`                       → `id` (API id, e.g. mongo hash)
+ * - `created_at` (ISO)         → `tanggal` (YYYY-MM-DD slice)
+ * - `primary_ticker_code`      → `sahamKode`
+ * - `summary`                  → `ringkasan`
+ * - `sentiment` (en)           → `sentimen` (id) via lookup above
+ * - `story_count`              → `jumlahBerita`
+ * - `sumber`                   → `[]` (the wire shape only has an
+ *                                 aggregate count, no per-publisher
+ *                                 breakdown — `<SourceBar>` will
+ *                                 render empty until the backend
+ *                                 adds per-source data)
  */
 function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
-  const totalArticles = story.medias.reduce(
-    (sum, m) => sum + m.count,
-    0,
-  );
   return {
-    id: `trending-${story.ticker}`,
-    tanggal: story.recap_date,
-    sahamKode: story.ticker,
-    ringkasan: story.brief_summary,
+    id: story.id,
+    tanggal: story.created_at.split("T")[0],
+    sahamKode: story.primary_ticker_code,
+    ringkasan: story.summary,
     sentimen: trendingSentimentToSentimen[story.sentiment],
-    jumlahBerita: totalArticles,
-    sumber: story.medias.map((m) => ({
-      media: m.name,
-      logo: "",
-      jumlah: m.count,
-    })),
+    jumlahBerita: story.story_count,
+    sumber: [],
   };
 }
 
@@ -126,7 +122,7 @@ export function PalingBanyakDiberitakan({
         <div className="space-y-2.5">
           {trending.slice(0, VISIBLE_TRENDING_LIMIT).map((story, i) => (
             <StockCard
-              key={story.ticker}
+              key={story.id}
               recap={mapTrendingStoryToRecap(story)}
               variant="list"
               rank={i + 1}

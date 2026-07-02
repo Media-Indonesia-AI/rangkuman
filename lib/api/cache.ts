@@ -271,38 +271,36 @@ export function loadCompositeChart(
 
 // ─── TRENDING STORIES ──────────────────────────────────────────
 
-/** Per-(limit, source) cache for `getTrendingStories`. */
+/** Per-`limit` cache for `getTrendingStories`. */
 const cachedTrendingStories = new Map<string, TrendingStoriesResponse>();
 const inflightTrendingStories = new Map<
   string,
   Promise<TrendingStoriesResponse>
 >();
 
-/** Cache key for a given (limit, source) pair. */
-function trendingStoriesKey(limit: number, source: string): string {
-  return `${limit}|${source}`;
+/** Cache key for a given `limit`. */
+function trendingStoriesKey(limit: number): string {
+  return String(limit);
 }
 
 /**
- * Fetch the trending-stories snapshot for a given limit + source, with
+ * Fetch the trending-stories snapshot for a given limit, with
  * request-level dedup. Concurrent and subsequent callers for the same
- * tuple share one network round-trip. Only successful responses are
+ * limit share one network round-trip. Only successful responses are
  * cached; errors clear the in-flight slot so the next mount can retry.
  *
  * @param limit  How many stories to fetch (default 20).
- * @param source Source identifier for the feed (default `"sahamrakyat"`).
  */
 export function loadTrendingStories(
   limit = 20,
-  source = "sahamrakyat",
 ): Promise<TrendingStoriesResponse> {
-  const key = trendingStoriesKey(limit, source);
+  const key = trendingStoriesKey(limit);
   const cached = cachedTrendingStories.get(key);
   if (cached) return Promise.resolve(cached);
   const inflight = inflightTrendingStories.get(key);
   if (inflight) return inflight;
   const promise = api
-    .getTrendingStories(limit, source)
+    .getTrendingStories(limit)
     .then((res) => {
       cachedTrendingStories.set(key, res);
       return res;

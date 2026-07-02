@@ -28,22 +28,30 @@ export interface TrendingMedia {
 
 /**
  * One ticker that's currently trending in the market. Bundles a
- * brief editorial summary, the recap timestamp, the day's net
- * sentiment, and the supporting article + per-media counts.
+ * brief editorial summary, timestamps, the day's net sentiment,
+ * and rollup counts (story_count, keywords, topics).
  */
 export interface TrendingStory {
-  /** Ticker code (e.g. `"BBCA"`). */
-  ticker: string;
+  /** Story ID. */
+  id: string;
+  /** Headline. */
+  title: string;
   /** One-paragraph editorial summary of why this ticker is trending. */
-  brief_summary: string;
-  /** ISO timestamp of when this recap was generated. */
-  recap_date: string;
+  summary: string;
+  /** Primary ticker code mentioned (e.g. `"MTEL"`). */
+  primary_ticker_code: string;
   /** Net sentiment direction for the day. */
   sentiment: TrendingSentiment;
-  /** Articles surfaced for this ticker, in display order. */
-  articles: TrendingArticle[];
-  /** Per-publisher article counts (a rollup of `articles`). */
-  medias: TrendingMedia[];
+  /** ISO timestamp of when the record was created. */
+  created_at: string;
+  /** ISO timestamp of when the record was last updated. */
+  updated_at: string;
+  /** Keywords tagged on this story. */
+  keywords: string[];
+  /** Topics this story is filed under. */
+  topics: StoryTopic[];
+  /** Number of stories aggregated into this trending entry. */
+  story_count: number;
 }
 
 /** Wire format the backend actually returns: `{ data: [...] }`. */

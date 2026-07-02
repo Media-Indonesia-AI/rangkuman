@@ -17,15 +17,13 @@ import { loadTrendingStories } from "@/lib/api/cache";
  * receive the same array.
  *
  * The first 20 stories by default, matching the API's own default.
- * The same `(limit, source)` tuple applies to the dedup key — two
- * mounts with different limits or sources each get their own fetch.
+ * The `limit` value applies to the dedup key — two mounts with
+ * different limits each get their own fetch.
  *
  * @param limit  How many stories to fetch (default 20).
- * @param source Source identifier for the feed (default `"sahamrakyat"`).
  */
 export function useTrendingStories(
   limit = 20,
-  source = "sahamrakyat",
 ): { data: TrendingStory[]; isLoading: boolean } {
   const [data, setData] = useState<TrendingStory[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -33,7 +31,7 @@ export function useTrendingStories(
   useEffect(() => {
     let cancelled = false;
 
-    void loadTrendingStories(limit, source)
+    void loadTrendingStories(limit)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })
@@ -47,7 +45,7 @@ export function useTrendingStories(
     return () => {
       cancelled = true;
     };
-  }, [limit, source]);
+  }, [limit]);
 
   return { data, isLoading };
 }
