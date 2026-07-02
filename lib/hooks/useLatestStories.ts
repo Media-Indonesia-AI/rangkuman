@@ -2,18 +2,18 @@
 
 import { useEffect, useState } from "react";
 import type { StoryFilter, StoryItem } from "@/lib/api";
-import { loadStory } from "@/lib/api/cache";
+import { loadHeadlines } from "@/lib/api/cache";
 
 /**
  * Data hook for the "Latest Headlines" widget on `/saham`. Wraps
- * `loadStory()` (the request-deduping cache wrapper) with React state
- * + a cancel-on-unmount guard.
+ * `loadHeadlines()` (the request-deduping cache wrapper) with React
+ * state + a cancel-on-unmount guard.
  *
  * Concurrent mounts of the widget (React 18 strict-mode double-invoke,
  * or two `<LatestHeadlines />` instances on the same page) share a
  * single network round-trip — the second call gets the same
- * `Promise<StoryResponse>` back from the `inflightStories` Map. After
- * resolution, both callers receive the same array.
+ * `Promise<StoryResponse>` back from the `inflightHeadlines` Map.
+ * After resolution, both callers receive the same array.
  *
  * On error the hook returns an empty array so consumers can fall back
  * to mock data without an extra null-check — same convention as
@@ -38,7 +38,7 @@ export function useLatestStories(
   useEffect(() => {
     let cancelled = false;
 
-    void loadStory(limit, skip, filters)
+    void loadHeadlines(limit, skip, filters)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })

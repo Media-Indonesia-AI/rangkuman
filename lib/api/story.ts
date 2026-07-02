@@ -3,7 +3,7 @@
  *
  * Hits `/story/*` and `/topic`. Re-exports are composed into the
  * top-level `api` object in `./client` so existing call sites
- * (`api.getTrendingStories()`, `api.getStory()`, `api.getTopic()`)
+ * (`api.getTrendingStories()`, `api.getHeadlines()`, `api.getTopic()`)
  * keep working.
  */
 
@@ -33,10 +33,10 @@ export function getTrendingStories(
 }
 
 /**
- * Fetch the story list, with optional structured filters.
+ * Fetch the headlines list, with optional structured filters.
  *
- * @param limit   How many stories to return (default 10).
- * @param skip    How many stories to skip from the start of the result
+ * @param limit   How many headlines to return (default 10).
+ * @param skip    How many headlines to skip from the start of the result
  *                set, for pagination (default 0).
  * @param filters Structured `{ field, operator, value }` filters to
  *                narrow the result set (default `[]`). The list is
@@ -44,7 +44,7 @@ export function getTrendingStories(
  *                `filters=[{"field":"primary_ticker_code","operator":"eq","value":"IHSG"}]`.
  *                Empty list omits the param entirely.
  */
-export function getStory(
+export function getHeadlines(
   limit = 10,
   skip = 0,
   filters: StoryFilter[] = [],
@@ -57,7 +57,7 @@ export function getStory(
     params.set("filters", JSON.stringify(filters));
   }
   return request<StoryResponse>(
-    `story?${params.toString()}`,
+    `headlines?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -78,7 +78,7 @@ export function getStory(
  *                set, for pagination (default 10).
  * @param filters Structured `{ field, operator, value }` filters to
  *                narrow the result set (default `[]`). JSON-encoded
- *                the same way as `getStory`'s filters. Empty list
+ *                the same way as `getHeadlines`'s filters. Empty list
  *                omits the param entirely.
  */
 export function getTopic(

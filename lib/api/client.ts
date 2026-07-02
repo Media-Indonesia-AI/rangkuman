@@ -22,7 +22,7 @@ import {
   getTickers,
   getTopStocks,
 } from "./stocks";
-import { getStory, getTopic, getTrendingStories } from "./story";
+import { getHeadlines, getTopic, getTrendingStories } from "./story";
 import type { ApiError } from "./types/error";
 
 export const API_BASE_URL =
@@ -128,6 +128,6 @@ export const api = {
   getExchangeRate,
   // Story
   getTrendingStories,
-  getStory,
+  getHeadlines,
   getTopic,
 };

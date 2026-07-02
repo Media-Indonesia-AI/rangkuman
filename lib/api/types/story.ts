@@ -104,30 +104,26 @@ export interface StoryTopic {
   name: string;
 }
 
-/** One story in the response from `GET story`. */
+/** One story in the response from `GET headlines`. */
 export interface StoryItem {
   /** Story ID. */
   id: string;
   /** Headline. */
-  headline: string;
+  title: string;
   /** One-paragraph summary of the story. */
   summary: string;
-  /** ID of the primary topic this story is filed under. */
-  primary_topic_slug: string;
   /** Primary ticker code mentioned (e.g. `"IHSG"`). */
   primary_ticker_code: string;
   /** Net sentiment direction for this story. */
-  primary_sentiment: StorySentiment;
-  /** ISO timestamp of when this recap was generated. */
-  recap_date: string;
-  /** Articles surfaced for this story, in display order. */
-  articles: StoryArticle[];
-  /** Topic this story is filed under. */
-  topic: StoryTopic;
+  sentiment: StorySentiment;
   /** ISO timestamp of when the record was created. */
   created_at: string;
   /** ISO timestamp of when the record was last updated. */
   updated_at: string;
+  /** Keywords tagged on this story. */
+  keywords: string[];
+  /** Topics this story is filed under. */
+  topics: StoryTopic[];
 }
 
 /** Wire format the backend actually returns: `{ data: [...] }`. */

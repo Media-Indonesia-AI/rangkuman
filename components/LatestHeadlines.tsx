@@ -46,7 +46,7 @@ function storyColor(sentiment: Sentimen | undefined): string {
  * with a relative-time rail, ticker badge, sentiment pill, STORY tag,
  * headline, and source name.
  *
- * Data path: `useLatestStories` → `loadStory` → `api.getStory`.
+ * Data path: `useLatestStories` → `loadHeadlines` → `api.getHeadlines`.
  *   - During the in-flight window the timeline rail shows a
  *     pulsing shimmer skeleton instead of the live list.
  *   - On success, live `StoryItem`s drive the render.
@@ -91,8 +91,7 @@ export function LatestHeadlines() {
         {isLoading && <HeadlinesSkeleton count={VISIBLE_COUNT} />}
 
         {liveItems?.map((story, idx) => {
-          const sentiment = toSentimen(story.primary_sentiment);
-          const source = story.articles[0]?.source_name;
+          const sentiment = toSentimen(story.sentiment);
           const dotColor = storyColor(sentiment);
           const isLast = idx === liveItems.length - 1;
           return (
@@ -121,7 +120,7 @@ export function LatestHeadlines() {
               <div className="space-y-1">
                 <div className="flex flex-wrap items-center gap-1">
                   <span className="font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-muted num-tabular">
-                    {getRelativeTime(story.recap_date)}
+                    {getRelativeTime(story.created_at)}
                   </span>
                   {story.primary_ticker_code && (
                     <span className="inline-flex items-center gap-0.5 rounded border border-border bg-bg-tertiary px-1 py-px font-mono text-[9.5px] font-semibold text-text-primary">
@@ -135,13 +134,8 @@ export function LatestHeadlines() {
                   </span>
                 </div>
                 <p className="text-[11.5px] font-medium leading-snug text-text-primary group-hover:text-brand">
-                  {story.headline}
+                  {story.title}
                 </p>
-                {source && (
-                  <p className="font-mono text-[9.5px] text-text-muted">
-                    {source}
-                  </p>
-                )}
               </div>
             </li>
           );
