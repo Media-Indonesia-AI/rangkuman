@@ -52,6 +52,8 @@ export interface TrendingStory {
   topics: StoryTopic[];
   /** Number of stories aggregated into this trending entry. */
   story_count: number;
+  /** Aggregated media presence, ranked by article count (descending). */
+  medias: TrendingMedia[];
 }
 
 /** Wire format the backend actually returns: `{ data: [...] }`. */
