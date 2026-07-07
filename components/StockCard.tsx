@@ -15,6 +15,10 @@ interface StockCardProps {
   variant?: "feed" | "featured" | "compact" | "list";
   className?: string;
   rank?: number;
+  /** Optional backend headline id. When set, the navigation href
+   *  becomes `/stock/{kode}?id={id}` so the detail page can call
+   *  `api.getHeadlineById(id)` on mount. */
+  id?: string;
 }
 
 export function StockCard({
@@ -23,9 +27,14 @@ export function StockCard({
   variant = "feed",
   className,
   rank,
+  id,
 }: StockCardProps) {
   const s = stock ?? getStockByKode(recap.sahamKode);
-  const href = `/stock/${recap.sahamKode}`;
+  // Build href once. With an `id`, append it as a query param so the
+  // stock detail page can deep-link to a specific headline; without,
+  // the href is identical to the pre-existing behavior.
+  const params = id ? new URLSearchParams({ id }).toString() : "";
+  const href = `/stock/${recap.sahamKode}${params ? `?${params}` : ""}`;
   const heroGradient = s ? HUE_GRADIENT[s.hue] : HUE_GRADIENT.slate;
   const isFeatured = variant === "featured";
   const isCompact = variant === "compact";
@@ -138,7 +147,7 @@ export function StockCard({
           </p>
 
           <div className="mt-auto flex items-end justify-between gap-2 border-t border-border pt-2.5">
-            <SourceBar sumber={recap.sumber.slice(0, 3)} size="sm" />
+            <SourceBar sumber={recap.sumber} max={3} size="sm" />
             <Link
               href={href}
               className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-brand transition-colors hover:text-brand-hover"
@@ -285,7 +294,7 @@ export function StockCard({
 
           {/* Desktop footer: sources + buka */}
           <div className="mt-auto hidden items-end justify-between gap-2 border-t border-border pt-2.5 sm:flex">
-            <SourceBar sumber={recap.sumber.slice(0, 3)} size="sm" />
+            <SourceBar sumber={recap.sumber} max={3} size="sm" />
             <Link
               href={href}
               className="inline-flex shrink-0 items-center gap-1 text-[11.5px] font-semibold text-brand transition-colors hover:text-brand-hover"
@@ -373,7 +382,7 @@ export function StockCard({
 
         {/* Footer: sources + cta */}
         <div className="mt-auto flex items-end justify-between gap-2 border-t border-border pt-2.5">
-          <SourceBar sumber={recap.sumber.slice(0, 3)} size="sm" />
+          <SourceBar sumber={recap.sumber} max={3} size="sm" />
           <Link
             href={href}
             className="inline-flex shrink-0 items-center gap-0.5 text-[11.5px] font-semibold text-brand transition-colors hover:text-brand-hover"

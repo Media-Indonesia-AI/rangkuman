@@ -1,9 +1,10 @@
 "use client";
 
 import { BookOpen, Clock } from "lucide-react";
-import type { StoryItem, StorySentiment } from "@/lib/api";
+import type { StoryItem } from "@/lib/api";
 import { headlines as mockHeadlines } from "@/lib/mock/headlines";
 import type { Sentimen } from "@/lib/mock/recaps";
+import { toSentimen } from "@/lib/util/sentiment";
 import { cn, getRelativeTime } from "@/lib/utils";
 import { useLatestStories } from "@/lib/hooks/useLatestStories";
 import { SentimentBadge } from "./SentimentBadge";
@@ -13,23 +14,6 @@ import { Shimmer } from "./Shimmer";
  *  backend for `limit` and then slices down to this count. Matches
  *  the previous mock-driven behavior of `headlines.slice(0, 6)`. */
 const VISIBLE_COUNT = 6;
-
-/**
- * Translate a backend `StorySentiment` (English) into the Indonesian
- * `Sentimen` vocabulary used by the existing UI components
- * (`SentimentBadge`, market-color palette, etc.). Centralized here so
- * the mapping only lives in one place.
- */
-function toSentimen(s: StorySentiment): Sentimen {
-  switch (s) {
-    case "positive":
-      return "positif";
-    case "negative":
-      return "negatif";
-    case "neutral":
-      return "netral";
-  }
-}
 
 /** Tailwind dot/rail color for a story's sentiment. Mirrors the
  *  existing `storyColor` derivation in the previous in-place

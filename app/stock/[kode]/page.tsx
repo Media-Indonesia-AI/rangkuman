@@ -4,6 +4,7 @@ import { ArrowLeft, ArrowUpRight, Clock, TrendingUp, TrendingDown, Minus } from 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SentimentBadge } from "@/components/SentimentBadge";
+import { HeadlineSentimentBadge } from "@/components/HeadlineSentimentBadge";
 import { SourceBar } from "@/components/SourceBar";
 import { EmptyState } from "@/components/EmptyState";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
@@ -17,6 +18,7 @@ import { SimilarStocks } from "@/components/SimilarStocks";
 import { groupArticlesByMedia } from "@/lib/mock/articles";
 import { formatTanggalIndonesia, formatTanggalSingkat } from "@/lib/util/formatDate";
 import { initialsOf } from "@/lib/util/formatMedia";
+import { HeadlineDetailProvider } from "@/components/HeadlineDetailProvider";
 
 interface PageProps {
   params: { kode: string };
@@ -77,6 +79,11 @@ export default function StockDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6">
+        {/* Owns the single deep-linked headline fetch: reads ?id= and
+            calls loadHeadlineById once, sharing the result (e.g. the
+            hero sentiment badge) via context. Wraps the server-rendered
+            body so consumers nested inside still receive it. */}
+        <HeadlineDetailProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
           Rangkuman &mdash; Saham {stock.nama} ({stock.kode})
@@ -109,7 +116,7 @@ export default function StockDetailPage({ params }: PageProps) {
               <span className="rounded border border-border bg-bg-primary/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-primary backdrop-blur-sm">
                 {stock.sektor}
               </span>
-              {recap && <SentimentBadge sentiment={recap.sentimen} size="sm" />}
+              {recap && <HeadlineSentimentBadge fallback={recap.sentimen} />}
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -137,6 +144,12 @@ export default function StockDetailPage({ params }: PageProps) {
             </div>
           </div>
         </section>
+
+        {/* Deep-linked headline detail is fetched once by
+            <HeadlineDetailProvider> above and consumed via
+            useHeadlineDetail() (currently by the hero sentiment badge).
+            A dedicated "Headline" detail section can be added here later
+            as another consumer — no extra fetch needed. */}
 
         {!recap ? (
           <EmptyState
@@ -339,6 +352,7 @@ export default function StockDetailPage({ params }: PageProps) {
             </aside>
           </div>
         )}
+        </HeadlineDetailProvider>
       </main>
       <Footer />
     </>

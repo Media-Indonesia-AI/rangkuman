@@ -2,8 +2,9 @@
 
 import { ArrowUpRight, Flame } from "lucide-react";
 import Link from "next/link";
-import type { TrendingStory, TrendingSentiment } from "@/lib/api";
-import type { DailyRecap, Sentimen } from "@/lib/mock/recaps";
+import type { TrendingStory } from "@/lib/api";
+import type { DailyRecap } from "@/lib/mock/recaps";
+import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "./Shimmer";
 import { StockCard } from "./StockCard";
 
@@ -39,12 +40,6 @@ interface PalingBanyakDiberitakanProps {
   trendingLoading: boolean;
 }
 
-const trendingSentimentToSentimen: Record<TrendingSentiment, Sentimen> = {
-  positive: "positif",
-  negative: "negatif",
-  neutral: "netral",
-};
-
 /**
  * Map a `TrendingStory` (API wire shape) → `DailyRecap` (the shape
  * `StockCard` consumes). Only the fields `StockCard` reads are
@@ -54,7 +49,7 @@ const trendingSentimentToSentimen: Record<TrendingSentiment, Sentimen> = {
  * - `created_at` (ISO)         → `tanggal` (YYYY-MM-DD slice)
  * - `primary_ticker_code`      → `sahamKode`
  * - `summary`                  → `ringkasan`
- * - `sentiment` (en)           → `sentimen` (id) via lookup above
+ * - `sentiment` (en)           → `sentimen` (id) via `toSentimen`
  * - `story_count`              → `jumlahBerita`
  * - `medias[]` ({name,count})  → `sumber[]` ({media,jumlah}) so
  *                                 `<SourceBar>` renders the per-publisher
@@ -68,7 +63,7 @@ function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
     tanggal: story.created_at.split("T")[0],
     sahamKode: story.primary_ticker_code,
     ringkasan: story.summary,
-    sentimen: trendingSentimentToSentimen[story.sentiment],
+    sentimen: toSentimen(story.sentiment),
     jumlahBerita: story.story_count,
     sumber: (story.medias ?? []).map((m) => ({
       media: m.name,
