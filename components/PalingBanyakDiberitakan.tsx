@@ -56,11 +56,11 @@ const trendingSentimentToSentimen: Record<TrendingSentiment, Sentimen> = {
  * - `summary`                  → `ringkasan`
  * - `sentiment` (en)           → `sentimen` (id) via lookup above
  * - `story_count`              → `jumlahBerita`
- * - `sumber`                   → `[]` (the wire shape only has an
- *                                 aggregate count, no per-publisher
- *                                 breakdown — `<SourceBar>` will
- *                                 render empty until the backend
- *                                 adds per-source data)
+ * - `medias[]` ({name,count})  → `sumber[]` ({media,jumlah}) so
+ *                                 `<SourceBar>` renders the per-publisher
+ *                                 breakdown. `logo` isn't in the wire
+ *                                 shape and `SourceBar` doesn't read it,
+ *                                 so it's left empty.
  */
 function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
   return {
@@ -70,7 +70,11 @@ function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
     ringkasan: story.summary,
     sentimen: trendingSentimentToSentimen[story.sentiment],
     jumlahBerita: story.story_count,
-    sumber: [],
+    sumber: (story.medias ?? []).map((m) => ({
+      media: m.name,
+      logo: "",
+      jumlah: m.count,
+    })),
   };
 }
 
@@ -126,6 +130,7 @@ export function PalingBanyakDiberitakan({
               recap={mapTrendingStoryToRecap(story)}
               variant="list"
               rank={i + 1}
+              id={story.id}
             />
           ))}
         </div>
