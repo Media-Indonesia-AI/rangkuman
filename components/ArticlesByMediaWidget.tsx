@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Newspaper } from "lucide-react";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useListStory } from "@/lib/hooks/useListStory";
 import { initialsOf } from "@/lib/util/formatMedia";
+import { Shimmer } from "./Shimmer";
 import { cn } from "@/lib/utils";
 import type { StoryArticle } from "@/lib/api";
 
@@ -11,35 +12,60 @@ interface ArticlesByMediaWidgetProps {
   className?: string;
 }
 
-/** `source_url` may arrive as either a hostname (`market.bisnis.com`)
- *  or a full canonical URL — the wire comment in `types/story.ts`
- *  documents both. Anchor `href` needs a scheme, so we normalize. */
+// `source_url` may arrive as either a hostname (`market.bisnis.com`)
+// or a full canonical URL. Anchor `href` needs a scheme, so we normalize.
 function articleHref(sourceUrl: string): string {
   return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
 }
 
-/** "Diliput media" — the deep-linked headline's articles grouped by
+const SHIMMER_GROUP_COUNT = 3;
+const SHIMMER_ARTICLES_PER_GROUP = 2;
+
+/** Skeleton shown while stories are in flight. Mirrors the real
+ *  group + article-row structure so the layout doesn't shift. */
+function ArticlesByMediaShimmer() {
+  return (
+    <div className="space-y-5">
+      {Array.from({ length: SHIMMER_GROUP_COUNT }).map((_, i) => (
+        <div
+          key={`skel-${i}`}
+          className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+        >
+          <header className="flex items-center gap-3 border-b border-border bg-bg-tertiary px-3 py-2">
+            <Shimmer className="h-6 w-6 rounded" />
+            <Shimmer className="h-3 w-24" />
+            <Shimmer className="h-2.5 w-6" />
+          </header>
+          <ul className="divide-y divide-border">
+            {Array.from({ length: SHIMMER_ARTICLES_PER_GROUP }).map((_, j) => (
+              <li key={`skel-${i}-${j}`} className="px-4 py-3">
+                <Shimmer className="h-3.5 w-full" />
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** "Diliput media" — deep-linked headline's articles grouped by
  *  publisher. Data path:
  *  `useHeadlineDetail()` → `detail.id`
- *  → `useListStory(10, 0, [{ field: "headline_id", operator: "eq",
- *  value: detail.id }], detail !== null)` → stories
- *  → flatten each story's `articles[]` and group by `source_name`.
- *
- *  The `enabled: detail !== null` gate prevents the no-filter request
- *  the hook would otherwise issue on first render (when `detail` is
- *  still null in the provider).
- *
- *  Renders a single `-` placeholder when there are no articles —
- *  matches the per-day placeholder style in `<NewsTimeline>` for
- *  visual consistency. */
+ *  → `useListStory(10, 0, [{ headline_id: detail.id }], detail !== null)`
+ *  → stories → flatten each `articles[]` → group by `source_name`.
+ *  Renders `-` when no articles, shimmer while fetching. */
 export function ArticlesByMediaWidget({ className }: ArticlesByMediaWidgetProps) {
-  const { detail } = useHeadlineDetail();
-  const { data: stories } = useListStory(
+  const { detail, loading: detailLoading } = useHeadlineDetail();
+  const { data: stories, isLoading: storiesLoading } = useListStory(
     10,
     0,
     detail ? [{ field: "headline_id", operator: "eq", value: detail.id }] : [],
     detail !== null,
   );
+
+  // Either fetch stage (detail or stories) should show the shimmer.
+  const isFetching = detailLoading || (detail !== null && storiesLoading);
 
   // Flatten stories → articles, group by source_name.
   const groups = new Map<string, StoryArticle[]>();
@@ -66,7 +92,9 @@ export function ArticlesByMediaWidget({ className }: ArticlesByMediaWidgetProps)
         </span>
       </header>
 
-      {grouped.length > 0 ? (
+      {isFetching ? (
+        <ArticlesByMediaShimmer />
+      ) : grouped.length > 0 ? (
         <div className="space-y-5">
           {grouped.map(({ media, items }) => (
             <div
@@ -111,8 +139,15 @@ export function ArticlesByMediaWidget({ className }: ArticlesByMediaWidgetProps)
           ))}
         </div>
       ) : (
-        <div className="flex items-center gap-1.5 rounded-md border border-dashed border-border bg-bg-tertiary/20 px-4 py-3">
-          <span className="font-mono text-[11.5px] text-text-faint">-</span>
+        <div className="flex flex-col items-center gap-2 px-3.5 py-10 text-center">
+          <Newspaper className="h-5 w-5 text-text-faint" aria-hidden />
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-text-muted">
+            Belum ada liputan media
+          </p>
+          <p className="max-w-xs text-[11.5px] leading-relaxed text-text-faint">
+            Headline ini belum punya artikel dari media. Coba cek
+            headline lain atau kembali ke beranda.
+          </p>
         </div>
       )}
     </section>
