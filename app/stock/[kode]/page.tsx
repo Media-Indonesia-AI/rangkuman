@@ -168,8 +168,8 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
               <KeyMetrics stock={stock} />
 
-              {/* News timeline 7 days */}
-              <NewsTimeline kode={kode} todayIso={TODAY_ISO} />
+              {/* News timeline */}
+              <NewsTimeline todayIso={TODAY_ISO} />
 
               {/* Sentiment 7-day mini bar chart */}
               <SentimentSparkline7d
