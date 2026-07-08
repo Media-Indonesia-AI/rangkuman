@@ -5,6 +5,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { HeadlineSentimentBadge } from "@/components/HeadlineSentimentBadge";
+import { HeadlineSummary } from "@/components/HeadlineSummary";
 import { SourceBar } from "@/components/SourceBar";
 import { EmptyState } from "@/components/EmptyState";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
@@ -185,9 +186,7 @@ export default function StockDetailPage({ params }: PageProps) {
                 </div>
 
                 <div className="p-4 sm:p-5">
-                  <p className="text-[15px] leading-[1.65] text-text-primary">
-                    {recap.ringkasan}
-                  </p>
+                  <HeadlineSummary fallback={recap.ringkasan} />
 
                   <div className="mt-5 border-t border-border pt-4">
                     <p className="label mb-2.5">Disebut dalam</p>

@@ -61,4 +61,5 @@ export type {
 export type {
   EmbeddedStory,
   HeadlineDetail,
+  HeadlineDetailResponse,
 } from "./types/headline";

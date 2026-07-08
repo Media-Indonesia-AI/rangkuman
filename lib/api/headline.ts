@@ -18,7 +18,7 @@ import type {
   StoryResponse,
   TrendingStoriesResponse,
 } from "./types/story";
-import type { HeadlineDetail } from "./types/headline";
+import type { HeadlineDetail, HeadlineDetailResponse } from "./types/headline";
 
 /**
  * Fetch the current trending-ticker stories.
@@ -70,19 +70,22 @@ export function getHeadlines(
 /**
  * Fetch a single headline by ID, with its related stories.
  *
- * Returns a flat object (no `{ data: ... }` wrapper) — see
- * `HeadlineDetail` for the wire shape. The `id` is path-encoded with
- * `encodeURIComponent` so callers can pass any string the backend
- * hands out (e.g. mongo-style hashes) without worrying about
- * reserved characters.
+ * The backend wraps the response in `{ data: HeadlineDetail }`
+ * (same shape as the list endpoints); this function unwraps it
+ * so call sites only see `HeadlineDetail`. See `HeadlineDetailResponse`
+ * for the raw wire shape.
+ *
+ * The `id` is path-encoded with `encodeURIComponent` so callers can
+ * pass any string the backend hands out (e.g. mongo-style hashes)
+ * without worrying about reserved characters.
  *
  * @param id Headline ID — opaque string from a list response.
  */
 export function getHeadlineById(
   id: string,
 ): Promise<HeadlineDetail> {
-  return request<HeadlineDetail>(
+  return request<HeadlineDetailResponse>(
     `headlines/${encodeURIComponent(id)}`,
     { method: "GET" },
-  );
+  ).then((res) => res.data);
 }

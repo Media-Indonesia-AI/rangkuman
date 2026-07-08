@@ -39,12 +39,22 @@ export interface EmbeddedStory {
  * payload with related stories in the older embedded shape
  * (see `EmbeddedStory`).
  *
- * Returned as a flat object — no `{ data: ... }` wrapper, unlike
- * the list endpoints (`TrendingStoriesResponse`, `StoryResponse`).
- * If the backend later wraps it, add a `HeadlineDetailResponse`
- * wrapper like the others.
+ * Wire format: `{ data: HeadlineDetail }` — same `{ data: ... }`
+ * wrapper as the list endpoints (`TrendingStoriesResponse`,
+ * `StoryResponse`, `TopicResponse`). The API client unwraps it
+ * before handing it to consumers, so call sites only ever see
+ * `HeadlineDetail`.
  */
 export interface HeadlineDetail extends StoryItem {
   /** Related stories for this headline, in the older wire shape. */
   stories: EmbeddedStory[];
+}
+
+/**
+ * Wire format the backend returns from `GET headlines/{id}`:
+ * `{ data: HeadlineDetail }`. The `getHeadlineById` API function
+ * unwraps this to `HeadlineDetail` for consumers.
+ */
+export interface HeadlineDetailResponse {
+  data: HeadlineDetail;
 }
