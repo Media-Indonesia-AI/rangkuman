@@ -1,12 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Clock, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { HeadlineSentimentBadge } from "@/components/HeadlineSentimentBadge";
-import { HeadlineSummary } from "@/components/HeadlineSummary";
-import { SourceBar } from "@/components/SourceBar";
+import { AggregateSummary } from "@/components/AggregateSummary";
 import { EmptyState } from "@/components/EmptyState";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
@@ -17,7 +16,7 @@ import { KeyMetrics } from "@/components/KeyMetrics";
 import { NewsTimeline7d } from "@/components/NewsTimeline7d";
 import { SimilarStocks } from "@/components/SimilarStocks";
 import { groupArticlesByMedia } from "@/lib/mock/articles";
-import { formatTanggalIndonesia, formatTanggalSingkat } from "@/lib/util/formatDate";
+import { formatTanggalSingkat } from "@/lib/util/formatDate";
 import { initialsOf } from "@/lib/util/formatMedia";
 import { HeadlineDetailProvider } from "@/components/HeadlineDetailProvider";
 
@@ -57,12 +56,6 @@ export function generateMetadata({ params }: PageProps) {
   };
 }
 
-const SentimenIcon = {
-  positif: TrendingUp,
-  netral: Minus,
-  negatif: TrendingDown,
-} as const;
-
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
   const stock = getStockByKode(kode);
@@ -73,7 +66,6 @@ export default function StockDetailPage({ params }: PageProps) {
   const groups = recap ? groupArticlesByMedia(recap.id) : [];
   const positive = stock.changePercent >= 0;
   const heroGradient = HUE_GRADIENT[stock.hue];
-  const Icon = recap ? SentimenIcon[recap.sentimen] : Minus;
 
   return (
     <>
@@ -163,37 +155,7 @@ export default function StockDetailPage({ params }: PageProps) {
             {/* Main column */}
             <div className="min-w-0 space-y-6">
               {/* Aggregate summary */}
-              <section
-                className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
-                aria-label="Ringkasan agregat"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-4 py-2.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <Icon className={`h-3.5 w-3.5 ${
-                      recap.sentimen === "positif" ? "text-bullish" :
-                      recap.sentimen === "negatif" ? "text-bearish" : "text-mixed"
-                    }`} aria-hidden />
-                    <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-primary">
-                      Ringkasan AI
-                    </span>
-                    <span className="font-mono text-[10.5px] text-text-muted num-tabular">
-                      · {formatTanggalIndonesia(recap.tanggal)}
-                    </span>
-                  </div>
-                  <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-                    {recap.jumlahBerita} artikel · {recap.sumber.length} media
-                  </span>
-                </div>
-
-                <div className="p-4 sm:p-5">
-                  <HeadlineSummary fallback={recap.ringkasan} />
-
-                  <div className="mt-5 border-t border-border pt-4">
-                    <p className="label mb-2.5">Disebut dalam</p>
-                    <SourceBar sumber={recap.sumber} />
-                  </div>
-                </div>
-              </section>
+              <AggregateSummary recap={recap} />
 
               {/* Price chart 30 days */}
               <PriceChart30d
