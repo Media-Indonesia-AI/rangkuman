@@ -3,6 +3,8 @@
  * stocks / market / auth, so the types live in their own file.
  */
 
+import type { EmbeddedStory } from "./headline";
+
 // ─── TRENDING STORIES ──────────────────────────────────────────
 
 /** Direction of the day's net sentiment for a trending ticker. */
@@ -142,5 +144,18 @@ export interface TopicResponse {
   data: StoryTopic[];
 }
 
+/** Wire format the backend returns from `GET stories`: `{ data:
+ *  EmbeddedStory[] }`. Items reuse the older wire shape from
+ *  `HeadlineDetail.stories[]` (`EmbeddedStory` in `./headline`), so
+ *  callers get the same `headline` / `primary_sentiment` /
+ *  `recap_date` fields plus the four optional extras (`headline_id`,
+ *  `articles`, `created_at`, `updated_at`) that only the standalone
+ *  endpoint ships. The `getListStory` API function unwraps this to
+ *  `EmbeddedStory[]` for consumers. */
+export interface StoryListResponse {
+  data: EmbeddedStory[];
+}
+
 // The headline-detail request types (`EmbeddedStory`, `HeadlineDetail`)
-// live in `./headline`.
+// live in `./headline`; `StoryListResponse` above re-imports
+// `EmbeddedStory` from there to type its `data` array.

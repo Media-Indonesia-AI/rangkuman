@@ -6,7 +6,7 @@
  * (`StoryItem`, `StorySentiment`) are imported from `./story`.
  */
 
-import type { StoryItem, StorySentiment } from "./story";
+import type { StoryArticle, StoryItem, StorySentiment } from "./story";
 
 // ─── HEADLINE DETAIL ───────────────────────────────────────────
 
@@ -17,6 +17,15 @@ import type { StoryItem, StorySentiment } from "./story";
  * NOT match the new top-level `StoryItem` (which uses `title`,
  * `sentiment`, `created_at`). The two shapes are kept separate until
  * the backend aligns them.
+ *
+ * The standalone stories-list endpoint (`GET stories`,
+ * `getListStory()`) also returns items in this shape, but tacks on
+ * a few extra fields: `headline_id` (the parent headline, useful as
+ * a round-trip key for callers that already have one in hand),
+ * `articles[]` (the per-story article rollup), and `created_at` /
+ * `updated_at` for sortability. Those four are optional here so the
+ * same interface covers both call sites — the embedded array in
+ * `HeadlineDetail` doesn't carry them today.
  */
 export interface EmbeddedStory {
   /** Story ID. */
@@ -31,6 +40,19 @@ export interface EmbeddedStory {
   /** ISO timestamp of when the related story was generated (older
    *  field name; new `StoryItem` calls this `created_at`). */
   recap_date: string;
+  /** Parent headline ID. Only present on items from the standalone
+   *  `/stories` endpoint; absent on the embedded array in
+   *  `HeadlineDetail`. */
+  headline_id?: string;
+  /** Source articles aggregated into this story. Only present on
+   *  items from the standalone `/stories` endpoint. */
+  articles?: StoryArticle[];
+  /** ISO timestamp of when the story record was created. Only
+   *  present on items from the standalone `/stories` endpoint. */
+  created_at?: string;
+  /** ISO timestamp of when the story record was last updated. Only
+   *  present on items from the standalone `/stories` endpoint. */
+  updated_at?: string;
 }
 
 /**

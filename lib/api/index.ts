@@ -51,6 +51,7 @@ export type {
   StoryArticle,
   StoryFilter,
   StoryItem,
+  StoryListResponse,
   StoryResponse,
   StorySentiment,
   StoryTopic,

@@ -10,6 +10,7 @@
  *   - `./stocks`   — getTopStocks, getTickers, getForeignStocks
  *   - `./market`   — getInterestRate, getExchangeRate
  *   - `./headline` — getTrendingStories, getHeadlines, getHeadlineById
+ *   - `./story`    — getListStory
  *   - `./topic`    — getTopic
  *
  * The `api` object at the bottom composes those into one namespace so
@@ -29,6 +30,7 @@ import {
   getTickers,
   getTopStocks,
 } from "./stocks";
+import { getListStory } from "./story";
 import { getTopic } from "./topic";
 import type { ApiError } from "./types/error";
 
@@ -137,6 +139,8 @@ export const api = {
   getTrendingStories,
   getHeadlines,
   getHeadlineById,
+  // Story
+  getListStory,
   // Topic
   getTopic,
 };
