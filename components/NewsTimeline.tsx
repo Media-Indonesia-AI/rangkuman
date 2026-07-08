@@ -10,7 +10,7 @@ import { useListStory } from "@/lib/hooks/useListStory";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { EmbeddedStory, StoryFilter } from "@/lib/api";
 
-interface NewsTimeline7dProps {
+interface NewsTimelineProps {
   kode: string;
   todayIso: string;
   className?: string;
@@ -33,7 +33,7 @@ function sentimentDotClass(s: EmbeddedStory["primary_sentiment"]): string {
 }
 
 /**
- * 7-day news timeline. Each day cell is filled with one of two data
+ * News timeline. Each day cell is filled with one of two data
  * sources, in priority order:
  *
  * 1. Stories from `useListStory(10, 0, [{ field: "headline_id",
@@ -54,7 +54,7 @@ function sentimentDotClass(s: EmbeddedStory["primary_sentiment"]): string {
  * replaces the per-day content with per-story content. The 7-day
  * grid, date pill, and rail dot stay constant across both modes.
  */
-export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProps) {
+export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
   const { detail } = useHeadlineDetail();
 
   // Filter the stories list to the deep-linked headline. The

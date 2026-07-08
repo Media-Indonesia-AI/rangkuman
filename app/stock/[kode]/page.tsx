@@ -13,7 +13,7 @@ import { getSentiment7d } from "@/lib/mock/sentiment-7d";
 import { SentimentSparkline7d } from "@/components/SentimentSparkline7d";
 import { PriceChart30d } from "@/components/PriceChart30d";
 import { KeyMetrics } from "@/components/KeyMetrics";
-import { NewsTimeline7d } from "@/components/NewsTimeline7d";
+import { NewsTimeline } from "@/components/NewsTimeline";
 import { SimilarStocks } from "@/components/SimilarStocks";
 import { groupArticlesByMedia } from "@/lib/mock/articles";
 import { formatTanggalSingkat } from "@/lib/util/formatDate";
@@ -169,7 +169,7 @@ export default function StockDetailPage({ params }: PageProps) {
               <KeyMetrics stock={stock} />
 
               {/* News timeline 7 days */}
-              <NewsTimeline7d kode={kode} todayIso={TODAY_ISO} />
+              <NewsTimeline kode={kode} todayIso={TODAY_ISO} />
 
               {/* Sentiment 7-day mini bar chart */}
               <SentimentSparkline7d
