@@ -48,8 +48,6 @@ export type {
   TrendingSentiment,
   TrendingStoriesResponse,
   TrendingStory,
-  EmbeddedStory,
-  HeadlineDetail,
   StoryArticle,
   StoryFilter,
   StoryItem,
@@ -58,3 +56,9 @@ export type {
   StoryTopic,
   TopicResponse,
 } from "./types/story";
+
+// Headline detail
+export type {
+  EmbeddedStory,
+  HeadlineDetail,
+} from "./types/headline";

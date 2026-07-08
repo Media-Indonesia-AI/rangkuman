@@ -1,21 +1,24 @@
 /**
- * Story-domain API endpoints.
+ * Headline-domain API endpoints.
  *
- * Hits `/story/*` and `/topic`. Re-exports are composed into the
- * top-level `api` object in `./client` so existing call sites
+ * Hits `headlines/*` — the trending ticker snapshot, the paginated
+ * headlines list, and the per-headline detail resource. Composed into
+ * the top-level `api` object in `./client` so existing call sites
  * (`api.getTrendingStories()`, `api.getHeadlines()`,
- * `api.getHeadlineById()`, `api.getTopic()`)
- * keep working.
+ * `api.getHeadlineById()`) keep working.
+ *
+ * The split between this file and `./topic` mirrors the backend
+ * route grouping: everything under `/headlines` lives here, the
+ * topic list (`/topic`) lives next door.
  */
 
 import { request } from "./client";
 import type {
-  HeadlineDetail,
   StoryFilter,
   StoryResponse,
-  TopicResponse,
   TrendingStoriesResponse,
 } from "./types/story";
+import type { HeadlineDetail } from "./types/headline";
 
 /**
  * Fetch the current trending-ticker stories.
@@ -80,43 +83,6 @@ export function getHeadlineById(
 ): Promise<HeadlineDetail> {
   return request<HeadlineDetail>(
     `headlines/${encodeURIComponent(id)}`,
-    { method: "GET" },
-  );
-}
-
-/**
- * Fetch the topic list, with optional structured filters. Topics are
- * the same entities embedded under `StoryItem.topic` — exposed here
- * as a paginated top-level resource so callers can enumerate them
- * (e.g. for navigation / filter chips) without first loading stories.
- *
- * The default `skip = 10` is unusual (other list endpoints default to
- * `0`); it matches the backend's own default and the user's spec.
- * Don't "fix" this to `0` without checking with whoever defined the
- * contract.
- *
- * @param limit   How many topics to return (default 10).
- * @param skip    How many topics to skip from the start of the result
- *                set, for pagination (default 10).
- * @param filters Structured `{ field, operator, value }` filters to
- *                narrow the result set (default `[]`). JSON-encoded
- *                the same way as `getHeadlines`'s filters. Empty list
- *                omits the param entirely.
- */
-export function getTopic(
-  limit = 10,
-  skip = 0,
-  filters: StoryFilter[] = [],
-): Promise<TopicResponse> {
-  const params = new URLSearchParams({
-    limit: String(limit),
-    skip: String(skip),
-  });
-  if (filters.length > 0) {
-    params.set("filters", JSON.stringify(filters));
-  }
-  return request<TopicResponse>(
-    `topic?${params.toString()}`,
     { method: "GET" },
   );
 }

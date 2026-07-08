@@ -6,15 +6,22 @@
  * it throws on non-2xx responses. Endpoint logic lives in category
  * modules:
  *
- *   - `./auth`    — register, login
- *   - `./stocks`  — getTopStocks, getTickers, getForeignStocks
- *   - `./market`  — getInterestRate, getExchangeRate
+ *   - `./auth`     — register, login
+ *   - `./stocks`   — getTopStocks, getTickers, getForeignStocks
+ *   - `./market`   — getInterestRate, getExchangeRate
+ *   - `./headline` — getTrendingStories, getHeadlines, getHeadlineById
+ *   - `./topic`    — getTopic
  *
  * The `api` object at the bottom composes those into one namespace so
  * existing call sites (`api.getTopStocks()`, etc.) keep working.
  */
 
 import { login, register } from "./auth";
+import {
+  getHeadlineById,
+  getHeadlines,
+  getTrendingStories,
+} from "./headline";
 import { getExchangeRate, getInterestRate } from "./market";
 import {
   getCompositeChart,
@@ -22,12 +29,7 @@ import {
   getTickers,
   getTopStocks,
 } from "./stocks";
-import {
-  getHeadlineById,
-  getHeadlines,
-  getTopic,
-  getTrendingStories,
-} from "./story";
+import { getTopic } from "./topic";
 import type { ApiError } from "./types/error";
 
 export const API_BASE_URL =
@@ -131,9 +133,10 @@ export const api = {
   // Market
   getInterestRate,
   getExchangeRate,
-  // Story
+  // Headline
   getTrendingStories,
   getHeadlines,
   getHeadlineById,
+  // Topic
   getTopic,
 };

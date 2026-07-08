@@ -25,11 +25,11 @@ import type {
 } from "./types/stocks";
 import type {
   TrendingStoriesResponse,
-  HeadlineDetail,
   StoryFilter,
   StoryResponse,
   TopicResponse,
 } from "./types/story";
+import type { HeadlineDetail } from "./types/headline";
 
 let cachedTopStocks: TopStocksResponse | null = null;
 let inflightTopStocks: Promise<TopStocksResponse> | null = null;
