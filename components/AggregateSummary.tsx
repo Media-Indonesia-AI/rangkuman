@@ -84,10 +84,10 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
           <LinkifiedText text={summaryText} />
         </p>
 
-        <div className="mt-5 border-t border-border pt-4">
+        {/* <div className="mt-5 border-t border-border pt-4">
           <p className="label mb-2.5">Disebut dalam</p>
           <SourceBar sumber={recap.sumber} />
-        </div>
+        </div> */}
       </div>
     </section>
   );
