@@ -65,7 +65,15 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
   const filters: StoryFilter[] = detail
     ? [{ field: "headline_id", operator: "eq", value: detail.id }]
     : [];
-  const { data: stories } = useListStory(10, 0, filters);
+  const { data: stories, isLoading: storiesLoading } = useListStory(10, 0, filters);
+
+  // Empty-state condition: a deep-linked headline (`?id=…`) that
+  // resolved to a `detail` payload but whose `useListStory` fetch
+  // settled with zero related stories. The statically prerendered
+  // shell (no `?id=…`) keeps the recap fallback because there's no
+  // headline in context to be "empty of stories" for.
+  const showEmptyWidget =
+    detail !== null && !storiesLoading && stories.length === 0;
 
   // Bucket stories by `yyyy-MM-dd` (the local-time date portion of
   // `recap_date`) so each cell can do a constant-time lookup.
@@ -89,8 +97,20 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
         )}`
       : null;
 
+  // Build the timeline's day list. When stories have loaded, the
+  // timeline spans exactly the unique dates present in the stories
+  // (one cell per date, chronological). When no stories are present
+  // — no `?id=…`, fetch in flight / failed, or the headline has no
+  // related stories — fall back to the original 7-day window ending
+  // at `todayIso` so the recap fallback still has a contiguous grid.
+  // `sortedDayKeys` is the already-sorted unique-date list, so its
+  // order is chronological; `parseISO` produces a Date compatible
+  // with the existing `format(d, …)` calls below.
   const today = parseISO(todayIso);
-  const days = Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
+  const days =
+    sortedDayKeys.length > 0
+      ? sortedDayKeys.map((iso) => parseISO(iso))
+      : Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
 
   return (
     <section
@@ -107,6 +127,18 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
         </span>
       </header>
 
+      {showEmptyWidget ? (
+        <div className="flex flex-col items-center gap-2 px-3.5 py-10 text-center">
+          <Calendar className="h-5 w-5 text-text-faint" aria-hidden />
+          <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-text-muted">
+            Belum ada cerita terkait
+          </p>
+          <p className="max-w-xs text-[11.5px] leading-relaxed text-text-faint">
+            Headline ini belum punya cerita terkait. Coba cek headline
+            lain atau kembali ke beranda.
+          </p>
+        </div>
+      ) : (
       <ol className="relative px-3.5 py-3.5">
         {/* Vertical rail */}
         <span
@@ -190,6 +222,15 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
                               locale: idLocale,
                             })}
                           </span>
+                          {/* `articles` is only present on items from the
+                              standalone `/stories` endpoint; the older
+                              embedded form (in `HeadlineDetail.stories[]`)
+                              doesn't carry it. `?? 0` keeps the count
+                              always rendered, matching the recap's
+                              "X artikel" line above. */}
+                          <span className="font-mono text-[10px] text-text-muted">
+                            {s.articles?.length ?? 0} artikel
+                          </span>
                         </div>
                         <p className="text-[11.5px] leading-snug text-text-primary">
                           {s.headline}
@@ -234,6 +275,7 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
           );
         })}
       </ol>
+      )}
     </section>
   );
 }
