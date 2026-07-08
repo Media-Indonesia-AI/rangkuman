@@ -26,6 +26,7 @@ import type {
 import type {
   TrendingStoriesResponse,
   StoryFilter,
+  StoryListResponse,
   StoryResponse,
   TopicResponse,
 } from "./types/story";
@@ -456,6 +457,68 @@ export function loadTopic(
       throw err;
     });
   inflightTopics.set(key, promise);
+  return promise;
+}
+
+// ─── STORIES LIST ──────────────────────────────────────────────
+
+/** Per-(limit, skip, filters) cache for `getListStory`. Same shape as
+ *  the headlines-list / topic-list caches; isolated so its keys can't
+ *  collide with the others even when (limit, skip, filters) tuples
+ *  happen to match. */
+const cachedListStories = new Map<string, StoryListResponse>();
+const inflightListStories = new Map<string, Promise<StoryListResponse>>();
+
+/** Cache key for a given (limit, skip, filters) tuple. Mirrors
+ *  `headlinesKey` and `topicKey` so structurally-equal filter lists
+ *  share a slot. */
+function listStoryKey(
+  limit: number,
+  skip: number,
+  filters: StoryFilter[],
+): string {
+  return `${limit}|${skip}|${JSON.stringify(filters)}`;
+}
+
+/**
+ * Fetch the stories list for a (limit, skip, filters) tuple, with
+ * request-level dedup. Concurrent and subsequent callers for the
+ * same tuple share one network round-trip. Only successful responses
+ * are cached; errors clear the in-flight slot so the next mount can
+ * retry.
+ *
+ * Typical use: filter by `headline_id` to fetch the related stories
+ * for a deep-linked headline. The hook `useListStory` is the
+ * React-friendly wrapper that adds state + cancel-on-unmount.
+ *
+ * @param limit   How many stories to return (default 10, matching
+ *                the backend's default).
+ * @param skip    How many stories to skip (default 0).
+ * @param filters Structured `{ field, operator, value }` filters
+ *                (default `[]`). Same list passed twice always
+ *                lands on the same cache slot.
+ */
+export function loadListStory(
+  limit = 10,
+  skip = 0,
+  filters: StoryFilter[] = [],
+): Promise<StoryListResponse> {
+  const key = listStoryKey(limit, skip, filters);
+  const cached = cachedListStories.get(key);
+  if (cached) return Promise.resolve(cached);
+  const inflight = inflightListStories.get(key);
+  if (inflight) return inflight;
+  const promise = api
+    .getListStory(limit, skip, filters)
+    .then((res) => {
+      cachedListStories.set(key, res);
+      return res;
+    })
+    .catch((err) => {
+      inflightListStories.delete(key); // allow retry on next mount
+      throw err;
+    });
+  inflightListStories.set(key, promise);
   return promise;
 }
 

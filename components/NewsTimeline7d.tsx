@@ -1,8 +1,14 @@
+"use client";
+
 import { Calendar, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getRecapForStock } from "@/lib/mock/recaps";
-import { format, subDays, parseISO } from "date-fns";
+import { format, parseISO, subDays } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
+import { useHeadlineDetail } from "./HeadlineDetailProvider";
+import { useListStory } from "@/lib/hooks/useListStory";
+import { toSentimen } from "@/lib/util/sentiment";
+import type { EmbeddedStory, StoryFilter } from "@/lib/api";
 
 interface NewsTimeline7dProps {
   kode: string;
@@ -10,13 +16,79 @@ interface NewsTimeline7dProps {
   className?: string;
 }
 
+/** Tailwind color for a story's sentiment pill. */
+function sentimentPillClass(s: EmbeddedStory["primary_sentiment"]): string {
+  const sm = toSentimen(s);
+  if (sm === "positif") return "bg-bullish-soft text-bullish";
+  if (sm === "negatif") return "bg-bearish-soft text-bearish";
+  return "bg-mixed-soft text-mixed";
+}
+
+/** Tailwind background for the rail dot. */
+function sentimentDotClass(s: EmbeddedStory["primary_sentiment"]): string {
+  const sm = toSentimen(s);
+  if (sm === "positif") return "bg-bullish";
+  if (sm === "negatif") return "bg-bearish";
+  return "bg-mixed";
+}
+
 /**
- * 7-day news timeline. For each of the last 7 days, look up whether a recap
- * exists for this stock. If yes, show a sentiment dot + article count + mini
- * headline. Empty days are rendered as faded entries so the timeline stays
- * contiguous.
+ * 7-day news timeline. Each day cell is filled with one of two data
+ * sources, in priority order:
+ *
+ * 1. Stories from `useListStory(10, 0, [{ field: "headline_id",
+ *    operator: "eq", value: detail.id }])` — the paginated
+ *    standalone `/stories` endpoint, filtered to the deep-linked
+ *    headline. The hook dedups concurrent mounts via the
+ *    `loadListStory` cache wrapper; the same fetch is shared with
+ *    any other consumer of `useListStory` keyed on the same
+ *    headline. Each cell renders one row per story with `headline`,
+ *    `primary_sentiment`, and the time portion of `recap_date`,
+ *    bucketed by the local-date portion of `recap_date`.
+ * 2. The aggregate recap (`getRecapForStock(kode, iso)`) — the
+ *    pre-existing mock fallback. Used when no `?id=` is set, the
+ *    fetch is in flight / failed, or no story landed on that day.
+ *
+ * This keeps the statically prerendered shell (no `?id=`) rendering
+ * the prior recap-based view unchanged, while the deep-linked path
+ * replaces the per-day content with per-story content. The 7-day
+ * grid, date pill, and rail dot stay constant across both modes.
  */
 export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProps) {
+  const { detail } = useHeadlineDetail();
+
+  // Filter the stories list to the deep-linked headline. The
+  // `useListStory` hook must be called unconditionally (hook rules);
+  // when there's no `detail` we pass `[]` and the hook returns
+  // whatever the API gives us — but the per-day bucket below will
+  // be empty in that case, so the cell falls back to mock recap.
+  const filters: StoryFilter[] = detail
+    ? [{ field: "headline_id", operator: "eq", value: detail.id }]
+    : [];
+  const { data: stories } = useListStory(10, 0, filters);
+
+  // Bucket stories by `yyyy-MM-dd` (the local-time date portion of
+  // `recap_date`) so each cell can do a constant-time lookup.
+  const storiesByDay = new Map<string, EmbeddedStory[]>();
+  for (const s of stories) {
+    const dayKey = format(parseISO(s.recap_date), "yyyy-MM-dd");
+    const bucket = storiesByDay.get(dayKey);
+    if (bucket) bucket.push(s);
+    else storiesByDay.set(dayKey, [s]);
+  }
+
+  // Earliest → latest range for the header sub-label. The map keys
+  // are already in `yyyy-MM-dd` local-time form, so a string sort
+  // gives chronological order without re-parsing dates.
+  const sortedDayKeys = Array.from(storiesByDay.keys()).sort();
+  const dateRangeLabel =
+    sortedDayKeys.length > 0
+      ? `${format(parseISO(sortedDayKeys[0]), "dd MMM")} s/d ${format(
+          parseISO(sortedDayKeys[sortedDayKeys.length - 1]),
+          "dd MMM",
+        )}`
+      : null;
+
   const today = parseISO(todayIso);
   const days = Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
 
@@ -28,9 +100,11 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
       <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
         <div className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-brand" aria-hidden />
-          <span className="label">Timeline Berita · 7 Hari</span>
+          <span className="label">Timeline Berita · {storiesByDay.size} Hari</span>
         </div>
-        <span className="font-mono text-[10px] text-text-faint">hari ini + 6 hari ke belakang</span>
+        <span className="font-mono text-[10px] text-text-faint">
+          {dateRangeLabel ?? "-"}
+        </span>
       </header>
 
       <ol className="relative px-3.5 py-3.5">
@@ -41,18 +115,24 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
         />
         {days.map((d) => {
           const iso = format(d, "yyyy-MM-dd");
-          const recap = getRecapForStock(kode, iso);
           const isToday = iso === todayIso;
           const date = format(d, "d MMM", { locale: idLocale });
           const dayName = format(d, "EEE", { locale: idLocale });
 
-          const dotColor = recap
-            ? recap.sentimen === "positif"
-              ? "bg-bullish"
-              : recap.sentimen === "negatif"
-                ? "bg-bearish"
-                : "bg-mixed"
-            : "bg-border";
+          const dayStories = storiesByDay.get(iso) ?? [];
+          const recap = dayStories.length === 0 ? getRecapForStock(kode, iso) : undefined;
+
+          // Dot color: first story's sentiment in stories mode, recap
+          // sentiment in fallback mode, neutral border when empty.
+          const dotColor = dayStories.length > 0
+            ? sentimentDotClass(dayStories[0].primary_sentiment)
+            : recap
+              ? recap.sentimen === "positif"
+                ? "bg-bullish"
+                : recap.sentimen === "negatif"
+                  ? "bg-bearish"
+                  : "bg-mixed"
+              : "bg-border";
 
           return (
             <li
@@ -84,11 +164,41 @@ export function NewsTimeline7d({ kode, todayIso, className }: NewsTimeline7dProp
                   className={cn(
                     "absolute -left-[19px] top-1.5 h-2.5 w-2.5 rounded-full ring-4 ring-bg-secondary",
                     dotColor,
-                    !recap && "opacity-40",
+                    dayStories.length === 0 && !recap && "opacity-40",
                     isToday && "ring-2",
                   )}
                 />
-                {recap ? (
+                {dayStories.length > 0 ? (
+                  // Stories mode — one row per story in this day bucket.
+                  <ul className="space-y-2">
+                    {dayStories.map((s) => (
+                      <li
+                        key={s.id}
+                        className="rounded-md border border-border bg-bg-tertiary/40 p-2.5"
+                      >
+                        <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                          <span
+                            className={cn(
+                              "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
+                              sentimentPillClass(s.primary_sentiment),
+                            )}
+                          >
+                            {s.primary_sentiment}
+                          </span>
+                          <span className="font-mono text-[10px] text-text-muted">
+                            {format(parseISO(s.recap_date), "HH:mm", {
+                              locale: idLocale,
+                            })}
+                          </span>
+                        </div>
+                        <p className="text-[11.5px] leading-snug text-text-primary">
+                          {s.headline}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : recap ? (
+                  // Fallback mode — pre-existing recap rendering.
                   <div className="rounded-md border border-border bg-bg-tertiary/40 p-2.5">
                     <div className="mb-1 flex items-center gap-1.5">
                       <span
