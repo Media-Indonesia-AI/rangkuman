@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Clock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { HeadlineSentimentBadge } from "@/components/HeadlineSentimentBadge";
 import { AggregateSummary } from "@/components/AggregateSummary";
+import { ArticlesByMediaWidget } from "@/components/ArticlesByMediaWidget";
 import { EmptyState } from "@/components/EmptyState";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
@@ -15,9 +16,7 @@ import { PriceChart30d } from "@/components/PriceChart30d";
 import { KeyMetrics } from "@/components/KeyMetrics";
 import { NewsTimeline } from "@/components/NewsTimeline";
 import { SimilarStocks } from "@/components/SimilarStocks";
-import { groupArticlesByMedia } from "@/lib/mock/articles";
 import { formatTanggalSingkat } from "@/lib/util/formatDate";
-import { initialsOf } from "@/lib/util/formatMedia";
 import { HeadlineDetailProvider } from "@/components/HeadlineDetailProvider";
 
 interface PageProps {
@@ -63,7 +62,6 @@ export default function StockDetailPage({ params }: PageProps) {
 
   const allRecaps = getRecapsForStock(kode);
   const recap = allRecaps[0];
-  const groups = recap ? groupArticlesByMedia(recap.id) : [];
   const positive = stock.changePercent >= 0;
   const heroGradient = HUE_GRADIENT[stock.hue];
 
@@ -177,64 +175,9 @@ export default function StockDetailPage({ params }: PageProps) {
                 todayIso={TODAY_ISO}
               />
 
-              {/* Articles grouped by media */}
-              <section aria-label="Berita per media">
-                <header className="mb-4 flex items-end justify-between border-b border-border-strong pb-2">
-                  <h2 className="text-[18px] font-bold tracking-tight text-text-primary">
-                    Diliput media
-                  </h2>
-                  <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-                    {groups.length} media
-                  </span>
-                </header>
-
-                <div className="space-y-5">
-                  {groups.map(({ media, items }) => (
-                    <div
-                      key={media}
-                      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
-                    >
-                      <header className="flex items-center gap-3 border-b border-border bg-bg-tertiary px-3 py-2">
-                        <span
-                          aria-hidden
-                          className="inline-flex h-6 w-6 items-center justify-center rounded border border-border bg-bg-card font-mono text-[9.5px] font-semibold uppercase text-text-secondary"
-                        >
-                          {initialsOf(media)}
-                        </span>
-                        <h3 className="text-[13px] font-semibold text-text-primary">
-                          {media}
-                        </h3>
-                        <span className="font-mono text-[10.5px] font-semibold text-brand num-tabular">
-                          ×{items.length}
-                        </span>
-                      </header>
-                      <ul className="divide-y divide-border">
-                        {items.map((a) => (
-                          <li key={a.id}>
-                            <a
-                              href={a.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="group block px-4 py-3 transition-colors hover:bg-bg-tertiary"
-                            >
-                              <h4 className="text-[14px] font-semibold leading-snug text-text-primary group-hover:text-brand">
-                                {a.judulAsli}
-                                <ArrowUpRight
-                                  className="ml-1 inline-block h-3 w-3 text-text-muted opacity-0 transition-opacity group-hover:opacity-100"
-                                  aria-hidden
-                                />
-                              </h4>
-                              <p className="mt-1 text-[12.5px] leading-relaxed text-text-secondary">
-                                {a.inti}
-                              </p>
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              {/* Articles grouped by media — data-driven via
+                  useListStory + the deep-linked headline's ID. */}
+              <ArticlesByMediaWidget />
             </div>
 
             {/* Right rail */}
