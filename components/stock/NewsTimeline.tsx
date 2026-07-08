@@ -7,7 +7,7 @@ import { id as idLocale } from "date-fns/locale";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useListStory } from "@/lib/hooks/useListStory";
 import { toSentimen } from "@/lib/util/sentiment";
-import { Shimmer } from "./Shimmer";
+import { Shimmer } from "@/components/Shimmer";
 import type { EmbeddedStory, StoryFilter } from "@/lib/api";
 
 interface NewsTimelineProps {

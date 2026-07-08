@@ -4,7 +4,7 @@ import { ArrowUpRight, Newspaper } from "lucide-react";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useListStory } from "@/lib/hooks/useListStory";
 import { initialsOf } from "@/lib/util/formatMedia";
-import { Shimmer } from "./Shimmer";
+import { Shimmer } from "@/components/Shimmer";
 import { cn } from "@/lib/utils";
 import type { StoryArticle } from "@/lib/api";
 

@@ -5,8 +5,8 @@ import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { DailyRecap } from "@/lib/mock/recaps";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { SourceBar } from "./SourceBar";
-import { LinkifiedText } from "./LinkifiedText";
+import { SourceBar } from "@/components/SourceBar";
+import { LinkifiedText } from "@/components/LinkifiedText";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
  *  the widget is self-contained — the page only passes the recap. */

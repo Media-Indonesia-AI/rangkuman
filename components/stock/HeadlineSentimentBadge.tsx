@@ -1,6 +1,6 @@
 "use client";
 
-import { SentimentBadge } from "./SentimentBadge";
+import { SentimentBadge } from "@/components/SentimentBadge";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { Sentimen } from "@/lib/mock/recaps";
