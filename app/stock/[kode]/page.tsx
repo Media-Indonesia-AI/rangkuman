@@ -29,21 +29,21 @@ export function generateStaticParams(): { kode: string }[] {
 export function generateMetadata({ params }: PageProps) {
   const stock = getStockByKode(params.kode);
   if (!stock) return { title: "Saham tidak ditemukan · Rangkuman" };
-  const recaps = getRecapsForStock(stock.kode);
+  const recaps = getRecapsForStock(params.kode);
   const today = recaps[0];
   const articleCount = today?.jumlahBerita ?? 0;
   const mediaCount = today?.sumber.length ?? 0;
-  const title = `${stock.kode} — ${stock.nama} · Rangkuman`;
-  const desc = `${stock.kode} dividen interim Rp 215/saham, yield ${stock.dividendYield.toFixed(1)}%. ${articleCount} artikel dari ${mediaCount} media.`;
+  const title = `${params.kode} — ${stock.nama} · Rangkuman`;
+  const desc = `${params.kode} dividen interim Rp 215/saham, yield ${stock.dividendYield.toFixed(1)}%. ${articleCount} artikel dari ${mediaCount} media.`;
   return {
     title,
     description: desc,
     openGraph: {
       title,
       description: desc,
-      url: `https://rangkuman.news/stock/${stock.kode}`,
+      url: `https://rangkuman.news/stock/${params.kode}`,
       type: "article",
-      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: stock.kode }],
+      images: [{ url: "/og-default.png", width: 1200, height: 630, alt: params.kode }],
     },
     twitter: {
       card: "summary_large_image",
@@ -81,7 +81,7 @@ export default function StockDetailPage({ params }: PageProps) {
         <TickerStoriesProvider kode={kode}>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
-          Rangkuman &mdash; Saham {stock.nama} ({stock.kode})
+          Rangkuman &mdash; Saham {stock.nama} ({params.kode})
         </h1>
 
         <Link
@@ -117,7 +117,7 @@ export default function StockDetailPage({ params }: PageProps) {
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
                 <h2 className="font-mono text-[56px] font-bold leading-none tracking-tighter text-text-primary sm:text-[72px]">
-                  {stock.kode}
+                  {params.kode}
                 </h2>
                 <p className="mt-1 text-[14px] text-text-secondary">{stock.nama}</p>
               </div>
@@ -148,7 +148,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
         {!recap ? (
           <EmptyState
-            title={`Belum ada recap untuk ${stock.kode}`}
+            title={`Belum ada recap untuk ${params.kode}`}
             description="Saham ini belum diberitakan pada tanggal terkini."
             suggestion="Coba cek tab '7 Hari Terakhir' di beranda."
           />
@@ -194,7 +194,7 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Quick links */}
               <section className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
                 <header className="border-b border-border bg-bg-tertiary px-3 py-2">
-                  <h3 className="label">Tentang {stock.kode}</h3>
+                  <h3 className="label">Tentang {params.kode}</h3>
                 </header>
                 <dl className="divide-y divide-border text-[12.5px]">
                   <div className="flex justify-between gap-2 px-3 py-2">
@@ -231,7 +231,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
               {/* Saham Serupa — stocks in the same sector */}
               <SimilarStocks
-                excludeKode={stock.kode}
+                excludeKode={params.kode}
                 sektor={stock.sektor}
                 limit={3}
               />
