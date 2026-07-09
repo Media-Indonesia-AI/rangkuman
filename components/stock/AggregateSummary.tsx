@@ -147,8 +147,8 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
           </span>
         </div>
         <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-          {jumlahBerita} artikel 
-          {/* · {recap.sumber.length} media */}
+          {jumlahBerita} artikel
+          {sumber.length > 0 && ` · ${sumber.length} media`}
         </span>
       </div>
 
