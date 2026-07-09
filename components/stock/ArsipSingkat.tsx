@@ -9,6 +9,7 @@ import { toSentimen } from "@/lib/util/sentiment";
 import type { StoryFilter, StoryItem } from "@/lib/api";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { Shimmer } from "@/components/Shimmer";
+import { EmptyState } from "@/components/EmptyState";
 
 /** How many archived entries to show in the right rail. The live
  *  fetch asks the backend for `limit` and we slice down to this
@@ -58,6 +59,19 @@ export function ArsipSingkat({ kode }: ArsipSingkatProps) {
     !isLoading && liveItems === null
       ? getRecapsForStock(kode).slice(1, 1 + VISIBLE_COUNT)
       : null;
+
+  // Both the live fetch and the recap fallback came back empty.
+  // Render the empty-state card so the right rail still has shape
+  // rather than a header with no rows under it.
+  if (!isLoading && liveItems === null && fallbackItems === null) {
+    return (
+      <EmptyState
+        title="Belum ada arsip"
+        description={`Belum ada headline yang diarsipkan untuk ${kode}.`}
+        suggestion="Coba cek tab '7 Hari Terakhir' di beranda."
+      />
+    );
+  }
 
   return (
     <section
