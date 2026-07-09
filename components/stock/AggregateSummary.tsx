@@ -1,10 +1,12 @@
 "use client";
 
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
+import { useMemo } from "react";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
+import { useListStory } from "@/lib/hooks/useListStory";
 import { SourceBar } from "@/components/SourceBar";
 import { LinkifiedText } from "@/components/LinkifiedText";
 
@@ -31,13 +33,53 @@ function sentimenColor(s: DailyRecap["sentimen"]): string {
  * per-headline `?id=` payload whenever it's present, and fall back
  * to the aggregate `recap` otherwise.
  *
- * The media count and the "Disebut dalam" source list stay on the
- * recap's data: the headline-detail payload doesn't carry aggregate
- * media counts (it has `topics` instead of sources), and falling back
- * here keeps the section's "aggregate" framing intact.
+ * The "Disebut dalam" source list comes from the headline-scoped
+ * stories via `useListStory` — each story's `articles[]` is grouped by
+ * `source_name` to derive per-media counts. While the fetch is in
+ * flight, while no `?id=` is set, or after a failed call, we fall
+ * back to `recap.sumber` so the section never goes blank.
  */
 export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   const { detail } = useHeadlineDetail();
+
+  // Same gating pattern as NewsTimeline / ArticlesByMediaWidget: only
+  // fetch when a headline id is present (no `?id=` → no useful filter).
+  // Disabling the hook also clears stale results, so the source bar
+  // doesn't briefly show the previous deep-link's medias.
+  const { data: stories } = useListStory(
+    10,
+    0,
+    detail ? [{ field: "headline_id", operator: "eq", value: detail.id }] : [],
+    detail !== null,
+  );
+
+  // Flatten stories.articles and group by source_name → Sumber shape.
+  // `logo` is left empty: the live payload ships `source_name` only,
+  // and SourceBar derives its avatar from `initialsOf(media)`.
+  const sumberFromStories = useMemo<Sumber[]>(() => {
+    const counts = new Map<string, number>();
+    for (const story of stories) {
+      for (const article of story.articles ?? []) {
+        counts.set(
+          article.source_name,
+          (counts.get(article.source_name) ?? 0) + 1,
+        );
+      }
+    }
+    return Array.from(counts, ([media, jumlah]) => ({
+      media,
+      logo: "",
+      jumlah,
+    }));
+  }, [stories]);
+
+  // Prefer the live, headline-scoped media; fall back to recap so
+  // the section never renders an empty source bar during loading,
+  // without a `?id=`, or after a fetch error.
+  const sumber =
+    detail !== null && sumberFromStories.length > 0
+      ? sumberFromStories
+      : recap.sumber;
 
   // Prefer the deep-linked headline's sentiment + date + summary +
   // story count; fall back to the recap when no `?id=` is set, the
@@ -84,10 +126,10 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
           <LinkifiedText text={summaryText} />
         </p>
 
-        {/* <div className="mt-5 border-t border-border pt-4">
+        <div className="mt-5 border-t border-border pt-4">
           <p className="label mb-2.5">Disebut dalam</p>
-          <SourceBar sumber={recap.sumber} />
-        </div> */}
+          <SourceBar sumber={sumber} />
+        </div>
       </div>
     </section>
   );
