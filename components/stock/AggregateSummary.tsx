@@ -25,13 +25,25 @@ function sentimenColor(s: DailyRecap["sentimen"]): string {
   return "text-mixed";
 }
 
-/** Strip a trailing "Sumber: …" sentence from an AI summary. The
- *  API appends that line as a source attribution, but this widget
- *  already renders the same list below via `<SourceBar>` — keeping
- *  it in the prose would duplicate the info and read as redundant
- *  citation at the end of every recap. */
+/** Strip trailing attributions from an AI summary.
+ *  1) A "Sumber: …" sentence (the API's source list). This widget
+ *     already renders the same media list below via `<SourceBar>`,
+ *     so keeping it in the prose would duplicate the info and read
+ *     as a redundant citation at the end of every recap.
+ *  2) One or more URLs at the very end, separated by whitespace
+ *     and/or commas (e.g. "https://x.com https://y.com" or
+ *     "https://x.com, https://y.com, https://z.com."), optionally
+ *     followed by a trailing period. The model occasionally tacks
+ *     on one or several citation links; the `<SourceBar>` already
+ *     shows the publishers, so the raw URLs add nothing for the
+ *     reader. The two passes are ordered so any URL inside a
+ *     "Sumber:" line is dropped by step 1, and any URLs that
+ *     survive (e.g. "lihat https://…") are dropped by step 2. */
 function stripSumberSuffix(text: string): string {
-  return text.replace(/\s*Sumber:\s+[\s\S]*$/, "").trimEnd();
+  return text
+    .replace(/\s*Sumber:\s+[\s\S]*$/, "")
+    .replace(/\s*(?:https?:\/\/\S+[\s,]*)+[\s.]*$/, "")
+    .trimEnd();
 }
 
 /**
