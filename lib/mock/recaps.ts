@@ -4,6 +4,9 @@ export interface Sumber {
   media: string;
   logo: string;
   jumlah: number;
+  /** URL of a representative article from this media. Optional —
+   *  when present, `<SourceBar>` renders the chip as a link. */
+  url?: string;
 }
 
 export interface DailyRecap {

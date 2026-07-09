@@ -3,6 +3,7 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { sourceHomepage } from "@/lib/util/formatMedia";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
@@ -77,20 +78,29 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   // Flatten stories.articles and group by source_name → Sumber shape.
   // `logo` is left empty: the live payload ships `source_name` only,
   // and SourceBar derives its avatar from `initialsOf(media)`.
+  // `url` is the publisher's homepage (article URL reduced to its
+  // origin) so SourceBar can render the chip as a link to that
+  // publisher rather than the specific article the recap cited.
   const sumberFromStories = useMemo<Sumber[]>(() => {
-    const counts = new Map<string, number>();
+    const acc = new Map<string, { count: number; url?: string }>();
     for (const story of stories) {
       for (const article of story.articles ?? []) {
-        counts.set(
-          article.source_name,
-          (counts.get(article.source_name) ?? 0) + 1,
-        );
+        const existing = acc.get(article.source_name);
+        if (existing) {
+          existing.count += 1;
+        } else {
+          acc.set(article.source_name, {
+            count: 1,
+            url: sourceHomepage(article.source_url),
+          });
+        }
       }
     }
-    return Array.from(counts, ([media, jumlah]) => ({
+    return Array.from(acc, ([media, { count, url }]) => ({
       media,
       logo: "",
-      jumlah,
+      jumlah: count,
+      url,
     }));
   }, [stories]);
 
