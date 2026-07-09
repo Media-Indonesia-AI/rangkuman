@@ -25,6 +25,15 @@ function sentimenColor(s: DailyRecap["sentimen"]): string {
   return "text-mixed";
 }
 
+/** Strip a trailing "Sumber: …" sentence from an AI summary. The
+ *  API appends that line as a source attribution, but this widget
+ *  already renders the same list below via `<SourceBar>` — keeping
+ *  it in the prose would duplicate the info and read as redundant
+ *  citation at the end of every recap. */
+function stripSumberSuffix(text: string): string {
+  return text.replace(/\s*Sumber:\s+[\s\S]*$/, "").trimEnd();
+}
+
 /**
  * "Ringkasan AI" / aggregate-summary card for the stock detail page.
  *
@@ -89,7 +98,7 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   const tanggalLabel = detail
     ? formatTanggalIndonesia(detail.created_at)
     : formatTanggalIndonesia(recap.tanggal);
-  const summaryText = detail?.summary ?? recap.ringkasan;
+  const summaryText = stripSumberSuffix(detail?.summary ?? recap.ringkasan);
   // `detail.stories` is the array of related stories for THIS
   // headline (`HeadlineDetail.stories: EmbeddedStory[]`). When the
   // page is deep-linked, that count is more specific to the headline
