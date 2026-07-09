@@ -8,15 +8,15 @@ import { ArsipSingkat } from "@/components/stock/ArsipSingkat";
 import { HeadlineSentimentBadge } from "@/components/stock/HeadlineSentimentBadge";
 import { AggregateSummary } from "@/components/stock/AggregateSummary";
 import { ArticlesByMediaWidget } from "@/components/stock/ArticlesByMediaWidget";
-import { SentimentSparkline7d } from "@/components/stock/SentimentSparkline7d";
+import { SentimentSparkline } from "@/components/stock/SentimentSparkline";
 import { PriceChart30d } from "@/components/stock/PriceChart30d";
 import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { SimilarStocks } from "@/components/stock/SimilarStocks";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
+import { TickerStoriesProvider } from "@/components/stock/TickerStoriesProvider";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
-import { getSentiment7d } from "@/lib/mock/sentiment-7d";
 
 interface PageProps {
   params: { kode: string };
@@ -74,6 +74,11 @@ export default function StockDetailPage({ params }: PageProps) {
             hero sentiment badge) via context. Wraps the server-rendered
             body so consumers nested inside still receive it. */}
         <HeadlineDetailProvider>
+        {/* Single ticker-scoped /stories fetch shared by ArsipSingkat
+            and SentimentSparkline. Without this, both widgets would
+            drive their own hook and the page would fire two fetches
+            for the same primary_ticker_code filter. */}
+        <TickerStoriesProvider kode={kode}>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
           Rangkuman &mdash; Saham {stock.nama} ({stock.kode})
@@ -168,11 +173,10 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* News timeline */}
               <NewsTimeline todayIso={TODAY_ISO} />
 
-              {/* Sentiment 7-day mini bar chart */}
-              <SentimentSparkline7d
-                data={getSentiment7d(kode)}
-                todayIso={TODAY_ISO}
-              />
+              {/* Sentiment trail — reads from the shared
+                  <TickerStoriesProvider> (mounted above). No prop
+                  needed for the ticker; the provider handles it. */}
+              <SentimentSparkline todayIso={TODAY_ISO} />
 
               {/* Articles grouped by media — data-driven via
                   useListStory + the deep-linked headline's ID. */}
@@ -234,6 +238,7 @@ export default function StockDetailPage({ params }: PageProps) {
             </aside>
           </div>
         )}
+        </TickerStoriesProvider>
         </HeadlineDetailProvider>
       </main>
       <Footer />

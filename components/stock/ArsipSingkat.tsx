@@ -2,13 +2,13 @@
 
 import { Clock } from "lucide-react";
 import Link from "next/link";
-import { useLatestStories } from "@/lib/hooks/useLatestStories";
 import { getRecapsForStock } from "@/lib/mock/recaps";
 import { formatTanggalSingkat } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
-import type { StoryFilter, StoryItem } from "@/lib/api";
+import type { EmbeddedStory } from "@/lib/api";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { Shimmer } from "@/components/Shimmer";
+import { useTickerStories } from "./TickerStoriesProvider";
 
 /** How many archived entries to show in the right rail. The live
  *  fetch asks the backend for `limit` and we slice down to this
@@ -25,9 +25,13 @@ interface ArsipSingkatProps {
  * "Arsip singkat" — right-rail widget listing the latest archived
  * headlines for one stock.
  *
- * Data path:
- *   `useLatestStories(limit, 0, [{ primary_ticker_code, eq, kode }])`
- *   → `loadHeadlines()` → `api.getHeadlines()` → live `StoryItem[]`.
+ * Data path: shared via `<TickerStoriesProvider>` (mounted by the
+ * page). Reads `useTickerStories()` to consume the ticker-scoped
+ * `EmbeddedStory[]` that the provider fetches once per page load —
+ * the same fetch that drives `<SentimentSparkline>`. Field names
+ * follow the older `EmbeddedStory` wire shape (`headline`,
+ * `primary_sentiment`, `recap_date`), which differs from the newer
+ * `StoryItem` used by `useLatestStories`.
  *
  * Each live row links to `/stock/{kode}?id={story.id}` so the stock
  * page's `<HeadlineDetailProvider>` can resolve the deep link via
@@ -35,25 +39,22 @@ interface ArsipSingkatProps {
  *
  * Three render branches, in order:
  *   - loading → pulsing shimmer rows so the rail doesn't shift.
- *   - loaded with data → live `StoryItem` rows with title + date +
- *     sentiment badge.
+ *   - loaded with data → live `EmbeddedStory` rows with headline +
+ *     date + sentiment badge.
  *   - loaded empty / errored → mock `recaps[]` filtered to this
  *     ticker and sliced to skip today's recap, rendered as the
  *     previous read-only rows. This mirrors `LatestHeadlines`'s
  *     fallback policy so users always see content.
  */
 export function ArsipSingkat({ kode }: ArsipSingkatProps) {
-  // Backend indexes stock attribution under `primary_ticker_code`.
-  // Memoizing keeps the filter array referentially stable so the
-  // hook's effect dependency doesn't churn every render.
-  const filters: StoryFilter[] = [
-    { field: "primary_ticker_code", operator: "eq", value: kode },
-  ];
-  const { data, isLoading } = useLatestStories(VISIBLE_COUNT, 0, filters);
+  // Shared ticker-scoped fetch owned by <TickerStoriesProvider>.
+  // Slice down to the visible count — the provider fetches a wider
+  // window so <SentimentSparkline> can bucket by date.
+  const { stories, isLoading } = useTickerStories();
 
   // Prefer live data; fall back to mock recaps (oldest first,
   // excluding today) when the fetch errored or returned empty.
-  const liveItems = data.length > 0 ? data.slice(0, VISIBLE_COUNT) : null;
+  const liveItems = stories.length > 0 ? stories.slice(0, VISIBLE_COUNT) : null;
   const fallbackItems =
     !isLoading && liveItems === null
       ? getRecapsForStock(kode).slice(1, 1 + VISIBLE_COUNT)
@@ -110,11 +111,11 @@ export function ArsipSingkat({ kode }: ArsipSingkatProps) {
  *  detail page's headline provider can resolve the deep link. The
  *  fallback recap rows stay non-clickable because their `id` is a
  *  recap id, not a headline id, so the deep-link fetcher would 404. */
-function ArsipRow({ story, kode }: { story: StoryItem; kode: string }) {
-  const sentiment = toSentimen(story.sentiment);
-  // `created_at` is an ISO timestamp; the date part is what we want
+function ArsipRow({ story, kode }: { story: EmbeddedStory; kode: string }) {
+  const sentiment = toSentimen(story.primary_sentiment);
+  // `recap_date` is an ISO timestamp; the date part is what we want
   // for the right-rail's compact date label.
-  const tanggal = story.created_at.split("T")[0];
+  const tanggal = story.recap_date.split("T")[0];
   return (
     <li>
       <Link
@@ -128,7 +129,7 @@ function ArsipRow({ story, kode }: { story: StoryItem; kode: string }) {
           <SentimentBadge sentiment={sentiment} size="sm" />
         </div>
         <p className="line-clamp-2 text-[12px] font-medium leading-snug text-text-secondary group-hover:text-text-primary">
-          {story.title}
+          {story.headline}
         </p>
       </Link>
     </li>
