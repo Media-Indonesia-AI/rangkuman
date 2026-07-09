@@ -8,8 +8,9 @@ import { toSentimen } from "@/lib/util/sentiment";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useListStory } from "@/lib/hooks/useListStory";
-import { SourceBar } from "@/components/SourceBar";
+import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
+import { SourceBar } from "@/components/SourceBar";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
  *  the widget is self-contained — the page only passes the recap. */
@@ -120,13 +121,27 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   const tanggalLabel = detail
     ? formatTanggalIndonesia(detail.created_at)
     : formatTanggalIndonesia(recap.tanggal);
-  const summaryText = stripSumberSuffix(detail?.summary ?? recap.ringkasan);
+  const summaryText = stripSumberSuffix(detail?.summary??'');
   // `detail.stories` is the array of related stories for THIS
   // headline (`HeadlineDetail.stories: EmbeddedStory[]`). When the
   // page is deep-linked, that count is more specific to the headline
   // than the recap's total-day article count.
   const jumlahBerita = detail ? detail.stories.length : recap.jumlahBerita;
   const Icon = SentimenIcon[sentimen];
+
+  // No summary prose (recap was empty, or `detail.summary` came back
+  // blank / stripped down to whitespace by `stripSumberSuffix`).
+  // Render the empty-state card instead of an empty `<p>` so the
+  // section still has shape.
+  if (summaryText.trim() === "") {
+    return (
+      <EmptyState
+        title="Belum ada ringkasan"
+        description={`Ringkasan AI belum tersedia untuk ${recap.sahamKode}.`}
+        suggestion="Coba cek headline lain atau kembali ke beranda."
+      />
+    );
+  }
 
   return (
     <section
