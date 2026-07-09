@@ -3,8 +3,8 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { SentimentBadge } from "@/components/SentimentBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { ArsipSingkat } from "@/components/stock/ArsipSingkat";
 import { HeadlineSentimentBadge } from "@/components/stock/HeadlineSentimentBadge";
 import { AggregateSummary } from "@/components/stock/AggregateSummary";
 import { ArticlesByMediaWidget } from "@/components/stock/ArticlesByMediaWidget";
@@ -17,7 +17,6 @@ import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvide
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
 import { getSentiment7d } from "@/lib/mock/sentiment-7d";
-import { formatTanggalSingkat } from "@/lib/util/formatDate";
 
 interface PageProps {
   params: { kode: string };
@@ -182,32 +181,11 @@ export default function StockDetailPage({ params }: PageProps) {
 
             {/* Right rail */}
             <aside className="space-y-5">
-              {/* Recap sebelumnya */}
-              {allRecaps.length > 1 && (
-                <section
-                  className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
-                  aria-label="Recap sebelumnya"
-                >
-                  <header className="border-b border-border bg-bg-tertiary px-3 py-2">
-                    <h3 className="label">Arsip singkat</h3>
-                  </header>
-                  <ul className="divide-y divide-border">
-                    {allRecaps.slice(1).map((r) => (
-                      <li key={r.id} className="px-3 py-2.5">
-                        <div className="mb-1.5 flex items-center gap-2">
-                          <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-muted num-tabular">
-                            {formatTanggalSingkat(r.tanggal)}
-                          </span>
-                          <SentimentBadge sentiment={r.sentimen} size="sm" />
-                        </div>
-                        <p className="line-clamp-2 text-[12px] leading-snug text-text-secondary">
-                          {r.ringkasan}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </section>
-              )}
+              {/* Live headlines for this ticker, falling back to the
+                  older mock recaps when the fetch returns empty. Self-
+                  contained in <ArsipSingkat> so it shares the same data
+                  conventions as LatestHeadlines. */}
+              <ArsipSingkat kode={kode} />
 
               {/* Quick links */}
               <section className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
