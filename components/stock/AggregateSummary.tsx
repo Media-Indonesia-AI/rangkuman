@@ -10,6 +10,7 @@ import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
+import { Shimmer } from "@/components/Shimmer";
 import { SourceBar } from "@/components/SourceBar";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
@@ -46,6 +47,50 @@ function stripSumberSuffix(text: string): string {
     .replace(/\s*Sumber:\s+[\s\S]*$/, "")
     .replace(/\s*(?:https?:\/\/\S+[\s,]*)+[\s.]*$/, "")
     .trimEnd();
+}
+
+/** Skeleton shown while the deep-linked headline detail is in
+ *  flight (`detailLoading === true`). Mirrors the real card's
+ *  structure — header strip with "Ringkasan AI" + meta + count,
+ *  multi-line prose block, "Disebut dalam" source row — so the
+ *  layout doesn't shift when the real payload arrives. */
+function AggregateSummaryShimmer() {
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      aria-label="Ringkasan agregat"
+      aria-busy="true"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-4 py-2.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <Shimmer className="h-3.5 w-3.5 rounded" />
+          <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-primary">
+            Ringkasan AI
+          </span>
+          <Shimmer className="h-2.5 w-20" />
+        </div>
+        <Shimmer className="h-2.5 w-24" />
+      </div>
+
+      <div className="p-4 sm:p-5">
+        {/* Summary prose — three lines of decreasing width */}
+        <div className="space-y-2">
+          <Shimmer className="h-3 w-full" />
+          <Shimmer className="h-3 w-[92%]" />
+          <Shimmer className="h-3 w-[78%]" />
+        </div>
+
+        <div className="mt-5 border-t border-border pt-4">
+          <Shimmer className="mb-2.5 h-3 w-20" />
+          <div className="flex flex-wrap gap-1.5">
+            <Shimmer className="h-6 w-20 rounded-full" />
+            <Shimmer className="h-6 w-24 rounded-full" />
+            <Shimmer className="h-6 w-16 rounded-full" />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
 }
 
 /**
@@ -123,6 +168,19 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   // than the recap's total-day article count.
   const jumlahBerita = detail ? detail.stories.length : recap.jumlahBerita;
   const Icon = SentimenIcon[sentimen];
+
+  // While the deep-linked headline detail is in flight (i.e. `?id=`
+  // is set and we're waiting for `loadHeadlineById` to resolve),
+  // render the skeleton instead of the recap fallback. Without this
+  // we'd briefly show the recap and then snap to the deep-linked
+  // summary, OR fall through to the "Belum ada ringkasan" empty
+  // state because `detail.summary` is undefined during loading —
+  // both of which look like real data. `HeadlineDetailProvider`
+  // only sets `loading: true` while an `?id=` is being fetched, so
+  // a no-`?id=` page render still falls through to the recap.
+  if (detailLoading) {
+    return <AggregateSummaryShimmer />;
+  }
 
   // No summary prose (recap was empty, or `detail.summary` came back
   // blank / stripped down to whitespace by `stripSumberSuffix`).

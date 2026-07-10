@@ -53,7 +53,7 @@ function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [detail, setDetail] = useState<HeadlineDetail | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     // Reset whenever the id changes (or clears) so a stale headline
@@ -64,7 +64,7 @@ function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
       return;
     }
     let cancelled = false;
-    setLoading(true);
+    
     void loadHeadlineById(id)
       .then((res) => {
         if (!cancelled) setDetail(res);
