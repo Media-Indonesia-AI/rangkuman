@@ -8,7 +8,10 @@
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit --skipLibCheck",
-    "build-og": "node scripts/build-og.mjs"
+    "build-og": "node scripts/build-og.mjs",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "dependencies": {
     "clsx": "2.1.1",
@@ -20,13 +23,18 @@
     "tailwind-merge": "2.5.4"
   },
   "devDependencies": {
+    "@secretlint/secretlint-rule-preset-recommend": "^9.1.0",
     "@types/node": "20.16.11",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
     "autoprefixer": "10.4.20",
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.15",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
     "postcss": "8.4.47",
+    "prettier": "^3.3.3",
+    "secretlint": "^9.1.0",
     "sharp": "^0.34.5",
     "tailwindcss": "3.4.13",
     "typescript": "5.6.3"
