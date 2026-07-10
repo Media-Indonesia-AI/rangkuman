@@ -78,7 +78,7 @@ export default function StockDetailPage({ params }: PageProps) {
             and SentimentSparkline. Without this, both widgets would
             drive their own hook and the page would fire two fetches
             for the same primary_ticker_code filter. */}
-        <TickerStoriesProvider kode={kode}>
+        <TickerStoriesProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
           Rangkuman &mdash; Saham {stock.nama} ({params.kode})

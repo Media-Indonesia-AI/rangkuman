@@ -3,6 +3,7 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { EmbeddedStory, StoryFilter } from "@/lib/api";
 import { useListStory } from "@/lib/hooks/useListStory";
+import { useSearchParams } from "next/navigation";
 
 interface TickerStoriesContextValue {
   /** All stories tagged with the stock's primary ticker, oldest →
@@ -44,14 +45,15 @@ const FETCH_LIMIT = 10;
  *              filter value.
  */
 export function TickerStoriesProvider({
-  kode,
   children,
 }: {
-  kode: string;
   children: ReactNode;
 }) {
+  const searchParams = useSearchParams();
+  const headlineId = searchParams.get("id")??'';
+
   const filters: StoryFilter[] = [
-    { field: "primary_ticker_code", operator: "eq", value: kode },
+    { field: "headline_id", operator: "eq", value: headlineId },
   ];
   const { data: stories, isLoading } = useListStory(
     FETCH_LIMIT,
