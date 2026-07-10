@@ -7,7 +7,7 @@ import type { EmbeddedStory } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
-import { useTickerStories } from "./TickerStoriesProvider";
+import { useHeadlineStories } from "./HeadlineStoriesProvider";
 
 /** One day's worth of chart data — the calendar date (yyyy-mm-dd)
  *  plus the dominant sentiment for that day's stories. */
@@ -17,8 +17,8 @@ interface SentimentSparklineProps {
   /** ISO date for "today" — used only to highlight the matching
    *  bar (the one whose `recap_date` equals this). Doesn't pin the
    *  window size — the chart's range follows the response. The
-   *  ticker itself is provided by `<TickerStoriesProvider>`, not
-   *  by this prop. */
+   *  headline-scoped stories are provided by
+   *  `<HeadlineStoriesProvider>`, not by this prop. */
   todayIso?: string;
   className?: string;
 }
@@ -42,10 +42,11 @@ function dayLabel(dateStr: string): { day: string; date: number } {
  * red = Negatif. Netral bars are slightly shorter so the visual
  * hierarchy is clear.
  *
- * Data flow: shared via `<TickerStoriesProvider>` (mounted by the
- * page). Reads `useTickerStories()` to consume the ticker-scoped
+ * Data flow: shared via `<HeadlineStoriesProvider>` (mounted by the
+ * page). Reads `useHeadlineStories()` to consume the headline-scoped
  * `EmbeddedStory[]` that the provider fetches once per page load —
- * the same fetch that drives `<ArsipSingkat>`.
+ * the same fetch that drives `<NewsTimeline>`, `<ArticlesByMediaWidget>`,
+ * and `<AggregateSummary>`.
  *
  * Each story is bucketed by its `recap_date`'s date portion. The
  * chart's range follows the response — if the API returns stories
@@ -58,8 +59,8 @@ function dayLabel(dateStr: string): { day: string; date: number } {
  * chart's window is the actual data span, not a synthetic window.
  */
 export function SentimentSparkline({ todayIso, className }: SentimentSparklineProps) {
-  // Shared ticker-scoped fetch owned by <TickerStoriesProvider>.
-  const { stories, isLoading: storiesLoading } = useTickerStories();
+  // Shared headline-scoped fetch owned by <HeadlineStoriesProvider>.
+  const { stories, isLoading: storiesLoading } = useHeadlineStories();
 
   // Bucket stories by date (yyyy-mm-dd slice of recap_date), then
   // walk the sorted date list and pick each day's dominant sentiment.

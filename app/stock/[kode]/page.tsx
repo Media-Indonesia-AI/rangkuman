@@ -14,7 +14,7 @@ import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { SimilarStocks } from "@/components/stock/SimilarStocks";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
-import { TickerStoriesProvider } from "@/components/stock/TickerStoriesProvider";
+import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
 import { getStockByKode, HUE_GRADIENT, stocks } from "@/lib/mock/stocks";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
 
@@ -74,11 +74,12 @@ export default function StockDetailPage({ params }: PageProps) {
             hero sentiment badge) via context. Wraps the server-rendered
             body so consumers nested inside still receive it. */}
         <HeadlineDetailProvider>
-        {/* Single ticker-scoped /stories fetch shared by ArsipSingkat
-            and SentimentSparkline. Without this, both widgets would
-            drive their own hook and the page would fire two fetches
-            for the same primary_ticker_code filter. */}
-        <TickerStoriesProvider>
+        {/* Single headline-scoped /stories fetch shared by
+            SentimentSparkline, NewsTimeline, ArticlesByMediaWidget,
+            and AggregateSummary. Without this, each widget would
+            drive its own useListStory and the page would mount
+            four hooks with byte-identical arguments. */}
+        <HeadlineStoriesProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
           Rangkuman &mdash; Saham {stock.nama} ({params.kode})
@@ -174,12 +175,12 @@ export default function StockDetailPage({ params }: PageProps) {
               <NewsTimeline todayIso={TODAY_ISO} />
 
               {/* Sentiment trail — reads from the shared
-                  <TickerStoriesProvider> (mounted above). No prop
-                  needed for the ticker; the provider handles it. */}
+                  <HeadlineStoriesProvider> (mounted above). */}
               <SentimentSparkline todayIso={TODAY_ISO} />
 
-              {/* Articles grouped by media — data-driven via
-                  useListStory + the deep-linked headline's ID. */}
+              {/* Articles grouped by media — data-driven via the
+                  shared headline-scoped stories fetched once by
+                  <HeadlineStoriesProvider>. */}
               <ArticlesByMediaWidget />
             </div>
 
@@ -238,7 +239,7 @@ export default function StockDetailPage({ params }: PageProps) {
             </aside>
           </div>
         )}
-        </TickerStoriesProvider>
+        </HeadlineStoriesProvider>
         </HeadlineDetailProvider>
       </main>
       <Footer />

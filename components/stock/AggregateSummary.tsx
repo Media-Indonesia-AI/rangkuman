@@ -7,7 +7,7 @@ import { sourceHomepage } from "@/lib/util/formatMedia";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { useListStory } from "@/lib/hooks/useListStory";
+import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { SourceBar } from "@/components/SourceBar";
@@ -57,24 +57,19 @@ function stripSumberSuffix(text: string): string {
  * to the aggregate `recap` otherwise.
  *
  * The "Disebut dalam" source list comes from the headline-scoped
- * stories via `useListStory` — each story's `articles[]` is grouped by
- * `source_name` to derive per-media counts. While the fetch is in
- * flight, while no `?id=` is set, or after a failed call, we fall
- * back to `recap.sumber` so the section never goes blank.
+ * stories via `useHeadlineStories` — each story's `articles[]` is
+ * grouped by `source_name` to derive per-media counts. While the
+ * fetch is in flight, while no `?id=` is set, or after a failed
+ * call, we fall back to `recap.sumber` so the section never goes
+ * blank.
  */
 export function AggregateSummary({ recap }: { recap: DailyRecap }) {
-  const { detail } = useHeadlineDetail();
+  const { detail, loading: detailLoading } = useHeadlineDetail();
 
-  // Same gating pattern as NewsTimeline / ArticlesByMediaWidget: only
-  // fetch when a headline id is present (no `?id=` → no useful filter).
-  // Disabling the hook also clears stale results, so the source bar
-  // doesn't briefly show the previous deep-link's medias.
-  const { data: stories } = useListStory(
-    10,
-    0,
-    detail ? [{ field: "headline_id", operator: "eq", value: detail.id }] : [],
-    detail !== null,
-  );
+  // Provider already gates on `detail !== null` so no separate
+  // `useListStory` call is needed here — the same fetch serves
+  // `NewsTimeline` and `ArticlesByMediaWidget`.
+  const { stories } = useHeadlineStories();
 
   // Flatten stories.articles and group by source_name → Sumber shape.
   // `logo` is left empty: the live payload ships `source_name` only,

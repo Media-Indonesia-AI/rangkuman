@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { useListStory } from "@/lib/hooks/useListStory";
+import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { initialsOf } from "@/lib/util/formatMedia";
 import { Shimmer } from "@/components/Shimmer";
 import { cn } from "@/lib/utils";
@@ -51,18 +51,15 @@ function ArticlesByMediaShimmer() {
 
 /** "Diliput media" — deep-linked headline's articles grouped by
  *  publisher. Data path:
- *  `useHeadlineDetail()` → `detail.id`
- *  → `useListStory(10, 0, [{ headline_id: detail.id }], detail !== null)`
- *  → stories → flatten each `articles[]` → group by `source_name`.
- *  Renders `-` when no articles, shimmer while fetching. */
+ *  `useHeadlineDetail()` (for the loading flag) +
+ *  `useHeadlineStories()` → stories → flatten each `articles[]` →
+ *  group by `source_name`. The provider fetches once per page load
+ *  using `detail.id` as the filter, gated on the headline having
+ *  resolved.
+ *  Renders an empty-state when no articles, shimmer while fetching. */
 export function ArticlesByMediaWidget({ className }: ArticlesByMediaWidgetProps) {
   const { detail, loading: detailLoading } = useHeadlineDetail();
-  const { data: stories, isLoading: storiesLoading } = useListStory(
-    10,
-    0,
-    detail ? [{ field: "headline_id", operator: "eq", value: detail.id }] : [],
-    detail !== null,
-  );
+  const { stories, isLoading: storiesLoading } = useHeadlineStories();
 
   // Either fetch stage (detail or stories) should show the shimmer.
   const isFetching = detailLoading || (detail !== null && storiesLoading);

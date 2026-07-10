@@ -5,10 +5,10 @@ import { cn } from "@/lib/utils";
 import { format, parseISO, subDays } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { useListStory } from "@/lib/hooks/useListStory";
+import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
-import type { EmbeddedStory, StoryFilter } from "@/lib/api";
+import type { EmbeddedStory } from "@/lib/api";
 
 interface NewsTimelineProps {
   todayIso: string;
@@ -62,19 +62,11 @@ function StoriesShimmerList() {
 export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
   const { detail, loading: detailLoading } = useHeadlineDetail();
 
-  // Gate the fetch: we can only filter by `headline_id` once the
-  // detail has resolved, so the hook stays disabled during the
-  // detail-fetch window. Without this, we'd fire a wasted no-filter
-  // request followed by a real one — different cache keys, no dedup.
-  const filters: StoryFilter[] = detail
-    ? [{ field: "headline_id", operator: "eq", value: detail.id }]
-    : [];
-  const { data: stories, isLoading: storiesLoading } = useListStory(
-    10,
-    0,
-    filters,
-    detail !== null,
-  );
+  // Shared headline-scoped stories — fetched once by
+  // <HeadlineStoriesProvider> (mounted above), gated on
+  // `detail !== null` so no wasted request fires when `?id=` is
+  // absent.
+  const { stories, isLoading: storiesLoading } = useHeadlineStories();
 
   // Either fetch stage (detail or stories) should show the shimmer.
   const isFetchingStories =
