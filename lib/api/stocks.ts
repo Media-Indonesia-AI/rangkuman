@@ -42,8 +42,8 @@ export function getForeignStocks(
   endDate?: string,
 ): Promise<ForeignStocksResponse> {
   const params = new URLSearchParams({
-    startDate: startDate ?? todayIsoDate(),
-    endDate: endDate ?? todayIsoDate(),
+    start_date : startDate ?? todayIsoDate(),
+    end_date: endDate ?? todayIsoDate(),
   });
   return request<ForeignStocksResponse>(
     `stocks/foreign-stocks?${params.toString()}`,
