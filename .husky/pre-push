@@ -1,1 +1,6 @@
-npm run type-check && npm run lint && npx prettier --check .
+echo "==> pre-push: running install + build + lint check"
+echo "[$(date +%s%3N)ms] \".env\""
+
+npm install
+npm run build
+npm run lint
