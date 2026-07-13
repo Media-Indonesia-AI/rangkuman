@@ -3,7 +3,9 @@ import { cn } from "@/lib/utils";
 import type { Saham } from "@/lib/mock/stocks";
 
 interface KeyMetricsProps {
-  stock: Saham;
+  /** The stock to render metrics for. When `null`, the component renders
+   *  nothing — there's no useful key-metrics row without the underlying stock. */
+  stock: Saham | null;
   className?: string;
 }
 
@@ -32,6 +34,10 @@ function Metric({ icon: Icon, label, value, hint, color = "text-text-primary" }:
 
 /** Key metrics tile: Market Cap · P/E · Volume · Dividend Yield · Beta · 30D change. */
 export function KeyMetrics({ stock, className }: KeyMetricsProps) {
+  // No underlying stock → nothing meaningful to show. Render nothing so the
+  // caller can keep its layout stable without conditionals.
+  if (!stock) return null;
+
   const peColor =
     stock.peRatio > 30 ? "text-bearish" :
     stock.peRatio < 0 ? "text-mixed" :

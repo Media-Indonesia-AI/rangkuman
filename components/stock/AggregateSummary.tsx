@@ -12,6 +12,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { Shimmer } from "@/components/Shimmer";
 import { SourceBar } from "@/components/SourceBar";
+import { todayIsoDate } from "@/lib/api/client";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
  *  the widget is self-contained — the page only passes the recap. */
@@ -108,7 +109,7 @@ function AggregateSummaryShimmer() {
  * call, we fall back to `recap.sumber` so the section never goes
  * blank.
  */
-export function AggregateSummary({ recap }: { recap: DailyRecap }) {
+export function AggregateSummary() {
   const { detail, loading: detailLoading } = useHeadlineDetail();
 
   // Provider already gates on `detail !== null` so no separate
@@ -151,22 +152,22 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
   const sumber =
     detail !== null && sumberFromStories.length > 0
       ? sumberFromStories
-      : recap.sumber;
+      : [];
 
   // Prefer the deep-linked headline's sentiment + date + summary +
   // story count; fall back to the recap when no `?id=` is set, the
   // fetch is in flight, or it failed. Single context read covers all
   // five slots so the header and body never disagree.
-  const sentimen = detail ? toSentimen(detail.sentiment) : recap.sentimen;
+  const sentimen = detail ? toSentimen(detail.sentiment) : "netral";
   const tanggalLabel = detail
     ? formatTanggalIndonesia(detail.created_at)
-    : formatTanggalIndonesia(recap.tanggal);
+    : formatTanggalIndonesia(todayIsoDate());
   const summaryText = stripSumberSuffix(detail?.summary??'');
   // `detail.stories` is the array of related stories for THIS
   // headline (`HeadlineDetail.stories: EmbeddedStory[]`). When the
   // page is deep-linked, that count is more specific to the headline
   // than the recap's total-day article count.
-  const jumlahBerita = detail ? detail.stories.length : recap.jumlahBerita;
+  const jumlahBerita = detail ? detail.stories.length : 0;
   const Icon = SentimenIcon[sentimen];
 
   // While the deep-linked headline detail is in flight (i.e. `?id=`
@@ -190,7 +191,7 @@ export function AggregateSummary({ recap }: { recap: DailyRecap }) {
     return (
       <EmptyState
         title="Belum ada ringkasan"
-        description={`Ringkasan AI belum tersedia untuk ${recap.sahamKode}.`}
+        description={`Ringkasan AI belum tersedia untuk ${detail?.primary_ticker_code ?? '-'}.`}
         suggestion="Coba cek headline lain atau kembali ke beranda."
       />
     );

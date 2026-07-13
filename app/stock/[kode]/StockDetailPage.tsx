@@ -25,12 +25,9 @@ interface PageProps {
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
   const stock = getStockByKode(kode);
-  if (!stock) notFound();
-
-  const allRecaps = getRecapsForStock(kode);
-  const recap = allRecaps[0];
-  const positive = stock.changePercent >= 0;
-  const heroGradient = HUE_GRADIENT[stock.hue];
+  
+  const positive = (stock?.changePercent??0) >= 0;
+  const heroGradient = HUE_GRADIENT[stock?.hue ?? 'amber'];
 
   return (
     <>
@@ -50,7 +47,7 @@ export default function StockDetailPage({ params }: PageProps) {
         <HeadlineStoriesProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
-          Rangkuman &mdash; Saham {stock.nama} ({params.kode})
+          Rangkuman &mdash; Saham {stock?.nama ?? 'N/A'} ({params.kode})
         </h1>
 
         <Link
@@ -78,9 +75,9 @@ export default function StockDetailPage({ params }: PageProps) {
           <div className="relative p-5 sm:p-6">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="rounded border border-border bg-bg-primary/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-primary backdrop-blur-sm">
-                {stock.sektor}
+                {stock?.sektor ?? 'N/A'}
               </span>
-              {recap && <HeadlineSentimentBadge fallback={recap.sentimen} />}
+              <HeadlineSentimentBadge />
             </div>
 
             <div className="flex flex-wrap items-end justify-between gap-4">
@@ -88,11 +85,11 @@ export default function StockDetailPage({ params }: PageProps) {
                 <h2 className="font-mono text-[56px] font-bold leading-none tracking-tighter text-text-primary sm:text-[72px]">
                   {params.kode}
                 </h2>
-                <p className="mt-1 text-[14px] text-text-secondary">{stock.nama}</p>
+                <p className="mt-1 text-[14px] text-text-secondary">{stock?.nama ?? 'N/A'}</p>
               </div>
               <div className="text-right">
                 <p className="font-mono text-[40px] font-bold leading-none tracking-tight text-text-primary num-tabular sm:text-[48px]">
-                  {stock.price.toLocaleString("id-ID")}
+                  {stock?.price?.toLocaleString("id-ID") ?? 'N/A'}
                 </p>
                 <p
                   className={
@@ -102,7 +99,7 @@ export default function StockDetailPage({ params }: PageProps) {
                   }
                 >
                   {positive ? "▲ +" : "▼ "}
-                  {Math.abs(stock.changePercent).toFixed(2)}% hari ini
+                  {Math.abs(stock?.changePercent ?? 0).toFixed(2)}% hari ini
                 </p>
               </div>
             </div>
@@ -115,29 +112,23 @@ export default function StockDetailPage({ params }: PageProps) {
             A dedicated "Headline" detail section can be added here later
             as another consumer — no extra fetch needed. */}
 
-        {!recap ? (
-          <EmptyState
-            title={`Belum ada recap untuk ${params.kode}`}
-            description="Saham ini belum diberitakan pada tanggal terkini."
-            suggestion="Coba cek tab '7 Hari Terakhir' di beranda."
-          />
-        ) : (
+        (
           <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
             {/* Main column */}
             <div className="min-w-0 space-y-6">
               {/* Aggregate summary */}
-              <AggregateSummary recap={recap} />
+              <AggregateSummary />
 
               {/* Price chart 30 days */}
               <PriceChart30d
                 kode={kode}
-                currentPrice={stock.price}
-                change30dPercent={stock.change30dPercent}
-                ath={stock.ath}
+                currentPrice={stock?.price ?? 0}
+                change30dPercent={stock?.change30dPercent ?? 0}
+                ath={stock?.ath ?? 0}
               />
 
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
-              <KeyMetrics stock={stock} />
+              <KeyMetrics stock={stock ?? null} />
 
               {/* News timeline */}
               <NewsTimeline todayIso={TODAY_ISO} />
@@ -168,12 +159,12 @@ export default function StockDetailPage({ params }: PageProps) {
                 <dl className="divide-y divide-border text-[12.5px]">
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Sektor</dt>
-                    <dd className="text-right text-text-primary">{stock.sektor}</dd>
+                    <dd className="text-right text-text-primary">{stock?.sektor ?? 'N/A'}</dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Harga</dt>
                     <dd className="font-mono text-text-primary num-tabular">
-                      {stock.price.toLocaleString("id-ID")}
+                      {stock?.price?.toLocaleString("id-ID") ?? 'N/A'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
@@ -186,13 +177,13 @@ export default function StockDetailPage({ params }: PageProps) {
                       }
                     >
                       {positive ? "+" : ""}
-                      {stock.changePercent.toFixed(2)}%
+                      {Math.abs(stock?.changePercent ?? 0).toFixed(2)}%
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Coverage</dt>
                     <dd className="text-text-primary">
-                      {recap.sumber.length} media, {recap.jumlahBerita} artikel
+                      {0} media, {0} artikel
                     </dd>
                   </div>
                 </dl>
@@ -201,12 +192,12 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Saham Serupa — stocks in the same sector */}
               <SimilarStocks
                 excludeKode={params.kode}
-                sektor={stock.sektor}
+                sektor={stock?.sektor ?? ''}
                 limit={3}
               />
             </aside>
           </div>
-        )}
+        )
         </HeadlineStoriesProvider>
         </HeadlineDetailProvider>
       </main>

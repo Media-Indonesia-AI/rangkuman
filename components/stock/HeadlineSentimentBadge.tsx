@@ -17,9 +17,9 @@ import type { Sentimen } from "@/lib/mock/recaps";
  * it failed — so the badge always renders something sensible, including
  * in the statically prerendered shell.
  */
-export function HeadlineSentimentBadge({ fallback }: { fallback: Sentimen }) {
+export function HeadlineSentimentBadge() {
   const { detail } = useHeadlineDetail();
-  const sentiment = detail ? toSentimen(detail.sentiment) : fallback;
+  const sentiment = detail ? toSentimen(detail.sentiment) : "netral";
 
   return <SentimentBadge sentiment={sentiment} size="sm" />;
 }

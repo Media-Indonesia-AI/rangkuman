@@ -3,7 +3,7 @@ import type { Sentimen } from "@/lib/mock/recaps";
 import { TrendingUp, Minus, TrendingDown } from "lucide-react";
 
 interface SentimentBadgeProps {
-  sentiment: Sentimen;
+  sentiment?: Sentimen;
   showLabel?: boolean;
   size?: "sm" | "md";
   className?: string;
@@ -31,7 +31,7 @@ export function SentimentBadge({
   size = "md",
   className,
 }: SentimentBadgeProps) {
-  const { label, bg, text, Icon } = config[sentiment];
+  const { label, bg, text, Icon } = config[sentiment ?? "netral"];
   const padding = size === "sm" ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[11px]";
 
   return (

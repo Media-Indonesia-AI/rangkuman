@@ -111,7 +111,7 @@ export default function SahamPage() {
               <GeneralNewsFeed isoDate={isoDate} />
             </div> */}
           </main>
-          <Footer />
+          {/* <Footer /> */}
         </>
       )}
 
