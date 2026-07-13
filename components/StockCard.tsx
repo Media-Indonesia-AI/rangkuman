@@ -268,7 +268,7 @@ export function StockCard({
           </div>
 
           {/* Summary */}
-          <p className="line-clamp-1 text-[12.5px] leading-snug text-text-secondary sm:line-clamp-3 sm:text-[13px] sm:leading-[1.55] sm:text-text-primary">
+          <p className="line-clamp-3 text-[12.5px] leading-snug text-text-secondary sm:line-clamp-3 sm:text-[13px] sm:leading-[1.55] sm:text-text-primary">
             {recap.ringkasan}
           </p>
 
