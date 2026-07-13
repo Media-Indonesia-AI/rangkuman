@@ -18,6 +18,9 @@ function rand(n: number): string {
   return s;
 }
 
+/** Event name any surface can dispatch on `window` to force the dialog open. */
+export const GUEST_LOGIN_DIALOG_OPEN_EVENT = "guest-login-dialog:open";
+
 /**
  * Global "guest login" dialog. Mounted once in app/layout.tsx.
  *
@@ -33,6 +36,13 @@ function rand(n: number): string {
  *  1. "Masuk sebagai tamu" -> auto-registers a random account, user is logged in
  *  2. "Daftar akun baru" -> navigates to /daftar
  *  3. "Masuk" -> navigates to /login
+ *
+ * External trigger:
+ *  Other surfaces (e.g. the "Lanjutkan dengan Google" button on
+ *  /login) can force the dialog open by dispatching the
+ *  `guest-login-dialog:open` window event. The dialog opens regardless
+ *  of route / timer state and clears the force-open flag once the user
+ *  logs in or dismisses it.
  */
 export function GuestLoginDialog() {
   const router = useRouter();
@@ -41,17 +51,39 @@ export function GuestLoginDialog() {
   const [loading, setLoading] = useState<null | "tamu">(null);
   const [error, setError] = useState<string | null>(null);
   const [showDialog, setShowDialog] = useState(false);
+  /**
+   * Set by an external `guest-login-dialog:open` event. Overrides the
+   * timer effect so the dialog stays open even on /login or while the
+   * 1-minute timer hasn't elapsed yet.
+   */
+  const [forceOpen, setForceOpen] = useState(false);
   /** Incremented on each dismiss so the timer effect re-arms. */
   const [resetKey, setResetKey] = useState(0);
 
   const onAuthPage = pathname === "/login" || pathname === "/daftar";
   const shouldArmTimer = user === null && !onAuthPage;
+  const isOpen = showDialog || forceOpen;
+
+  // External trigger: any surface can open the dialog by dispatching the
+  // event. No-ops if the user is already logged in (defensive — the
+  // login page already redirects logged-in users away from /login).
+  useEffect(() => {
+    const handler = () => {
+      if (!user) setForceOpen(true);
+    };
+    window.addEventListener(GUEST_LOGIN_DIALOG_OPEN_EVENT, handler);
+    return () =>
+      window.removeEventListener(GUEST_LOGIN_DIALOG_OPEN_EVENT, handler);
+  }, [user]);
 
   // Arm / re-arm the 1-minute timer whenever the user becomes eligible
   // to see the dialog. Cleared when the user logs in, navigates to
   // /login or /daftar, or unmounts. `resetKey` dependency makes the
-  // timer restart on every dismiss.
+  // timer restart on every dismiss. `forceOpen` short-circuits the
+  // effect so the dialog isn't auto-hidden while an external trigger
+  // is holding it open.
   useEffect(() => {
+    if (forceOpen) return;
     if (!shouldArmTimer) {
       setShowDialog(false);
       return;
@@ -59,39 +91,43 @@ export function GuestLoginDialog() {
     setShowDialog(false);
     const t = window.setTimeout(() => setShowDialog(true), DELAY_MS);
     return () => window.clearTimeout(t);
-  }, [shouldArmTimer, pathname, resetKey]);
+  }, [shouldArmTimer, pathname, resetKey, forceOpen]);
 
   // The component instance persists across login/logout cycles (the
-  // `if (!showDialog) return null` early return doesn't unmount it),
-  // so transient states like `loading` and `error` from a previous
+  // `if (!isOpen) return null` early return doesn't unmount it), so
+  // transient states like `loading` and `error` from a previous
   // session would otherwise leak into the next session. Reset them
-  // whenever the auth user changes.
+  // whenever the auth user changes. Also clear `forceOpen` so the
+  // timer can take over again on the next eligible route.
   useEffect(() => {
     setLoading(null);
     setError(null);
+    if (user) setForceOpen(false);
   }, [user]);
 
   // Escape-to-dismiss. Same effect as clicking the X / backdrop —
   // resets the timer by bumping resetKey.
   useEffect(() => {
-    if (!showDialog) return;
+    if (!isOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         setShowDialog(false);
+        setForceOpen(false);
         setResetKey((k) => k + 1);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [showDialog]);
+  }, [isOpen]);
 
   const dismiss = useCallback(() => {
     setShowDialog(false);
+    setForceOpen(false);
     setResetKey((k) => k + 1);
   }, []);
 
-  if (!showDialog) return null;
+  if (!isOpen) return null;
 
   const handleTamu = async () => {
     setLoading("tamu");

@@ -7,8 +7,9 @@ import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { loginWithIdentifier, loginWithGoogle } from "@/lib/auth";
+import { loginWithIdentifier } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { GUEST_LOGIN_DIALOG_OPEN_EVENT } from "@/components/GuestLoginDialog";
 import { cn } from "@/lib/utils";
 
 type FieldErrors = {
@@ -58,15 +59,11 @@ export default function LoginPage() {
 
   const handleGoogleLogin = () => {
     setErrors({});
-    setLoading(true);
-    try {
-      loginWithGoogle();
-      router.push("/watchlist");
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "Gagal masuk";
-      setErrors({ password: msg });
-      setLoading(false);
-    }
+    // Open the global GuestLoginDialog so the user picks the auth
+    // method (tamu / Google / daftar / login) in one place. Once they
+    // sign in, useCurrentUser flips and the login page's redirect
+    // effect sends them to /watchlist.
+    window.dispatchEvent(new CustomEvent(GUEST_LOGIN_DIALOG_OPEN_EVENT));
   };
 
   const clearError = (field: keyof FieldErrors) =>
