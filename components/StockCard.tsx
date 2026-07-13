@@ -6,8 +6,9 @@ import { ShareButton } from "./ShareButton";
 import { SavedButton } from "./SavedButton";
 import { cn } from "@/lib/utils";
 import type { DailyRecap } from "@/lib/mock/recaps";
-import { getStockByKode, HUE_GRADIENT, type Saham } from "@/lib/mock/stocks";
+import { getStockByKode, type Saham } from "@/lib/mock/stocks";
 import { formatTanggalIndonesia, formatTanggalSingkat } from "@/lib/util/formatDate";
+import { pickHeroGradient } from "@/lib/util/heroGradient";
 
 interface StockCardProps {
   recap: DailyRecap;
@@ -35,7 +36,7 @@ export function StockCard({
   // the href is identical to the pre-existing behavior.
   const params = id ? new URLSearchParams({ id }).toString() : "";
   const href = `/stock/${recap.sahamKode}${params ? `?${params}` : ""}`;
-  const heroGradient = s ? HUE_GRADIENT[s.hue] : HUE_GRADIENT.slate;
+  const heroGradient = pickHeroGradient(recap.sahamKode);
   const isFeatured = variant === "featured";
   const isCompact = variant === "compact";
 
