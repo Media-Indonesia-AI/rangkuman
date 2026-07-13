@@ -13,13 +13,31 @@ import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { SimilarStocks } from "@/components/stock/SimilarStocks";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
+import { HUE_GRADIENT } from "@/lib/mock/stocks";
 
 interface PageProps {
   params: { kode: string };
 }
 
+/**
+ * Pick a hue-gradient class for the hero strip. We don't have real
+ * stock data yet (mock removed), so this hashes the ticker code to a
+ * stable hue index. Each ticker gets a distinct color, and the same
+ * ticker always renders with the same gradient (no hydration mismatch
+ * and no flicker across re-renders).
+ */
+function pickHeroGradient(kode: string): string {
+  const keys = Object.keys(HUE_GRADIENT) as Array<keyof typeof HUE_GRADIENT>;
+  let hash = 0;
+  for (let i = 0; i < kode.length; i++) {
+    hash = (hash * 31 + kode.charCodeAt(i)) >>> 0;
+  }
+  return HUE_GRADIENT[keys[hash % keys.length]];
+}
+
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
+  const heroGradient = pickHeroGradient(kode);
 
   return (
     <>
@@ -52,7 +70,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
         {/* Hero / price block */}
         <section
-          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-bg-secondary`}
+          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-gradient-to-br ${heroGradient}`}
         >
           <div
             className="absolute inset-0 opacity-[0.04]"
