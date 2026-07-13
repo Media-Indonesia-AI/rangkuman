@@ -52,7 +52,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
         {/* Hero / price block */}
         <section
-          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-gradient-to-br from-bg-secondary`}
+          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-bg-secondary`}
         >
           <div
             className="absolute inset-0 opacity-[0.04]"
