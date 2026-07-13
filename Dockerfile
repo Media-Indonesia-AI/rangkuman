@@ -1,27 +1,27 @@
-# Base image
-FROM node:18-alpine
+# syntax=docker/dockerfile:1.7
+
+# ---------- Stage 1: build ----------
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Allow selecting environment file at build-time (defaults to development)
-ARG NODE_ENV=development
-ENV NODE_ENV=${NODE_ENV}
+# Install deps with cache-friendly layer
+COPY package.json package-lock.json ./
+RUN npm ci
 
-# Copy only necessary files first (layer-cache friendly)
-COPY package*.json ./
-RUN npm install
-
-# Copy the rest of the source
+# Copy source and build the static site
 COPY . .
-
-# Copy the requested environment file to .env (soft step — won't fail if missing)
-RUN cp .env.${NODE_ENV} .env || true
-
-# Build the static export (next build writes to ./out/ thanks to output: 'export')
 RUN npm run build
 
-EXPOSE 8080
+# ---------- Stage 2: serve ----------
+FROM nginx:1.27-alpine
 
-# Serve the static export on 8080.
-# --single makes SPA routes like /stock/BBCA fall back to index.html.
-CMD ["sh", "-c", "npx --yes serve out -l 8080 --single"]
+# Replace the default site config
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+
+# Static export output from Next.js (`output: 'export'` → ./out)
+COPY --from=builder /app/out /usr/share/nginx/html
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

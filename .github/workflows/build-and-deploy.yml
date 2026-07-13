@@ -1,0 +1,231 @@
+name: Build and Deploy Image
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_ref:
+        description: Branch to build/deploy
+        required: true
+        default: dev
+        type: choice
+        options:
+          - dev
+          - master
+      deploy_environment:
+        description: Environment to deploy to
+        required: true
+        default: stage
+        type: choice
+        options:
+          - stage
+          - prod
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ format('{0}/rangkuman-news', github.repository_owner) }}
+
+concurrency:
+  group: container-deploy-${{ inputs.deploy_environment }}-${{ inputs.source_ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Resolve / Build Image
+    runs-on: ubuntu-latest
+    outputs:
+      git_sha: ${{ steps.image.outputs.git_sha }}
+      image_ref: ${{ steps.image.outputs.image_ref }}
+      image_exists: ${{ steps.existing-image.outputs.exists }}
+
+    steps:
+      - name: Checkout source ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_ref }}
+
+      - name: Set image metadata
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git_sha="$(git rev-parse HEAD)"
+          registry="${REGISTRY,,}"
+          image_name="${IMAGE_NAME,,}"
+          image_ref="${registry}/${image_name}"
+
+          {
+            echo "git_sha=$git_sha"
+            echo "image_ref=$image_ref"
+            echo "tags<<EOF"
+            echo "$image_ref:$git_sha"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Log in to container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          password: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Check for existing SHA image
+        id: existing-image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          image="${{ steps.image.outputs.image_ref }}:${{ steps.image.outputs.git_sha }}"
+
+          if docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Block prod if image does not exist
+        if: inputs.deploy_environment == 'prod' && steps.existing-image.outputs.exists != 'true'
+        shell: bash
+        run: |
+          echo "Image does not exist:"
+          echo "${{ steps.image.outputs.image_ref }}:${{ steps.image.outputs.git_sha }}"
+          echo ""
+          echo "prod must reuse an image already built from stage."
+          exit 1
+
+      - name: Build and push Docker image for stage
+        if: inputs.deploy_environment == 'stage' && steps.existing-image.outputs.exists != 'true'
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.image.outputs.tags }}
+          cache-from: type=registry,ref=${{ steps.image.outputs.image_ref }}:buildcache
+          cache-to: type=registry,ref=${{ steps.image.outputs.image_ref }}:buildcache,mode=max
+
+      - name: Tag prod image as latest
+        if: inputs.deploy_environment == 'prod'
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker buildx imagetools create \
+            --tag "${{ steps.image.outputs.image_ref }}:latest" \
+            "${{ steps.image.outputs.image_ref }}:${{ steps.image.outputs.git_sha }}"
+
+      - name: Write build summary
+        shell: bash
+        run: |
+          {
+            echo "### Image"
+            echo ""
+            echo "- Environment: \`${{ inputs.deploy_environment }}\`"
+            echo "- Source ref: \`${{ inputs.source_ref }}\`"
+            echo "- Git SHA: \`${{ steps.image.outputs.git_sha }}\`"
+            echo "- Image: \`${{ steps.image.outputs.image_ref }}:${{ steps.image.outputs.git_sha }}\`"
+            echo "- Existing image reused: \`${{ steps.existing-image.outputs.exists }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    needs: build
+    environment: ${{ inputs.deploy_environment }}
+
+    env:
+      DEPLOY_ENVIRONMENT: ${{ inputs.deploy_environment }}
+      IMAGE_REF: ${{ needs.build.outputs.image_ref }}
+      IMAGE_TAG: ${{ needs.build.outputs.git_sha }}
+      IMAGE: ${{ needs.build.outputs.image_ref }}:${{ needs.build.outputs.git_sha }}
+      DEPLOY_HOST: ${{ vars.DEPLOY_HOST }}
+      DEPLOY_PORT: ${{ vars.DEPLOY_PORT || '22' }}
+      DEPLOY_USER: ${{ vars.DEPLOY_USER || 'root' }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+
+    steps:
+      - name: Set up SSH key
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          set -euxo pipefail
+
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/dev_key
+          chmod 600 ~/.ssh/dev_key
+
+          ssh-keyscan -p "$DEPLOY_PORT" "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>&1 || echo "keyscan failed: $?"
+
+          ssh -vv -i ~/.ssh/dev_key -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" "whoami" 2>&1 || echo "ssh failed: $?"
+
+      - name: Prepare deploy files
+        shell: bash
+        env:
+          ENV_FILE: ${{ vars.ENV }}
+          COMPOSE_YML: ${{ vars.COMPOSE_YML }}
+          ID_RSA: ${{ secrets.ID_RSA }}
+        run: |
+          set -euo pipefail
+
+          printf '%s' "$ENV_FILE" > .env
+          printf '%s' "$COMPOSE_YML" > docker-compose.yml
+          printf '%s' "$ID_RSA" > id_rsa
+          chmod 600 id_rsa
+
+      - name: Copy deploy files to server
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ssh -i ~/.ssh/dev_key -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p '$DEPLOY_PATH'"
+
+          scp -i ~/.ssh/dev_key -P "$DEPLOY_PORT" \
+            .env \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/.env"
+
+          scp -i ~/.ssh/dev_key -P "$DEPLOY_PORT" \
+            docker-compose.yml \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/docker-compose.yml"
+
+          ssh -i ~/.ssh/dev_key -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p '$DEPLOY_PATH/key' && chmod 700 '$DEPLOY_PATH/key'"
+
+          scp -i ~/.ssh/dev_key -P "$DEPLOY_PORT" \
+            id_rsa \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/key/id_rsa"
+
+      - name: Deploy on server
+        shell: bash
+        env:
+          REGISTRY_USERNAME: ${{ secrets.REGISTRY_USERNAME || github.actor }}
+          REGISTRY_PASSWORD: ${{ secrets.REGISTRY_PASSWORD || secrets.GITHUB_TOKEN }}
+          DEPLOY_COMMAND: ${{ secrets.DEPLOY_COMMAND }}
+
+        run: |
+          set -euo pipefail
+
+          echo "$REGISTRY_PASSWORD" | ssh -i ~/.ssh/dev_key -p "$DEPLOY_PORT" "$DEPLOY_USER@$DEPLOY_HOST" \
+            "docker login ghcr.io -u '$REGISTRY_USERNAME' --password-stdin"
+
+          bash -euo pipefail -c "$DEPLOY_COMMAND"
+
+      - name: Write deploy summary
+        shell: bash
+        run: |
+          {
+            echo "### Deployment"
+            echo ""
+            echo "- Environment: \`$DEPLOY_ENVIRONMENT\`"
+            echo "- Image: \`$IMAGE\`"
+          } >> "$GITHUB_STEP_SUMMARY"
