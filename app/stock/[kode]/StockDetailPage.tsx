@@ -25,7 +25,7 @@ interface PageProps {
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
   const stock = getStockByKode(kode);
-  
+
   const positive = (stock?.changePercent??0) >= 0;
   const heroGradient = HUE_GRADIENT[stock?.hue ?? 'amber'];
 
@@ -112,7 +112,6 @@ export default function StockDetailPage({ params }: PageProps) {
             A dedicated "Headline" detail section can be added here later
             as another consumer — no extra fetch needed. */}
 
-        (
           <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
             {/* Main column */}
             <div className="min-w-0 space-y-6">
@@ -197,7 +196,6 @@ export default function StockDetailPage({ params }: PageProps) {
               />
             </aside>
           </div>
-        )
         </HeadlineStoriesProvider>
         </HeadlineDetailProvider>
       </main>
