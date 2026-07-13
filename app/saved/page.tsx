@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Bookmark, Trash2, ArrowUpRight, Filter, X } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { ShareButton } from "@/components/ShareButton";
 import { SavedButton } from "@/components/SavedButton";
 import { useSaved } from "@/lib/hooks/useSaved";
@@ -31,7 +30,6 @@ export default function SavedPage() {
   return (
     <>
       <Navbar />
-      <TopTicker />
 
       <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
         {/* Header */}

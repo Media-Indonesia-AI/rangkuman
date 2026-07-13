@@ -5,7 +5,9 @@ import Link from "next/link";
 import { Newspaper, ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { ShareButton } from "./ShareButton";
 import { SavedButton } from "./SavedButton";
+import { Shimmer } from "./Shimmer";
 import { getNewsStoriesByDate, getStoryCountsByDate, getLatestTime, type NewsCategory } from "@/lib/mock/general-news";
+import { useTopics } from "@/lib/hooks/useTopics";
 import { cn } from "@/lib/utils";
 
 const categoryConfig: Record<
@@ -49,7 +51,7 @@ const categoryConfig: Record<
   },
 };
 
-type Filter = "semua" | NewsCategory;
+type Filter = "semua" | string;
 
 interface GeneralNewsFeedProps {
   isoDate: string;
@@ -60,8 +62,27 @@ export function GeneralNewsFeed({ isoDate }: GeneralNewsFeedProps) {
   const allStories = useMemo(() => getNewsStoriesByDate(isoDate), [isoDate]);
   const counts = useMemo(() => getStoryCountsByDate(isoDate), [isoDate]);
 
+  // Fetch live topics to drive the tab menu. The hook returns `[]`
+  // on error / empty response so the `displayTopics` fallback below
+  // takes over and the user still sees the mock category list.
+  const { data: liveTopics, isLoading: topicsLoading } = useTopics(10, 0, []);
+
+  // Map a topic to its categoryConfig entry (for accent / dot color)
+  // and to its mock count. The topic.slug values are expected to
+  // match NewsCategory strings today ("ekonomi", "pemerintah", …) —
+  // unknown slugs render with no accent.
+  const displayTopics = liveTopics.length > 0
+    ? liveTopics
+    : (Object.keys(categoryConfig) as NewsCategory[]).map((cat) => ({
+        id: cat,
+        slug: cat,
+        name: categoryConfig[cat].label,
+      }));
+
   const filtered = useMemo(() => {
     if (filter === "semua") return allStories;
+    // Topic slug doubles as the mock `category` for known topics,
+    // so the existing per-category filter keeps working unchanged.
     return allStories.filter((s) => s.category === filter);
   }, [filter, allStories]);
 
@@ -96,16 +117,32 @@ export function GeneralNewsFeed({ isoDate }: GeneralNewsFeedProps) {
               label="Semua"
               count={allStories.length}
             />
-            {(Object.keys(categoryConfig) as NewsCategory[]).map((cat) => (
-              <FilterPill
-                key={cat}
-                active={filter === cat}
-                onClick={() => setFilter(cat)}
-                label={categoryConfig[cat].label}
-                count={counts[cat]}
-                accent={categoryConfig[cat].text}
-              />
-            ))}
+            {topicsLoading ? (
+              // Single shimmer bar sized to roughly match a tab row,
+              // so the menu doesn't visually pop in when topics land.
+              <Shimmer className="h-6 w-48" />
+            ) : (
+              displayTopics.map((topic) => {
+                // topic.slug is expected to match a NewsCategory key
+                // (ekonomi / pemerintah / politik / emiten / global);
+                // unknown slugs render with no accent color.
+                const cat = (categoryConfig as Record<
+                  string,
+                  (typeof categoryConfig)[NewsCategory]
+                >)[topic.slug];
+                const count = (counts as Record<string, number>)[topic.slug] ?? 0;
+                return (
+                  <FilterPill
+                    key={topic.id}
+                    active={filter === topic.slug}
+                    onClick={() => setFilter(topic.slug)}
+                    label={topic.name}
+                    count={count}
+                    accent={cat?.text}
+                  />
+                );
+              })
+            )}
           </div>
         </div>
       </header>

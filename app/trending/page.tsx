@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Flame, ArrowUpRight, ArrowLeft, FileText, Megaphone, Newspaper } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import {
   getTrending,
@@ -29,7 +28,6 @@ export default function TrendingPage() {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">

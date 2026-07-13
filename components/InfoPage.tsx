@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { cn } from "@/lib/utils";
 
 interface InfoPageProps {
@@ -42,7 +41,6 @@ export function InfoPage({
   return (
     <>
       <Navbar />
-      <TopTicker />
       <main className="mx-auto max-w-3xl px-4 pb-16 pt-6 sm:px-6 sm:pt-8">
         {/* Breadcrumb */}
         <nav aria-label="Breadcrumb" className="mb-4 flex items-center gap-1 font-mono text-[10.5px] text-text-muted">

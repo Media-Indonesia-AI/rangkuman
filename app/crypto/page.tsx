@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Inbox, ArrowUpRight, Flame, BookOpen, TrendingUp, TrendingDown, BarChart3 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { CryptoSubNav, type CryptoSubNavValue } from "@/components/CryptoSubNav";
 import { CryptoSection } from "@/components/CryptoSection";
 import { CryptoInfoBar } from "@/components/CryptoInfoBar";
@@ -135,7 +134,6 @@ export default function CryptoPage() {
 
   return (
     <>
-      <TopTicker variant="crypto" />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-4 md:max-w-4xl lg:max-w-6xl lg:px-8">

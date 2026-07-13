@@ -1,8 +1,11 @@
 "use client";
 
-import { stocks } from "@/lib/mock/stocks";
+import { useEffect, useState } from "react";
+import { stocks as mockStocks } from "@/lib/mock/stocks";
 import { COINS } from "@/lib/mock/crypto";
 import { GLOBAL_INDICES } from "@/lib/mock/category-widgets";
+import { loadTickers, peekTickers } from "@/lib/api/cache";
+import type { TickerItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 export type TopTickerVariant = "stocks" | "crypto" | "global";
@@ -38,8 +41,31 @@ function formatIndexValue(value: string): string {
 }
 
 /**
+ * Render shape for a single stock row. `Saham` (mock) is a superset
+ * of this; `TickerItem` (API) maps onto it via `tickerToEntry`. Both
+ * sources flow into the same render path.
+ */
+interface StockEntry {
+  kode: string;
+  nama: string;
+  price: number;
+  changePercent: number;
+}
+
+function tickerToEntry(t: TickerItem): StockEntry {
+  return {
+    kode: t.ticker,
+    nama: t.company_name,
+    price: t.price,
+    changePercent: t.percent_change,
+  };
+}
+
+/**
  * Sticky horizontal price ticker — swaps content based on `variant`.
- *   - "stocks" (default): Indonesian stocks (IHSG)
+ *   - "stocks" (default): Indonesian stocks (IHSG) — fetched from
+ *     /stocks/ticker, with the mock catalog as fallback during the
+ *     initial load and on error
  *   - "crypto": crypto prices (BTC, ETH, SOL, etc.)
  *   - "global": world indices (S&P 500, HSI, Nikkei, etc.)
  *
@@ -52,6 +78,40 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
       : variant === "global"
         ? "Indeks global real-time"
         : "Harga saham real-time";
+
+  // Live ticker data for the "stocks" variant. Initialized lazily from
+  // the shared cache so a remount that happens after another instance
+  // has already fetched shows the data on the first render (no flash
+  // of the mock fallback). We store the unwrapped array (`.data`) so
+  // the rest of this component can treat it as a plain list.
+  const [apiStocks, setApiStocks] = useState<TickerItem[] | null>(
+    () => peekTickers()?.data ?? null,
+  );
+
+  useEffect(() => {
+    if (variant !== "stocks") return;
+    let cancelled = false;
+    void loadTickers()
+      .then((res) => {
+        if (!cancelled) setApiStocks(res.data);
+      })
+      .catch(() => {
+        // Swallow — the mock list below is the fallback for any failure
+        // (auth, network, server error, malformed response).
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [variant]);
+
+  // Prefer live data when it arrived with content; otherwise fall back
+  // to the mock catalog so the ticker is never empty. (Saham[] is
+  // assignable to StockEntry[] via structural typing — the mock is a
+  // superset of what we need.)
+  const stockSource: StockEntry[] =
+    apiStocks !== null && apiStocks.length > 0
+      ? apiStocks.map(tickerToEntry)
+      : mockStocks;
 
   return (
     <div
@@ -115,7 +175,7 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
                     <span className="text-text-faint">·</span>
                   </a>
                 ))
-              : stocks.map((s, idx) => {
+              : stockSource.map((s, idx) => {
                   const positive = s.changePercent >= 0;
                   return (
                     <a
