@@ -19,7 +19,6 @@ build
 Dockerfile
 docker-compose.yml
 .dockerignore
-nginx.conf
 
 # Docs (not needed in image)
 *.md
