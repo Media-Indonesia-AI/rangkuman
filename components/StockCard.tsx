@@ -30,7 +30,7 @@ export function StockCard({
   rank,
   id,
 }: StockCardProps) {
-  const s = stock ?? getStockByKode(recap.sahamKode);
+  // const s = stock ?? getStockByKode(recap.sahamKode);
   // Build href once. With an `id`, append it as a query param so the
   // stock detail page can deep-link to a specific headline; without,
   // the href is identical to the pre-existing behavior.
@@ -55,9 +55,9 @@ export function StockCard({
           <span className="font-mono text-[12px] font-semibold text-text-primary group-hover:text-brand">
             {recap.sahamKode}
           </span>
-          <span className="flex-1 truncate text-[12px] text-text-secondary">
-            {s?.nama}
-          </span>
+          {/* <span className="flex-1 truncate text-[12px] text-text-secondary">
+            {recap?.nama ?? ""}
+          </span> */}
           <SentimentBadge sentiment={recap.sentimen} size="sm" />
           <span className="num-tabular text-[11px] text-text-muted">
             {recap.jumlahBerita}
@@ -83,7 +83,8 @@ export function StockCard({
           className={cn(
             "relative block w-[120px] shrink-0 overflow-hidden sm:w-[160px]",
           )}
-          aria-label={`${recap.sahamKode} — ${s?.nama ?? ""}`}
+          // aria-label={`${recap.sahamKode} — ${s?.nama ?? ""}`}
+          aria-label={`${recap.sahamKode}`}
         >
           <div className={cn("absolute inset-0 bg-gradient-to-br", heroGradient)} aria-hidden />
           <div
@@ -107,9 +108,9 @@ export function StockCard({
               <h2 className="font-mono text-[32px] font-bold leading-[0.9] tracking-tighter text-text-primary sm:text-[40px]">
                 {recap.sahamKode}
               </h2>
-              <p className="mt-1 truncate text-[10.5px] text-text-secondary sm:text-[11.5px]">
+              {/* <p className="mt-1 truncate text-[10.5px] text-text-secondary sm:text-[11.5px]">
                 {s?.nama}
-              </p>
+              </p> */}
             </div>
           </div>
         </Link>
@@ -137,7 +138,8 @@ export function StockCard({
               <SavedButton id={recap.sahamKode} kind="stock" publishedAt={recap.tanggal} tone="dark" />
               <ShareButton
                 url={`https://rangkuman.news${href}`}
-                title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                // title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                title={`${recap.sahamKode} — Rangkuman`}
                 tone="dark"
               />
             </div>
@@ -175,7 +177,8 @@ export function StockCard({
         <Link
           href={href}
           className="relative hidden w-[150px] shrink-0 overflow-hidden sm:block"
-          aria-label={`${recap.sahamKode} — ${s?.nama ?? ""}`}
+          // aria-label={`${recap.sahamKode} — ${s?.nama ?? ""}`}
+          aria-label={`${recap.sahamKode}`}
         >
           <div className={cn("absolute inset-0 bg-gradient-to-br", heroGradient)} aria-hidden />
           <div
@@ -199,9 +202,9 @@ export function StockCard({
               <h2 className="font-mono text-[28px] font-bold leading-[0.9] tracking-tighter text-text-primary">
                 {recap.sahamKode}
               </h2>
-              <p className="mt-1 line-clamp-2 text-[11.5px] leading-snug text-text-secondary">
+              {/* <p className="mt-1 line-clamp-2 text-[11.5px] leading-snug text-text-secondary">
                 {s?.nama}
-              </p>
+              </p> */}
             </div>
           </div>
         </Link>
@@ -222,11 +225,11 @@ export function StockCard({
               <h2 className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary group-hover/link:text-brand">
                 {recap.sahamKode}
               </h2>
-              {s?.nama && (
+              {/* {s?.nama && (
                 <span className="truncate text-[11.5px] text-text-muted">
                   {s.nama}
                 </span>
-              )}
+              )} */}
             </Link>
             <SentimentBadge sentiment={recap.sentimen} size="sm" />
           </div>
@@ -257,7 +260,8 @@ export function StockCard({
               />
               <ShareButton
                 url={`https://rangkuman.news${href}`}
-                title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                // title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                title={`${recap.sahamKode} — Rangkuman`}
                 tone="dark"
               />
             </div>
@@ -287,7 +291,8 @@ export function StockCard({
               />
               <ShareButton
                 url={`https://rangkuman.news${href}`}
-                title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                // title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+                title={`${recap.sahamKode} — Rangkuman`}
                 tone="dark"
               />
             </div>
@@ -339,28 +344,29 @@ export function StockCard({
             <h3 className="font-mono text-[22px] font-bold leading-none tracking-tighter text-text-primary group-hover/link:text-brand">
               {recap.sahamKode}
             </h3>
-            {s?.nama && (
+            {/* {s?.nama && (
               <span className="hidden truncate text-[11.5px] text-text-muted sm:inline">
                 {s.nama}
               </span>
-            )}
+            )} */}
           </Link>
           <div className="flex shrink-0 items-center gap-1">
             <SavedButton id={recap.sahamKode} kind="stock" publishedAt={recap.tanggal} tone="dark" />
             <ShareButton
               url={`https://rangkuman.news${href}`}
-              title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+              // title={`${recap.sahamKode} — ${s?.nama ?? ""} · Rangkuman`}
+              title={`${recap.sahamKode} — Rangkuman`}
               tone="dark"
             />
           </div>
         </div>
 
         {/* Mobile-only name (since it's hidden on the row above at sm+) */}
-        {s?.nama && (
+        {/* {s?.nama && (
           <p className="-mt-1 mb-1 truncate text-[11.5px] text-text-muted sm:hidden">
             {s.nama}
           </p>
-        )}
+        )} */}
 
         {/* Meta line: date · articles · sentiment */}
         <p className="mb-2 inline-flex flex-wrap items-center gap-1.5 font-mono text-[10.5px] text-text-muted">
