@@ -507,9 +507,21 @@ export const newsStoriesByDate: Record<string, NewsStory[]> = {
   ],
 };
 
+/**
+ * The mock snapshot lives at `TODAY_ISO` (a fixed date in the mock
+ * registry). When the page's date picker points at a real date that
+ * the mock doesn't cover, fall back to that snapshot so the section
+ * still has content. Without this, navigating away from the mock
+ * date (or defaulting to real today) would render zero stories.
+ */
+function pickDateWithData(isoDate: string): string {
+  if (newsStoriesByDate[isoDate]?.length) return isoDate;
+  return TODAY_ISO;
+}
+
 /** Get aggregated news stories for a given ISO date. */
 export function getNewsStoriesByDate(isoDate: string): NewsStory[] {
-  return newsStoriesByDate[isoDate] ?? [];
+  return newsStoriesByDate[pickDateWithData(isoDate)] ?? [];
 }
 
 /** Count stories per category for a given ISO date. */

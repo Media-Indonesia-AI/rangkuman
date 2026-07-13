@@ -1,13 +1,11 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Flame, Inbox, ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { DatePicker } from "@/components/DatePicker";
-import { StockCard } from "@/components/StockCard";
+import { PalingBanyakDiberitakan } from "@/components/PalingBanyakDiberitakan";
 import { Sidebar } from "@/components/Sidebar";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketMood } from "@/components/MarketMood";
@@ -16,29 +14,29 @@ import { MobileTopMovers } from "@/components/MobileTopMovers";
 import { WatchlistSection } from "@/components/WatchlistSection";
 import { SahamSubTabs } from "@/components/SahamSubTabs";
 import { SektorSection } from "@/components/SektorSection";
-import {
-  getRecapsByDate,
-  TODAY_ISO,
-} from "@/lib/mock/recaps";
+import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
+import { todayIsoDate } from "@/lib/api/client";
 import { getMarketMoodByDate } from "@/lib/mock/market-mood";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
 export default function SahamPage() {
   /** Sub-tab active: "recap" (default) | "sektor" */
   const [subTab, setSubTab] = useState<"recap" | "sektor">("recap");
-  // Selected date — drives every data fetch on the page.
-  const [isoDate, setIsoDate] = useState<string>(TODAY_ISO);
+  // Selected date — defaults to actual local-tz today via lazy
+  // initialization (so the user always lands on the current day on
+  // first visit, not the hardcoded mock "2026-06-07"). The user can
+  // still navigate back via the DatePicker.
+  const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
 
-  const recaps = useMemo(() => getRecapsByDate(isoDate), [isoDate]);
   const mood = useMemo(() => getMarketMoodByDate(isoDate), [isoDate]);
 
-  const isToday = isoDate === TODAY_ISO;
-  const featured = isToday ? recaps[0] : undefined;
-  const rest = isToday ? recaps.slice(1) : recaps;
+  // "Paling banyak diberitakan" — live API, independent of the date
+  // picker. The trending endpoint returns the current top stories, not
+  // a date-keyed snapshot.
+  const { data: trending, isLoading: trendingLoading } = useTrendingStories();
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       {/* FIX 4: Sr-only H1 for SEO */}
@@ -70,96 +68,48 @@ export default function SahamPage() {
             {/* Watchlist preview — only shown when user is logged in & watchlist isn't empty */}
             <WatchlistSection />
 
-        {/* Main grid: left rail + feed + right rail */}
-        <div className="grid gap-6 xl:grid-cols-[240px_1fr_320px]">
-          {/* Left rail — Top Movers */}
-          <div className="hidden xl:block">
-            <div className="sticky top-20">
-              <LeftSidebar />
-            </div>
-          </div>
+            {/* Main grid: left rail + feed + right rail */}
+            <div className="grid gap-6 xl:grid-cols-[240px_1fr_320px]">
+              {/* Left rail — Top Movers */}
+              <div className="hidden xl:block">
+                <div className="sticky top-20">
+                  <LeftSidebar />
+                </div>
+              </div>
 
-          {/* Feed column */}
-          <div className="min-w-0 space-y-5">
-            {/* Date picker + recap summary */}
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <DatePicker
-                value={isoDate}
-                onChange={setIsoDate}
-                todayIso={TODAY_ISO}
-                maxLookbackDays={30}
-              />
-              <span className="font-mono text-[10.5px] text-text-faint">
-                {recaps.length} recap · {formatTanggalIndonesia(isoDate)}
-              </span>
-            </div>
-
-            {featured && (
-              <section aria-label="Featured recap">
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Flame className="h-3.5 w-3.5 text-brand" aria-hidden />
-                  <span className="label text-text-secondary">
-                    Paling banyak diberitakan
+              {/* Feed column */}
+              <div className="min-w-0 space-y-5">
+                {/* Date picker + recap summary */}
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <DatePicker
+                    value={isoDate}
+                    onChange={setIsoDate}
+                    todayIso={todayIsoDate()}
+                    maxLookbackDays={30}
+                  />
+                  <span className="font-mono text-[10.5px] text-text-faint">
+                    {trending.length} recap · {formatTanggalIndonesia(isoDate)}
                   </span>
                 </div>
-                <StockCard recap={featured} variant="featured" rank={1} />
-              </section>
-            )}
 
-            {/* Feed */}
-            {rest.length === 0 ? (
-              <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border bg-bg-secondary/50 px-6 py-12 text-center">
-                <Inbox className="h-7 w-7 text-text-faint" aria-hidden />
-                <p className="text-[13.5px] font-semibold text-text-primary">
-                  Belum ada recap untuk tanggal ini
-                </p>
-                <p className="max-w-sm text-[12px] leading-snug text-text-muted">
-                  Coba pilih tanggal lain pakai picker di atas, atau mundur
-                  beberapa hari ke belakang.
-                </p>
+                <PalingBanyakDiberitakan
+                  trending={trending}
+                  trendingLoading={trendingLoading}
+                />
               </div>
-            ) : (
-              <>
-                <div className="space-y-2.5">
-                  {rest.map((recap, idx) => (
-                    <StockCard
-                      key={recap.id}
-                      recap={recap}
-                      variant="list"
-                      rank={idx + 2}
-                    />
-                  ))}
-                </div>
 
-                {/* Lihat 20 teratas — link to /trending page */}
-                <div className="flex justify-center pt-1">
-                  <Link
-                    href="/trending"
-                    className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand"
-                  >
-                    Lihat 20 teratas
-                    <ArrowUpRight
-                      className="h-3 w-3 transition-transform group-hover:-translate-y-px group-hover:translate-x-px"
-                      aria-hidden
-                    />
-                  </Link>
+              {/* Right sidebar — desktop only, contains Market Mood + Headlines + Newsletter */}
+              <div className="hidden xl:block">
+                <div className="sticky top-20">
+                  <Sidebar />
                 </div>
-              </>
-            )}
-          </div>
-
-          {/* Right sidebar — desktop only, contains Market Mood + Headlines + Newsletter */}
-          <div className="hidden xl:block">
-            <div className="sticky top-20">
-              <Sidebar />
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* General news feed — ekonomi, pemerintah, politik (below the stock recap feed) */}
-        <div className="mt-10">
-          <GeneralNewsFeed isoDate={isoDate} />
-        </div>
+            {/* General news feed — ekonomi, pemerintah, politik (below the stock recap feed) */}
+            {/* <div className="mt-10">
+              <GeneralNewsFeed isoDate={isoDate} />
+            </div> */}
           </main>
           <Footer />
         </>

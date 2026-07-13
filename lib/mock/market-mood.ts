@@ -36,6 +36,13 @@ export interface MarketWidget {
   staticSubLabel?: string;
   /** Static badge — controls color of sub-label (matches sentiment palette). */
   staticBadge?: "bullish" | "bearish" | "mixed";
+  /**
+   * When true, the renderer replaces value + visualization with a
+   * shimmer placeholder. The label stays visible (it's static across
+   * all data states). Set by merge functions whose backing fetch is
+   * still in flight.
+   */
+  loading?: boolean;
 }
 
 export interface MarketMood {

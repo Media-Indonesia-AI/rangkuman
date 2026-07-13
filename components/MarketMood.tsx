@@ -1,10 +1,17 @@
-import { Activity, TrendingUp, TrendingDown, Minus } from "lucide-react";
+"use client";
+
+import { Activity, Minus, TrendingDown, TrendingUp, type LucideIcon } from "lucide-react";
+import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
-import { SparklineChart } from "./SparklineChart";
-import { GaugeChart } from "./GaugeChart";
-import { ProgressBarChart } from "./ProgressBarChart";
+import { MarketMoodCell } from "./MarketMoodCell";
+import {
+  mergeBiRate,
+  mergeForeignFlow,
+  mergeIhsg,
+  mergeUsdIdr,
+} from "./MarketMoodMerge";
 
 interface MarketMoodProps {
   sentiment: Sentimen;
@@ -14,10 +21,31 @@ interface MarketMoodProps {
   widgets: MarketWidget[];
 }
 
-const sentimentConfig: Record<Sentimen, { label: string; bg: string; text: string; border: string; Icon: typeof TrendingUp }> = {
-  positif: { label: "Positif", bg: "bg-bullish-soft", text: "text-bullish", border: "border-bullish-line", Icon: TrendingUp },
-  netral: { label: "Netral", bg: "bg-mixed-soft", text: "text-mixed", border: "border-mixed-line", Icon: Minus },
-  negatif: { label: "Negatif", bg: "bg-bearish-soft", text: "text-bearish", border: "border-bearish-line", Icon: TrendingDown },
+const sentimentConfig: Record<
+  Sentimen,
+  { label: string; bg: string; text: string; border: string; Icon: LucideIcon }
+> = {
+  positif: {
+    label: "Positif",
+    bg: "bg-bullish-soft",
+    text: "text-bullish",
+    border: "border-bullish-line",
+    Icon: TrendingUp,
+  },
+  netral: {
+    label: "Netral",
+    bg: "bg-mixed-soft",
+    text: "text-mixed",
+    border: "border-mixed-line",
+    Icon: Minus,
+  },
+  negatif: {
+    label: "Negatif",
+    bg: "bg-bearish-soft",
+    text: "text-bearish",
+    border: "border-bearish-line",
+    Icon: TrendingDown,
+  },
 };
 
 const factorSentimentColors: Record<Sentimen, string> = {
@@ -26,6 +54,18 @@ const factorSentimentColors: Record<Sentimen, string> = {
   netral: "text-mixed",
 };
 
+/**
+ * Market Mood strip — header (label + sentiment badge), 6-up widget
+ * grid, and a single-line summary footer. Four of the six cells
+ * (BI Rate, USD/IDR, Foreign Flow, IHSG) are driven by live data;
+ * the others stay on their mock values. Live-data widgets render a
+ * shimmer placeholder until their backing fetch resolves.
+ *
+ * The orchestrator is intentionally thin: data fetching lives in
+ * `useMarketMoodData`, format helpers in `lib/util/formatNumber.ts`,
+ * widget merges in `MarketMoodMerge.ts`, and cell rendering in
+ * `MarketMoodCell.tsx`. This file only wires them together.
+ */
 export function MarketMood({
   sentiment,
   sentimentLabel,
@@ -36,6 +76,26 @@ export function MarketMood({
   const sc = sentimentConfig[sentiment];
   const Icon = sc.Icon;
   const topFactors = factors.slice(0, 3);
+
+  const { biRate, exchangeRate, foreignFlow, compositeChart, isLoading } =
+    useMarketMoodData();
+
+  // Compose the four live-data merges. Each function only mutates the
+  // widget it owns and is a no-op when its data source is null, so
+  // order is safe and any source can land first.
+  const effectiveWidgets = mergeIhsg(
+    mergeBiRate(
+      mergeForeignFlow(
+        mergeUsdIdr(widgets, exchangeRate, isLoading.exchangeRate),
+        foreignFlow,
+        isLoading.foreignFlow,
+      ),
+      biRate,
+      isLoading.biRate,
+    ),
+    compositeChart,
+    isLoading.compositeChart,
+  );
 
   return (
     <section
@@ -52,7 +112,10 @@ export function MarketMood({
           <span
             className={cn(
               "inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest",
-              sc.bg, sc.text, sc.border, "border",
+              sc.bg,
+              sc.text,
+              sc.border,
+              "border",
             )}
           >
             <Icon className="h-2.5 w-2.5" aria-hidden />
@@ -60,10 +123,10 @@ export function MarketMood({
           </span>
         </div>
 
-        {/* 4 compact widget cells */}
+        {/* Widget cells */}
         <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-border md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-          {widgets.map((w) => (
-            <CompactWidgetCell key={w.id} widget={w} />
+          {effectiveWidgets.map((w) => (
+            <MarketMoodCell key={w.id} widget={w} />
           ))}
         </div>
       </div>
@@ -75,7 +138,12 @@ export function MarketMood({
           <span className="hidden sm:inline">
             {topFactors.map((f, i) => (
               <span key={f.label} className="whitespace-nowrap">
-                <span className={cn("font-mono font-semibold", factorSentimentColors[f.sentiment])}>
+                <span
+                  className={cn(
+                    "font-mono font-semibold",
+                    factorSentimentColors[f.sentiment],
+                  )}
+                >
                   {f.label} {f.value}
                 </span>
                 {i < topFactors.length - 1 ? " · " : ""}
@@ -85,95 +153,5 @@ export function MarketMood({
         </p>
       </div>
     </section>
-  );
-}
-
-function CompactWidgetCell({ widget }: { widget: MarketWidget }) {
-  const positive = widget.changePercent >= 0;
-  const trendPositive = widget.type === "sparkline" ? positive : true;
-
-  return (
-    <div className="flex items-center gap-2 px-2.5 py-1.5 lg:gap-3 lg:px-3">
-      {/* Label column — narrow */}
-      <div className="flex min-w-[60px] shrink-0 flex-col gap-0.5">
-        <span className="label text-[9px]">{widget.label}</span>
-        <div className="flex items-baseline gap-1">
-          <p className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular lg:text-[17px]">
-            {widget.value}
-          </p>
-        </div>
-        {widget.type === "sparkline" ? (
-          <span
-            className={cn(
-              "font-mono text-[9.5px] font-semibold leading-none num-tabular",
-              positive ? "text-bullish" : "text-bearish",
-            )}
-          >
-            {positive ? "▲ +" : "▼ "}
-            {Math.abs(widget.changePercent).toFixed(2)}%
-          </span>
-        ) : widget.type === "gauge" ? (
-          <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
-            {widget.gaugeLabel}
-          </span>
-        ) : widget.type === "static" ? (
-          <span
-            className={cn(
-              "font-mono text-[9.5px] font-semibold leading-none",
-              widget.staticBadge === "bullish" && "text-bullish",
-              widget.staticBadge === "bearish" && "text-bearish",
-              widget.staticBadge === "mixed" && "text-mixed",
-              !widget.staticBadge && "text-text-muted",
-            )}
-          >
-            {widget.staticSubLabel}
-          </span>
-        ) : (
-          <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
-            Harian
-          </span>
-        )}
-      </div>
-
-      {/* Visualization column — fills the rest */}
-      <div className="flex-1 min-w-0">
-        {widget.type === "sparkline" && widget.sparklineData && (
-          <SparklineChart
-            data={widget.sparklineData}
-            positive={trendPositive}
-            height={24}
-            showArea
-            showDots
-          />
-        )}
-        {widget.type === "gauge" && widget.gaugeValue !== undefined && (
-          <GaugeChart value={widget.gaugeValue} />
-        )}
-        {widget.type === "bar" && widget.barValue !== undefined && (
-          <ProgressBarChart
-            value={widget.barValue}
-            leftLabel={widget.barLeftLabel}
-            rightLabel={widget.barRightLabel}
-            compact
-          />
-        )}
-        {widget.type === "static" && (
-          <div className="flex h-[24px] items-center justify-end gap-1.5 pr-0.5">
-            <span
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded border px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest opacity-80",
-                widget.staticBadge === "bullish" && "border-bullish-line text-bullish",
-                widget.staticBadge === "bearish" && "border-bearish-line text-bearish",
-                widget.staticBadge === "mixed" && "border-mixed-line text-mixed",
-                !widget.staticBadge && "border-border text-text-muted",
-              )}
-            >
-              <span className="h-1 w-1 rounded-full bg-current" aria-hidden />
-              {widget.staticSubLabel}
-            </span>
-          </div>
-        )}
-      </div>
-    </div>
   );
 }

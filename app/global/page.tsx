@@ -3,7 +3,6 @@ import Link from "next/link";
 import { ArrowRight, Globe2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { GradientDivider } from "@/components/GradientDivider";
 import { MarketSnapshot, type MetricCard } from "@/components/MarketSnapshot";
 import { getStoriesByCategory } from "@/lib/mock/highlights";
@@ -72,7 +71,6 @@ export default function GlobalPage() {
   const ceritaLain = stories.slice(5); // rest
   return (
     <>
-      <TopTicker variant="global" />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-6xl lg:px-8">

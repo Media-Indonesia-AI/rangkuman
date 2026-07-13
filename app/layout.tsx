@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
 import { ToastContainer } from "@/components/Toast";
+import { GuestLoginDialog } from "@/components/GuestLoginDialog";
+import { TopTickerRouter } from "@/components/TopTickerRouter";
 import "./globals.css";
 
 const inter = Inter({
@@ -91,9 +93,11 @@ export default function RootLayout({
         />
       </head>
       <body className="relative min-h-screen bg-bg-primary font-sans text-[14px] leading-relaxed text-text-primary antialiased">
+        <TopTickerRouter />
         {children}
         <NewsletterFloatingPill />
         <ToastContainer />
+        <GuestLoginDialog />
       </body>
     </html>
   );

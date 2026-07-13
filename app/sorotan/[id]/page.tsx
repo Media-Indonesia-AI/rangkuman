@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { ArrowLeft, Clock, Tag, Newspaper, ChevronRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { StoryTimeline } from "@/components/StoryTimeline";
 import { KeyDataBlock } from "@/components/KeyDataBlock";
 import { MarketSnapshotCompact } from "@/components/MarketSnapshotCompact";
@@ -80,7 +79,6 @@ export default function StoryPage({ params }: PageProps) {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-6xl lg:px-8">

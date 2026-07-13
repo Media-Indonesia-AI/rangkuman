@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Newspaper, TrendingUp, FileText, Building2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { getSektorBySlug, sektorList, getTopStocksInSektor, type SektorHue } from "@/lib/mock/sectors";
 import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
@@ -99,7 +98,6 @@ export default function SektorDetailPage({ params }: PageProps) {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">
