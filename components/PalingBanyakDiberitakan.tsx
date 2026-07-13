@@ -62,7 +62,7 @@ function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
     id: story.id,
     tanggal: story.created_at.split("T")[0],
     sahamKode: story.primary_ticker_code,
-    ringkasan: story.summary,
+    ringkasan: story.title,
     sentimen: toSentimen(story.sentiment),
     jumlahBerita: story.story_count,
     sumber: (story.medias ?? []).map((m) => ({

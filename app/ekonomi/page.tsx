@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { CategoryPageView } from "@/components/CategoryPageView";
 
 export const metadata: Metadata = {
   title: "Ekonomi · Rangkuman",
@@ -22,6 +21,4 @@ export const metadata: Metadata = {
   },
 };
 
-export default function EkonomiPage() {
-  return <CategoryPageView category="ekonomi" />;
-}
+export { default } from "./EkonomiPage";
