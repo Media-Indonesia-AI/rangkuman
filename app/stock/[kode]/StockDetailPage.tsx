@@ -1,9 +1,7 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { EmptyState } from "@/components/EmptyState";
 import { ArsipSingkat } from "@/components/stock/ArsipSingkat";
 import { HeadlineSentimentBadge } from "@/components/stock/HeadlineSentimentBadge";
 import { AggregateSummary } from "@/components/stock/AggregateSummary";
@@ -15,8 +13,6 @@ import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { SimilarStocks } from "@/components/stock/SimilarStocks";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
-import { getStockByKode, HUE_GRADIENT } from "@/lib/mock/stocks";
-import { getRecapsForStock, TODAY_ISO } from "@/lib/mock/recaps";
 
 interface PageProps {
   params: { kode: string };
@@ -24,10 +20,6 @@ interface PageProps {
 
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
-  const stock = getStockByKode(kode);
-
-  const positive = (stock?.changePercent??0) >= 0;
-  const heroGradient = HUE_GRADIENT[stock?.hue ?? 'amber'];
 
   return (
     <>
@@ -47,7 +39,7 @@ export default function StockDetailPage({ params }: PageProps) {
         <HeadlineStoriesProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
-          Rangkuman &mdash; Saham {stock?.nama ?? 'N/A'} ({params.kode})
+          Rangkuman &mdash; Saham {'N/A'} ({params.kode})
         </h1>
 
         <Link
@@ -60,7 +52,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
         {/* Hero / price block */}
         <section
-          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-gradient-to-br ${heroGradient}`}
+          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-gradient-to-br from-bg-secondary`}
         >
           <div
             className="absolute inset-0 opacity-[0.04]"
@@ -75,7 +67,7 @@ export default function StockDetailPage({ params }: PageProps) {
           <div className="relative p-5 sm:p-6">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <span className="rounded border border-border bg-bg-primary/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-primary backdrop-blur-sm">
-                {stock?.sektor ?? 'N/A'}
+                {'N/A'}
               </span>
               <HeadlineSentimentBadge />
             </div>
@@ -85,21 +77,18 @@ export default function StockDetailPage({ params }: PageProps) {
                 <h2 className="font-mono text-[56px] font-bold leading-none tracking-tighter text-text-primary sm:text-[72px]">
                   {params.kode}
                 </h2>
-                <p className="mt-1 text-[14px] text-text-secondary">{stock?.nama ?? 'N/A'}</p>
+                <p className="mt-1 text-[14px] text-text-secondary">{'N/A'}</p>
               </div>
               <div className="text-right">
                 <p className="font-mono text-[40px] font-bold leading-none tracking-tight text-text-primary num-tabular sm:text-[48px]">
-                  {stock?.price?.toLocaleString("id-ID") ?? 'N/A'}
+                  {'N/A'}
                 </p>
                 <p
                   className={
-                    positive
-                      ? "mt-1 font-mono text-[16px] font-semibold text-bullish num-tabular"
-                      : "mt-1 font-mono text-[16px] font-semibold text-bearish num-tabular"
+                    "mt-1 font-mono text-[16px] font-semibold text-text-primary num-tabular"
                   }
                 >
-                  {positive ? "▲ +" : "▼ "}
-                  {Math.abs(stock?.changePercent ?? 0).toFixed(2)}% hari ini
+                  {'—'}
                 </p>
               </div>
             </div>
@@ -121,20 +110,20 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Price chart 30 days */}
               <PriceChart30d
                 kode={kode}
-                currentPrice={stock?.price ?? 0}
-                change30dPercent={stock?.change30dPercent ?? 0}
-                ath={stock?.ath ?? 0}
+                currentPrice={0}
+                change30dPercent={0}
+                ath={0}
               />
 
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
-              <KeyMetrics stock={stock ?? null} />
+              <KeyMetrics stock={null} />
 
               {/* News timeline */}
-              <NewsTimeline todayIso={TODAY_ISO} />
+              <NewsTimeline todayIso={''} />
 
               {/* Sentiment trail — reads from the shared
                   <HeadlineStoriesProvider> (mounted above). */}
-              <SentimentSparkline todayIso={TODAY_ISO} />
+              <SentimentSparkline todayIso={''} />
 
               {/* Articles grouped by media — data-driven via the
                   shared headline-scoped stories fetched once by
@@ -158,25 +147,18 @@ export default function StockDetailPage({ params }: PageProps) {
                 <dl className="divide-y divide-border text-[12.5px]">
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Sektor</dt>
-                    <dd className="text-right text-text-primary">{stock?.sektor ?? 'N/A'}</dd>
+                    <dd className="text-right text-text-primary">{'N/A'}</dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Harga</dt>
                     <dd className="font-mono text-text-primary num-tabular">
-                      {stock?.price?.toLocaleString("id-ID") ?? 'N/A'}
+                      {'N/A'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
                     <dt className="text-text-muted">Perubahan</dt>
-                    <dd
-                      className={
-                        positive
-                          ? "font-mono font-semibold text-bullish num-tabular"
-                          : "font-mono font-semibold text-bearish num-tabular"
-                      }
-                    >
-                      {positive ? "+" : ""}
-                      {Math.abs(stock?.changePercent ?? 0).toFixed(2)}%
+                    <dd className="font-mono font-semibold text-text-primary num-tabular">
+                      {'N/A'}
                     </dd>
                   </div>
                   <div className="flex justify-between gap-2 px-3 py-2">
@@ -191,7 +173,7 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Saham Serupa — stocks in the same sector */}
               <SimilarStocks
                 excludeKode={params.kode}
-                sektor={stock?.sektor ?? ''}
+                sektor={''}
                 limit={3}
               />
             </aside>
