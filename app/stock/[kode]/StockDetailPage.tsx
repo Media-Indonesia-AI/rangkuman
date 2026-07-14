@@ -112,7 +112,7 @@ export default function StockDetailPage({ params }: PageProps) {
             {/* Main column */}
             <div className="min-w-0 space-y-6">
               {/* Aggregate summary */}
-              <AggregateSummary />
+              <AggregateSummary kode={kode} />
 
               {/* Price chart 30 days */}
               <PriceChart30d

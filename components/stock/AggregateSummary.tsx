@@ -109,7 +109,7 @@ function AggregateSummaryShimmer() {
  * call, we fall back to `recap.sumber` so the section never goes
  * blank.
  */
-export function AggregateSummary() {
+export function AggregateSummary({ kode }: { kode: string }) {
   const { detail, loading: detailLoading } = useHeadlineDetail();
 
   // Provider already gates on `detail !== null` so no separate
@@ -191,7 +191,7 @@ export function AggregateSummary() {
     return (
       <EmptyState
         title="Belum ada ringkasan"
-        description={`Ringkasan AI belum tersedia untuk ${detail?.primary_ticker_code ?? '-'}.`}
+        description={`Ringkasan AI belum tersedia untuk ${detail?.primary_ticker_code ?? kode}.`}
         suggestion="Coba cek headline lain atau kembali ke beranda."
       />
     );

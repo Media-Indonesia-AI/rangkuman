@@ -2,7 +2,7 @@
 
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, parseISO, subDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { useHeadlineStories } from "./HeadlineStoriesProvider";
@@ -57,8 +57,10 @@ function StoriesShimmerList() {
 
 /** News timeline. Renders one cell per day — story rows when the
  *  headline has related stories, a `-` placeholder otherwise. The
- *  day list is derived from the stories' dates when present, or
- *  from a 7-day window ending at `todayIso` as a fallback. */
+ *  day list is derived from the stories' dates when present. When no
+ *  stories are available (deep link / fallback headline has none, or
+ *  no headline could be resolved), shows an empty-widget branch
+ *  instead of fabricating a 7-day placeholder grid. */
 export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
   const { detail, loading: detailLoading } = useHeadlineDetail();
 
@@ -72,9 +74,12 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
   const isFetchingStories =
     detailLoading || (detail !== null && storiesLoading);
 
-  // Deep-linked headline with no related stories.
-  const showEmptyWidget =
-    detail !== null && !storiesLoading && stories.length === 0;
+  // No related stories to plot — either the deep-linked headline
+  // (or the fallback headline derived by HeadlineDetailProvider) has
+  // no related stories, or no headline could be resolved at all.
+  // Either way the timeline has nothing to show, so render the empty
+  // state instead of fabricating a 7-day placeholder grid.
+  const showEmptyWidget = !isFetchingStories && stories.length === 0;
 
   // Bucket stories by local-time date so each cell does an O(1) lookup.
   const storiesByDay = new Map<string, EmbeddedStory[]>();
@@ -95,13 +100,10 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
         )}`
       : null;
 
-  // Stories present → one cell per unique date. Otherwise → 7-day
-  // window as a placeholder grid.
-  const today = parseISO(todayIso);
-  const days =
-    sortedDayKeys.length > 0
-      ? sortedDayKeys.map((iso) => parseISO(iso))
-      : Array.from({ length: 7 }, (_, i) => subDays(today, 6 - i));
+  // Stories present → one cell per unique date. The empty case is
+  // handled by the empty-widget branch below, so we don't fabricate a
+  // 7-day placeholder grid here.
+  const days = sortedDayKeys.map((iso) => parseISO(iso));
 
   return (
     <section

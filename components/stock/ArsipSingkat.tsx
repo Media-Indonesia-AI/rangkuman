@@ -60,10 +60,16 @@ export function ArsipSingkat({ kode }: ArsipSingkatProps) {
       ? getRecapsForStock(kode).slice(1, 1 + VISIBLE_COUNT)
       : null;
 
-  // Both the live fetch and the recap fallback came back empty.
-  // Render the empty-state card so the right rail still has shape
-  // rather than a header with no rows under it.
-  if (!isLoading && liveItems === null && fallbackItems === null) {
+  // Both the live fetch and the recap fallback yielded no rows.
+  // `fallbackItems` is `null` when not applicable (still loading or
+  // live data present), but can also be an empty array when the recap
+  // slice for this ticker has no entries — the `length === 0` check
+  // catches that case so we don't render a header with no rows under it.
+  if (
+    !isLoading &&
+    liveItems === null &&
+    (fallbackItems === null || fallbackItems.length === 0)
+  ) {
     return (
       <EmptyState
         title="Belum ada arsip"
