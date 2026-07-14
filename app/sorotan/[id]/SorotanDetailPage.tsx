@@ -247,16 +247,19 @@ export default function SorotanDetailPage({ params }: PageProps) {
               <section aria-label="Saham terkait" className="mt-6">
                 <h2 className="label mb-2 text-text-secondary">Saham terkait</h2>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  {story.tickers.map((t) => (
-                    <Link
-                      key={t}
-                      href={`/stock/${t}`}
-                      className="group inline-flex items-center gap-1 rounded border border-cat-saham-line bg-cat-saham-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-cat-saham transition-colors hover:bg-cat-saham-soft/70"
-                    >
-                      {t}
-                      <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                    </Link>
-                  ))}
+                  {story.tickers.map((t) => {
+                    const href = `/stock/${t}`;
+                    return (
+                      <Link
+                        key={t}
+                        href={href}
+                        className="group inline-flex items-center gap-1 rounded border border-cat-saham-line bg-cat-saham-soft px-2.5 py-1 font-mono text-[11px] font-semibold text-cat-saham transition-colors hover:bg-cat-saham-soft/70"
+                      >
+                        {t}
+                        <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                      </Link>
+                    );
+                  })}
                 </div>
               </section>
             )}

@@ -177,10 +177,11 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
                 ))
               : stockSource.map((s, idx) => {
                   const positive = s.changePercent >= 0;
+                  const href = `/stock/${s.kode}`;
                   return (
                     <a
                       key={`stk-d${dupIdx}-${s.kode}-${idx}`}
-                      href={`/stock/${s.kode}`}
+                      href={href}
                       className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
                     >
                       <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">

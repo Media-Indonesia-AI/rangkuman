@@ -169,9 +169,10 @@ function StockCard({
   colorClass: string;
 }) {
   const positive = percentChange >= 0;
+  const href = `/stock/${ticker}`;
   return (
     <Link
-      href={`/stock/${ticker}`}
+      href={href}
       className="flex min-w-0 flex-col gap-0.5 rounded-md border border-border bg-bg-tertiary px-2.5 py-1.5 transition-colors hover:border-border-strong"
     >
       <span className="font-mono text-[12px] font-semibold text-text-primary">

@@ -183,12 +183,13 @@ function WatchlistStockCard({ kode }: { kode: string }) {
 
   const recap = getRecapForStock(kode, TODAY_ISO);
   const positive = stock.changePercent >= 0;
+  const href = `/stock/${kode}`;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong hover:shadow-card-hover">
       {/* Top: ticker + remove */}
       <header className="flex items-start justify-between border-b border-border bg-bg-tertiary px-3 py-2">
-        <Link href={`/stock/${kode}`} className="min-w-0">
+        <Link href={href} className="min-w-0">
           <p className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
             {kode}
           </p>

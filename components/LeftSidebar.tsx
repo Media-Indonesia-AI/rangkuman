@@ -158,10 +158,11 @@ function Row({
   colorClass: string;
 }) {
   const positive = stock.percent_change >= 0;
+  const href = `/stock/${stock.ticker}`;
   return (
     <li>
       <Link
-        href={`/stock/${stock.ticker}`}
+        href={href}
         className="group flex items-center justify-between gap-2 rounded px-1 py-1.5 transition-colors hover:bg-bg-tertiary"
       >
         <div className="min-w-0">

@@ -157,13 +157,14 @@ function SearchFormInner() {
           <div className="grid gap-4 sm:grid-cols-2">
             {results.map((s) => {
               const recap = getRecapForStock(s.kode, TODAY_ISO);
+              const href = `/stock/${s.kode}`;
               return (
                 <section key={s.kode}>
                   {recap ? (
                     <StockCard recap={recap} stock={s} />
                   ) : (
                     <Link
-                      href={`/stock/${s.kode}`}
+                      href={href}
                       className="card card-hover group block p-4"
                     >
                       <div className="flex items-center gap-3">

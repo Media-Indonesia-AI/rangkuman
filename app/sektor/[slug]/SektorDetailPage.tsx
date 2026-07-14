@@ -162,10 +162,11 @@ export default function SektorDetailPage({ params }: PageProps) {
                 (r) => r.tanggal === TODAY_ISO,
               );
               const positive = stock.changePercent >= 0;
+              const href = `/stock/${stock.kode}`;
               return (
                 <Link
                   key={stock.kode}
-                  href={`/stock/${stock.kode}`}
+                  href={href}
                   className="group flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong hover:shadow-card-hover"
                 >
                   {/* Top rank strip */}
@@ -262,10 +263,11 @@ export default function SektorDetailPage({ params }: PageProps) {
             <ol className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-bg-secondary">
               {news.map((r, idx) => {
                 const positive = r.stock.changePercent >= 0;
+                const href = `/stock/${r.sahamKode}`;
                 return (
                   <li key={r.id}>
                     <Link
-                      href={`/stock/${r.sahamKode}`}
+                      href={href}
                       className="group grid grid-cols-[36px_1fr_auto] items-center gap-2 px-3 py-2.5 transition-colors hover:bg-bg-tertiary/60 sm:grid-cols-[40px_1fr_140px_120px] sm:gap-3 sm:px-4"
                     >
                       <span className="font-mono text-[11px] font-semibold text-text-faint num-tabular">

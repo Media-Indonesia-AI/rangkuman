@@ -135,10 +135,12 @@ export default function TrendingPage() {
           </header>
 
           <ol className="divide-y divide-border">
-            {rows.map((r) => (
+            {rows.map((r) => {
+              const href = `/stock/${r.kode}`;
+              return (
               <li key={r.kode}>
                 <Link
-                  href={`/stock/${r.kode}`}
+                  href={href}
                   className="group block px-3 py-3 transition-colors hover:bg-bg-tertiary/60 sm:grid sm:grid-cols-[40px_1fr_60px_120px_120px] sm:items-center sm:gap-3 sm:px-4 sm:py-3"
                 >
                   {/* Mobile card layout (stacked vertically) */}
@@ -221,7 +223,8 @@ export default function TrendingPage() {
                   </div>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ol>
         </section>
 

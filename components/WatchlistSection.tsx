@@ -64,10 +64,11 @@ export function WatchlistSection() {
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.slice(0, 6).map(({ stock, recap }) => {
           const positive = stock.changePercent >= 0;
+          const href = `/stock/${stock.kode}`;
           return (
             <Link
               key={stock.kode}
-              href={`/stock/${stock.kode}`}
+              href={href}
               className="group flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-3 transition-all hover:border-border-strong hover:shadow-card-hover"
             >
               <div className="min-w-0 flex-1">
@@ -131,10 +132,12 @@ export function WatchlistSection() {
             </span>
           </header>
           <ul className="divide-y divide-border">
-            {topNews.map((r) => (
+            {topNews.map((r) => {
+              const href = `/stock/${r.sahamKode}`;
+              return (
               <li key={r.id}>
                 <Link
-                  href={`/stock/${r.sahamKode}`}
+                  href={href}
                   className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-bg-tertiary"
                 >
                   <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-faint num-tabular">
@@ -149,7 +152,8 @@ export function WatchlistSection() {
                   </span>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         </div>
       )}

@@ -46,10 +46,11 @@ export function SimilarStocks({ excludeKode, sektor, limit = 3, className }: Sim
       <ol className="divide-y divide-border">
         {similar.map((s) => {
           const positive = s.changePercent >= 0;
+          const href = `/stock/${s.kode}`;
           return (
             <li key={s.kode}>
               <Link
-                href={`/stock/${s.kode}`}
+                href={href}
                 className="group flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-bg-tertiary"
               >
                 <span className="font-mono text-[14px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">

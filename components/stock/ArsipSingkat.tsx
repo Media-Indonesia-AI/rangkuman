@@ -129,10 +129,17 @@ function ArsipRow({ story, kode }: { story: StoryItem; kode: string }) {
   // `created_at` is an ISO timestamp; the date part is what we want
   // for the right-rail's compact date label.
   const tanggal = story.created_at.split("T")[0];
+  // Deep-link the headline so the detail page's headline provider can
+  // resolve the row via `api.getHeadlineById(id)` (same shape as
+  // `<StockCard>`).
+  const params = story.id
+    ? new URLSearchParams({ id: story.id }).toString()
+    : "";
+  const href = `/stock/${kode}${params ? `?${params}` : ""}`;
   return (
     <li>
       <Link
-        href={`/stock/${kode}?id=${story.id}`}
+        href={href}
         className="group block px-3 py-2.5 transition-colors hover:bg-bg-tertiary"
       >
         <div className="mb-1.5 flex items-center gap-2">
