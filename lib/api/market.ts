@@ -1,9 +1,10 @@
 /**
- * Market-data API endpoints (BI Rate + exchange rates).
+ * Market-data API endpoints (BI Rate + exchange rates + market mood).
  *
- * Hits `/interest-rate` and `/exchange-rate`. Re-exports are composed
- * into the top-level `api` object in `./client` so existing call sites
- * (`api.getInterestRate(...)`, `api.getExchangeRate(...)`) keep working.
+ * Hits `/interest-rate`, `/exchange-rate`, and `/market-mood`.
+ * Re-exports are composed into the top-level `api` object in
+ * `./client` so existing call sites (`api.getInterestRate(...)`,
+ * `api.getExchangeRate(...)`, `api.getMarketMood()`) keep working.
  */
 
 import { request, todayIsoDate } from "./client";
@@ -11,6 +12,7 @@ import type {
   ExchangeRateChartResponse,
   InterestRate,
 } from "./types/market";
+import { MarketMood } from "./types/moods";
 
 /**
  * Fetch the BI Rate snapshot for a given date.
@@ -41,4 +43,16 @@ export function getExchangeRate(
     `exchange-rate/chart?${params.toString()}`,
     { method: "GET" },
   );
+}
+
+/**
+ * Fetch the composite market-mood snapshot. Combines IHSG change,
+ * foreign flow, USD/IDR, the latest BI Rate decision, and
+ * headline-sentiment counts into a single object with a 0–100 score,
+ * an Indonesian label band, and an AI-written narrative explaining
+ * the drivers. The response is returned unwrapped (no `{ data: ... }`
+ * envelope — `MarketMood` is the top-level payload).
+ */
+export function getMarketMood(): Promise<MarketMood> {
+  return request<MarketMood>("market-mood", { method: "GET" });
 }

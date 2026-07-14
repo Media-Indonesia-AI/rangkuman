@@ -15,8 +15,9 @@
 import { api } from "./client";
 import type {
   ExchangeRateChartResponse,
-  InterestRate,
+  InterestRate
 } from "./types/market";
+import { MarketMood } from "./types/moods";
 import type {
   CompositeChartResponse,
   ForeignStocksResponse,
@@ -166,6 +167,33 @@ export function loadExchangeRate(
     });
   inflightExchangeRates.set(key, promise);
   return promise;
+}
+
+// ─── MARKET MOOD ────────────────────────────────────────────────
+
+let cachedMarketMood: MarketMood | null = null;
+let inflightMarketMood: Promise<MarketMood> | null = null;
+
+/**
+ * Fetch the composite market-mood snapshot, with request-level dedup.
+ * Concurrent and subsequent callers share one network round-trip.
+ * Only successful responses are cached; errors clear the in-flight
+ * slot so the next mount can retry.
+ */
+export function loadMarketMood(): Promise<MarketMood> {
+  if (cachedMarketMood !== null) return Promise.resolve(cachedMarketMood);
+  if (inflightMarketMood !== null) return inflightMarketMood;
+  inflightMarketMood = api
+    .getMarketMood()
+    .then((res) => {
+      cachedMarketMood = res;
+      return res;
+    })
+    .catch((err) => {
+      inflightMarketMood = null; // allow retry on next mount
+      throw err;
+    });
+  return inflightMarketMood;
 }
 
 // ─── FOREIGN FLOW ──────────────────────────────────────────────
