@@ -28,11 +28,14 @@ export default function StockDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6">
-        {/* Owns the single deep-linked headline fetch: reads ?id= and
-            calls loadHeadlineById once, sharing the result (e.g. the
-            hero sentiment badge) via context. Wraps the server-rendered
-            body so consumers nested inside still receive it. */}
-        <HeadlineDetailProvider>
+        {/* Owns the headline-detail fetch: reads ?id= and calls
+            loadHeadlineById once. When ?id= is absent, falls back to
+            the latest headline for this ticker (loadHeadlines filtered
+            by primary_ticker_code). Either way the result (e.g. the
+            hero sentiment badge) is shared via context. Wraps the
+            server-rendered body so consumers nested inside still
+            receive it. */}
+        <HeadlineDetailProvider kode={kode}>
         {/* Single headline-scoped /stories fetch shared by
             SentimentSparkline, NewsTimeline, ArticlesByMediaWidget,
             and AggregateSummary. Without this, each widget would
@@ -97,11 +100,13 @@ export default function StockDetailPage({ params }: PageProps) {
           </div>
         </section>
 
-        {/* Deep-linked headline detail is fetched once by
-            <HeadlineDetailProvider> above and consumed via
-            useHeadlineDetail() (currently by the hero sentiment badge).
-            A dedicated "Headline" detail section can be added here later
-            as another consumer — no extra fetch needed. */}
+        {/* Headline detail is fetched once by <HeadlineDetailProvider>
+            above (either the deep-linked id from the URL, or the
+            latest headline for this ticker when no id is present)
+            and consumed via useHeadlineDetail() (currently by the
+            hero sentiment badge). A dedicated "Headline" detail
+            section can be added here later as another consumer — no
+            extra fetch needed. */}
 
           <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
             {/* Main column */}

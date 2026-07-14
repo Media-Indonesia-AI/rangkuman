@@ -9,21 +9,30 @@ import {
   type ReactNode,
 } from "react";
 import { useSearchParams } from "next/navigation";
-import { loadHeadlineById } from "@/lib/api/cache";
-import type { HeadlineDetail } from "@/lib/api";
+import { loadHeadlineById, loadHeadlines } from "@/lib/api/cache";
+import type { HeadlineDetail, StoryFilter } from "@/lib/api";
 
 /**
- * Single owner of the deep-linked headline-detail fetch for the stock
- * detail page.
+ * Single owner of the headline-detail fetch for the stock detail page.
  *
  * The page (`app/stock/[kode]/page.tsx`) is a static-export server
  * component (`output: 'export'` + `generateStaticParams`/
  * `generateMetadata`), so it can't read `?id=` or run a browser fetch
- * itself. Instead it mounts this provider once; the provider reads the
- * `?id=` deep-link param, calls `loadHeadlineById(id)` a single time
- * (deduped/cached in `lib/api/cache`), and exposes the result via
- * context so any consumer in the subtree (the hero sentiment badge
- * today, a headline detail section later) reads from one fetch.
+ * itself. Instead it mounts this provider once; the provider:
+ *
+ *   1. Reads the `?id=` deep-link param.
+ *   2. If present, calls `loadHeadlineById(id)` once (deduped/cached
+ *      in `lib/api/cache`).
+ *   3. If absent, falls back to the most recent headline for `kode`:
+ *      calls `loadHeadlines(1, 0, [{primary_ticker_code, eq, kode}])`,
+ *      takes the first story's id, then calls `loadHeadlineById(id)`
+ *      on it. The list endpoint is the same one `ArsipSingkat` uses
+ *      (different `limit`, so a separate cache slot), so a warm cache
+ *      still skips the network round-trip.
+ *
+ * The result is exposed via context so any consumer in the subtree
+ * (the hero sentiment badge today, a headline detail section later)
+ * reads from one fetch.
  *
  * A client `Context.Provider` may wrap server-rendered `children`; the
  * server content is passed through untouched and client consumers
@@ -49,7 +58,14 @@ export function useHeadlineDetail(): HeadlineDetailContextValue {
   return useContext(HeadlineDetailContext);
 }
 
-function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
+interface HeadlineDetailProviderProps {
+  /** Stock ticker. Used to derive a fallback headline id from the
+   *  latest headlines list when the URL doesn't carry `?id=`. */
+  kode: string;
+  children: ReactNode;
+}
+
+function HeadlineDetailFetcher({ kode, children }: HeadlineDetailProviderProps) {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
   const [detail, setDetail] = useState<HeadlineDetail | null>(null);
@@ -60,11 +76,46 @@ function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
     // never lingers on a different deep link.
     setDetail(null);
     if (!id) {
-      setLoading(false);
-      return;
+      // No deep link — derive an id from the latest headlines for
+      // this ticker so consumers like the hero sentiment badge still
+      // have a context. The list endpoint is the same one
+      // `<ArsipSingkat>` uses (different `limit`, so a separate cache
+      // slot); a warm cache still skips the network round-trip.
+      const fallbackFilters: StoryFilter[] = [
+        { field: "primary_ticker_code", operator: "eq", value: kode },
+      ];
+      let cancelled = false;
+      void loadHeadlines(1, 0, fallbackFilters)
+        .then((res) => {
+          if (cancelled) return;
+          const fallbackId = res.data[0]?.id;
+          if (!fallbackId) {
+            // No headlines for this ticker — leave detail null and
+            // flip loading off so consumers fall back.
+            setLoading(false);
+            return;
+          }
+          return loadHeadlineById(fallbackId)
+            .then((d) => {
+              if (!cancelled) setDetail(d);
+            })
+            .catch(() => {
+              // Keep detail null on error — consumers fall back.
+            })
+            .finally(() => {
+              if (!cancelled) setLoading(false);
+            });
+        })
+        .catch(() => {
+          // List fetch failed — leave detail null.
+          if (!cancelled) setLoading(false);
+        });
+      return () => {
+        cancelled = true;
+      };
     }
     let cancelled = false;
-    
+
     void loadHeadlineById(id)
       .then((res) => {
         if (!cancelled) setDetail(res);
@@ -78,7 +129,7 @@ function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [id]);
+  }, [id, kode]);
 
   return (
     <HeadlineDetailContext.Provider value={{ detail, loading }}>
@@ -87,7 +138,10 @@ function HeadlineDetailFetcher({ children }: { children: ReactNode }) {
   );
 }
 
-export function HeadlineDetailProvider({ children }: { children: ReactNode }) {
+export function HeadlineDetailProvider({
+  kode,
+  children,
+}: HeadlineDetailProviderProps) {
   // useSearchParams() opts out of static prerendering, so the Suspense
   // boundary lets Next ship the static shell (rendering `children` with
   // the default null-context) and hydrate the resolved value after.
@@ -99,7 +153,7 @@ export function HeadlineDetailProvider({ children }: { children: ReactNode }) {
         </HeadlineDetailContext.Provider>
       }
     >
-      <HeadlineDetailFetcher>{children}</HeadlineDetailFetcher>
+      <HeadlineDetailFetcher kode={kode}>{children}</HeadlineDetailFetcher>
     </Suspense>
   );
 }
