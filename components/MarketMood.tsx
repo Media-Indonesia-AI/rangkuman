@@ -9,6 +9,13 @@ import {
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
+import {
+  formatBps,
+  formatCompactIdr,
+  formatIdrRate,
+  formatRate,
+  isEmptyForeignFlow,
+} from "@/lib/util/formatNumber";
 import { cn } from "@/lib/utils";
 import { MarketMoodCell } from "./MarketMoodCell";
 import {
@@ -19,7 +26,6 @@ import {
 } from "./MarketMoodMerge";
 
 interface MarketMoodProps {
-  factors: MarketFactor[];
   widgets: MarketWidget[];
 }
 
@@ -36,7 +42,6 @@ interface MarketMoodProps {
  * `MarketMoodCell.tsx`. This file only wires them together.
  */
 export function MarketMood({
-  factors,
   widgets,
 }: MarketMoodProps) {
   const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
@@ -51,7 +56,55 @@ export function MarketMood({
     : "netral";
   const sc = sentimentConfig[sentiment];
   const Icon = sc.Icon;
-  const topFactors = factors.slice(0, 3);
+
+  // Build the three "top factors" pills (BI Rate → USD/IDR → Foreign
+  // Flow) from the live data sources. Each source contributes at
+  // most one factor; sources whose data hasn't landed yet (or that
+  // came back empty) are skipped — better to show fewer accurate
+  // values than stale mock fallbacks. Sentiment for each follows the
+  // market-color convention used elsewhere in the strip (rate hike =
+  // bearish, IDR weakening = bearish, net sell = bearish).
+  const topFactors: MarketFactor[] = [];
+
+  if (biRate) {
+    const biSentiment: Sentimen =
+      biRate.bps > 0 ? "negatif" : biRate.bps < 0 ? "positif" : "netral";
+    topFactors.push({
+      label: "BI Rate",
+      value: formatRate(biRate.rate),
+      change: formatBps(biRate.bps),
+      sentiment: biSentiment,
+    });
+  }
+
+  if (exchangeRate && exchangeRate.data.length > 0) {
+    const last = exchangeRate.data[exchangeRate.data.length - 1];
+    const first = exchangeRate.data[0];
+    const pctChange =
+      first.rate !== 0 ? ((last.rate - first.rate) / first.rate) * 100 : 0;
+    const fxSentiment: Sentimen =
+      pctChange > 0 ? "negatif" : pctChange < 0 ? "positif" : "netral";
+    const sign = pctChange >= 0 ? "+" : "";
+    topFactors.push({
+      label: "USD/IDR",
+      value: `Rp ${formatIdrRate(first.rate)}`,
+      change: `${sign}${pctChange.toFixed(2).replace(".", ",")}%`,
+      sentiment: fxSentiment,
+    });
+  }
+
+  if (foreignFlow && !isEmptyForeignFlow(foreignFlow)) {
+    const net = foreignFlow.summary.net_value;
+    const flowSentiment: Sentimen =
+      net < 0 ? "negatif" : net > 0 ? "positif" : "netral";
+    topFactors.push({
+      label: "Foreign Flow",
+      value:
+        net < 0 ? "Net sell" : net > 0 ? "Net buy" : "Netral",
+      change: `Rp ${formatCompactIdr(net)}`,
+      sentiment: flowSentiment,
+    });
+  }
 
   // Compose the four live-data merges. Each function only mutates the
   // widget it owns and is a no-op when its data source is null, so
