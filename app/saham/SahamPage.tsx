@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -16,7 +16,6 @@ import { SahamSubTabs } from "@/components/SahamSubTabs";
 import { SektorSection } from "@/components/SektorSection";
 import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
 import { todayIsoDate } from "@/lib/api/client";
-import { getMarketMoodByDate } from "@/lib/mock/market-mood";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
 export default function SahamPage() {
@@ -27,8 +26,6 @@ export default function SahamPage() {
   // first visit, not the hardcoded mock "2026-06-07"). The user can
   // still navigate back via the DatePicker.
   const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
-
-  const mood = useMemo(() => getMarketMoodByDate(isoDate), [isoDate]);
 
   // "Paling banyak diberitakan" — live API, independent of the date
   // picker. The trending endpoint returns the current top stories, not
@@ -52,9 +49,7 @@ export default function SahamPage() {
       {subTab === "recap" && (
         <>
           <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5">
-            <MarketMood
-              widgets={mood.widgets}
-            />
+            <MarketMood />
             <div className="mt-3">
               <MobileTopMovers />
             </div>

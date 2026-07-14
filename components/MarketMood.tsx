@@ -19,31 +19,27 @@ import {
 import { cn } from "@/lib/utils";
 import { MarketMoodCell } from "./MarketMoodCell";
 import {
-  mergeBiRate,
-  mergeForeignFlow,
-  mergeIhsg,
-  mergeUsdIdr,
+  buildBiRateWidget,
+  buildFearGreedWidget,
+  buildForeignFlowWidget,
+  buildIhsgWidget,
+  buildUsdIdrWidget,
 } from "./MarketMoodMerge";
 
-interface MarketMoodProps {
-  widgets: MarketWidget[];
-}
-
 /**
- * Market Mood strip — header (label + sentiment badge), 6-up widget
- * grid, and a single-line summary footer. Four of the six cells
- * (BI Rate, USD/IDR, Foreign Flow, IHSG) are driven by live data;
- * the others stay on their mock values. Live-data widgets render a
- * shimmer placeholder until their backing fetch resolves.
+ * Market Mood strip — header (label + sentiment badge), 5-up widget
+ * grid, and a single-line summary footer. Five cells (BI Rate, USD/IDR,
+ * Foreign Flow, IHSG, Sentimen Investor) are all derived live from the
+ * `useMarketMoodData` hook — no `widgets` prop, no mock fallback.
+ * Each cell renders a shimmer placeholder while its backing fetch is
+ * in flight, then formats the live data once it lands.
  *
  * The orchestrator is intentionally thin: data fetching lives in
  * `useMarketMoodData`, format helpers in `lib/util/formatNumber.ts`,
- * widget merges in `MarketMoodMerge.ts`, and cell rendering in
+ * widget builders in `MarketMoodMerge.ts`, and cell rendering in
  * `MarketMoodCell.tsx`. This file only wires them together.
  */
-export function MarketMood({
-  widgets,
-}: MarketMoodProps) {
+export function MarketMood() {
   const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
     useMarketMoodData();
 
@@ -56,6 +52,18 @@ export function MarketMood({
     : "netral";
   const sc = sentimentConfig[sentiment];
   const Icon = sc.Icon;
+
+  // Build the five widget cells purely from live data. Each builder
+  // returns a complete widget (or placeholder values + `loading: true`
+  // while the fetch is in flight). Order matches the strip's
+  // left-to-right layout.
+  const widgets: MarketWidget[] = [
+    buildIhsgWidget(compositeChart, isLoading.compositeChart),
+    buildForeignFlowWidget(foreignFlow, isLoading.foreignFlow),
+    buildUsdIdrWidget(exchangeRate, isLoading.exchangeRate),
+    buildBiRateWidget(biRate, isLoading.biRate),
+    buildFearGreedWidget(mood, false),
+  ];
 
   // Build the three "top factors" pills (BI Rate → USD/IDR → Foreign
   // Flow) from the live data sources. Each source contributes at
@@ -106,23 +114,6 @@ export function MarketMood({
     });
   }
 
-  // Compose the four live-data merges. Each function only mutates the
-  // widget it owns and is a no-op when its data source is null, so
-  // order is safe and any source can land first.
-  const effectiveWidgets = mergeIhsg(
-    mergeBiRate(
-      mergeForeignFlow(
-        mergeUsdIdr(widgets, exchangeRate, isLoading.exchangeRate),
-        foreignFlow,
-        isLoading.foreignFlow,
-      ),
-      biRate,
-      isLoading.biRate,
-    ),
-    compositeChart,
-    isLoading.compositeChart,
-  );
-
   return (
     <section
       className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
@@ -150,8 +141,8 @@ export function MarketMood({
         </div>
 
         {/* Widget cells */}
-        <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-border md:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-          {effectiveWidgets.map((w) => (
+        <div className="grid flex-1 grid-cols-2 divide-x divide-y divide-border md:grid-cols-3 lg:grid-cols-5 lg:divide-y-0">
+          {widgets.map((w) => (
             <MarketMoodCell key={w.id} widget={w} />
           ))}
         </div>
