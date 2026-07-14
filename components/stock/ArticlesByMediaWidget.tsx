@@ -128,6 +128,11 @@ export function ArticlesByMediaWidget({ className }: ArticlesByMediaWidgetProps)
                           aria-hidden
                         />
                       </h4>
+                      {a.excerpt && (
+                        <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
+                          {a.excerpt}
+                        </p>
+                      )}
                     </a>
                   </li>
                 ))}

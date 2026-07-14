@@ -96,6 +96,11 @@ export interface StoryArticle {
   source_url: string;
   /** Display name of the publisher (usually matches `source_url`). */
   source_name: string;
+  /** Short editorial excerpt / dek of the article body. Optional —
+   *  older API responses may omit it, so consumers must guard. When
+   *  present, this is what `<ArticlesByMediaWidget>` renders as the
+   *  subtitle line under each article's title. */
+  excerpt?: string;
 }
 
 /** The topic this story is filed under. */
