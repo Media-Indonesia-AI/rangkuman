@@ -1,3 +1,10 @@
+import {
+  Minus,
+  TrendingDown,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
+import type { Sentimen } from "@/lib/mock/recaps";
 
 // ─── MARKET MOOD ────────────────────────────────────────────────
 
@@ -41,3 +48,74 @@ export interface MarketMood {
   /** AI-generated narrative explaining the mood drivers. */
   narrative: string;
 }
+
+/**
+ * Wire format the backend returns from `GET market-mood`:
+ * `{ data: MarketMood }`. The `getMarketMood` API function unwraps
+ * it to `MarketMood` for consumers (same `{ data: ... }` envelope
+ * pattern used by every other endpoint in this codebase — see
+ * `HeadlineDetailResponse` for the parallel example).
+ */
+export interface MarketMoodResponse {
+  data: MarketMood;
+}
+
+// ─── PRESENTATION BUCKETS ──────────────────────────────────────
+// The maps below sit next to `MarketMoodLabel` and `Sentimen` so the
+// API band → UI bucket mapping, the per-bucket styling, and the
+// per-bucket text color all live in one file. Trade-off: this types
+// module now depends on `lucide-react` (for the icon components) and
+// `@/lib/mock/recaps` (for `Sentimen`). The dependency is one-way
+// (moods → icon/recap) and stable, so the cost is small.
+
+/** Per-bucket styling for the mood badge — text, background, border,
+ *  and the icon that represents the band. Drives the header pill in
+ *  `<MarketMood>`. */
+export const sentimentConfig: Record<
+  Sentimen,
+  { label: string; bg: string; text: string; border: string; Icon: LucideIcon }
+> = {
+  positif: {
+    label: "Positif",
+    bg: "bg-bullish-soft",
+    text: "text-bullish",
+    border: "border-bullish-line",
+    Icon: TrendingUp,
+  },
+  netral: {
+    label: "Netral",
+    bg: "bg-mixed-soft",
+    text: "text-mixed",
+    border: "border-mixed-line",
+    Icon: Minus,
+  },
+  negatif: {
+    label: "Negatif",
+    bg: "bg-bearish-soft",
+    text: "text-bearish",
+    border: "border-bearish-line",
+    Icon: TrendingDown,
+  },
+};
+
+/** Map the API's `MarketMoodLabel` band (5 entries) onto the
+ *  3-bucket styling taxonomy the badge uses (`sentimentConfig`).
+ *  "Sangat Pesimis" / "Pesimis" both fall into the bearish bucket;
+ *  "Sangat Optimis" / "Optimis" both fall into the bullish bucket.
+ *  `Netral` maps to the neutral bucket. */
+export const labelToSentiment: Record<MarketMoodLabel, Sentimen> = {
+  "Sangat Pesimis": "negatif",
+  Pesimis: "negatif",
+  Netral: "netral",
+  Optimis: "positif",
+  "Sangat Optimis": "positif",
+};
+
+/** Per-bucket text color for the small "top factors" pills in the
+ *  mood strip's footer (e.g. `Netral Sell 1.5T` styled with bearish
+ *  red when its sentiment is `negatif`). */
+export const factorSentimentColors: Record<Sentimen, string> = {
+  positif: "text-bullish",
+  negatif: "text-bearish",
+  netral: "text-mixed",
+};

@@ -6,16 +6,18 @@ import type {
   ExchangeRateChartResponse,
   ForeignStocksResponse,
   InterestRate,
+  MarketMood,
 } from "@/lib/api";
 import {
   loadCompositeChart,
   loadExchangeRate,
   loadForeignStocks,
   loadInterestRate,
+  loadMarketMood,
 } from "@/lib/api/cache";
 
 /**
- * Loading-flag bundle for the four live data sources.
+ * Loading-flag bundle for the live data sources.
  * A flag is `true` only during the strict in-flight window between
  * mount and first response (success or error). It's `false` while
  * the data is still null after a fetch error, so consumers should
@@ -27,6 +29,7 @@ export interface LoadingFlags {
   exchangeRate: boolean;
   foreignFlow: boolean;
   compositeChart: boolean;
+  mood: boolean;
 }
 
 export interface UseMarketMoodDataResult {
@@ -34,22 +37,29 @@ export interface UseMarketMoodDataResult {
   exchangeRate: ExchangeRateChartResponse | null;
   foreignFlow: ForeignStocksResponse | null;
   compositeChart: CompositeChartPoint[] | null;
+  /** Composite market-mood snapshot (score, label, narrative, and the
+   *  aggregated market data behind it). `null` while in flight or on
+   *  a failed fetch — same shape as the granular sources above. */
+  mood: MarketMood | null;
   /** Per-source loading flags. `true` while the matching fetch is in
    *  flight, `false` once the fetch has settled (success or error). */
   isLoading: LoadingFlags;
 }
 
 /**
- * Centralized data fetching for the four live data sources that
- * drive the Market Mood strip:
+ * Centralized data fetching for the live data sources that drive the
+ * Market Mood strip:
  *
  *   - `loadInterestRate`  → `biRate`
  *   - `loadExchangeRate`  → `exchangeRate`
  *   - `loadForeignStocks` → `foreignFlow`
  *   - `loadCompositeChart` → `compositeChart`
+ *   - `loadMarketMood`    → `mood` (composite snapshot — score, label,
+ *                                       narrative, and aggregated
+ *                                       market data)
  *
- * All four are deduped via [lib/api/cache.ts] so concurrent mounts
- * share one round-trip per (date, base, range) tuple. The matching
+ * All five are deduped via [lib/api/cache] so concurrent mounts share
+ * one round-trip per (date, base, range) tuple. The matching
  * `isLoading.*` flag is flipped to `false` once the promise settles,
  * success or error — that's the shimmer window the render layer cares
  * about.
@@ -57,9 +67,6 @@ export interface UseMarketMoodDataResult {
  * The single `useEffect` cancels in-flight resolvers on unmount via
  * the standard `cancelled` flag pattern, so a remounted component
  * can't set state on a torn-down instance.
- *
- * Adding a fifth data source: add one `useState` pair, one `.then`
- * branch, one `.catch` branch. No new mental model.
  */
 export function useMarketMoodData(): UseMarketMoodDataResult {
   const [biRate, setBiRate] = useState<InterestRate | null>(null);
@@ -72,12 +79,14 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
   const [compositeChart, setCompositeChart] = useState<
     CompositeChartPoint[] | null
   >(null);
+  const [mood, setMood] = useState<MarketMood | null>(null);
 
   // Start true — every cell flashes shimmer until its first response.
   const [isBiRateLoading, setIsBiRateLoading] = useState(true);
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(true);
   const [isForeignFlowLoading, setIsForeignFlowLoading] = useState(true);
   const [isIHSGLoading, setIsIHSGLoading] = useState(true);
+  const [isMoodLoading, setIsMoodLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
@@ -130,6 +139,18 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
         if (!cancelled) setIsIHSGLoading(false);
       });
 
+    void loadMarketMood()
+      .then((data) => {
+        if (!cancelled) {
+          setMood(data);
+          setIsMoodLoading(false);
+        }
+      })
+      .catch(() => {
+        // Silent — the strip falls back to the prop-driven label/summary.
+        if (!cancelled) setIsMoodLoading(false);
+      });
+
     return () => {
       cancelled = true;
     };
@@ -140,11 +161,13 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
     exchangeRate,
     foreignFlow,
     compositeChart,
+    mood,
     isLoading: {
       biRate: isBiRateLoading,
       exchangeRate: isExchangeRateLoading,
       foreignFlow: isForeignFlowLoading,
       compositeChart: isIHSGLoading,
+      mood: isMoodLoading,
     },
   };
 }

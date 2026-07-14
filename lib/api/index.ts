@@ -66,4 +66,13 @@ export type {
 } from "./types/headline";
 
 // Market Mood
-export type { MarketMood, MarketMoodLabel } from "./types/moods";
+export type {
+  MarketMood,
+  MarketMoodLabel,
+  MarketMoodResponse,
+} from "./types/moods";
+export {
+  factorSentimentColors,
+  labelToSentiment,
+  sentimentConfig,
+} from "./types/moods";

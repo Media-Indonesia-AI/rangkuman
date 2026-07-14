@@ -12,7 +12,7 @@ import type {
   ExchangeRateChartResponse,
   InterestRate,
 } from "./types/market";
-import { MarketMood } from "./types/moods";
+import { MarketMood, MarketMoodResponse } from "./types/moods";
 
 /**
  * Fetch the BI Rate snapshot for a given date.
@@ -50,9 +50,17 @@ export function getExchangeRate(
  * foreign flow, USD/IDR, the latest BI Rate decision, and
  * headline-sentiment counts into a single object with a 0–100 score,
  * an Indonesian label band, and an AI-written narrative explaining
- * the drivers. The response is returned unwrapped (no `{ data: ... }`
- * envelope — `MarketMood` is the top-level payload).
+ * the drivers.
+ *
+ * The backend wraps the response in `{ data: MarketMood }` (same
+ * envelope as every other endpoint in this codebase — see
+ * `HeadlineDetailResponse` for the parallel example). This function
+ * unwraps it so call sites only see `MarketMood`. See
+ * `MarketMoodResponse` for the raw wire shape.
  */
 export function getMarketMood(): Promise<MarketMood> {
-  return request<MarketMood>("market-mood", { method: "GET" });
+  return request<MarketMoodResponse>(
+    "market-mood",
+    { method: "GET" },
+  ).then((res) => res.data);
 }

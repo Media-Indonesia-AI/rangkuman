@@ -1,6 +1,11 @@
 "use client";
 
-import { Activity, Minus, TrendingDown, TrendingUp, type LucideIcon } from "lucide-react";
+import { Activity } from "lucide-react";
+import {
+  factorSentimentColors,
+  labelToSentiment,
+  sentimentConfig,
+} from "@/lib/api";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
 import type { MarketFactor, MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
@@ -14,45 +19,9 @@ import {
 } from "./MarketMoodMerge";
 
 interface MarketMoodProps {
-  sentiment: Sentimen;
-  sentimentLabel: string;
-  summary: string;
   factors: MarketFactor[];
   widgets: MarketWidget[];
 }
-
-const sentimentConfig: Record<
-  Sentimen,
-  { label: string; bg: string; text: string; border: string; Icon: LucideIcon }
-> = {
-  positif: {
-    label: "Positif",
-    bg: "bg-bullish-soft",
-    text: "text-bullish",
-    border: "border-bullish-line",
-    Icon: TrendingUp,
-  },
-  netral: {
-    label: "Netral",
-    bg: "bg-mixed-soft",
-    text: "text-mixed",
-    border: "border-mixed-line",
-    Icon: Minus,
-  },
-  negatif: {
-    label: "Negatif",
-    bg: "bg-bearish-soft",
-    text: "text-bearish",
-    border: "border-bearish-line",
-    Icon: TrendingDown,
-  },
-};
-
-const factorSentimentColors: Record<Sentimen, string> = {
-  positif: "text-bullish",
-  negatif: "text-bearish",
-  netral: "text-mixed",
-};
 
 /**
  * Market Mood strip — header (label + sentiment badge), 6-up widget
@@ -67,18 +36,22 @@ const factorSentimentColors: Record<Sentimen, string> = {
  * `MarketMoodCell.tsx`. This file only wires them together.
  */
 export function MarketMood({
-  sentiment,
-  sentimentLabel,
-  summary,
   factors,
   widgets,
 }: MarketMoodProps) {
+  const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
+    useMarketMoodData();
+
+  // Drive the badge styling off the API's label band. While the
+  // snapshot is still in flight or after a fetch error, fall back to
+  // the neutral bucket so the badge renders with a stable style
+  // instead of flashing empty/styled.
+  const sentiment: Sentimen = mood
+    ? labelToSentiment[mood.label]
+    : "netral";
   const sc = sentimentConfig[sentiment];
   const Icon = sc.Icon;
   const topFactors = factors.slice(0, 3);
-
-  const { biRate, exchangeRate, foreignFlow, compositeChart, isLoading } =
-    useMarketMoodData();
 
   // Compose the four live-data merges. Each function only mutates the
   // widget it owns and is a no-op when its data source is null, so
@@ -119,7 +92,7 @@ export function MarketMood({
             )}
           >
             <Icon className="h-2.5 w-2.5" aria-hidden />
-            {sentimentLabel}
+            {mood?.label ?? ''}
           </span>
         </div>
 
@@ -134,7 +107,7 @@ export function MarketMood({
       {/* Single-line summary + top factors */}
       <div className="border-t border-border bg-bg-tertiary px-3 py-1.5">
         <p className="text-[11.5px] leading-[1.5] text-text-secondary">
-          {summary}{" "}
+          {mood?.narrative ?? ''}{" "}
           <span className="hidden sm:inline">
             {topFactors.map((f, i) => (
               <span key={f.label} className="whitespace-nowrap">

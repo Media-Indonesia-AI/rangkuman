@@ -53,9 +53,6 @@ export default function SahamPage() {
         <>
           <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5">
             <MarketMood
-              sentiment={mood.sentiment}
-              sentimentLabel={mood.sentimentLabel}
-              summary={mood.summary}
               factors={mood.factors}
               widgets={mood.widgets}
             />
