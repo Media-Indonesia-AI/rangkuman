@@ -1,3 +1,8 @@
+"use client";
+
+import { useMemo } from "react";
+import { useHeadlineDetail } from "./HeadlineDetailProvider";
+import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { cn } from "@/lib/utils";
 
 interface StockAboutPanelProps {
@@ -13,8 +18,6 @@ interface StockAboutPanelProps {
    *  comma separator) and colors it: positive → `text-bullish`,
    *  negative → `text-bearish`. */
   pctChange?: number | null;
-  /** Coverage stats for the "Coverage" row. */
-  coverage?: { media: number; artikel: number } | null;
 }
 
 /**
@@ -26,21 +29,58 @@ interface StockAboutPanelProps {
  * card. Keeping it independent from the peer list makes it easier
  * to reorder, hide, or restyle either block on its own.
  *
+ * The Coverage row is driven by the headline-scoped fetches
+ * `useHeadlineDetail()` + `useHeadlineStories()` — same pair
+ * `<AggregateSummary />` reads — so the counts stay in sync with
+ * the rest of the page:
+ *   - **artikel** = `detail.stories.length`
+ *   - **media**   = unique `source_name` count across all
+ *                   `stories[].articles[]`, derived via `useMemo`
+ *                   so the Set walk only runs when `stories`
+ *                   changes.
+ *
  * Placeholder behavior matches the original inline JSX so the
  * page keeps rendering gracefully while its data hooks are still
  * in flight:
  *   - `sektor == null`     → renders `"N/A"`
  *   - `price == null`      → renders `"N/A"`
  *   - `pctChange == null`  → renders `"N/A"`
- *   - `coverage == null`   → renders `"0 media, 0 artikel"`
+ *   - `media === 0`        → renders just `"<n> artikel"`
+ *   - `media > 0`          → renders `"<n> artikel · <m> media"`
+ *     (same shape as the count chip in `<AggregateSummary />`)
+ *
+ * **Must be rendered inside `<HeadlineDetailProvider>` and
+ * `<HeadlineStoriesProvider>`** — the coverage row reads from both
+ * contexts. The stock detail page already wraps the entire right
+ * rail in those providers, so no extra wiring is required.
  */
 export function StockAboutPanel({
   kode,
   sektor,
   price,
   pctChange,
-  coverage,
 }: StockAboutPanelProps) {
+  const { detail } = useHeadlineDetail();
+  const { stories } = useHeadlineStories();
+
+  // Mirrors `<AggregateSummary />` `sumberFromStories`: flatten
+  // stories.articles and reduce to a Set of `source_name`. The set
+  // size is the "media" count shown in the Coverage row.
+  const mediaCount = useMemo(() => {
+    const sources = new Set<string>();
+    for (const story of stories) {
+      for (const article of story.articles ?? []) {
+        if (article.source_name) sources.add(article.source_name);
+      }
+    }
+    return sources.size;
+  }, [stories]);
+
+  // Same source as `<AggregateSummary />` `jumlahBerita`: the
+  // headline's `stories` array length, which is the headline-scoped
+  // article count surfaced to the rest of the page.
+  const artikelCount = detail ? detail.stories.length : 0;
+
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
       <header className="border-b border-border bg-bg-tertiary px-3 py-2">
@@ -77,10 +117,8 @@ export function StockAboutPanel({
         </div>
         <div className="flex justify-between gap-2 px-3 py-2">
           <dt className="text-text-muted">Coverage</dt>
-          <dd className="text-text-primary">
-            {coverage
-              ? `${coverage.media} media, ${coverage.artikel} artikel`
-              : "0 media, 0 artikel"}
+          <dd className="font-mono text-text-muted num-tabular">
+            {`${artikelCount} artikel${mediaCount > 0 ? ` · ${mediaCount} media` : ""}`}
           </dd>
         </div>
       </dl>
