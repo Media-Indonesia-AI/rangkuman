@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowUpRight, Building2 } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
+import { Shimmer } from "@/components/Shimmer";
 import type { RelatedStock } from "@/lib/api";
 import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
 import { getRecapForStock } from "@/lib/mock/recaps";
@@ -16,14 +17,15 @@ interface SimilarStocksProps {
    *  fallback to filter peers. Ignored when `relatedStocks` is
    *  provided. */
   sektor: string;
-  /** How many similar stocks to show. Default 3. */
+  /** How many similar stocks to show. Default 3. Also drives the
+   *  number of skeleton rows shown while `loading` is true. */
   limit?: number;
   className?: string;
   /**
    * When `true`, render only the `<ol>` peer list — no outer
    * `<section>` and no header. Used when composing into another
-   * widget (e.g. `StockAboutPanel`) that already provides the
-   * container and label. Default `false` (standalone card).
+   * widget that already provides the container and label. Default
+   * `false` (standalone card).
    *
    * In bare mode a top border is added to the list so it visually
    * separates from whatever sits above it inside the parent.
@@ -45,6 +47,18 @@ interface SimilarStocksProps {
    * the mock fallback.
    */
   relatedStocks?: RelatedStock[];
+  /**
+   * When `true`, render a shimmer skeleton instead of real rows.
+   * Set this while the upstream fetch (e.g. `useTickerInformation`)
+   * is in flight — otherwise the widget would briefly fall back to
+   * the mock catalog and flash real-but-wrong data before the API
+   * response lands.
+   *
+   * The skeleton mirrors the real row layout (ticker slot + name
+   * line + price/change line + arrow slot) and produces `limit`
+   * rows so the card height matches the eventual content.
+   */
+  loading?: boolean;
 }
 
 /** Internal shape — both the mock `Saham` and the API `RelatedStock`
@@ -83,12 +97,75 @@ function normalizeApi(s: RelatedStock): NormalizedStock {
   };
 }
 
+/** Skeleton shown while the upstream fetch is in flight. Layout
+ *  mirrors the real rows so the card height doesn't shift when
+ *  the real payload arrives. Header stays mostly real — the icon
+ *  and label are static across all data states, only the "sektor
+ *  X" suffix shimmer-checks until we know what to render. */
+function SimilarStocksShimmer({
+  count,
+  bare,
+}: {
+  count: number;
+  bare: boolean;
+}) {
+  const list = (
+    <ol
+      className={cn(
+        "divide-y divide-border",
+        bare && "border-t border-border",
+      )}
+      aria-busy="true"
+    >
+      {Array.from({ length: count }).map((_, i) => (
+        <li key={`skel-${i}`} className="flex items-center gap-2.5 px-3 py-2.5">
+          {/* Ticker slot */}
+          <Shimmer className="h-4 w-14" />
+          {/* Middle column: name + price/change line */}
+          <div className="min-w-0 flex-1 space-y-1.5">
+            <Shimmer className="h-2.5 w-3/4" />
+            <div className="flex items-center gap-1.5">
+              <Shimmer className="h-2.5 w-10" />
+              <Shimmer className="h-2.5 w-8" />
+            </div>
+          </div>
+          {/* Arrow slot */}
+          <Shimmer className="h-3 w-3" />
+        </li>
+      ))}
+    </ol>
+  );
+
+  if (bare) return list;
+
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      aria-label="Saham serupa di sektor yang sama"
+      aria-busy="true"
+    >
+      <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
+        <div className="flex items-center gap-1.5">
+          <Building2 className="h-3.5 w-3.5 text-brand" aria-hidden />
+          <span className="label">Saham Serupa</span>
+        </div>
+        <Shimmer className="h-2.5 w-20" />
+      </header>
+      {list}
+    </section>
+  );
+}
+
 /**
  * "Saham Serupa" — peer stocks surfaced either from the live
  * `ticker-information` API (preferred when `relatedStocks` is
  * passed) or from the in-memory mock catalog filtered by `sektor`
  * (fallback). Each card shows ticker, name, price, change, and an
  * optional sentiment badge derived from today's recap.
+ *
+ * Renders a shimmer skeleton while `loading` is true so the
+ * upstream fetch's in-flight window doesn't fall through to the
+ * mock fallback and flash real-but-wrong data.
  */
 export function SimilarStocks({
   excludeKode,
@@ -97,7 +174,12 @@ export function SimilarStocks({
   className,
   bare = false,
   relatedStocks,
+  loading = false,
 }: SimilarStocksProps) {
+  if (loading) {
+    return <SimilarStocksShimmer count={limit} bare={bare} />;
+  }
+
   const raw: NormalizedStock[] = relatedStocks
     ? relatedStocks.map(normalizeApi)
     : mockStocks

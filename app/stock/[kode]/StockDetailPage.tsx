@@ -28,8 +28,11 @@ export default function StockDetailPage({ params }: PageProps) {
   // Live ticker info — drives the hero chip / price / change and the
   // StockAboutPanel info rows. Hook resets state on `kode` change so
   // navigating from /stock/ANTM to /stock/BBCA never flashes the old
-  // ticker's data.
-  const { data: tickerInfo } = useTickerInformation(kode);
+  // ticker's data. `isLoading` is passed through to <SimilarStocks>
+  // so it shows a shimmer skeleton instead of flashing mock data
+  // while the API response is in flight.
+  const { data: tickerInfo, isLoading: tickerLoading } =
+    useTickerInformation(kode);
 
   const priceText = tickerInfo
     ? tickerInfo.price.toLocaleString("id-ID")
@@ -141,11 +144,15 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* "Saham Serupa" peer list as its own card — when
                   `relatedStocks` is provided, the API list is used
                   directly (in backend order); otherwise the mock-
-                  based sector filter is the fallback. */}
+                  based sector filter is the fallback. `loading`
+                  gates the shimmer skeleton so the widget doesn't
+                  briefly fall back to mock data while the upstream
+                  fetch is in flight. */}
               <SimilarStocks
                 excludeKode={kode}
                 sektor={tickerInfo?.sector_name ?? ""}
                 relatedStocks={tickerInfo?.related_stocks ?? undefined}
+                loading={tickerLoading}
               />
             </aside>
           </div>
