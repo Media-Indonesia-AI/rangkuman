@@ -130,3 +130,31 @@ export interface TickerInformation {
   pct_change: number;
   related_stocks: RelatedStock[];
 }
+
+// ─── KEY METRICS ────────────────────────────────────────────────
+
+/**
+ * Composite payload for `GET stocks/key-metrics/{ticker}`.
+ * Returned unwrapped (no `{ data: ... }` envelope) — same shape as
+ * `TickerInformation` and `ForeignStocksResponse`.
+ *
+ * All numeric fields are floats as the backend returns them; the
+ * consumer formats per-locale. `pct_change` is signed (positive =
+ * up) and matches the field name used by `TickerInformation` and
+ * `RelatedStock` — *not* `percent_change` (the `TopStockItem` /
+ * `TickerItem` field name).
+ */
+export interface KeyMetrics {
+  /** Market capitalization, in IDR (raw, unformatted). */
+  market_cap: number;
+  /** Trailing price-to-earnings ratio. */
+  pe_ratio: number;
+  /** Day trading volume, in shares. */
+  volume: number;
+  /** Dividend yield as a percentage (e.g. `1.25` for 1.25%). */
+  dividend_yield: number;
+  /** Beta vs. the benchmark index. */
+  beta: number;
+  /** Day-change percent (signed). */
+  pct_change: number;
+}

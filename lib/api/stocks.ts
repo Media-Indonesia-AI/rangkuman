@@ -14,6 +14,7 @@ import { request, todayIsoDate } from "./client";
 import type {
   CompositeChartResponse,
   ForeignStocksResponse,
+  KeyMetrics,
   TickerInformation,
   TickersResponse,
   TopStocksResponse,
@@ -83,6 +84,24 @@ export function getTickerInformation(
   const code = ticker.toUpperCase();
   return request<TickerInformation>(
     `stocks/ticker-information/${encodeURIComponent(code)}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch key financial metrics for a given ticker — market cap,
+ * P/E, volume, dividend yield, beta, and day-change percent.
+ *
+ * `@param ticker` Ticker code (e.g. `"ANTM"`). Uppercased before
+ *                 being inserted into the URL so callers can pass
+ *                 either case consistently.
+ */
+export function getKeyMetrics(
+  ticker: string,
+): Promise<KeyMetrics> {
+  const code = ticker.toUpperCase();
+  return request<KeyMetrics>(
+    `stocks/key-metrics/${encodeURIComponent(code)}`,
     { method: "GET" },
   );
 }
