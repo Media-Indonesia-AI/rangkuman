@@ -4,6 +4,7 @@ import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
 import { ToastContainer } from "@/components/Toast";
 import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
+import { BfcacheRecovery } from "@/components/BfcacheRecovery";
 import "./globals.css";
 
 const inter = Inter({
@@ -94,6 +95,7 @@ export default function RootLayout({
       </head>
       <body className="relative min-h-screen bg-bg-primary font-sans text-[14px] leading-relaxed text-text-primary antialiased">
         <TopTickerRouter />
+        <BfcacheRecovery />
         {children}
         <NewsletterFloatingPill />
         <ToastContainer />
