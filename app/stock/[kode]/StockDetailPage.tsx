@@ -37,9 +37,6 @@ export default function StockDetailPage({ params }: PageProps) {
   const priceText = tickerInfo
     ? tickerInfo.price.toLocaleString("id-ID")
     : null;
-  const changeText = tickerInfo
-    ? `${tickerInfo.pct_change >= 0 ? "+" : ""}${tickerInfo.pct_change.toFixed(2).replace(".", ",")}%`
-    : null;
 
   return (
     <>
@@ -138,7 +135,7 @@ export default function StockDetailPage({ params }: PageProps) {
                 kode={kode}
                 sektor={tickerInfo?.sector_name ?? null}
                 price={priceText}
-                change={changeText}
+                pctChange={tickerInfo?.pct_change ?? null}
               />
 
               {/* "Saham Serupa" peer list as its own card — when

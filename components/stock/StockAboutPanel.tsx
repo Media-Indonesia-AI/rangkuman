@@ -1,3 +1,5 @@
+import { cn } from "@/lib/utils";
+
 interface StockAboutPanelProps {
   /** Ticker code; drives the panel header. */
   kode: string;
@@ -6,9 +8,11 @@ interface StockAboutPanelProps {
   sektor?: string | null;
   /** Pre-formatted price for the "Harga" row. */
   price?: string | null;
-  /** Pre-formatted day-change string for the "Perubahan" row
-   *  (caller-formatted, e.g. `"+4,45%"` or `"-1,20%"`). */
-  change?: string | null;
+  /** Day change in percent (signed). Renders `"N/A"` when
+   *  `null`/`undefined`. The panel formats it (sign, two decimals,
+   *  comma separator) and colors it: positive → `text-bullish`,
+   *  negative → `text-bearish`. */
+  pctChange?: number | null;
   /** Coverage stats for the "Coverage" row. */
   coverage?: { media: number; artikel: number } | null;
 }
@@ -25,16 +29,16 @@ interface StockAboutPanelProps {
  * Placeholder behavior matches the original inline JSX so the
  * page keeps rendering gracefully while its data hooks are still
  * in flight:
- *   - `sektor == null`   → renders `"N/A"`
- *   - `price == null`    → renders `"N/A"`
- *   - `change == null`   → renders `"N/A"`
- *   - `coverage == null` → renders `"0 media, 0 artikel"`
+ *   - `sektor == null`     → renders `"N/A"`
+ *   - `price == null`      → renders `"N/A"`
+ *   - `pctChange == null`  → renders `"N/A"`
+ *   - `coverage == null`   → renders `"0 media, 0 artikel"`
  */
 export function StockAboutPanel({
   kode,
   sektor,
   price,
-  change,
+  pctChange,
   coverage,
 }: StockAboutPanelProps) {
   return (
@@ -56,8 +60,19 @@ export function StockAboutPanel({
         </div>
         <div className="flex justify-between gap-2 px-3 py-2">
           <dt className="text-text-muted">Perubahan</dt>
-          <dd className="font-mono font-semibold text-text-primary num-tabular">
-            {change ?? "N/A"}
+          <dd
+            className={cn(
+              "font-mono font-semibold num-tabular",
+              pctChange == null
+                ? "text-text-primary"
+                : pctChange >= 0
+                  ? "text-bullish"
+                  : "text-bearish",
+            )}
+          >
+            {pctChange == null
+              ? "N/A"
+              : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2).replace(".", ",")}%`}
           </dd>
         </div>
         <div className="flex justify-between gap-2 px-3 py-2">

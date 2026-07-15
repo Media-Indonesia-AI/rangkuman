@@ -90,7 +90,16 @@ export function StockHero({
             <p className="font-mono text-[40px] font-bold leading-none tracking-tight text-text-primary num-tabular sm:text-[48px]">
               {price ?? "N/A"}
             </p>
-            <p className="mt-1 font-mono text-[16px] font-semibold text-text-primary num-tabular">
+            <p
+              className={cn(
+                "mt-1 font-mono text-[16px] font-semibold num-tabular",
+                pctChange == null
+                  ? "text-text-primary"
+                  : pctChange >= 0
+                    ? "text-bullish"
+                    : "text-bearish",
+              )}
+            >
               {pctChange == null
                 ? "—"
                 : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2).replace(".", ",")}%`}
