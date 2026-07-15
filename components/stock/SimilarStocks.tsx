@@ -13,6 +13,16 @@ interface SimilarStocksProps {
   /** How many similar stocks to show. Default 3. */
   limit?: number;
   className?: string;
+  /**
+   * When `true`, render only the `<ol>` peer list — no outer
+   * `<section>` and no header. Used when composing into another
+   * widget (e.g. `StockAboutPanel`) that already provides the
+   * container and label. Default `false` (standalone card).
+   *
+   * In bare mode a top border is added to the list so it visually
+   * separates from whatever sits above it inside the parent.
+   */
+  bare?: boolean;
 }
 
 /**
@@ -20,7 +30,13 @@ interface SimilarStocksProps {
  * ticker, name, price, change, sentiment (from today's recap) and a small
  * cross-link to the stock detail page.
  */
-export function SimilarStocks({ excludeKode, sektor, limit = 3, className }: SimilarStocksProps) {
+export function SimilarStocks({
+  excludeKode,
+  sektor,
+  limit = 3,
+  className,
+  bare = false,
+}: SimilarStocksProps) {
   const similar: Saham[] = stocks
     .filter((s) => s.sektor === sektor && s.kode !== excludeKode.toUpperCase())
     .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // most-active first
@@ -29,6 +45,60 @@ export function SimilarStocks({ excludeKode, sektor, limit = 3, className }: Sim
   if (similar.length === 0) {
     return null;
   }
+
+  const list = (
+    <ol
+      className={cn(
+        "divide-y divide-border",
+        bare && "border-t border-border",
+      )}
+    >
+      {similar.map((s) => {
+        const positive = s.changePercent >= 0;
+        const href = `/stock/${s.kode}`;
+        return (
+          <li key={s.kode}>
+            <Link
+              href={href}
+              className="group flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-bg-tertiary"
+            >
+              <span className="font-mono text-[14px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
+                {s.kode}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[11px] text-text-muted">{s.nama}</span>
+                <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-text-faint">
+                  <span className="num-tabular text-text-secondary">
+                    {s.price.toLocaleString("id-ID")}
+                  </span>
+                  <span
+                    className={cn(
+                      "num-tabular font-semibold",
+                      positive ? "text-bullish" : "text-bearish",
+                    )}
+                  >
+                    {positive ? "+" : ""}
+                    {s.changePercent.toFixed(2)}%
+                  </span>
+                </span>
+              </span>
+              {(() => {
+                const recap = getRecapForStock(s.kode, "2026-06-07");
+                if (!recap) return null;
+                return <SentimentBadge sentiment={recap.sentimen} size="sm" showLabel={false} />;
+              })()}
+              <ArrowUpRight
+                className="h-3 w-3 shrink-0 text-text-faint transition-colors group-hover:text-brand"
+                aria-hidden
+              />
+            </Link>
+          </li>
+        );
+      })}
+    </ol>
+  );
+
+  if (bare) return list;
 
   return (
     <section
@@ -42,51 +112,7 @@ export function SimilarStocks({ excludeKode, sektor, limit = 3, className }: Sim
         </div>
         <span className="font-mono text-[9.5px] text-text-faint">sektor {sektor}</span>
       </header>
-
-      <ol className="divide-y divide-border">
-        {similar.map((s) => {
-          const positive = s.changePercent >= 0;
-          const href = `/stock/${s.kode}`;
-          return (
-            <li key={s.kode}>
-              <Link
-                href={href}
-                className="group flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-bg-tertiary"
-              >
-                <span className="font-mono text-[14px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
-                  {s.kode}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[11px] text-text-muted">{s.nama}</span>
-                  <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-text-faint">
-                    <span className="num-tabular text-text-secondary">
-                      {s.price.toLocaleString("id-ID")}
-                    </span>
-                    <span
-                      className={cn(
-                        "num-tabular font-semibold",
-                        positive ? "text-bullish" : "text-bearish",
-                      )}
-                    >
-                      {positive ? "+" : ""}
-                      {s.changePercent.toFixed(2)}%
-                    </span>
-                  </span>
-                </span>
-                {(() => {
-                  const recap = getRecapForStock(s.kode, "2026-06-07");
-                  if (!recap) return null;
-                  return <SentimentBadge sentiment={recap.sentimen} size="sm" showLabel={false} />;
-                })()}
-                <ArrowUpRight
-                  className="h-3 w-3 shrink-0 text-text-faint transition-colors group-hover:text-brand"
-                  aria-hidden
-                />
-              </Link>
-            </li>
-          );
-        })}
-      </ol>
+      {list}
     </section>
   );
 }
