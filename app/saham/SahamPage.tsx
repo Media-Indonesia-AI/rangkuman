@@ -53,6 +53,9 @@ export default function SahamPage() {
             <div className="mt-3">
               <MobileTopMovers />
             </div>
+            <div className="mt-3 xl:hidden">
+              <Sidebar />
+            </div>
           </div>
 
           <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">
