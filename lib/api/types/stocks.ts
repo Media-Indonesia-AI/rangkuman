@@ -151,8 +151,10 @@ export interface KeyMetrics {
   pe_ratio: number;
   /** Day trading volume, in shares. */
   volume: number;
-  /** Dividend yield as a percentage (e.g. `1.25` for 1.25%). */
-  dividend_yield: number;
+  /** Dividend yield as a percentage (e.g. `1.25` for 1.25%).
+   *  `null` when the stock doesn't pay a dividend; consumers
+   *  should coalesce to `0` for arithmetic / display. */
+  dividend_yield: number | null;
   /** Beta vs. the benchmark index. */
   beta: number;
   /** Day-change percent (signed). */

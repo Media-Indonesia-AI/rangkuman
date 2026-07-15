@@ -194,12 +194,12 @@ export function KeyMetrics({ kode, className }: KeyMetricsProps) {
         <Metric
           icon={Percent}
           label="Dividend Yield"
-          value={isEmpty ? "—" : `${data.dividend_yield.toFixed(1).replace(".", ",")}%`}
+          value={isEmpty ? "—" : `${(data.dividend_yield ?? 0).toFixed(1).replace(".", ",")}%`}
           hint={isEmpty ? undefined : "annualized"}
           color={
             isEmpty
               ? "text-text-faint"
-              : data.dividend_yield >= 4
+              : (data.dividend_yield ?? 0) >= 4
                 ? "text-bullish"
                 : "text-text-primary"
           }
