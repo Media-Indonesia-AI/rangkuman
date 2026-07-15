@@ -23,6 +23,7 @@ export { loadTickers, peekTickers } from "./tickers";
 export { loadTickerInformation } from "./ticker-information";
 export { loadKeyMetrics } from "./key-metrics";
 export { loadStockHistorical } from "./stock-historical";
+export { loadSectors, peekSectors } from "./sectors";
 export { loadInterestRate } from "./interest-rate";
 export { loadExchangeRate } from "./exchange-rate";
 export { loadMarketMood } from "./market-mood";

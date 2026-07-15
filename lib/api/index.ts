@@ -46,6 +46,13 @@ export type {
   InterestRate,
 } from "./types/market";
 
+// Sectors
+export type {
+  Sector,
+  SectorStock,
+  SectorsResponse,
+} from "./types/sectors";
+
 // Story
 export type {
   TrendingArticle,
