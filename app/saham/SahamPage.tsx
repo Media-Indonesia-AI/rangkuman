@@ -13,7 +13,7 @@ import { GeneralNewsFeed } from "@/components/GeneralNewsFeed";
 import { MobileTopMovers } from "@/components/MobileTopMovers";
 import { WatchlistSection } from "@/components/WatchlistSection";
 import { SahamSubTabs } from "@/components/SahamSubTabs";
-import { SektorSection } from "@/components/SektorSection";
+import { SektorSection } from "@/components/sektor";
 import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";

@@ -1,6 +1,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { SektorSection } from "@/components/SektorSection";
+import { SektorSection } from "@/components/sektor";
 
 export default function SektorPage() {
   return (

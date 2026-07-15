@@ -111,7 +111,11 @@ rangkuman-news/
 │   │
 │   ├── CryptoInfoBar.tsx             # 1-line crypto info (F&G, sparklines, BTC.D)
 │   ├── CryptoSubNav.tsx              # /crypto/ Recap | Pasar tabs
-│   ├── SektorSection.tsx             # /saham/ sektor grid
+│   ├── sektor/                       # /saham/ + /sektor/ sector grid
+│   │   ├── SektorSection.tsx          # section + grid orchestration
+│   │   ├── SektorCard.tsx             # one tile in the 12-sector grid
+│   │   ├── hueStyles.ts               # per-hue Tailwind class maps
+│   │   └── index.ts                   # barrel: SektorSection, SektorCard
 │   │
 │   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
 │   ├── ShareButton.tsx  SavedButton.tsx
