@@ -3,7 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { ArsipSingkat } from "@/components/stock/ArsipSingkat";
-import { HeadlineSentimentBadge } from "@/components/stock/HeadlineSentimentBadge";
+import { StockHero } from "@/components/stock/StockHero";
 import { AggregateSummary } from "@/components/stock/AggregateSummary";
 import { ArticlesByMediaWidget } from "@/components/stock/ArticlesByMediaWidget";
 import { SentimentSparkline } from "@/components/stock/SentimentSparkline";
@@ -13,7 +13,6 @@ import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { SimilarStocks } from "@/components/stock/SimilarStocks";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
-import { pickHeroGradient } from "@/lib/util/heroGradient";
 
 interface PageProps {
   params: { kode: string };
@@ -21,7 +20,6 @@ interface PageProps {
 
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
-  const heroGradient = pickHeroGradient(kode);
 
   return (
     <>
@@ -56,49 +54,7 @@ export default function StockDetailPage({ params }: PageProps) {
         </Link>
 
         {/* Hero / price block */}
-        <section
-          className={`relative mb-6 overflow-hidden rounded-lg border border-border bg-gradient-to-br ${heroGradient}`}
-        >
-          <div
-            className="absolute inset-0 opacity-[0.04]"
-            style={{
-              backgroundImage:
-                "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-              backgroundSize: "32px 32px",
-            }}
-            aria-hidden
-          />
-
-          <div className="relative p-5 sm:p-6">
-            <div className="mb-3 flex flex-wrap items-center gap-2">
-              <span className="rounded border border-border bg-bg-primary/80 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-primary backdrop-blur-sm">
-                {'N/A'}
-              </span>
-              <HeadlineSentimentBadge />
-            </div>
-
-            <div className="flex flex-wrap items-end justify-between gap-4">
-              <div>
-                <h2 className="font-mono text-[56px] font-bold leading-none tracking-tighter text-text-primary sm:text-[72px]">
-                  {params.kode}
-                </h2>
-                <p className="mt-1 text-[14px] text-text-secondary">{'N/A'}</p>
-              </div>
-              <div className="text-right">
-                <p className="font-mono text-[40px] font-bold leading-none tracking-tight text-text-primary num-tabular sm:text-[48px]">
-                  {'N/A'}
-                </p>
-                <p
-                  className={
-                    "mt-1 font-mono text-[16px] font-semibold text-text-primary num-tabular"
-                  }
-                >
-                  {'—'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </section>
+        <StockHero kode={kode} chip="N/A" />
 
         {/* Headline detail is fetched once by <HeadlineDetailProvider>
             above (either the deep-linked id from the URL, or the
