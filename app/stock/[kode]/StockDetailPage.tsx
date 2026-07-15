@@ -149,7 +149,6 @@ export default function StockDetailPage({ params }: PageProps) {
                   briefly fall back to mock data while the upstream
                   fetch is in flight. */}
               <SimilarStocks
-                excludeKode={kode}
                 sektor={tickerInfo?.sector_name ?? ""}
                 relatedStocks={tickerInfo?.related_stocks ?? undefined}
                 loading={tickerLoading}

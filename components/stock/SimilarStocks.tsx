@@ -1,63 +1,12 @@
 import Link from "next/link";
 import { ArrowUpRight, Building2 } from "lucide-react";
-import { SentimentBadge } from "@/components/SentimentBadge";
 import { Shimmer } from "@/components/Shimmer";
 import type { RelatedStock } from "@/lib/api";
-import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
-import { getRecapForStock } from "@/lib/mock/recaps";
-import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
 
 interface SimilarStocksProps {
-  /** Ticker to exclude from results. Used only by the mock-based
-   *  fallback — when `relatedStocks` is provided, the backend has
-   *  already excluded the current ticker. */
-  excludeKode: string;
-  /** Sector of the current stock. Used only by the mock-based
-   *  fallback to filter peers. Ignored when `relatedStocks` is
-   *  provided. */
   sektor: string;
-  /** How many similar stocks to show. Default 3. Also drives the
-   *  number of skeleton rows shown while `loading` is true. */
-  limit?: number;
-  className?: string;
-  /**
-   * When `true`, render only the `<ol>` peer list — no outer
-   * `<section>` and no header. Used when composing into another
-   * widget that already provides the container and label. Default
-   * `false` (standalone card).
-   *
-   * In bare mode a top border is added to the list so it visually
-   * separates from whatever sits above it inside the parent.
-   */
-  bare?: boolean;
-  /**
-   * Direct list of peer stocks from the API (e.g.
-   * `ticker-information.related_stocks`). When provided, this list
-   * is rendered as-is — preserving the backend's order — and the
-   * mock-based sector filter is skipped.
-   *
-   * Each entry is shaped like `{ name, company_name, price,
-   * pct_change }`. The backend is expected to have already
-   * excluded the current ticker; `excludeKode` is not applied to
-   * this list.
-   *
-   * `limit` still applies (caps the rendered slice) so callers can
-   * keep using the same prop whether they pass API data or rely on
-   * the mock fallback.
-   */
   relatedStocks?: RelatedStock[];
-  /**
-   * When `true`, render a shimmer skeleton instead of real rows.
-   * Set this while the upstream fetch (e.g. `useTickerInformation`)
-   * is in flight — otherwise the widget would briefly fall back to
-   * the mock catalog and flash real-but-wrong data before the API
-   * response lands.
-   *
-   * The skeleton mirrors the real row layout (ticker slot + name
-   * line + price/change line + arrow slot) and produces `limit`
-   * rows so the card height matches the eventual content.
-   */
   loading?: boolean;
 }
 
@@ -68,24 +17,6 @@ interface NormalizedStock {
   companyName: string;
   price: number;
   changePercent: number;
-  /** Mock-based stocks can attach a recap-derived sentiment. API
-   *  stocks don't carry one (the backend doesn't include it in
-   *  `related_stocks`), so it's optional. */
-  sentiment?: Sentimen;
-}
-
-/** Mock recap lookup is keyed by a hardcoded "today" date inside
- *  `getRecapForStock`; keep the wrapper here so the render stays
- *  oblivious to that quirk. */
-function normalizeMock(s: Saham): NormalizedStock {
-  const recap = getRecapForStock(s.kode, "2026-06-07");
-  return {
-    ticker: s.kode,
-    companyName: s.nama,
-    price: s.price,
-    changePercent: s.changePercent,
-    sentiment: recap?.sentimen,
-  };
 }
 
 function normalizeApi(s: RelatedStock): NormalizedStock {
@@ -104,16 +35,13 @@ function normalizeApi(s: RelatedStock): NormalizedStock {
  *  X" suffix shimmer-checks until we know what to render. */
 function SimilarStocksShimmer({
   count,
-  bare,
 }: {
   count: number;
-  bare: boolean;
 }) {
   const list = (
     <ol
       className={cn(
         "divide-y divide-border",
-        bare && "border-t border-border",
       )}
       aria-busy="true"
     >
@@ -135,8 +63,6 @@ function SimilarStocksShimmer({
       ))}
     </ol>
   );
-
-  if (bare) return list;
 
   return (
     <section
@@ -168,28 +94,17 @@ function SimilarStocksShimmer({
  * mock fallback and flash real-but-wrong data.
  */
 export function SimilarStocks({
-  excludeKode,
   sektor,
-  limit = 3,
-  className,
-  bare = false,
   relatedStocks,
   loading = false,
 }: SimilarStocksProps) {
   if (loading) {
-    return <SimilarStocksShimmer count={limit} bare={bare} />;
+    return <SimilarStocksShimmer count={3}/>;
   }
 
-  const raw: NormalizedStock[] = relatedStocks
+  const items: NormalizedStock[] = relatedStocks
     ? relatedStocks.map(normalizeApi)
-    : mockStocks
-        .filter(
-          (s) => s.sektor === sektor && s.kode !== excludeKode.toUpperCase(),
-        )
-        .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
-        .map(normalizeMock);
-
-  const items = raw.slice(0, limit);
+    : [];
 
   if (items.length === 0) {
     return null;
@@ -199,7 +114,6 @@ export function SimilarStocks({
     <ol
       className={cn(
         "divide-y divide-border",
-        bare && "border-t border-border",
       )}
     >
       {items.map((s) => {
@@ -233,13 +147,7 @@ export function SimilarStocks({
                   </span>
                 </span>
               </span>
-              {s.sentiment && (
-                <SentimentBadge
-                  sentiment={s.sentiment}
-                  size="sm"
-                  showLabel={false}
-                />
-              )}
+
               <ArrowUpRight
                 className="h-3 w-3 shrink-0 text-text-faint transition-colors group-hover:text-brand"
                 aria-hidden
@@ -251,13 +159,11 @@ export function SimilarStocks({
     </ol>
   );
 
-  if (bare) return list;
-
   return (
     <section
       className={cn(
         "overflow-hidden rounded-lg border border-border bg-bg-secondary",
-        className,
+        'Similar Stocks',
       )}
       aria-label="Saham serupa di sektor yang sama"
     >
