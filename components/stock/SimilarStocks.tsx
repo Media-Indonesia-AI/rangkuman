@@ -107,7 +107,31 @@ export function SimilarStocks({
     : [];
 
   if (items.length === 0) {
-    return null;
+    return (
+      <section
+        className={cn(
+          "overflow-hidden rounded-lg border border-border bg-bg-secondary",
+        )}
+        aria-label="Saham serupa di sektor yang sama"
+      >
+        <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
+          <div className="flex items-center gap-1.5">
+            <Building2 className="h-3.5 w-3.5 text-brand" aria-hidden />
+            <span className="label">Saham Serupa</span>
+          </div>
+          {!relatedStocks && (
+            <span className="font-mono text-[9.5px] text-text-faint">
+              sektor {sektor}
+            </span>
+          )}
+        </header>
+        <div className="px-3 py-5 text-center">
+          <p className="text-[11px] text-text-muted">
+            Belum ada saham serupa
+          </p>
+        </div>
+      </section>
+    );
   }
 
   const list = (
