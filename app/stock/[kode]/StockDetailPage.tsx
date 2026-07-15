@@ -103,7 +103,7 @@ export default function StockDetailPage({ params }: PageProps) {
               />
 
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
-              <KeyMetrics stock={null} />
+              <KeyMetrics kode={kode} />
 
               {/* News timeline */}
               <NewsTimeline todayIso={''} />
