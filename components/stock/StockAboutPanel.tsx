@@ -1,11 +1,8 @@
-import { SimilarStocks } from "./SimilarStocks";
-
 interface StockAboutPanelProps {
-  /** Ticker code; drives the panel header and the SimilarStocks
-   *  exclude filter. */
+  /** Ticker code; drives the panel header. */
   kode: string;
-  /** Sector name — rendered in the "Sektor" row and used as the
-   *  SimilarStocks filter. Renders `"N/A"` when `null`/`undefined`. */
+  /** Sector name — rendered in the "Sektor" row. Renders `"N/A"`
+   *  when `null`/`undefined`. */
   sektor?: string | null;
   /** Pre-formatted price for the "Harga" row. */
   price?: string | null;
@@ -14,25 +11,16 @@ interface StockAboutPanelProps {
   change?: string | null;
   /** Coverage stats for the "Coverage" row. */
   coverage?: { media: number; artikel: number } | null;
-  /** How many similar stocks to show. Default 3. */
-  limit?: number;
 }
 
 /**
- * Right-rail panel for the stock detail page — combines the
- * "Tentang {kode}" stock-info `<dl>` (Sektor / Harga / Perubahan /
- * Coverage) with the "Saham Serupa" peer list into one cohesive
- * widget so the page doesn't compose them inline.
+ * "Tentang {kode}" — the stock-info card for the stock detail page.
  *
- * Layout: a single outer `<section>` with one header
- * `"Tentang {kode}"`. The `<dl>` sits directly under the header;
- * the peer list follows with no second header (the panel is
- * already labeled). A `border-t` separates the dl from the list.
- *
- * When no peers match the current sector, `SimilarStocks` returns
- * `null` and the panel shows only the info `<dl>` — no empty
- * header or "no results" placeholder. That's deliberate: the
- * info rows are the primary content.
+ * One self-contained `<section>` with a header and a 4-row `<dl>`
+ * (Sektor / Harga / Perubahan / Coverage). Designed to sit in the
+ * right rail as its own card, above a separate `<SimilarStocks />`
+ * card. Keeping it independent from the peer list makes it easier
+ * to reorder, hide, or restyle either block on its own.
  *
  * Placeholder behavior matches the original inline JSX so the
  * page keeps rendering gracefully while its data hooks are still
@@ -48,7 +36,6 @@ export function StockAboutPanel({
   price,
   change,
   coverage,
-  limit = 3,
 }: StockAboutPanelProps) {
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
@@ -82,13 +69,6 @@ export function StockAboutPanel({
           </dd>
         </div>
       </dl>
-
-      <SimilarStocks
-        excludeKode={kode}
-        sektor={sektor ?? ""}
-        limit={limit}
-        bare
-      />
     </section>
   );
 }

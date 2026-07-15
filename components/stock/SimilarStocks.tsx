@@ -1,14 +1,20 @@
 import Link from "next/link";
 import { ArrowUpRight, Building2 } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
-import { stocks, type Saham } from "@/lib/mock/stocks";
+import type { RelatedStock } from "@/lib/api";
+import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
 import { getRecapForStock } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
 
 interface SimilarStocksProps {
-  /** Ticker to exclude from results. */
+  /** Ticker to exclude from results. Used only by the mock-based
+   *  fallback — when `relatedStocks` is provided, the backend has
+   *  already excluded the current ticker. */
   excludeKode: string;
-  /** Sector of the current stock. */
+  /** Sector of the current stock. Used only by the mock-based
+   *  fallback to filter peers. Ignored when `relatedStocks` is
+   *  provided. */
   sektor: string;
   /** How many similar stocks to show. Default 3. */
   limit?: number;
@@ -23,12 +29,66 @@ interface SimilarStocksProps {
    * separates from whatever sits above it inside the parent.
    */
   bare?: boolean;
+  /**
+   * Direct list of peer stocks from the API (e.g.
+   * `ticker-information.related_stocks`). When provided, this list
+   * is rendered as-is — preserving the backend's order — and the
+   * mock-based sector filter is skipped.
+   *
+   * Each entry is shaped like `{ name, company_name, price,
+   * pct_change }`. The backend is expected to have already
+   * excluded the current ticker; `excludeKode` is not applied to
+   * this list.
+   *
+   * `limit` still applies (caps the rendered slice) so callers can
+   * keep using the same prop whether they pass API data or rely on
+   * the mock fallback.
+   */
+  relatedStocks?: RelatedStock[];
+}
+
+/** Internal shape — both the mock `Saham` and the API `RelatedStock`
+ *  get normalized here so the JSX only deals with one shape. */
+interface NormalizedStock {
+  ticker: string;
+  companyName: string;
+  price: number;
+  changePercent: number;
+  /** Mock-based stocks can attach a recap-derived sentiment. API
+   *  stocks don't carry one (the backend doesn't include it in
+   *  `related_stocks`), so it's optional. */
+  sentiment?: Sentimen;
+}
+
+/** Mock recap lookup is keyed by a hardcoded "today" date inside
+ *  `getRecapForStock`; keep the wrapper here so the render stays
+ *  oblivious to that quirk. */
+function normalizeMock(s: Saham): NormalizedStock {
+  const recap = getRecapForStock(s.kode, "2026-06-07");
+  return {
+    ticker: s.kode,
+    companyName: s.nama,
+    price: s.price,
+    changePercent: s.changePercent,
+    sentiment: recap?.sentimen,
+  };
+}
+
+function normalizeApi(s: RelatedStock): NormalizedStock {
+  return {
+    ticker: s.name,
+    companyName: s.company_name,
+    price: s.price,
+    changePercent: s.pct_change,
+  };
 }
 
 /**
- * "Saham Serupa" — up to N other stocks in the same sector. Each card shows
- * ticker, name, price, change, sentiment (from today's recap) and a small
- * cross-link to the stock detail page.
+ * "Saham Serupa" — peer stocks surfaced either from the live
+ * `ticker-information` API (preferred when `relatedStocks` is
+ * passed) or from the in-memory mock catalog filtered by `sektor`
+ * (fallback). Each card shows ticker, name, price, change, and an
+ * optional sentiment badge derived from today's recap.
  */
 export function SimilarStocks({
   excludeKode,
@@ -36,13 +96,20 @@ export function SimilarStocks({
   limit = 3,
   className,
   bare = false,
+  relatedStocks,
 }: SimilarStocksProps) {
-  const similar: Saham[] = stocks
-    .filter((s) => s.sektor === sektor && s.kode !== excludeKode.toUpperCase())
-    .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent)) // most-active first
-    .slice(0, limit);
+  const raw: NormalizedStock[] = relatedStocks
+    ? relatedStocks.map(normalizeApi)
+    : mockStocks
+        .filter(
+          (s) => s.sektor === sektor && s.kode !== excludeKode.toUpperCase(),
+        )
+        .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+        .map(normalizeMock);
 
-  if (similar.length === 0) {
+  const items = raw.slice(0, limit);
+
+  if (items.length === 0) {
     return null;
   }
 
@@ -53,20 +120,22 @@ export function SimilarStocks({
         bare && "border-t border-border",
       )}
     >
-      {similar.map((s) => {
+      {items.map((s) => {
         const positive = s.changePercent >= 0;
-        const href = `/stock/${s.kode}`;
+        const href = `/stock/${s.ticker}`;
         return (
-          <li key={s.kode}>
+          <li key={s.ticker}>
             <Link
               href={href}
               className="group flex items-center gap-2.5 px-3 py-2.5 transition-colors hover:bg-bg-tertiary"
             >
               <span className="font-mono text-[14px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
-                {s.kode}
+                {s.ticker}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-[11px] text-text-muted">{s.nama}</span>
+                <span className="block truncate text-[11px] text-text-muted">
+                  {s.companyName}
+                </span>
                 <span className="mt-0.5 flex items-center gap-1.5 font-mono text-[10px] text-text-faint">
                   <span className="num-tabular text-text-secondary">
                     {s.price.toLocaleString("id-ID")}
@@ -82,11 +151,13 @@ export function SimilarStocks({
                   </span>
                 </span>
               </span>
-              {(() => {
-                const recap = getRecapForStock(s.kode, "2026-06-07");
-                if (!recap) return null;
-                return <SentimentBadge sentiment={recap.sentimen} size="sm" showLabel={false} />;
-              })()}
+              {s.sentiment && (
+                <SentimentBadge
+                  sentiment={s.sentiment}
+                  size="sm"
+                  showLabel={false}
+                />
+              )}
               <ArrowUpRight
                 className="h-3 w-3 shrink-0 text-text-faint transition-colors group-hover:text-brand"
                 aria-hidden
@@ -102,7 +173,10 @@ export function SimilarStocks({
 
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn(
+        "overflow-hidden rounded-lg border border-border bg-bg-secondary",
+        className,
+      )}
       aria-label="Saham serupa di sektor yang sama"
     >
       <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -110,7 +184,14 @@ export function SimilarStocks({
           <Building2 className="h-3.5 w-3.5 text-brand" aria-hidden />
           <span className="label">Saham Serupa</span>
         </div>
-        <span className="font-mono text-[9.5px] text-text-faint">sektor {sektor}</span>
+        {/* Suffix is only meaningful when the list is sector-filtered
+            from the mock; the API already pre-filters and the
+            "sektor X" label would be misleading. */}
+        {!relatedStocks && (
+          <span className="font-mono text-[9.5px] text-text-faint">
+            sektor {sektor}
+          </span>
+        )}
       </header>
       {list}
     </section>
