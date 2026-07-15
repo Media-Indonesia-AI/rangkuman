@@ -15,6 +15,7 @@ import type {
   CompositeChartResponse,
   ForeignStocksResponse,
   KeyMetrics,
+  StockHistoricalResponse,
   TickerInformation,
   TickersResponse,
   TopStocksResponse,
@@ -102,6 +103,27 @@ export function getKeyMetrics(
   const code = ticker.toUpperCase();
   return request<KeyMetrics>(
     `stocks/key-metrics/${encodeURIComponent(code)}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the historical daily price series for a given ticker.
+ *
+ * The backend takes the ticker as a query param (not a path
+ * segment like `key-metrics`), so it ends up in the URL after
+ * `?`. The ticker is uppercased before being inserted so callers
+ * can pass either case consistently.
+ *
+ * `@param ticker` Ticker code, e.g. `"ANTM"`.
+ */
+export function getStockHistorical(
+  ticker: string,
+): Promise<StockHistoricalResponse> {
+  const code = ticker.toUpperCase();
+  const params = new URLSearchParams({ ticker: code });
+  return request<StockHistoricalResponse>(
+    `stocks/stock/historical?${params.toString()}`,
     { method: "GET" },
   );
 }

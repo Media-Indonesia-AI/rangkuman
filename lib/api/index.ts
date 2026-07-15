@@ -28,6 +28,8 @@ export type {
   ForeignStocksResponse,
   KeyMetrics,
   RelatedStock,
+  StockHistoricalPoint,
+  StockHistoricalResponse,
   TickerInformation,
   TickerItem,
   TickersResponse,

@@ -28,6 +28,7 @@ import {
   getCompositeChart,
   getForeignStocks,
   getKeyMetrics,
+  getStockHistorical,
   getTickerInformation,
   getTickers,
   getTopStocks,
@@ -134,6 +135,7 @@ export const api = {
   getTickers,
   getTickerInformation,
   getKeyMetrics,
+  getStockHistorical,
   getForeignStocks,
   getCompositeChart,
   // Market

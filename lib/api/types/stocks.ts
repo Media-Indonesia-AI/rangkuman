@@ -158,3 +158,31 @@ export interface KeyMetrics {
   /** Day-change percent (signed). */
   pct_change: number;
 }
+
+// ─── STOCK HISTORICAL ──────────────────────────────────────────
+
+/**
+ * One OHLC-light data point on a stock's historical price series.
+ *
+ * `date_time` is an ISO 8601 timestamp from the server (UTC, e.g.
+ * `"2026-06-17T00:00:00.000Z"`). `price` is the closing price in
+ * IDR (raw, unformatted). `price_change` is the signed day
+ * change — positive = up, negative = down. The backend sends
+ * `0` for the earliest point in the series (no prior day to
+ * diff against), so consumers should not treat `0` as a flat
+ * day.
+ */
+export interface StockHistoricalPoint {
+  date_time: string;
+  price: number;
+  price_change: number;
+}
+
+/**
+ * Wire format for `GET stocks/stock/historical?ticker=...`.
+ * The backend wraps the array in `{ data: [...] }` (same shape
+ * as `TopStocksResponse`).
+ */
+export interface StockHistoricalResponse {
+  data: StockHistoricalPoint[];
+}
