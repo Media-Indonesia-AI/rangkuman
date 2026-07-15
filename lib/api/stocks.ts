@@ -14,6 +14,7 @@ import { request, todayIsoDate } from "./client";
 import type {
   CompositeChartResponse,
   ForeignStocksResponse,
+  TickerInformation,
   TickersResponse,
   TopStocksResponse,
 } from "./types/stocks";
@@ -64,6 +65,24 @@ export function getCompositeChart(
   const params = new URLSearchParams({ period });
   return request<CompositeChartResponse>(
     `stocks/composite-chart?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch composite ticker information — current price, day change,
+ * sector, and a list of related stocks (peers in the same sector).
+ *
+ * `@param ticker` Ticker code (e.g. `"ANTM"`). Uppercased before
+ *                 being inserted into the URL so callers can pass
+ *                 either case consistently.
+ */
+export function getTickerInformation(
+  ticker: string,
+): Promise<TickerInformation> {
+  const code = ticker.toUpperCase();
+  return request<TickerInformation>(
+    `stocks/ticker-information/${encodeURIComponent(code)}`,
     { method: "GET" },
   );
 }

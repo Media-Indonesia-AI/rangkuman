@@ -91,3 +91,42 @@ export interface CompositeChartPoint {
 
 /** Wire format for `GET stocks/composite-chart` — a bare array, no wrapper. */
 export type CompositeChartResponse = CompositeChartPoint[];
+
+// ─── TICKER INFORMATION ────────────────────────────────────────
+
+/**
+ * One row of "related stocks" surfaced alongside a ticker's
+ * information — usually peer companies in the same sector.
+ *
+ * `name` is the ticker code (e.g. `"INAI"`); `notation` is the
+ * board/symbol marker the backend sends (often empty for main-board
+ * listings); `company_name` is the full legal name.
+ *
+ * `pct_change` is the day-change percent (signed; positive = up).
+ * Note: this endpoint uses `pct_change`, whereas `TopStockItem`
+ * uses `percent_change` — different endpoints, different field
+ * names. Match the wire format exactly.
+ */
+export interface RelatedStock {
+  name: string;
+  notation: string;
+  company_name: string;
+  price: number;
+  pct_change: number;
+}
+
+/**
+ * Composite payload for `GET stocks/ticker-information/{ticker}`.
+ * Returned unwrapped (no `{ data: ... }` envelope) — same shape as
+ * `ForeignStocksResponse`.
+ *
+ * `pct_change` is the ticker's day-change percent (signed).
+ * `related_stocks` lists peers in the same sector for the "ticker
+ * detail" panel.
+ */
+export interface TickerInformation {
+  sector_name: string;
+  price: number;
+  pct_change: number;
+  related_stocks: RelatedStock[];
+}

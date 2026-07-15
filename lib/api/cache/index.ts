@@ -20,6 +20,7 @@
 
 export { loadTopStocks } from "./top-stocks";
 export { loadTickers, peekTickers } from "./tickers";
+export { loadTickerInformation } from "./ticker-information";
 export { loadInterestRate } from "./interest-rate";
 export { loadExchangeRate } from "./exchange-rate";
 export { loadMarketMood } from "./market-mood";

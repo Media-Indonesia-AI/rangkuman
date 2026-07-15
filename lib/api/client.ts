@@ -27,6 +27,7 @@ import { getExchangeRate, getInterestRate, getMarketMood } from "./market";
 import {
   getCompositeChart,
   getForeignStocks,
+  getTickerInformation,
   getTickers,
   getTopStocks,
 } from "./stocks";
@@ -130,6 +131,7 @@ export const api = {
   // Stocks
   getTopStocks,
   getTickers,
+  getTickerInformation,
   getForeignStocks,
   getCompositeChart,
   // Market
