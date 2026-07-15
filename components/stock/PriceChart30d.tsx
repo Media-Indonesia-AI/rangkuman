@@ -1,27 +1,116 @@
+"use client";
+
 import { cn } from "@/lib/utils";
-import { getPriceHistory } from "@/lib/mock/price-history";
-import { TrendingUp, TrendingDown, Activity } from "lucide-react";
+import { useStockHistorical } from "@/lib/hooks/useStockHistorical";
+import { Shimmer } from "@/components/Shimmer";
+import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PriceChart30dProps {
+  /** Ticker code, e.g. `"ANTM"`. Drives the request URL; uppercased
+   *  inside `useStockHistorical` so callers can pass any case. */
   kode: string;
-  currentPrice: number;
-  change30dPercent: number;
-  ath: number;
   className?: string;
+}
+
+/** Skeleton shown while `GET stocks/stock/historical?ticker=...` is
+ *  in flight. Mirrors the real card's structure (header strip with
+ *  "Harga 30 Hari" + meta row, big chart area) so the layout
+ *  doesn't shift when the real payload arrives. */
+function PriceChart30dShimmer() {
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      aria-label="Pergerakan harga 30 hari"
+      aria-busy="true"
+    >
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
+        <div className="flex items-center gap-1.5">
+          <Activity className="h-3.5 w-3.5 text-brand" aria-hidden />
+          <span className="label">Harga 30 Hari</span>
+        </div>
+        <div className="flex items-center gap-3 text-[10.5px]">
+          <Shimmer className="h-2.5 w-8" />
+          <Shimmer className="h-2.5 w-12" />
+          <span className="text-text-faint">·</span>
+          <Shimmer className="h-2.5 w-12" />
+          <Shimmer className="h-2.5 w-12" />
+          <span className="text-text-faint">·</span>
+          <Shimmer className="h-2.5 w-14" />
+        </div>
+      </header>
+      <div className="px-3.5 py-3">
+        <Shimmer className="h-[140px] w-full rounded" />
+      </div>
+    </section>
+  );
+}
+
+/** Empty-state shell. Same outer `<section>` + header strip as the
+ *  real card so the layout stays stable when the backend returns no
+ *  historical data for the ticker (or the fetch failed). The header
+ *  collapses the meta row to a single muted "no data" hint so the
+ *  row doesn't read as "ATH · Current · 0.00%" with no actual
+ *  numbers behind it. */
+function PriceChart30dEmpty({ kode }: { kode: string }) {
+  return (
+    <section
+      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      aria-label="Pergerakan harga 30 hari"
+    >
+      <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
+        <div className="flex items-center gap-1.5">
+          <Activity className="h-3.5 w-3.5 text-brand" aria-hidden />
+          <span className="label">Harga 30 Hari</span>
+        </div>
+        <span className="font-mono text-[9.5px] text-text-faint">
+          belum ada data untuk {kode}
+        </span>
+      </header>
+      <div className="px-3.5 py-8 text-center">
+        <p className="text-[12px] text-text-muted">
+          Belum ada data historis untuk {kode}.
+        </p>
+      </div>
+    </section>
+  );
 }
 
 /**
  * 30-day price chart — SVG line + area fill.
- * Green when the 30-day change is positive, red when negative.
+ *
+ * Data is fetched live from `GET stocks/stock/historical?ticker=...`
+ * via `useStockHistorical`. The wire format is
+ * `{ date_time, price, price_change }[]`; the component:
+ *   - plots `price` as the line
+ *   - derives `currentPrice` (last point) and `ath` (max)
+ *   - derives `change30dPercent` from first vs. last point
+ *   - color (green/red) tracks the sign of the 30D change
+ *
+ * Three render branches:
+ *   1. `isLoading`     → shimmer skeleton (header + chart placeholder)
+ *   2. `data` is null or empty → empty-state shell with a
+ *      "Belum ada data historis" message
+ *   3. real data       → the SVG line + area chart
  */
-export function PriceChart30d({
-  kode,
-  currentPrice,
-  change30dPercent,
-  ath,
-  className,
-}: PriceChart30dProps) {
-  const data = getPriceHistory(kode, 30);
+export function PriceChart30d({ kode, className }: PriceChart30dProps) {
+  const { data, isLoading } = useStockHistorical(kode);
+
+  if (isLoading) {
+    return <PriceChart30dShimmer />;
+  }
+
+  if (!data || data.length === 0) {
+    return <PriceChart30dEmpty kode={kode} />;
+  }
+
+  // Series is API-ordered (oldest → newest). Derive everything
+  // the chart needs from the points so the component never
+  // depends on stale parent-supplied numbers.
+  const prices = data.map((p) => p.price);
+  const firstPrice = prices[0];
+  const lastPrice = prices[prices.length - 1];
+  const ath = Math.max(...prices);
+  const change30dPercent = ((lastPrice - firstPrice) / firstPrice) * 100;
   const positive = change30dPercent >= 0;
   const Icon = positive ? TrendingUp : TrendingDown;
 
@@ -35,20 +124,32 @@ export function PriceChart30d({
   const chartW = W - padL - padR;
   const chartH = H - padT - padB;
 
-  const min = Math.min(...data);
-  const max = Math.max(...data);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
   const range = max - min || 1;
 
   // Y grid: 4 lines (min, 25%, 75%, max)
   const gridLevels = 4;
-  const yTicks = Array.from({ length: gridLevels }, (_, i) => min + (range * i) / (gridLevels - 1));
+  const yTicks = Array.from(
+    { length: gridLevels },
+    (_, i) => min + (range * i) / (gridLevels - 1),
+  );
 
-  // X axis: every 5 days label
-  const xLabelIdx = [0, 6, 12, 18, 24, 29];
+  // X axis: 6 evenly-spaced labels across the series. With N=30
+  // points the labels land at indices 0, 6, 12, 18, 24, 29 — same
+  // as the original 30-day mock. For shorter series the indices
+  // compress accordingly so the labels stay evenly distributed.
+  const N = prices.length;
+  const xLabelIdx = N <= 6
+    ? Array.from({ length: N }, (_, i) => i)
+    : [0, Math.floor(N * 0.2), Math.floor(N * 0.4), Math.floor(N * 0.6), Math.floor(N * 0.8), N - 1];
+  const dayLabels = xLabelIdx.map((i) =>
+    i === N - 1 ? "today" : `${-(N - 1 - i)}d`,
+  );
 
   // Build smooth path
-  const points = data.map((v, i) => {
-    const x = padL + (i / (data.length - 1)) * chartW;
+  const points = prices.map((v, i) => {
+    const x = padL + (i / (prices.length - 1)) * chartW;
     const y = padT + (1 - (v - min) / range) * chartH;
     return [x, y] as const;
   });
@@ -71,12 +172,12 @@ export function PriceChart30d({
     return v.toFixed(0);
   }
 
-  // Day labels: relative offsets (-29, -23, -17, -11, -5, today)
-  const dayLabels = ["-29d", "-23d", "-17d", "-11d", "-5d", "today"];
-
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn(
+        "overflow-hidden rounded-lg border border-border bg-bg-secondary",
+        className,
+      )}
       aria-label="Pergerakan harga 30 hari"
     >
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -92,7 +193,7 @@ export function PriceChart30d({
           <span className="text-text-faint">·</span>
           <span className="font-mono text-text-faint">Current</span>
           <span className="font-mono font-semibold text-text-primary num-tabular">
-            {currentPrice.toLocaleString("id-ID")}
+            {lastPrice.toLocaleString("id-ID")}
           </span>
           <span className="text-text-faint">·</span>
           <span
@@ -103,7 +204,7 @@ export function PriceChart30d({
           >
             <Icon className="h-2.5 w-2.5" aria-hidden />
             {positive ? "+" : ""}
-            {change30dPercent.toFixed(2)}%
+            {change30dPercent.toFixed(2).replace(".", ",")}%
           </span>
         </div>
       </header>
@@ -113,7 +214,7 @@ export function PriceChart30d({
           viewBox={`0 0 ${W} ${H}`}
           className="h-auto w-full"
           role="img"
-          aria-label={`Chart harga 30 hari, perubahan ${change30dPercent.toFixed(2)}%`}
+          aria-label={`Chart harga 30 hari, perubahan ${change30dPercent.toFixed(2).replace(".", ",")}%`}
         >
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
@@ -152,8 +253,8 @@ export function PriceChart30d({
 
           {/* X-axis labels */}
           {xLabelIdx.map((idx, i) => {
-            if (idx >= data.length) return null;
-            const x = padL + (idx / (data.length - 1)) * chartW;
+            if (idx >= prices.length) return null;
+            const x = padL + (idx / (prices.length - 1)) * chartW;
             return (
               <text
                 key={idx}
@@ -162,8 +263,8 @@ export function PriceChart30d({
                 textAnchor="middle"
                 fontSize="9"
                 fontFamily="ui-monospace, SFMono-Regular, monospace"
-                fill={idx === data.length - 1 ? "#F7931A" : "#525252"}
-                fontWeight={idx === data.length - 1 ? "700" : "500"}
+                fill={idx === prices.length - 1 ? "#F7931A" : "#525252"}
+                fontWeight={idx === prices.length - 1 ? "700" : "500"}
               >
                 {dayLabels[i]}
               </text>

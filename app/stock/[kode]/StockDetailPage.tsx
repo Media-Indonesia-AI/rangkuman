@@ -95,12 +95,7 @@ export default function StockDetailPage({ params }: PageProps) {
               <AggregateSummary kode={kode} />
 
               {/* Price chart 30 days */}
-              <PriceChart30d
-                kode={kode}
-                currentPrice={0}
-                change30dPercent={0}
-                ath={0}
-              />
+              <PriceChart30d kode={kode} />
 
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
               <KeyMetrics kode={kode} />
