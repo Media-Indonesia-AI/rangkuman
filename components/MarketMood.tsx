@@ -58,7 +58,7 @@ export function MarketMood() {
   // while the fetch is in flight). Order matches the strip's
   // left-to-right layout.
   const widgets: MarketWidget[] = [
-    buildIhsgWidget(compositeChart, isLoading.compositeChart),
+    buildIhsgWidget(compositeChart, mood, isLoading.compositeChart),
     buildForeignFlowWidget(foreignFlow, isLoading.foreignFlow),
     buildUsdIdrWidget(exchangeRate, isLoading.exchangeRate),
     buildBiRateWidget(biRate, isLoading.biRate),

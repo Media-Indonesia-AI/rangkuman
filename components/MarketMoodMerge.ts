@@ -142,12 +142,19 @@ export function buildForeignFlowWidget(
  * and the full price series feeds `sparklineData` so the SparklineChart
  * renders the real intraday curve.
  *
+ * The day-change percentage is read from `mood.ihsg_pct_change` rather
+ * than derived from the sparkline endpoints — the chart series is
+ * intraday-tick granularity, so the first/last percentage wouldn't
+ * equal the official session close-to-close `pct_change` the API
+ * returns. The cell relies on this for the `▲/▼` sign and color.
+ *
  * SparklineChart needs ≥2 points to render anything; below that,
  * `sparklineData` is left undefined so the visualization column
  * stays empty.
  */
 export function buildIhsgWidget(
   chart: CompositeChartPoint[] | null,
+  mood: MarketMood | null,
   loading: boolean,
 ): MarketWidget {
   const sparklineData =
@@ -165,7 +172,7 @@ export function buildIhsgWidget(
     id: "ihsg",
     label: "IHSG",
     value: last !== undefined ? formatIhsgPrice(last) : PLACEHOLDER,
-    changePercent: 0,
+    changePercent: mood?.ihsg_pct_change ?? 0,
     type: "sparkline",
     ...(sparklineData !== undefined ? { sparklineData } : {}),
     loading,
