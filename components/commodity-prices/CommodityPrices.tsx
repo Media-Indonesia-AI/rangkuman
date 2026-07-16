@@ -165,13 +165,13 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
                         </span>
                       </div>
 
-                      {/* Price + unit */}
+                      {/* Price + unit/currency */}
                       <div className="flex items-baseline gap-1">
                         <span className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular">
                           {formatPrice(c.price)}
                         </span>
                         <span className="truncate font-mono text-[8.5px] text-text-muted">
-                          {c.unit}
+                          {c.currency}/{c.unit}
                         </span>
                       </div>
 

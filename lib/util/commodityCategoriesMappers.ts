@@ -66,8 +66,8 @@ export type CommodityCategorySlug = "energi" | "logam" | "pertanian";
 
 /**
  * Minimal commodity shape the tile needs. Drops wire-specific
- * fields (`symbol`, `currency`, `latest_price_date`) that the UI
- * doesn't render, and adds derived display fields (`category`,
+ * fields (`symbol`, `latest_price_date`) that the UI doesn't
+ * render, and adds derived display fields (`category`,
  * `changePercent`, `history`).
  */
 export interface DisplayCommodity {
@@ -79,6 +79,10 @@ export interface DisplayCommodity {
   category: CommodityCategorySlug;
   /** Physical unit string from the wire, e.g. `"T"`, `"Kg"`. */
   unit: string;
+  /** Currency the price is denominated in, e.g. `"MYR"`,
+   *  `"USD Cents"`. Pairs with `unit` to label the price tile
+   *  (`"T/MYR"`, `"Kg/USD Cents"`). */
+  currency: string;
   /** Latest price (raw, unformatted). */
   price: number;
   /** Day-change percent (signed). Mean of `top_stocks[].price_change`. */
@@ -169,6 +173,7 @@ export function mapCommodity(
     name: api.name,
     category,
     unit: api.unit,
+    currency: api.currency,
     price: api.latest_price,
     changePercent: mean(api.top_stocks.map((s) => s.price_change)),
     history: [],
