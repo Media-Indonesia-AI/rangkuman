@@ -77,11 +77,11 @@ export default function SektorDetailPage({ params }: PageProps) {
         <h1 className="sr-only">Rangkuman &mdash; Sektor {sektor.name}</h1>
 
         <Link
-          href="/sektor"
+          href="/saham"
           className="mb-3 inline-flex items-center gap-1.5 text-[12px] text-text-muted transition-colors hover:text-text-primary"
         >
           <ArrowLeft className="h-3 w-3" aria-hidden />
-          Semua sektor
+          Kembali ke Sektor
         </Link>
 
         <SektorDetailHeader sektor={sektor} />
