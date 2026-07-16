@@ -75,6 +75,13 @@ export function buildBiRateWidget(
  * sorted series feeds `sparklineData` so the existing sparkline slot
  * renders the real curve.
  *
+ * The day-change percentage is read from `mood.usd_idr_pct_change`
+ * rather than derived from the sparkline endpoints — same reasoning
+ * as `buildIhsgWidget`: the chart series is session-tick granularity,
+ * so a first/last percentage wouldn't equal the official close-to-
+ * close `usd_idr_pct_change` the API exposes on the mood snapshot.
+ * The cell relies on this for the `▲/▼` sign and color.
+ *
  * SparklineChart needs ≥2 points to render anything; below that
  * (loading, single-point response, error), `sparklineData` is left
  * undefined so the visualization column shows nothing rather than a
@@ -82,6 +89,7 @@ export function buildBiRateWidget(
  */
 export function buildUsdIdrWidget(
   res: ExchangeRateChartResponse | null,
+  mood: MarketMood | null,
   loading: boolean,
 ): MarketWidget {
   const points = res?.data;
@@ -99,7 +107,7 @@ export function buildUsdIdrWidget(
     id: "usd-idr",
     label: "USD/IDR",
     value: last !== undefined ? formatIdrRate(last) : PLACEHOLDER,
-    changePercent: 0,
+    changePercent: mood?.usd_idr_pct_change ?? 0,
     type: "sparkline",
     ...(sortedRates !== undefined ? { sparklineData: sortedRates } : {}),
     loading,

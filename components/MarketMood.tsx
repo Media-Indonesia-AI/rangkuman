@@ -60,7 +60,7 @@ export function MarketMood() {
   const widgets: MarketWidget[] = [
     buildIhsgWidget(compositeChart, mood, isLoading.compositeChart),
     buildForeignFlowWidget(foreignFlow, isLoading.foreignFlow),
-    buildUsdIdrWidget(exchangeRate, isLoading.exchangeRate),
+    buildUsdIdrWidget(exchangeRate, mood, isLoading.exchangeRate),
     buildBiRateWidget(biRate, isLoading.biRate),
     buildFearGreedWidget(mood, false),
   ];
@@ -85,17 +85,23 @@ export function MarketMood() {
     });
   }
 
-  if (exchangeRate && exchangeRate.data.length > 0) {
-    const last = exchangeRate.data[exchangeRate.data.length - 1];
-    const first = exchangeRate.data[0];
-    const pctChange =
-      first.rate !== 0 ? ((last.rate - first.rate) / first.rate) * 100 : 0;
+  // USD/IDR factor: pull the latest rate from the exchange-rate
+  // series for the displayed value, but use `mood.usd_idr_pct_change`
+  // for the change% so we stay consistent with the canonical
+  // session-close pct the mood API exposes (same source the USD/IDR
+  // widget cell reads). Skipped when either source is missing.
+  const lastUsdIdr =
+    exchangeRate && exchangeRate.data.length > 0
+      ? exchangeRate.data[exchangeRate.data.length - 1].rate
+      : undefined;
+  if (mood && lastUsdIdr !== undefined) {
+    const pctChange = mood.usd_idr_pct_change;
     const fxSentiment: Sentimen =
       pctChange > 0 ? "negatif" : pctChange < 0 ? "positif" : "netral";
     const sign = pctChange >= 0 ? "+" : "";
     topFactors.push({
       label: "USD/IDR",
-      value: `Rp ${formatIdrRate(first.rate)}`,
+      value: `Rp ${formatIdrRate(lastUsdIdr)}`,
       change: `${sign}${pctChange.toFixed(2).replace(".", ",")}%`,
       sentiment: fxSentiment,
     });
