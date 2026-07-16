@@ -85,7 +85,7 @@ function HeadlineDetailFetcher({ kode, children }: HeadlineDetailProviderProps) 
         { field: "primary_ticker_code", operator: "eq", value: kode },
       ];
       let cancelled = false;
-      void loadHeadlines(1, 0, fallbackFilters)
+      void loadHeadlines(3, 0, fallbackFilters)
         .then((res) => {
           if (cancelled) return;
           const fallbackId = res.data[0]?.id;
