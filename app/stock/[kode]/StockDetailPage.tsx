@@ -63,11 +63,11 @@ export default function StockDetailPage({ params }: PageProps) {
         </h1>
 
         <Link
-          href="/"
+          href="/saham"
           className="mb-4 inline-flex items-center gap-1.5 text-[12px] text-text-muted transition-colors hover:text-brand"
         >
           <ArrowLeft className="h-3 w-3" aria-hidden />
-          Kembali ke Beranda
+          Kembali ke Saham
         </Link>
 
         {/* Hero / price block — chip / price / change wired to live
