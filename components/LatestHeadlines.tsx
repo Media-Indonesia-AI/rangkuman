@@ -6,7 +6,7 @@ import { headlines as mockHeadlines } from "@/lib/mock/headlines";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { toSentimen } from "@/lib/util/sentiment";
 import { cn, getRelativeTime } from "@/lib/utils";
-import { useLatestStories } from "@/lib/hooks/useLatestStories";
+import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { SentimentBadge } from "./SentimentBadge";
 import { Shimmer } from "./Shimmer";
 
@@ -30,7 +30,7 @@ function storyColor(sentiment: Sentimen | undefined): string {
  * with a relative-time rail, ticker badge, sentiment pill, STORY tag,
  * headline, and source name.
  *
- * Data path: `useLatestStories` → `loadHeadlines` → `api.getHeadlines`.
+ * Data path: `useHeadlines` → `loadHeadlines` → `api.getHeadlines`.
  *   - During the in-flight window the timeline rail shows a
  *     pulsing shimmer skeleton instead of the live list.
  *   - On success, live `StoryItem`s drive the render.
@@ -44,7 +44,7 @@ function storyColor(sentiment: Sentimen | undefined): string {
 export function LatestHeadlines() {
   // Match the backend's default `limit` so we can pass through any
   // number of filters unchanged. We slice to VISIBLE_COUNT below.
-  const { data, isLoading } = useLatestStories(10, 0, []);
+  const { data, isLoading } = useHeadlines(10, 0, []);
 
   // Build the render list. Prefer live data; fall back to mock if the
   // fetch errored or returned empty (empty list would render an empty

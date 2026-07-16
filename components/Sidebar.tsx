@@ -6,7 +6,7 @@ import { LatestHeadlines } from "./LatestHeadlines";
  * Kept as a server component so it doesn't pull `useState`/`useEffect`
  * into the route bundle. The data fetch lives inside the
  * `<LatestHeadlines />` client island, which is what owns the
- * `useLatestStories` hook.
+ * `useHeadlines` hook.
  */
 export function Sidebar() {
   return (

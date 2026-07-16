@@ -16,7 +16,7 @@ import { loadTopic } from "@/lib/api/cache";
  *
  * On error the hook returns an empty array so consumers can fall back
  * to their mock / hardcoded category list without an extra null-check
- * — same convention as `useLatestStories` and `useTrendingStories`.
+ * — same convention as `useHeadlines` and `useTrendingStories`.
  * The `isLoading` flag flips to `false` once the fetch settles either
  * way, so the widget can drop its shimmer.
  *

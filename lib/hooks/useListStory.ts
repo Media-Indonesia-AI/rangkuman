@@ -19,7 +19,7 @@ import { loadListStory } from "@/lib/api/cache";
  *
  * On error the hook returns an empty array so consumers can fall back
  * to mock or alternate data without an extra null-check — same
- * convention as `useLatestStories`, `useTopics`, and
+ * convention as `useHeadlines`, `useTopics`, and
  * `useTrendingStories`. The `isLoading` flag flips to `false` once
  * the fetch settles either way, so the widget can drop its shimmer.
  *

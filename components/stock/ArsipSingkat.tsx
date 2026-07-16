@@ -2,7 +2,7 @@
 
 import { Clock } from "lucide-react";
 import Link from "next/link";
-import { useLatestStories } from "@/lib/hooks/useLatestStories";
+import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { getRecapsForStock } from "@/lib/mock/recaps";
 import { formatTanggalSingkat } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
@@ -27,7 +27,7 @@ interface ArsipSingkatProps {
  * headlines for one stock.
  *
  * Data path:
- *   `useLatestStories(limit, 0, [{ primary_ticker_code, eq, kode }])`
+ *   `useHeadlines(limit, 0, [{ primary_ticker_code, eq, kode }])`
  *   → `loadHeadlines()` → `api.getHeadlines()` → live `StoryItem[]`.
  *
  * Each live row links to `/stock/{kode}?id={story.id}` so the stock
@@ -50,7 +50,7 @@ export function ArsipSingkat({ kode }: ArsipSingkatProps) {
   const filters: StoryFilter[] = [
     { field: "primary_ticker_code", operator: "eq", value: kode },
   ];
-  const { data, isLoading } = useLatestStories(VISIBLE_COUNT, 0, filters);
+  const { data, isLoading } = useHeadlines(VISIBLE_COUNT, 0, filters);
 
   // Prefer live data; fall back to mock recaps (oldest first,
   // excluding today) when the fetch errored or returned empty.

@@ -27,7 +27,7 @@ import { loadHeadlines } from "@/lib/api/cache";
  *                (default `[]`). Same list passed twice always lands
  *                on the same cache slot.
  */
-export function useLatestStories(
+export function useHeadlines(
   limit = 10,
   skip = 0,
   filters: StoryFilter[] = [],
