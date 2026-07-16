@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -9,18 +9,34 @@ import { PalingBanyakDiberitakan } from "@/components/PalingBanyakDiberitakan";
 import { Sidebar } from "@/components/Sidebar";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketMood } from "@/components/MarketMood";
-import { GeneralNewsFeed } from "@/components/GeneralNewsFeed";
 import { MobileTopMovers } from "@/components/MobileTopMovers";
 import { WatchlistSection } from "@/components/WatchlistSection";
-import { SahamSubTabs } from "@/components/SahamSubTabs";
+import { SahamSubTabs, type SahamTab } from "@/components/SahamSubTabs";
 import { SektorSection } from "@/components/sektor";
 import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
+/** localStorage key for the persisted sub-tab selection on /saham.
+ *  Matches the `beritainvestor:*` namespace convention used by
+ *  auth, watchlist, theme, newsletter, etc. */
+const SAHAM_TAB_KEY = "beritainvestor:saham-tab";
+
+/** Type guard for the persisted value — ignores anything other
+ *  than the two known tabs (defensive against manual localStorage
+ *  edits and version skew across deploys). */
+function isSahamTab(value: unknown): value is SahamTab {
+  return value === "recap" || value === "sektor";
+}
+
 export default function SahamPage() {
-  /** Sub-tab active: "recap" (default) | "sektor" */
-  const [subTab, setSubTab] = useState<"recap" | "sektor">("recap");
+  /** Sub-tab active: "recap" (default) | "sektor". The user's
+   *  last selection is persisted to localStorage so navigating
+   *  away and back (or a page reload) lands on the same tab
+   *  rather than always defaulting to "recap". The state starts
+   *  as `null` and is hydrated on mount to avoid an SSR/CSR
+   *  markup mismatch — same pattern as `<ThemeToggle />`. */
+  const [subTab, setSubTab] = useState<SahamTab | null>(null);
   // Selected date — defaults to actual local-tz today via lazy
   // initialization (so the user always lands on the current day on
   // first visit, not the hardcoded mock "2026-06-07"). The user can
@@ -29,8 +45,49 @@ export default function SahamPage() {
 
   // "Paling banyak diberitakan" — live API, independent of the date
   // picker. The trending endpoint returns the current top stories, not
-  // a date-keyed snapshot.
+  // a date-keyed snapshot. Declared before the pre-hydration guard
+  // below so the hook order is stable across renders.
   const { data: trending, isLoading: trendingLoading } = useTrendingStories();
+
+  // Hydrate the persisted sub-tab on first mount.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(SAHAM_TAB_KEY);
+      if (isSahamTab(raw)) setSubTab(raw);
+      else setSubTab("recap"); // fall back to default on absent / invalid
+    } catch {
+      // localStorage may be disabled (private mode, blocked by
+      // browser policy, etc.) — silently land on the default tab.
+      setSubTab("recap");
+    }
+  }, []);
+
+  // Persist on every subsequent change. The first effect already
+  // set the persisted value into state, so this skips re-writing
+  // the same value during the initial hydration render.
+  useEffect(() => {
+    if (subTab === null) return; // pre-hydration; let the read effect own the first write
+    try {
+      window.localStorage.setItem(SAHAM_TAB_KEY, subTab);
+    } catch {
+      /* noop — storage may be full or disabled */
+    }
+  }, [subTab]);
+
+  // Pre-hydration guard: render only the static chrome (navbar +
+  // sr-only H1) until the persisted tab is known. This prevents a
+  // flash of "recap" content when the user's persisted choice is
+  // "sektor".
+  if (subTab === null) {
+    return (
+      <>
+        <Navbar />
+        <h1 className="sr-only">
+          Rangkuman &mdash; Saham: Recap Harian &amp; Sektor Pasar Modal Indonesia
+        </h1>
+      </>
+    );
+  }
 
   return (
     <>
@@ -99,11 +156,6 @@ export default function SahamPage() {
                 </div>
               </div>
             </div>
-
-            {/* General news feed — ekonomi, pemerintah, politik (below the stock recap feed) */}
-            {/* <div className="mt-10">
-              <GeneralNewsFeed isoDate={isoDate} />
-            </div> */}
           </main>
           {/* <Footer /> */}
         </>
