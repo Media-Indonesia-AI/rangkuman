@@ -10,8 +10,6 @@ import { SektorCard } from "./SektorCard";
 interface SektorSectionProps {
   /** Whether to show the commodity prices block above the sector grid. */
   showCommodities?: boolean;
-  /** Section title shown above the grid. */
-  gridTitle?: string;
   className?: string;
 }
 
@@ -117,7 +115,6 @@ function SektorSectionEmpty() {
  */
 export function SektorSection({
   showCommodities = true,
-  gridTitle = "12 sektor pasar modal Indonesia",
   className,
 }: SektorSectionProps) {
   const { data, isLoading } = useSectors();
@@ -159,7 +156,7 @@ export function SektorSection({
                 </span>
               </div>
               <h2 className="text-[15px] font-bold tracking-tight text-text-primary">
-                {gridTitle}
+                {sectors.length} Sektor Pasar Modal Indonesia
               </h2>
               <p className="mt-1 text-[11.5px] leading-relaxed text-text-muted">
                 Sentimen, saham unggulan, dan rata-rata perubahan hari ini. Klik
