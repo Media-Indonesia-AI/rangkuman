@@ -1,8 +1,5 @@
 "use client";
 
-import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
-import { SparklineChart } from "@/components/SparklineChart";
 import { useCommodityCategories } from "@/lib/hooks/useCommodityCategories";
 import {
   mapCommodityCategories,
@@ -10,20 +7,13 @@ import {
   type DisplayCategory,
 } from "@/lib/util/commodityCategoriesMappers";
 import { cn } from "@/lib/utils";
-import { iconFor } from "./commodityIcons";
 import { styleForBucket } from "./categoryStyles";
+import { CommodityTile } from "./CommodityTile";
 import { CommodityPricesEmpty } from "./CommodityPricesEmpty";
 import { CommodityPricesShimmer } from "./CommodityPricesShimmer";
 
 interface CommodityPricesProps {
   filter?: CommodityCategorySlug;
-}
-
-/** Format price with appropriate precision. */
-function formatPrice(p: number): string {
-  return p.toLocaleString("en-US", {
-    maximumFractionDigits: p >= 1000 ? 0 : 2,
-  });
 }
 
 /**
@@ -35,7 +25,7 @@ function formatPrice(p: number): string {
  *    resolved styling bucket (energi / logam / pertanian, with
  *    a generic neutral fallback) for its chip color.
  *
- * Data is fetched live from `GET stocks/commodity-categories`
+ * Data is fetched live from `GET commodities/commodity-categories`
  * via `useCommodityCategories` and projected onto
  * `DisplayCategory[]` by `mapCommodityCategories` — see
  * `lib/util/commodityCategoriesMappers.ts` for the per-field
@@ -52,9 +42,11 @@ function formatPrice(p: number): string {
  * bucket (`"energi" | "logam" | "pertanian"`). When set, the
  * grid renders only sections whose bucket matches.
  *
+ * Per-tile rendering lives in:
+ *   - `./CommodityTile`
+ *
  * Styling helpers live alongside this file:
  *   - `./categoryStyles` — per-bucket chip colors
- *   - `./commodityIcons` — per-commodity / per-category icon lookup
  *
  * State variants live in:
  *   - `./CommodityPricesShimmer`
@@ -129,87 +121,9 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
 
               {/* Compact tile grid — 2/3/4/5 cols */}
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
-                {items.map((c) => {
-                  const Icon = iconFor(c);
-                  const positive = c.changePercent >= 0;
-                  return (
-                    <Link
-                      key={c.id}
-                      href="#"
-                      className="group relative flex flex-col gap-1 overflow-hidden rounded-md border border-border bg-bg-secondary p-2 transition-all hover:border-border-strong hover:shadow-card-hover"
-                    >
-                      {/* Top row: icon + name + change */}
-                      <div className="flex items-center justify-between gap-1">
-                        <div className="flex min-w-0 items-center gap-1">
-                          <span
-                            className={cn(
-                              "inline-flex h-4 w-4 shrink-0 items-center justify-center rounded",
-                              cfg.bg,
-                              cfg.text,
-                            )}
-                          >
-                            <Icon className="h-2.5 w-2.5" aria-hidden />
-                          </span>
-                          <span className="truncate text-[11px] font-semibold leading-tight text-text-primary">
-                            {c.name}
-                          </span>
-                        </div>
-                        <span
-                          className={cn(
-                            "shrink-0 font-mono text-[9.5px] font-semibold leading-none num-tabular",
-                            positive ? "text-bullish" : "text-bearish",
-                          )}
-                        >
-                          {positive ? "+" : ""}
-                          {c.changePercent.toFixed(2)}%
-                        </span>
-                      </div>
-
-                      {/* Price + unit/currency */}
-                      <div className="flex items-baseline gap-1">
-                        <span className="font-mono text-[15px] font-bold leading-none tracking-tight text-text-primary num-tabular">
-                          {formatPrice(c.price)}
-                        </span>
-                        <span className="truncate font-mono text-[8.5px] text-text-muted">
-                          {c.currency}/{c.unit}
-                        </span>
-                      </div>
-
-                      {/* Sparkline — very compact */}
-                      <SparklineChart
-                        data={c.history}
-                        positive={positive}
-                        height={18}
-                        showArea
-                      />
-
-                      {/* Related stocks footer — single line, very small */}
-                      <div className="-mx-2 -mb-2 flex items-center justify-between border-t border-border bg-bg-tertiary/40 px-2 py-1">
-                        <p className="truncate font-mono text-[8.5px] text-text-muted">
-                          {c.relatedStocks.slice(0, 3).map((t, i) => (
-                            <span key={t}>
-                              <span className="font-semibold uppercase tracking-wide text-text-secondary">
-                                {t}
-                              </span>
-                              {i < Math.min(c.relatedStocks.length, 3) - 1 && (
-                                <span className="mx-0.5 text-text-faint">·</span>
-                              )}
-                            </span>
-                          ))}
-                          {c.relatedStocks.length > 3 && (
-                            <span className="ml-0.5 text-text-faint">
-                              +{c.relatedStocks.length - 3}
-                            </span>
-                          )}
-                        </p>
-                        <ArrowUpRight
-                          className="h-2.5 w-2.5 shrink-0 text-text-faint transition-colors group-hover:text-brand"
-                          aria-hidden
-                        />
-                      </div>
-                    </Link>
-                  );
-                })}
+                {items.map((c) => (
+                  <CommodityTile key={c.id} commodity={c} style={cfg} />
+                ))}
               </div>
             </div>
           );

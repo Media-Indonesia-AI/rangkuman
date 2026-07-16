@@ -24,7 +24,7 @@
 
 import type { CommodityCategorySlug } from "@/lib/util/commodityCategoriesMappers";
 
-interface CategoryStyle {
+export interface CategoryStyle {
   text: string;
   bg: string;
   border: string;

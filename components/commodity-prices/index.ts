@@ -17,12 +17,14 @@
  */
 
 export { CommodityPrices } from "./CommodityPrices";
+export { CommodityTile } from "./CommodityTile";
 export { CommodityPricesShimmer } from "./CommodityPricesShimmer";
 export { CommodityPricesEmpty } from "./CommodityPricesEmpty";
 export {
   categoryConfig,
   genericCategoryStyle,
   styleForBucket,
+  type CategoryStyle,
 } from "./categoryStyles";
 export {
   perCommodityIcon,
