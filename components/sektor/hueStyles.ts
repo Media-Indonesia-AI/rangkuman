@@ -9,12 +9,12 @@
  *   - `hueBg`     → background tint for the rounded icon badge
  *   - `hueBorder` → border tint for the rounded icon badge
  *
- * Each sector in the mock has a `hue` field that maps into these
+ * Each sector carries a `hue` field that maps into these
  * lookups; consumers spread all three into the same `cn(...)` so
  * the three layers stay coordinated per sector.
  */
 
-import type { SektorHue } from "@/lib/mock/sectors";
+import type { SektorHue } from "@/lib/util/sectorMappers";
 
 export const hueText: Record<SektorHue, string> = {
   amber: "text-amber-500",

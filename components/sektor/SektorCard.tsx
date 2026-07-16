@@ -1,16 +1,19 @@
 import Link from "next/link";
 import { ArrowRight, Building2 } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
-import { getTopStocksInSektor, type Sektor } from "@/lib/mock/sectors";
 import { cn } from "@/lib/utils";
 import { hueBg, hueBorder, hueText } from "./hueStyles";
+import {
+  topStocksByAbsChange,
+  type SektorDisplay,
+} from "@/lib/util/sectorMappers";
 
 interface SektorCardProps {
-  /** The sector to render. Pulled from the mock catalog —
-   *  `slug` drives the link, `hue` drives the badge color,
-   *  `stocks` is the full set the top-3 sample is sliced from. */
-  sektor: Sektor;
-  /** How many top stocks to surface in the "Top 3 hari ini"
+  /** The sector to render. `slug` drives the link, `hue` drives
+   *  the badge color, `stocks` is the slice the top-N sample is
+   *  sorted from. */
+  sektor: SektorDisplay;
+  /** How many top stocks to surface in the "Top N hari ini"
    *  list. Defaults to 3 to match the original layout. */
   topN?: number;
 }
@@ -22,13 +25,18 @@ interface SektorCardProps {
  * the grid + section header. Renders the icon badge with the
  * sector's `hue`, the sentiment chip, the average day change,
  * and a `topN` sample of stocks sorted by |changePercent| (via
- * `getTopStocksInSektor`).
+ * `topStocksByAbsChange`).
  *
  * The whole card is a single `<Link>` to `/sektor/{slug}` so the
  * hit area covers the entire tile, not just the bottom CTA.
+ *
+ * `stock.nama` is rendered when present but is left empty when
+ * the wire payload doesn't carry one — the API's `SectorStock`
+ * shape currently only includes `stock_code`, `price`, and
+ * `price_change`.
  */
 export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
-  const top = getTopStocksInSektor(sektor, topN);
+  const top = topStocksByAbsChange(sektor.stocks, topN);
   const positive = sektor.avgChange >= 0;
 
   return (
@@ -53,7 +61,7 @@ export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
               {sektor.name}
             </h3>
             <p className="font-mono text-[10px] text-text-muted">
-              {sektor.stocks.length} emiten
+              {sektor.totalStock} emiten
             </p>
           </div>
         </div>
@@ -65,7 +73,7 @@ export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
       </div>
 
       <p className="px-3.5 pt-2.5 text-[11.5px] leading-snug text-text-secondary line-clamp-2">
-        {sektor.description}
+        Indeks sektor {sektor.name} IHSG · {sektor.totalStock} emiten konstituen.
       </p>
 
       <div className="mt-2 flex items-center gap-2 px-3.5">
@@ -77,7 +85,7 @@ export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
           )}
         >
           {positive ? "+" : ""}
-          {sektor.avgChange.toFixed(2)}%
+          {sektor.avgChange.toFixed(2).replace(".", ",")}%
         </span>
       </div>
 
@@ -94,9 +102,11 @@ export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
                 <span className="font-mono text-[11.5px] font-semibold text-text-primary">
                   {stock.kode}
                 </span>
-                <span className="flex-1 truncate text-[10.5px] text-text-muted">
-                  {stock.nama}
-                </span>
+                {stock.nama && (
+                  <span className="flex-1 truncate text-[10.5px] text-text-muted">
+                    {stock.nama}
+                  </span>
+                )}
                 <span
                   className={cn(
                     "font-mono text-[11px] font-semibold num-tabular",
@@ -104,7 +114,7 @@ export function SektorCard({ sektor, topN = 3 }: SektorCardProps) {
                   )}
                 >
                   {stockPositive ? "+" : ""}
-                  {stock.changePercent.toFixed(2)}%
+                  {stock.changePercent.toFixed(2).replace(".", ",")}%
                 </span>
               </li>
             );
