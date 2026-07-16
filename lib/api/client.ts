@@ -24,6 +24,7 @@ import {
   getTrendingStories,
 } from "./headline";
 import { getExchangeRate, getInterestRate, getMarketMood } from "./market";
+import { getCommodityCategories } from "./commodity-categories";
 import { getSectors } from "./sectors";
 import {
   getCompositeChart,
@@ -145,6 +146,7 @@ export const api = {
   getMarketMood,
   // Sectors
   getSectors,
+  getCommodityCategories,
   // Headline
   getTrendingStories,
   getHeadlines,
