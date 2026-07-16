@@ -30,6 +30,24 @@ function formatPrice(p: number): string {
 }
 
 /**
+ * Compute the period-over-period change percent from a
+ * historical series: `(last - first) / first * 100`.
+ *
+ * Returns `null` for degenerate inputs (empty series, single
+ * point, or `first === 0`) so the caller can fall back to a
+ * different source rather than rendering `0%` or `Infinity%`.
+ */
+function periodChangePercent(
+  points: { rate: number }[] | null | undefined,
+): number | null {
+  if (!points || points.length < 2) return null;
+  const first = points[0].rate;
+  const last = points[points.length - 1].rate;
+  if (first === 0) return null;
+  return ((last - first) / first) * 100;
+}
+
+/**
  * One tile in the commodity-price grid.
  *
  * Self-contained so `<CommodityPrices />` only has to orchestrate
@@ -47,6 +65,13 @@ function formatPrice(p: number): string {
  * mounting 10 tiles triggers at most 10 unique round-trips, not
  * 10 simultaneous fetches per tile.
  *
+ * The change% is computed from the historical series
+ * (`(last - first) / first * 100`) once the series resolves,
+ * and falls back to the mapper's stocks-derived value while
+ * the historical fetch is in flight. Both the change label
+ * text and the sparkline color read the same flag, so they
+ * stay in sync.
+ *
  * The whole tile is a single `<Link>` so the click hit area
  * covers the entire card, not just the footer CTA — mirrors the
  * `SektorCard` convention.
@@ -58,8 +83,14 @@ function formatPrice(p: number): string {
  */
 export function CommodityTile({ commodity, style }: CommodityTileProps) {
   const Icon = iconFor(commodity);
-  const positive = commodity.changePercent >= 0;
   const { data: historyPoints } = useCommodityHistorical(commodity.symbol, "1M");
+  // Period change from the wire's own historical series. Null
+  // while the fetch is in flight (or on error) — we fall back
+  // to the mapper's stocks-derived value in that case so the
+  // tile never flashes a zero / placeholder.
+  const periodChange = periodChangePercent(historyPoints);
+  const displayChange = periodChange ?? commodity.changePercent;
+  const positive = displayChange >= 0;
   const rates = historyPoints?.map((p) => p.rate) ?? [];
 
   return (
@@ -90,7 +121,7 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
           )}
         >
           {positive ? "+" : ""}
-          {commodity.changePercent.toFixed(2)}%
+          {displayChange.toFixed(2)}%
         </span>
       </div>
 
