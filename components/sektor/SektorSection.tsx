@@ -1,7 +1,7 @@
 "use client";
 
 import { Building2 } from "lucide-react";
-import { CommodityPrices } from "@/components/CommodityPrices";
+import { CommodityPrices } from "@/components/commodity-prices";
 import { Shimmer } from "@/components/Shimmer";
 import { useSectors } from "@/lib/hooks/useSectors";
 import { mapSector } from "@/lib/util/sectorMappers";

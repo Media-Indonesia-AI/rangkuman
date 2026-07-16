@@ -117,6 +117,14 @@ rangkuman-news/
 │   │   ├── hueStyles.ts               # per-hue Tailwind class maps
 │   │   └── index.ts                   # barrel: SektorSection, SektorCard
 │   │
+│   ├── commodity-prices/             # commodity-price tile grid (live API)
+│   │   ├── CommodityPrices.tsx        # one section per wire category
+│   │   ├── CommodityPricesShimmer.tsx # loading skeleton
+│   │   ├── CommodityPricesEmpty.tsx   # empty-state shell
+│   │   ├── categoryStyles.ts          # per-bucket chip styling
+│   │   ├── commodityIcons.ts          # per-commodity / per-category icons
+│   │   └── index.ts                   # barrel
+│   │
 │   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
 │   ├── ShareButton.tsx  SavedButton.tsx
 │   ├── SearchBar.tsx  ThemeToggle.tsx
