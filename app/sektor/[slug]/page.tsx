@@ -39,4 +39,12 @@ export function generateMetadata({ params }: PageProps) {
   };
 }
 
-export { default } from "./SektorDetailPage";
+/** Route handler for /sektor/[slug]. Component lives in the
+ *  `@/components/sektor-detail` widget folder (orchestrator +
+ *  focused sub-components + state variants) — this file just
+ *  re-exports the default so Next.js can pick it up.
+ *
+ *  `generateMetadata` / `generateStaticParams` stay here (still
+ *  mock-sourced) so SEO metadata is built at compile time without
+ *  needing a server-side fetcher for the live sectors API. */
+export { default } from "@/components/sektor-detail";

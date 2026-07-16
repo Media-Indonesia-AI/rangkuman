@@ -125,6 +125,16 @@ rangkuman-news/
 │   │   ├── commodityIcons.ts          # per-commodity / per-category icons
 │   │   └── index.ts                   # barrel
 │   │
+│   ├── sektor-detail/                # /sektor/[slug] sector detail page
+│   │   ├── SektorDetailPage.tsx        # page orchestrator (loading/data/404)
+│   │   ├── SektorDetailHeader.tsx      # sector header (hue + sentiment + stats)
+│   │   ├── SektorTopStocks.tsx         # top-5 stocks section
+│   │   ├── SektorTopStockCard.tsx      # one top-5 stock tile
+│   │   ├── SektorDetailNews.tsx        # news placeholder section
+│   │   ├── SektorDetailSkeleton.tsx    # loading shimmer
+│   │   ├── SektorDetailEmpty.tsx       # 404 defensive fallback
+│   │   └── index.ts                    # barrel
+│   │
 │   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
 │   ├── ShareButton.tsx  SavedButton.tsx
 │   ├── SearchBar.tsx  ThemeToggle.tsx
