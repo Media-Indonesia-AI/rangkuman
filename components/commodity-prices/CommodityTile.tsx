@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SparklineChart } from "@/components/SparklineChart";
+import { useCommodityHistorical } from "@/lib/hooks/useCommodityHistorical";
 import type { DisplayCommodity } from "@/lib/util/commodityCategoriesMappers";
 import { cn } from "@/lib/utils";
 import { iconFor } from "./commodityIcons";
@@ -36,9 +37,15 @@ function formatPrice(p: number): string {
  * a single `<Link>` wrapping:
  *   - the icon + name + change% top row,
  *   - the price + currency/unit row,
- *   - the sparkline,
+ *   - the sparkline (powered by `useCommodityHistorical`),
  *   - the top-3 related-stocks footer with the trailing
  *     `ArrowUpRight` affordance.
+ *
+ * Each tile fetches its own historical series via
+ * `useCommodityHistorical(commodity.symbol, "1M")` — the cache
+ * module dedupes concurrent fetches of the same symbol, so
+ * mounting 10 tiles triggers at most 10 unique round-trips, not
+ * 10 simultaneous fetches per tile.
  *
  * The whole tile is a single `<Link>` so the click hit area
  * covers the entire card, not just the footer CTA — mirrors the
@@ -52,6 +59,8 @@ function formatPrice(p: number): string {
 export function CommodityTile({ commodity, style }: CommodityTileProps) {
   const Icon = iconFor(commodity);
   const positive = commodity.changePercent >= 0;
+  const { data: historyPoints } = useCommodityHistorical(commodity.symbol, "1M");
+  const rates = historyPoints?.map((p) => p.rate) ?? [];
 
   return (
     <Link
@@ -95,9 +104,11 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
         </span>
       </div>
 
-      {/* Sparkline — very compact */}
+      {/* Sparkline — very compact. Falls back to the chart's
+       *  empty-state div while the per-symbol historical fetch
+       *  is in flight (same visual as before data arrives). */}
       <SparklineChart
-        data={commodity.history}
+        data={rates}
         positive={positive}
         height={18}
         showArea

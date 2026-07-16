@@ -73,6 +73,10 @@ export type CommodityCategorySlug = "energi" | "logam" | "pertanian";
 export interface DisplayCommodity {
   /** Server-side commodity id (UUID). */
   id: string;
+  /** Backend symbol code, e.g. `"PLO:COM"`. Stable across
+   *  renames — the tile uses this to fetch its own historical
+   *  series via `useCommodityHistorical`. */
+  symbol: string;
   /** Human-readable commodity name, e.g. `"Palm Oil"`. */
   name: string;
   /** Display category bucket the commodity belongs to. */
@@ -170,6 +174,7 @@ export function mapCommodity(
 ): DisplayCommodity {
   return {
     id: api.id,
+    symbol: api.symbol,
     name: api.name,
     category,
     unit: api.unit,
