@@ -1,5 +1,5 @@
 /**
- * Map the wire shape of `GET stocks/commodity-categories` into
+ * Map the wire shape of `GET commodities/commodity-categories` into
  * the display shape consumed by `<CommodityPrices />`.
  *
  * The wire payload is a category-bucketed aggregate (one row per

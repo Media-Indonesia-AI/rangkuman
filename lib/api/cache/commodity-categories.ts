@@ -1,5 +1,5 @@
 /**
- * Request-level cache for `GET stocks/commodity-categories`.
+ * Request-level cache for `GET commodities/commodity-categories`.
  *
  * Single-slot cache — the commodity-category list is global (not
  * per-ticker) and rarely changes mid-session. Concurrent mounts

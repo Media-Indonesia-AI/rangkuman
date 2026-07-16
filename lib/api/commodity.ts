@@ -1,12 +1,11 @@
 /**
  * Commodity-domain API endpoints.
  *
- * Both endpoints below live in `/commodities/*` (or
- * `/stocks/commodity-categories` — see notes per function) and
- * are grouped here for clean separation from auth (`register`/
- * `login`), market data (`getInterestRate`/`getExchangeRate`),
- * and per-ticker stock endpoints (`getTickers`/`getKeyMetrics`)
- * in `lib/api/client.ts`.
+ * Both endpoints below live under the `/commodities/*` path
+ * prefix and are grouped here for clean separation from auth
+ * (`register`/`login`), market data (`getInterestRate`/
+ * `getExchangeRate`), and per-ticker stock endpoints
+ * (`getTickers`/`getKeyMetrics`) in `lib/api/client.ts`.
  *
  * The functions are individually re-exported and consumed by the
  * composite `api` object in `./client.ts`, so existing call
@@ -22,9 +21,7 @@ import type { CommodityHistoricalResponse } from "./types/commodity-historical";
  * Fetch the full commodity-category list with each category's
  * commodities and each commodity's top related stocks.
  *
- * Hits `/stocks/commodity-categories` (note the `/stocks/`
- * prefix — this one lives under the stocks umbrella even
- * though the response is commodity-domain).
+ * Hits `/commodities/commodity-categories`.
  *
  * @param commodityLimit  Max commodities to return per category
  *                        (default `10`). Caps the size of each
@@ -40,15 +37,15 @@ import type { CommodityHistoricalResponse } from "./types/commodity-historical";
  * `CommodityCategoriesResponse` for the raw wire shape.
  */
 export function getCommodityCategories(
-  commodityLimit = 10,
-  topStocksLimit = 0,
+  limit = 10,
+  skip = 0,
 ): Promise<CommodityCategoriesResponse> {
   const params = new URLSearchParams({
-    commodity_limit: String(commodityLimit),
-    top_stocks_limit: String(topStocksLimit),
+    limit: String(limit),
+    skip: String(skip),
   });
   return request<CommodityCategoriesResponse>(
-    `stocks/commodity-categories?${params.toString()}`,
+    `commodity-categories?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -56,10 +53,7 @@ export function getCommodityCategories(
 /**
  * Fetch the historical daily rate series for a commodity.
  *
- * Hits `/commodities/historical` (note: this one is under the
- * `/commodities/*` umbrella, not `/stocks/*` — the two
- * commodity endpoints in this file sit under different
- * path prefixes).
+ * Hits `/commodities/historical`.
  *
  * @param symbol  Wire symbol code (e.g. `"PLO:COM"`). Default
  *                `""` — the backend treats an empty symbol as

@@ -5,7 +5,7 @@ import type { CommodityCategory } from "@/lib/api/types/commodity-categories";
 import { loadCommodityCategories } from "@/lib/api/cache";
 
 /**
- * Data hook for `GET stocks/commodity-categories`.
+ * Data hook for `GET commodities/commodity-categories`.
  *
  * Wraps `loadCommodityCategories()` (the single-slot, request-
  * deduping cache wrapper) with React state + a cancel-on-unmount

@@ -1,15 +1,15 @@
 /**
- * Types for the `GET stocks/commodity-categories` endpoint.
+ * Types for the `GET commodities/commodity-categories` endpoint.
  *
  * Separate file from `types/sectors.ts` because the wire shape is a
  * commodity-bucketed aggregate (one row per category with embedded
- * commodities and their top_stocks), not a sector/index aggregate
- * like the other `/stocks/*` endpoints. Keeping it in its own module
- * also makes it easy to evolve the commodity-specific fields
- * (e.g. `unit`, `currency`, `latest_price_date`, nested `top_stocks[]`)
- * without churning the sector type file.
+ * commodities and their top_stocks), not a sector/index aggregate.
+ * Keeping it in its own module also makes it easy to evolve the
+ * commodity-specific fields (e.g. `unit`, `currency`,
+ * `latest_price_date`, nested `top_stocks[]`) without churning the
+ * sector type file.
  *
- * Consumed by `../commodity-categories.ts` (request function) and any
+ * Consumed by `../commodity.ts` (request function) and any
  * commodity-list components that build on top of it.
  */
 
@@ -62,7 +62,7 @@ export interface CommodityCategoryCommodity {
 }
 
 /**
- * One row in the `/stocks/commodity-categories` response — a category
+ * One row in the `/commodities/commodity-categories` response — a category
  * aggregate with its commodities embedded.
  *
  * The category is identified by two parallel fields:
@@ -92,7 +92,7 @@ export interface CommodityCategory {
   commodities: CommodityCategoryCommodity[];
 }
 
-/** Wire format for `GET stocks/commodity-categories` — `{ data: CommodityCategory[] }`. */
+/** Wire format for `GET commodities/commodity-categories` — `{ data: CommodityCategory[] }`. */
 export interface CommodityCategoriesResponse {
   data: CommodityCategory[];
 }
