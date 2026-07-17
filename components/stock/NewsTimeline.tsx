@@ -57,10 +57,13 @@ function StoriesShimmerList() {
 
 /** News timeline. Renders one cell per day — story rows when the
  *  headline has related stories, a `-` placeholder otherwise. The
- *  day list is derived from the stories' dates when present. When no
- *  stories are available (deep link / fallback headline has none, or
- *  no headline could be resolved), shows an empty-widget branch
- *  instead of fabricating a 7-day placeholder grid. */
+ *  day list is derived from the stories' dates when present, sorted
+ *  **newest-first** so "today" (if present) anchors the top of the
+ *  column; within each day, stories are also sorted by `recap_date`
+ *  desc so the latest recap leads the cell. When no stories are
+ *  available (deep link / fallback headline has none, or no headline
+ *  could be resolved), shows an empty-widget branch instead of
+ *  fabricating a 7-day placeholder grid. */
 export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
   const { detail, loading: detailLoading } = useHeadlineDetail();
 
@@ -90,14 +93,26 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
     else storiesByDay.set(dayKey, [s]);
   }
 
-  // Map keys are already `yyyy-MM-dd` so string sort is chronological.
-  const sortedDayKeys = Array.from(storiesByDay.keys()).sort();
+  // Sort each day's stories by `recap_date` desc — newest at the
+  // top of the cell. `recap_date` carries the time component so
+  // `Date.parse` gives a real wall-clock comparison; ties stay in
+  // the API's natural order.
+  for (const bucket of storiesByDay.values()) {
+    bucket.sort(
+      (a, b) => Date.parse(b.recap_date) - Date.parse(a.recap_date),
+    );
+  }
+
+  // Map keys are already `yyyy-MM-dd` so string sort is chronological;
+  // `.reverse()` flips it to newest-first so the timeline reads top-
+  // down from "today" backwards.
+  const sortedDayKeys = Array.from(storiesByDay.keys()).sort().reverse();
   const dateRangeLabel =
     sortedDayKeys.length > 0
-      ? `${format(parseISO(sortedDayKeys[0]), "dd MMM")} s/d ${format(
+      ? `${format(
           parseISO(sortedDayKeys[sortedDayKeys.length - 1]),
           "dd MMM",
-        )}`
+        )} s/d ${format(parseISO(sortedDayKeys[0]), "dd MMM")}`
       : null;
 
   // Stories present → one cell per unique date. The empty case is

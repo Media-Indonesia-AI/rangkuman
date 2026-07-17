@@ -28,10 +28,11 @@ interface SektorNewsItemProps {
  * a `rank`, and the row renders:
  *
  *   - left — the global rank strip ("#01", "#02"),
- *   - middle — ticker + (optional) company name, then one
- *     paragraph per article in `story.articles[]` rendering
- *     each article's `excerpt` (the editorial dek — the "all
- *     articles" content), then a "<n> media" pill driven by the
+ *   - middle — ticker + (optional) company name, then the
+ *     story's headline (the story-level title from the older
+ *     `EmbeddedStory.headline` field — kept distinct from the
+ *     per-article `excerpt` to keep each row to a single
+ *     scannable line), then a "<n> media" pill driven by the
  *     unique `source_name` count across `story.articles[]`,
  *   - right — the stock's day-change percent, colored bullish
  *     when positive, bearish when negative, muted when flat.
@@ -39,15 +40,10 @@ interface SektorNewsItemProps {
  *     icon next to the media count mirrors that direction so the
  *     reader can scan direction at a glance.
  *
- * The whole row is a single `<Link>` to `/stock/{stock.kode}` so
- * the full hit-area is clickable, mirroring the
+ * The whole row is a single `<Link>` to `/stock/{stock.kode}?id={headline_id}`
+ * (when `headline_id` is present) so the click deep-links into the
+ * stock detail page with the right headline, mirroring the
  * `<SektorTopStockCard />` and `<SektorCard />` conventions.
- *
- * Articles without an `excerpt` are skipped — older wire rows
- * don't carry one (see `StoryArticle.excerpt?`). When every
- * article is excerpt-less, the excerpt block renders nothing
- * and the row keeps the ticker + media pill only, so the layout
- * stays predictable.
  *
  * The hook lives in the parent (`<SektorDetailNews />` mounts one
  * `<StoryCollector />` per stock); this row receives the resolved
@@ -70,12 +66,6 @@ export function SektorNewsItem({ story, stock, rank }: SektorNewsItemProps) {
     : stockFlat
       ? "text-text-muted"
       : "text-bearish";
-
-  // Articles with a usable `excerpt` — older wire rows omit the
-  // field, so we filter rather than render blank paragraphs.
-  const excerptArticles = (story.articles ?? []).filter(
-    (a): a is typeof a & { excerpt: string } => Boolean(a.excerpt),
-  );
 
   // Per-story media count — unique `source_name` across this
   // story's `articles[]`. Mirrors the Set walk in
@@ -112,17 +102,10 @@ export function SektorNewsItem({ story, stock, rank }: SektorNewsItemProps) {
               </span>
             )}
           </div>
-          {excerptArticles.length > 0 && (
-            <div className="mt-1.5 space-y-1">
-              {excerptArticles.map((article, idx) => (
-                <p
-                  key={`${article.source_url}-${idx}`}
-                  className="text-[12.5px] leading-snug text-text-secondary"
-                >
-                  {article.excerpt}
-                </p>
-              ))}
-            </div>
+          {story.headline && (
+            <p className="mt-1.5 text-[12.5px] leading-snug text-text-secondary">
+              {story.headline}
+            </p>
           )}
           {mediaCount > 0 && (
             <div
