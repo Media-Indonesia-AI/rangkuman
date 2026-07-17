@@ -56,7 +56,9 @@ interface SektorNewsItemProps {
 export function SektorNewsItem({ story, stock, rank }: SektorNewsItemProps) {
   const stockPositive = stock.changePercent > 0;
   const stockFlat = stock.changePercent === 0;
-  const href = `/stock/${stock.kode}`;
+
+  const params = story.headline_id ? new URLSearchParams({ id: story.headline_id }).toString() : "";
+  const href = `/stock/${stock.kode}${params ? `?${params}` : ""}`;
 
   const DirectionIcon = stockPositive
     ? TrendingUp
