@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Newspaper } from "lucide-react";
 import type { SektorDisplayStock } from "@/lib/util/sectorMappers";
+import { useSektorDetail } from "@/lib/hooks/useSektorDetail";
 import { cn } from "@/lib/utils";
 
 interface SektorTopStockCardProps {
@@ -27,8 +28,14 @@ interface SektorTopStockCardProps {
  *   - top rank strip with the #NN badge,
  *   - the ticker + optional company name row,
  *   - the price + day-change row (bullish/bearish colored),
- *   - the footer row with a "Live dari API" pill and the
- *     `ArrowUpRight` CTA affordance.
+ *   - the headline row — the latest headline for this ticker
+ *     via `useSektorDetail`, falling back to a muted italic
+ *     "Belum ada Recap" placeholder when the ticker has no
+ *     headline yet (loading, no data, or fetch error),
+ *   - the footer row that swaps between a "<n> artikel · <m>
+ *     media" coverage line (when `useSektorDetail` has
+ *     resolved counts) and a "Live dari API" pill (during
+ *     loading), plus the `ArrowUpRight` CTA affordance.
  *
  * The whole card is a single `<Link>` so the click hit area
  * covers the entire tile, not just the bottom CTA — mirrors
@@ -37,11 +44,14 @@ interface SektorTopStockCardProps {
  * `nama` is rendered only when present. The wire `SectorStock`
  * payload may omit it; in that case the card collapses to
  * ticker + price + change (no muted secondary label), keeping
- * the layout stable.
+ * the layout stable. The headline row always renders (with
+ * its italic placeholder when empty), so the card body
+ * height stays predictable across the grid.
  */
 export function SektorTopStockCard({ stock, rank }: SektorTopStockCardProps) {
   const stockPositive = stock.changePercent >= 0;
   const href = `/stock/${stock.kode}`;
+  const { title, articleCount, mediaCount } = useSektorDetail(stock.kode);
 
   return (
     <Link
@@ -81,10 +91,28 @@ export function SektorTopStockCard({ stock, rank }: SektorTopStockCardProps) {
           </span>
         </div>
 
+        <p
+          className={cn(
+            "mt-2 line-clamp-2 text-[11.5px] leading-snug",
+            title ? "text-text-secondary" : "italic text-text-faint",
+          )}
+        >
+          {title || "Belum ada Recap"}
+        </p>
+
         <div className="mt-2.5 flex items-center justify-between border-t border-border pt-2">
-          <span className="font-mono text-[10px] text-text-faint">
-            Live dari API
-          </span>
+          {(articleCount > 0 || mediaCount > 0) ? (
+            <div className="flex items-center gap-1 font-mono text-[10px] text-text-faint">
+              <Newspaper className="h-3 w-3" aria-hidden />
+              <span className="num-tabular">
+                {`${articleCount} artikel${mediaCount > 0 ? ` · ${mediaCount} media` : ""}`}
+              </span>
+            </div>
+          ) : (
+            <span className="font-mono text-[10px] text-text-faint">
+              Belum ada Recap
+            </span>
+          )}
           <ArrowUpRight
             className="h-3 w-3 text-text-faint transition-colors group-hover:text-brand"
             aria-hidden
