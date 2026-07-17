@@ -14,8 +14,12 @@ interface UseSektorDetailResult {
   /** The latest headline for `ticker`, or `null` while the fetch is
    *  in flight, on error, or when the ticker has no headlines. */
   title: string | null;
-  /** Number of related stories (`loadListStory` data length). 0 while
-   *  the fetch is in flight or on error. */
+  /** ISO timestamp (`created_at`) of the latest headline, used to
+   *  display + sort rows by recency. `null` until the headline
+   *  resolves (or when the ticker has no headlines at all). */
+  date: string | null;
+  /** Number of related stories (`stories.length`). 0 while the
+   *  fetch is in flight or on error. */
   articleCount: number;
   /** Unique publisher count across every `articles[].source_name`
    *  in the related stories. Mirrors the coverage count used by
@@ -25,11 +29,19 @@ interface UseSektorDetailResult {
   /** True while the headline fetch is in flight; stays `true` until
    *  the optional followup stories fetch settles too. */
   isLoading: boolean;
+  /** All stories tagged with the resolved headline, oldest →
+   *  newest as the API returns them. Empty array while the headline
+   *  detail hasn't resolved yet, while loading, or on error. Each
+   *  entry exposes its own `summary` (the recap paragraph rendered
+   *  per row in `<SektorDetailNews />`) and `articles[]` (for the
+   *  per-row media count). */
+  stories: EmbeddedStory[];
 }
 
 /**
- * Data hook for the sector-top-stock card on `/sektor/[slug]`. Two
- * sequential fetches, derived off `loadHeadlines` + `loadListStory`:
+ * Data hook for the sector-top-stock card on `/sektor/[slug]` and
+ * the sector news feed on the same page. Two sequential fetches,
+ * derived off `loadHeadlines` + `loadListStory`:
  *
  *   1. `loadHeadlines(1, 0, [{primary_ticker_code, eq, ticker}])`
  *      — newest headline for `ticker`.
@@ -37,22 +49,26 @@ interface UseSektorDetailResult {
  *      where `id` is `headlines[0].id` — related stories for that
  *      headline.
  *
- * Returns the headline `title`, the count of related stories
- * (`articleCount`), and the unique `source_name` count across every
- * `articles[]` (`mediaCount`).
+ * Returns the headline `title` + `date` (`created_at`), the count of
+ * related stories (`articleCount` + `stories.length`), the unique
+ * `source_name` count across every `articles[]` (`mediaCount`), and
+ * the raw `stories` array. `date` powers the "berdasarkan tanggal"
+ * sort in `<SektorDetailNews />`; `stories` powers the per-row recap
+ * paragraphs; the rest drives the headline + coverage row on
+ * `<SektorTopStockCard />`.
  *
- * Concurrent mounts of the same ticker (e.g. two `<SektorTopStockCard />`
- * instances on the same sector tile) share one network round-trip
- * through the request-level cache; switching tickers triggers a fresh
- * fetch. State resets on every `ticker` change so a fast ticker switch
- * never briefly shows the previous ticker's headline alongside the
- * new loading state.
+ * Concurrent mounts of the same ticker (e.g. a top-5 tile *and* a
+ * news row for the same ticker on one page) share one network
+ * round-trip through the request-level cache; switching tickers
+ * triggers a fresh fetch. State resets on every `ticker` change so
+ * a fast ticker switch never briefly shows the previous ticker's
+ * headline alongside the new loading state.
  *
  * On either fetch failing the hook falls back to
- * `{ title: null, articleCount: 0, mediaCount: 0, isLoading: false }`
+ * `{ title: null, date: null, articleCount: 0, mediaCount: 0, isLoading: false, stories: [] }`
  * so consumers can render an empty / placeholder row without an
  * extra null-check. The `isLoading` flag flips to `false` once the
- * headline fetch settles either way, so the card can drop its
+ * headline fetch settles either way, so consumers can drop their
  * shimmer even if the followup stories fetch failed.
  *
  * @param ticker Ticker code, e.g. `"ANTM"`. Case-insensitive (the
@@ -63,9 +79,11 @@ export function useSektorDetail(
   ticker: string,
 ): UseSektorDetailResult {
   const [title, setTitle] = useState<string | null>(null);
+  const [date, setDate] = useState<string | null>(null);
   const [articleCount, setArticleCount] = useState(0);
   const [mediaCount, setMediaCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [stories, setStories] = useState<EmbeddedStory[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,9 +91,11 @@ export function useSektorDetail(
     // show the previous ticker's headline alongside the new loading
     // state — same reset pattern as `useTickerInformation`.
     setTitle(null);
+    setDate(null);
     setArticleCount(0);
     setMediaCount(0);
     setIsLoading(true);
+    setStories([]);
 
     const headlineFilters: StoryFilter[] = [
       { field: "primary_ticker_code", operator: "eq", value: ticker },
@@ -87,17 +107,19 @@ export function useSektorDetail(
         const first = res.data[0];
         if (!first) {
           // Ticker has no headlines — leave the counts at zero and
-          // drop loading so the card renders its empty state.
+          // drop loading so the row renders its empty state.
           setIsLoading(false);
           return;
         }
         setTitle(first.title);
+        setDate(first.created_at);
         const storyFilters: StoryFilter[] = [
           { field: "headline_id", operator: "eq", value: first.id },
         ];
         return loadListStory(FETCH_LIMIT, 0, storyFilters)
           .then((listRes) => {
             if (cancelled) return;
+            setStories(listRes.data);
             setArticleCount(listRes.data.length);
             setMediaCount(uniqueMediaCount(listRes.data));
           })
@@ -111,7 +133,7 @@ export function useSektorDetail(
       })
       .catch(() => {
         // Headline list fetch failed — leave everything at the
-        // initial state and drop loading so the card renders its
+        // initial state and drop loading so the row renders its
         // empty state.
         if (!cancelled) setIsLoading(false);
       });
@@ -121,7 +143,7 @@ export function useSektorDetail(
     };
   }, [ticker]);
 
-  return { title, articleCount, mediaCount, isLoading };
+  return { title, date, articleCount, mediaCount, isLoading, stories };
 }
 
 /** Unique `source_name` count across every article in the supplied
