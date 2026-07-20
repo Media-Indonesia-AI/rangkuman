@@ -8,6 +8,9 @@
  */
 
 import type { Sentimen } from "@/lib/mock/crypto";
+import type { StoryItem, StoryTopic } from "@/lib/api";
+import { toSentimen } from "@/lib/util/sentiment";
+import { getRelativeTime } from "@/lib/utils";
 
 export interface CryptoStory {
   id: string;
@@ -142,3 +145,92 @@ export const COIN_KODE_TO_STORY_ID: Record<string, string> = {
   LINK: "cr-link-2026-06-07",
   FET: "cr-fet-2026-06-07",
 };
+
+/**
+ * Resolve the `topic_id` that drives the `/crypto` page's live
+ * headline feed. Prefers the canonical **slug** match (URL-safe
+ * identifier, stable across renames), then falls back to a
+ * case-insensitive **name** match. If neither lands on a topic,
+ * the first entry in the list wins as a resilience fallback so
+ * the page renders even before a "crypto" topic is registered.
+ *
+ * Used by `<CryptoRecapTab />` to filter `useHeadlines()`; the
+ * returned id flows into the `topic_id=eq:<id>` filter.
+ *
+ * Return shape mirrors the helper's callers: `null` only when
+ * the topics list is empty (still loading or backend returned
+ * nothing). Every other path returns a string id.
+ */
+export function findCryptoTopicId(
+  topics: readonly StoryTopic[],
+): string | null {
+  // 1. Canonical slug match — preferred since slugs are stable,
+  //    URL-friendly identifiers the backend exposes as the
+  //    authoritative foreign key reference.
+  const slugHit = topics.find((t) => t.slug === "crypto");
+  if (slugHit) return slugHit.id;
+
+  // 2. Case-insensitive name match — covers backends that ship
+  //    `name: "Crypto"` / `"crypto"` / `"CRYPTO"` while the slug
+  //    is something else (e.g. `"crypto-market"`).
+  const nameHit = topics.find(
+    (t) => t.name.trim().toLowerCase() === "crypto",
+  );
+  if (nameHit) return nameHit.id;
+
+  // 3. First-topic fallback — keeps the page rendering even if
+  //    no "crypto"-tagged topic exists in the dataset yet. The
+  //    caller treats any non-null id as "fetch with this filter";
+  //    we'd rather show *something* than wait forever.
+  return topics[0]?.id ?? null;
+}
+
+/**
+ * Best-effort `StoryItem` (live wire) → `CryptoStory` (card
+ * shape) adapter. Used by `<CryptoRecapTab />` to feed the
+ * existing `<CryptoStoryCard />` and `<CryptoFeaturedCard />`
+ * widgets from the live `useHeadlines(topic_id)` response.
+ *
+ * The live wire shape (`StoryItem`) doesn't carry page-specific
+ * display fields, so we derive sensible defaults:
+ *
+ *   - `coinKode`  ← `primary_ticker_code` (or `"—"` when absent),
+ *   - `coinName`  ← same as `coinKode` (no separate API name today),
+ *   - `coinPrice` ← `0` (live wire doesn't ship price; the cards
+ *                   render `$0` until the recap-detail API exposes
+ *                   current market data — acceptable short-term
+ *                   visual debt, less disruptive than reshaping the
+ *                   card widgets),
+ *   - `coinChange`< `0`  (same rationale),
+ *   - `flag`      ← `undefined` (only the mock-known tickers carry
+ *                   flag emojis today; the live API doesn't ship
+ *                   one),
+ *   - `timeAgo`   ← derived from `created_at` via the shared
+ *                   `getRelativeTime()` helper,
+ *   - `jumlahBerita` ← `1` (one story ≈ one article count baseline),
+ *   - `readTime`  ← `"2 mnt"` placeholder,
+ *   - `sumber`    ← `[]`  (live wire doesn't break down sources
+ *                   here; the per-story `sources` arrive later via
+ *                   the recap-detail fetch).
+ *
+ * This keeps the cards' prop contract stable while letting the
+ * tab render any `StoryItem[]` shape it gets from the API.
+ */
+export function storyItemToCryptoStory(item: StoryItem): CryptoStory {
+  const ticker = item.primary_ticker_code ?? "—";
+  return {
+    id: item.id,
+    title: item.title,
+    summary: item.summary,
+    coinKode: ticker,
+    coinName: ticker,
+    coinPrice: 0,
+    coinChange: 0,
+    sentimen: toSentimen(item.sentiment),
+    jumlahBerita: 1,
+    sumber: [],
+    timeAgo: getRelativeTime(item.created_at),
+    readTime: "2 mnt",
+    flag: undefined,
+  };
+}
