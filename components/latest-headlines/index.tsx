@@ -158,7 +158,7 @@ export function LatestHeadlines() {
       // skip) tuple lands on its own cache slot, so scrolling the
       // same distance twice is a free dedup hit (no network).
       setIsLoadingMore(true);
-      const nextSkip = skip + 1;
+      const nextSkip = skip + PAGE_LIMIT;
       void loadHeadlines(PAGE_LIMIT, nextSkip, [])
         .then((res) => {
           setItems((prev) => {
