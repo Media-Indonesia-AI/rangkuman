@@ -42,15 +42,15 @@ export default function CryptoPage() {
         </h1>
 
         {/* Sub-nav (Recap | Pasar) — replaces section header */}
-        <div className="flex items-center justify-start pt-1">
+        {/* <div className="flex items-center justify-start pt-1">
           <CryptoSubNav active={subTab} onChange={setSubTab} />
-        </div>
+        </div> */}
 
         {/* 1-line info bar — F&G gauge + 3 sparklines (BTC/ETH/SOL) */}
-        <CryptoInfoBar className="mt-3" />
+        {/* <CryptoInfoBar className="mt-3" /> */}
 
         {subTab === "top" && <CryptoRecapTab />}
-        {subTab === "pasar" && <CryptoPasarTab />}
+        {/* {subTab === "pasar" && <CryptoPasarTab />} */}
       </main>
       <Footer />
     </>
