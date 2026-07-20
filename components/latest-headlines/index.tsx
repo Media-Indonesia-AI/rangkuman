@@ -191,16 +191,26 @@ export function LatestHeadlines() {
       <LatestHeadlinesHeader />
 
       {/*
-        Scroll container. `max-h-[360px]` mirrors the height used
-        by the watchlist search-results list so the two scrollable
-        widgets visually agree on how much content they expose at
-        once. `overflow-y-auto` + `overscroll-behavior: contain`
-        prevent scroll chaining into the page body.
+        Scroll container. Height is responsive so the timeline
+        doesn't dominate the mobile viewport (where a 600px block
+        would push the page content out of reach) but still renders
+        ~10-12 rows on desktop:
+
+        - mobile (`< sm`):  `max-h-[400px]` — keeps the page flow
+          tight on phones, where viewport heights are already
+          short and users scroll the page rather than the widget,
+        - desktop (`sm:`+): `max-h-[600px]` — taller, so the
+          sidebar exposes more rows above the fold before the user
+          has to engage the scroll.
+
+        The widget remains scrollable in either case. `overflow-y-auto`
+        + `overscroll-behavior: contain` prevent scroll chaining
+        into the page body.
       */}
       <ol
         ref={listRef}
         onScroll={handleScroll}
-        className="relative max-h-[360px] overflow-y-auto overscroll-contain"
+        className="relative max-h-[400px] overflow-y-auto overscroll-contain sm:max-h-[600px]"
       >
         {renderSource.kind === "live" ? (
           <>
