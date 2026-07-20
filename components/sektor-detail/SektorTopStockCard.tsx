@@ -1,10 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowUpRight, Newspaper } from "lucide-react";
+import {
+  ArrowUpRight,
+  Minus,
+  Newspaper,
+  TrendingDown,
+  TrendingUp,
+} from "lucide-react";
+import type { StorySentiment } from "@/lib/api";
 import type { SektorDisplayStock } from "@/lib/util/sectorMappers";
 import { useSektorDetail } from "@/lib/hooks/useSektorDetail";
 import { cn } from "@/lib/utils";
+
+/** Lucide icon + color pair for each headline sentiment, shared
+ *  with `<SentimentBadge />` so the sector top-stock card and the
+ *  hero badge stay visually consistent. "neutral" still renders a
+ *  distinct muted icon rather than disappearing — a card with no
+ *  signal is still useful information for the reader. */
+const SENTIMENT_ICON: Record<
+  StorySentiment,
+  { Icon: typeof TrendingUp; className: string; label: string }
+> = {
+  positive: {
+    Icon: TrendingUp,
+    className: "text-bullish",
+    label: "Sentimen positif",
+  },
+  negative: {
+    Icon: TrendingDown,
+    className: "text-bearish",
+    label: "Sentimen negatif",
+  },
+  neutral: {
+    Icon: Minus,
+    className: "text-mixed",
+    label: "Sentimen netral",
+  },
+};
 
 interface SektorTopStockCardProps {
   /** The stock to render. Drives every field on the card —
@@ -51,7 +84,16 @@ interface SektorTopStockCardProps {
 export function SektorTopStockCard({ stock, rank }: SektorTopStockCardProps) {
   const stockPositive = stock.changePercent >= 0;
   const href = `/stock/${stock.kode}`;
-  const { title, articleCount, mediaCount } = useSektorDetail(stock.kode);
+  const { title, articleCount, mediaCount, sentiment } =
+    useSektorDetail(stock.kode);
+  // Resolve the sentiment glyph up-front so the headline <div>
+  // can stay a flat flex row. `null` (loading / no data) renders
+  // a placeholder span of the same width so the title text doesn't
+  // shift when the icon arrives — the gap follows the icon size,
+  // not the content. `Icon` is captured into a capitalized local so
+  // JSX can render it (member-expression elements aren't valid).
+  const sentimentIcon = sentiment ? SENTIMENT_ICON[sentiment] : null;
+  const SentimentIcon = sentimentIcon?.Icon;
 
   return (
     <Link
@@ -63,6 +105,25 @@ export function SektorTopStockCard({ stock, rank }: SektorTopStockCardProps) {
         <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-faint num-tabular">
           #{String(rank).padStart(2, "0")}
         </span>
+        {/* Headline-scoped sentiment glyph on the right edge of the
+            rank strip, flush with the same row as the #NN number.
+            The icon (when known) is wrapped in a `role="img"` span so
+            `title` + `aria-label` deliver the tooltip + a11y name;
+            while the fetch is still in flight an empty span of the
+            same width holds the slot so the number doesn't reflow
+            once the icon arrives. */}
+        {sentimentIcon && SentimentIcon ? (
+          <span
+            title={sentimentIcon.label}
+            aria-label={sentimentIcon.label}
+            role="img"
+            className={cn("flex-none", sentimentIcon.className)}
+          >
+            <SentimentIcon className="h-3 w-3" aria-hidden />
+          </span>
+        ) : (
+          <span aria-hidden className="h-3 w-3 flex-none" />
+        )}
       </div>
 
       <div className="p-3.5">

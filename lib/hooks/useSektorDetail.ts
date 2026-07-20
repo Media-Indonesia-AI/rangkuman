@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { EmbeddedStory, StoryFilter } from "@/lib/api";
+import type { EmbeddedStory, StoryFilter, StorySentiment } from "@/lib/api";
 import { loadHeadlines, loadListStory } from "@/lib/api/cache";
 
 /** Page-size for the headline-scoped `/stories` fetch. Mirrors
@@ -36,6 +36,13 @@ interface UseSektorDetailResult {
    *  per row in `<SektorDetailNews />`) and `articles[]` (for the
    *  per-row media count). */
   stories: EmbeddedStory[];
+  /** Sentiment of the latest headline for `ticker`, in the API
+   *  `StorySentiment` vocabulary (`"positive" | "negative" |
+   *  "neutral"`). `null` until the headline resolves (or when the
+   *  ticker has no headlines at all) — consumers should treat
+   *  `null` as "no signal" rather than defaulting it to neutral so
+   *  they can suppress the sentiment badge during loading. */
+  sentiment: StorySentiment | null;
 }
 
 /**
@@ -51,8 +58,10 @@ interface UseSektorDetailResult {
  *
  * Returns the headline `title` + `date` (`created_at`), the count of
  * related stories (`articleCount` + `stories.length`), the unique
- * `source_name` count across every `articles[]` (`mediaCount`), and
- * the raw `stories` array. `date` powers the "berdasarkan tanggal"
+ * `source_name` count across every `articles[]` (`mediaCount`), the
+ * headline `sentiment` (English `StorySentiment` so callers like
+ * `<SektorTopStockCard />` can pick their own icon set), and the
+ * raw `stories` array. `date` powers the "berdasarkan tanggal"
  * sort in `<SektorDetailNews />`; `stories` powers the per-row recap
  * paragraphs; the rest drives the headline + coverage row on
  * `<SektorTopStockCard />`.
@@ -65,7 +74,7 @@ interface UseSektorDetailResult {
  * headline alongside the new loading state.
  *
  * On either fetch failing the hook falls back to
- * `{ title: null, date: null, articleCount: 0, mediaCount: 0, isLoading: false, stories: [] }`
+ * `{ title: null, date: null, articleCount: 0, mediaCount: 0, isLoading: false, stories: [], sentiment: null }`
  * so consumers can render an empty / placeholder row without an
  * extra null-check. The `isLoading` flag flips to `false` once the
  * headline fetch settles either way, so consumers can drop their
@@ -84,6 +93,7 @@ export function useSektorDetail(
   const [mediaCount, setMediaCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [stories, setStories] = useState<EmbeddedStory[]>([]);
+  const [sentiment, setSentiment] = useState<StorySentiment | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -96,6 +106,7 @@ export function useSektorDetail(
     setMediaCount(0);
     setIsLoading(true);
     setStories([]);
+    setSentiment(null);
 
     const headlineFilters: StoryFilter[] = [
       { field: "primary_ticker_code", operator: "eq", value: ticker },
@@ -113,6 +124,7 @@ export function useSektorDetail(
         }
         setTitle(first.title);
         setDate(first.created_at);
+        setSentiment(first.sentiment);
         const storyFilters: StoryFilter[] = [
           { field: "headline_id", operator: "eq", value: first.id },
         ];
@@ -143,7 +155,7 @@ export function useSektorDetail(
     };
   }, [ticker]);
 
-  return { title, date, articleCount, mediaCount, isLoading, stories };
+  return { title, date, articleCount, mediaCount, isLoading, stories, sentiment };
 }
 
 /** Unique `source_name` count across every article in the supplied
