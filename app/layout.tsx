@@ -5,6 +5,7 @@ import { ToastContainer } from "@/components/Toast";
 import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
 import { BfcacheRecovery } from "@/components/BfcacheRecovery";
+import { TopicsProvider } from "@/components/topics-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -94,12 +95,23 @@ export default function RootLayout({
         />
       </head>
       <body className="relative min-h-screen bg-bg-primary font-sans text-[14px] leading-relaxed text-text-primary antialiased">
-        <TopTickerRouter />
-        <BfcacheRecovery />
-        {children}
-        <NewsletterFloatingPill />
-        <ToastContainer />
-        <GuestLoginDialog />
+        {/*
+          Layout-level providers. Each one is a small client island
+          that owns a piece of cross-route state (top-ticker router,
+          bfcache recovery, the shared topics list). Mounting them
+          here means a single network round-trip per data source
+          when the app first hydrates, regardless of which route the
+          user lands on. Subsequent routes read from cache / context
+          without re-fetching.
+        */}
+        <TopicsProvider>
+          <TopTickerRouter />
+          <BfcacheRecovery />
+          {children}
+          <NewsletterFloatingPill />
+          <ToastContainer />
+          <GuestLoginDialog />
+        </TopicsProvider>
       </body>
     </html>
   );
