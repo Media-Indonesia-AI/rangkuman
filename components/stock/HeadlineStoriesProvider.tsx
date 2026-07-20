@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, type ReactNode } from "react";
+import { createContext, useContext, useMemo, type ReactNode } from "react";
 import type { EmbeddedStory, StoryFilter } from "@/lib/api";
 import { useListStory } from "@/lib/hooks/useListStory";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
@@ -60,9 +60,21 @@ export function HeadlineStoriesProvider({
 }) {
   const { detail } = useHeadlineDetail();
 
-  const filters: StoryFilter[] = detail
-    ? [{ field: "headline_id", operator: "eq", value: detail.id }]
-    : [];
+  // `useListStory` lists `filters` in its `useEffect` dep array, so the
+  // reference must be stable across renders when its content is
+  // unchanged. Building the array inline each render would give it a
+  // fresh identity every time — re-running the effect, re-issuing
+  // `setIsLoading(true)`, re-rendering, and looping until React hits
+  // "Maximum update depth exceeded". `useMemo` pins the reference to
+  // `detail?.id` (and skips the array entirely while detail is null),
+  // so the effect only re-fires when the headline actually changes.
+  const filters = useMemo<StoryFilter[]>(
+    () =>
+      detail
+        ? [{ field: "headline_id", operator: "eq", value: detail.id }]
+        : [],
+    [detail?.id],
+  );
   const { data: stories, isLoading } = useListStory(
     FETCH_LIMIT,
     0,
