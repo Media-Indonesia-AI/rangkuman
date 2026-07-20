@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { HomeTabs } from "./HomeTabs";
 import { DateDivider } from "@/components/DateDivider";
-import { StockCard } from "@/components/StockCard";
+import { StockCard } from "@/components/stock-card";
 import { EmptyState } from "@/components/EmptyState";
 import { getRecapsByDate, getRecapsByRecentDays, TODAY_ISO, YESTERDAY_ISO } from "@/lib/mock/recaps";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";

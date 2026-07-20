@@ -6,7 +6,7 @@ import type { TrendingStory } from "@/lib/api";
 import type { DailyRecap } from "@/lib/mock/recaps";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "./Shimmer";
-import { StockCard } from "./StockCard";
+import { StockCard } from "./stock-card";
 
 /**
  * "Paling banyak diberitakan" — the top trending story list on

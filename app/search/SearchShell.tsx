@@ -4,7 +4,7 @@ import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Search as SearchIcon, ArrowUpRight } from "lucide-react";
-import { StockCard } from "@/components/StockCard";
+import { StockCard } from "@/components/stock-card";
 import { EmptyState } from "@/components/EmptyState";
 import { stocks } from "@/lib/mock/stocks";
 import { recaps, getRecapForStock, TODAY_ISO } from "@/lib/mock/recaps";
