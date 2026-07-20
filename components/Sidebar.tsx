@@ -1,4 +1,4 @@
-import { LatestHeadlines } from "./LatestHeadlines";
+import { LatestHeadlines } from "./latest-headlines";
 
 /**
  * Sidebar — currently just hosts the "Latest Headlines" widget.
