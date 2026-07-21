@@ -89,9 +89,9 @@ export function EmitenStories({
         <>
           <FeaturedStory story={featured} />
           <ul className="mt-1">
-            {rest.map((story) => (
+            {rest.map((story, i) => (
               <li key={story.id}>
-                <StoryRow story={story} />
+                <StoryRow story={story} first={i === 0} />
               </li>
             ))}
           </ul>
@@ -196,11 +196,16 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
   );
 }
 
-function StoryRow({ story }: { story: HeadlineLast7DaysItem }) {
+function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: boolean }) {
   return (
     <Link
       href={`/stock/${story.primary_ticker_code}`}
-      className="flex gap-3 border-t border-white py-3 transition-colors hover:bg-bg-secondary/60"
+      className={cn(
+        "flex gap-3 py-3 transition-colors hover:bg-bg-secondary/60",
+        // Skip the top divider on the first row so there's no line
+        // between the featured card and item two.
+        !first && "border-t border-white",
+      )}
     >
       <div className="flex w-[52px] shrink-0 flex-col items-start gap-1">
         <TickerBadge kode={story.primary_ticker_code} />
