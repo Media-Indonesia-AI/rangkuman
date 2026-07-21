@@ -6,6 +6,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { DatePicker } from "@/components/DatePicker";
 import { PalingBanyakDiberitakan } from "@/components/PalingBanyakDiberitakan";
+import { EmitenStories } from "@/components/EmitenStories";
 import { Sidebar } from "@/components/Sidebar";
 import { LeftSidebar } from "@/components/LeftSidebar";
 import { MarketMood } from "@/components/MarketMood";
@@ -130,6 +131,8 @@ export default function SahamPage() {
 
               {/* Feed column */}
               <div className="min-w-0 space-y-5">
+                <EmitenStories />
+
                 {/* Date picker + recap summary */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <DatePicker
