@@ -1,44 +1,56 @@
 "use client";
 
 import Link from "next/link";
-import { Newspaper, ArrowRight, Clock, TrendingUp, TrendingDown } from "lucide-react";
+import { Newspaper, ArrowRight, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import {
-  getEmitenStories,
-  type EmitenStory,
-  type EmitenStoryStatus,
-} from "@/lib/mock/emiten-stories";
+import { toSentimen } from "@/lib/util/sentiment";
+import type { Sentimen } from "@/lib/mock/recaps";
+import type { HeadlineLast7DaysItem } from "@/lib/api";
+import { useMultiStories } from "@/lib/hooks/useMultiStories";
+import { Shimmer } from "../Shimmer";
 
 /**
- * "Story" widget — curated narrative contexts per emiten
+ * "Story" widget — multi-date stories for a ticker
  * ("Konteks emiten yang lagi berkembang"). Renders one large featured
- * card (the first story) followed by a stack of compact list rows.
+ * card (the latest story) followed by a stack of compact list rows.
  *
- * Data is mock (`getEmitenStories()`) — see `lib/mock/emiten-stories.ts`.
- * Purely presentational otherwise; each card links to the ticker's
- * detail page, and the header "Lihat semua" links to `/trending`.
+ * Data comes from `GET headlines/multi-date-stories` via
+ * `useMultiStories(ticker)`. The endpoint provides ticker, title,
+ * summary, sentiment, created_at, keywords, and topics — fields it
+ * doesn't provide yet (a lifecycle status, a price move "sejak story",
+ * a milestone timeline) render as `N/A` / are omitted.
+ *
+ * `ticker` is optional; it defaults to `DEFAULT_TICKER` so the widget
+ * works on the non-ticker-scoped `/saham` page.
  */
 
-/** Visual style per lifecycle status — pill colors + status dot. */
-const statusStyle: Record<
-  EmitenStoryStatus,
+/** Fallback ticker when the host page doesn't pass one. */
+const DEFAULT_TICKER = "BBCA";
+
+/** How many stories to request (featured + list rows). */
+const STORY_LIMIT = 6;
+
+/** Visual style per sentiment — pill colors + status dot. */
+const sentimentStyle: Record<
+  Sentimen,
   { label: string; pill: string; dot: string }
 > = {
-  berlangsung: {
-    label: "Sedang berlangsung",
-    pill: "border-bullish/30 text-bullish",
-    dot: "bg-bullish",
-  },
-  berkembang: {
-    label: "Berkembang",
-    pill: "border-blue-400/40 text-blue-400",
-    dot: "bg-blue-400",
-  },
+  positif: { label: "Positif", pill: "border-bullish/30 text-bullish", dot: "bg-bullish" },
+  netral: { label: "Netral", pill: "border-border text-text-muted", dot: "bg-text-muted" },
+  negatif: { label: "Negatif", pill: "border-bearish/30 text-bearish", dot: "bg-bearish" },
 };
 
-export function EmitenStories({ className }: { className?: string }) {
-  const stories = getEmitenStories();
-  if (stories.length === 0) return null;
+interface EmitenStoriesProps {
+  /** Ticker to fetch stories for. Defaults to `DEFAULT_TICKER`. */
+  ticker?: string;
+  className?: string;
+}
+
+export function EmitenStories({
+  ticker = DEFAULT_TICKER,
+  className,
+}: EmitenStoriesProps) {
+  const { data: stories, isLoading } = useMultiStories(ticker, STORY_LIMIT);
 
   const [featured, ...rest] = stories;
 
@@ -67,15 +79,24 @@ export function EmitenStories({ className }: { className?: string }) {
         </Link>
       </div>
 
-      <FeaturedStory story={featured} />
-
-      <ul className="mt-1">
-        {rest.map((story) => (
-          <li key={story.id}>
-            <StoryRow story={story} />
-          </li>
-        ))}
-      </ul>
+      {isLoading ? (
+        <StoriesSkeleton />
+      ) : stories.length === 0 ? (
+        <p className="py-6 text-center font-mono text-[11px] text-text-faint">
+          Belum ada story untuk {ticker.toUpperCase()}.
+        </p>
+      ) : (
+        <>
+          <FeaturedStory story={featured} />
+          <ul className="mt-1">
+            {rest.map((story) => (
+              <li key={story.id}>
+                <StoryRow story={story} />
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
     </section>
   );
 }
@@ -89,9 +110,9 @@ function TickerBadge({ kode }: { kode: string }) {
   );
 }
 
-/** Colored lifecycle pill with a leading status dot. */
-function StatusPill({ status }: { status: EmitenStoryStatus }) {
-  const s = statusStyle[status];
+/** Colored sentiment pill with a leading dot. */
+function SentimentPill({ sentiment }: { sentiment: HeadlineLast7DaysItem["sentiment"] }) {
+  const s = sentimentStyle[toSentimen(sentiment)];
   return (
     <span
       className={cn(
@@ -105,35 +126,43 @@ function StatusPill({ status }: { status: EmitenStoryStatus }) {
   );
 }
 
-/** Signed percent change, `▲`/`▼` prefixed and colored. */
-function ChangeBadge({ value }: { value: number }) {
-  const positive = value >= 0;
+/** Muted "N/A" marker for fields the endpoint doesn't provide yet. */
+function NotAvailable({ className }: { className?: string }) {
   return (
-    <span
-      className={cn(
-        "num-tabular font-mono text-[10.5px] font-semibold",
-        positive ? "text-bullish" : "text-bearish",
-      )}
-    >
-      {positive ? "▲" : "▼"}
-      {Math.abs(value).toFixed(1)}%
+    <span className={cn("font-mono text-[10.5px] text-text-faint", className)}>
+      N/A
     </span>
   );
 }
 
-function FeaturedStory({ story }: { story: EmitenStory }) {
-  const positive = story.changePercent >= 0;
-  const ChangeIcon = positive ? TrendingUp : TrendingDown;
+/**
+ * Human "X waktu lalu" label from an ISO timestamp. Returns "N/A" if
+ * the string can't be parsed.
+ */
+function relativeUpdated(iso: string): string {
+  const then = new Date(iso).getTime();
+  if (Number.isNaN(then)) return "N/A";
+  const diffMs = Date.now() - then;
+  const days = Math.floor(diffMs / 86_400_000);
+  if (days >= 1) return `${days} hari lalu`;
+  const hours = Math.floor(diffMs / 3_600_000);
+  if (hours >= 1) return `${hours} jam lalu`;
+  const mins = Math.max(1, Math.floor(diffMs / 60_000));
+  return `${mins} menit lalu`;
+}
+
+function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
+  const topic = story.topics[0]?.name;
   return (
     <Link
-      href={`/stock/${story.kode}`}
+      href={`/stock/${story.primary_ticker_code}`}
       className="block rounded-lg border border-border bg-bg-secondary p-4 transition-colors hover:border-border-strong"
     >
       <div className="flex flex-wrap items-center gap-2">
-        <TickerBadge kode={story.kode} />
-        <StatusPill status={story.status} />
+        <TickerBadge kode={story.primary_ticker_code} />
+        <SentimentPill sentiment={story.sentiment} />
         <span className="font-mono text-[10.5px] text-text-faint">
-          · {story.liputanCount} liputan
+          · {story.keywords.length} kata kunci
         </span>
       </div>
 
@@ -144,76 +173,45 @@ function FeaturedStory({ story }: { story: EmitenStory }) {
         {story.summary}
       </p>
 
-      {story.timeline && (
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-[9px] uppercase tracking-widest text-text-faint">
-              Timeline
-            </span>
-            <TimelineDots steps={story.timeline.steps} />
-          </div>
-          <span className="truncate font-mono text-[10.5px] text-text-faint">
-            {story.timeline.milestone}
-          </span>
-        </div>
-      )}
-
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white pt-2.5">
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 font-mono text-[10.5px] text-text-muted">
             <Clock className="h-3 w-3" aria-hidden />
-            Update {story.updatedLabel}
+            Update {relativeUpdated(story.created_at)}
           </span>
-          {story.topic && (
+          {topic ? (
             <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[9.5px] text-text-secondary">
-              {story.topic}
+              {topic}
             </span>
+          ) : (
+            <NotAvailable />
           )}
         </div>
-        <span
-          className={cn(
-            "inline-flex items-center gap-1 font-mono text-[11px] font-semibold num-tabular",
-            positive ? "text-bullish" : "text-bearish",
-          )}
-        >
-          <ChangeIcon className="h-3 w-3" aria-hidden />
-          {positive ? "+" : ""}
-          {story.changePercent.toFixed(1)}% sejak story
+        {/* Price move "sejak story" isn't in the endpoint yet. */}
+        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-faint">
+          <NotAvailable /> sejak story
         </span>
       </div>
     </Link>
   );
 }
 
-/** Row of connected milestone dots for the featured timeline. */
-function TimelineDots({ steps }: { steps: number }) {
-  return (
-    <span className="flex items-center" aria-hidden>
-      {Array.from({ length: Math.max(steps, 1) }).map((_, i) => (
-        <span key={i} className="flex items-center">
-          {i > 0 && <span className="h-px w-3 bg-bullish/50" />}
-          <span className="h-1.5 w-1.5 rounded-full bg-bullish" />
-        </span>
-      ))}
-    </span>
-  );
-}
-
-function StoryRow({ story }: { story: EmitenStory }) {
+function StoryRow({ story }: { story: HeadlineLast7DaysItem }) {
   return (
     <Link
-      href={`/stock/${story.kode}`}
+      href={`/stock/${story.primary_ticker_code}`}
       className="flex gap-3 border-t border-white py-3 transition-colors hover:bg-bg-secondary/60"
     >
       <div className="flex w-[52px] shrink-0 flex-col items-start gap-1">
-        <TickerBadge kode={story.kode} />
-        <ChangeBadge value={story.changePercent} />
+        <TickerBadge kode={story.primary_ticker_code} />
+        {/* Price change isn't in the endpoint yet. */}
+        <NotAvailable />
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
-          <StatusPill status={story.status} />
+          <SentimentPill sentiment={story.sentiment} />
           <span className="font-mono text-[10px] text-text-faint">
-            · {story.liputanCount} liputan · {story.updatedLabel}
+            · {story.keywords.length} kata kunci · {relativeUpdated(story.created_at)}
           </span>
         </div>
         <h4 className="mt-1 text-[15px] font-semibold leading-tight text-text-primary">
@@ -224,5 +222,39 @@ function StoryRow({ story }: { story: EmitenStory }) {
         </p>
       </div>
     </Link>
+  );
+}
+
+/** Loading placeholder — one featured block + three compact rows. */
+function StoriesSkeleton() {
+  return (
+    <div>
+      <div className="rounded-lg border border-border bg-bg-secondary p-4">
+        <div className="flex items-center gap-2">
+          <Shimmer className="h-4 w-12" />
+          <Shimmer className="h-4 w-20" />
+        </div>
+        <Shimmer className="mt-2.5 h-5 w-2/3" />
+        <div className="mt-2 space-y-1.5">
+          <Shimmer className="h-3 w-full" />
+          <Shimmer className="h-3 w-4/5" />
+        </div>
+      </div>
+      <ul className="mt-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <li key={i} className="flex gap-3 border-t border-white py-3">
+            <div className="flex w-[52px] shrink-0 flex-col gap-1">
+              <Shimmer className="h-4 w-11" />
+              <Shimmer className="h-3 w-10" />
+            </div>
+            <div className="min-w-0 flex-1 space-y-1.5">
+              <Shimmer className="h-3 w-24" />
+              <Shimmer className="h-3.5 w-1/2" />
+              <Shimmer className="h-3 w-full" />
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
