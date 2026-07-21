@@ -1,115 +1,62 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { ArrowUp, ArrowDown, TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
-import { type ApiError, type TopStockItem } from "@/lib/api";
-import { loadTopStocks } from "@/lib/api/cache";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
-import { MOCK_TOP_STOCKS } from "@/lib/mock/top-stocks";
+import { TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
+import { type IndexMoverItem } from "@/lib/api";
+import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
 import { LoginPromptOverlay } from "./LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
-type LoadState =
-  | { kind: "loading" }
-  | { kind: "ready"; gainers: TopStockItem[]; losers: TopStockItem[] }
-  | { kind: "error"; message: string };
-
 /**
- * Top Movers strip — horizontal scrollable cards of gainers + losers.
- * Fetches live data from /stocks/top-stocks. Renders:
+ * Index Movers strip — horizontal scrollable cards of the stocks
+ * moving the composite index, shown in the order the API returns.
+ * Fetches live data from /stocks/index-mover. Renders:
  * - Shimmer skeletons while loading
  * - Error state with retry on failure
  * - Real cards when ready
  *
- * Re-fetches when the user logs in/out.
+ * Data + login-driven refetch live in `useIndexMovers`. Each card is
+ * colored by its own day-change sign (up = bullish, down = bearish).
  */
 export function MobileTopMovers() {
-  const user = useCurrentUser();
-  const [state, setState] = useState<LoadState>({ kind: "loading" });
+  const { state, refetch } = useIndexMovers(10);
 
-  const fetchOnce = useCallback(async () => {
-    setState({ kind: "loading" });
-    try {
-      const res = await loadTopStocks();
-      const groups = res.data ?? [];
-      const gainers =
-        groups.find((g) => g.type === "top-gainer")?.stocks ?? [];
-      const losers =
-        groups.find((g) => g.type === "top-looser")?.stocks ?? [];
-      setState({ kind: "ready", gainers, losers });
-    } catch (err) {
-      const apiErr = err as ApiError;
-      // 401 = the endpoint requires auth and the user is logged out. Show
-      // a static mock list under the LoginPromptOverlay rather than an
-      // error — the list itself is secondary to the login prompt.
-      if (apiErr?.status === 401) {
-        const groups = MOCK_TOP_STOCKS.data;
-        setState({
-          kind: "ready",
-          gainers: groups.find((g) => g.type === "top-gainer")?.stocks ?? [],
-          losers: groups.find((g) => g.type === "top-looser")?.stocks ?? [],
-        });
-        return;
-      }
-      setState({
-        kind: "error",
-        message:
-          apiErr?.message
-            ? `Gagal memuat: ${apiErr.message}`
-            : "Gagal memuat top movers.",
-      });
-    }
-  }, []);
-
-  // Refetch on login / logout.
-  useEffect(() => {
-    void fetchOnce();
-  }, [user, fetchOnce]);
-
-  const total =
-    state.kind === "ready"
-      ? state.gainers.length + state.losers.length
-      : 0;
+  // A 401 means the endpoint is auth-gated and the user is logged out.
+  // The LoginPromptOverlay already covers the strip, so treat it as an
+  // empty (non-error) list rather than showing a failure message.
+  const isError = state.kind === "error" && state.status !== 401;
+  const loading = state.kind === "loading";
+  const movers = state.kind === "ready" ? state.movers : [];
 
   return (
     <section
       className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary xl:hidden"
-      aria-label="Top Movers"
+      aria-label="Index Movers"
     >
       <header className="flex items-center gap-1.5 border-b border-border bg-bg-tertiary px-3 py-1.5">
         <TrendingUp className="h-3 w-3 text-brand" aria-hidden />
-        <h2 className="label">Top Movers · IDX</h2>
+        <h2 className="label">Index Movers · IDX</h2>
         <span className="ml-auto font-mono text-[10px] text-text-faint num-tabular">
           {state.kind === "ready"
-            ? `${total} saham`
-            : state.kind === "loading"
+            ? `${movers.length} saham`
+            : loading
               ? "…"
               : "-"}
         </span>
       </header>
 
       <div className="relative">
-        {state.kind === "error" ? (
-          <ErrorState message={state.message} onRetry={fetchOnce} />
+        {isError ? (
+          <ErrorState
+            message={
+              state.kind === "error" && state.message
+                ? `Gagal memuat: ${state.message}`
+                : "Gagal memuat index movers."
+            }
+            onRetry={refetch}
+          />
         ) : (
-          <>
-            <MoverRow
-              title="Gainers"
-              Icon={ArrowUp}
-              direction="up"
-              loading={state.kind === "loading"}
-              rows={state.kind === "ready" ? state.gainers : []}
-            />
-            <div className="border-t border-border" />
-            <MoverRow
-              title="Losers"
-              Icon={ArrowDown}
-              direction="down"
-              loading={state.kind === "loading"}
-              rows={state.kind === "ready" ? state.losers : []}
-            />
-          </>
+          <MoverRow loading={loading} rows={movers} />
         )}
         <LoginPromptOverlay />
       </div>
@@ -118,29 +65,16 @@ export function MobileTopMovers() {
 }
 
 interface MoverRowProps {
-  title: string;
-  direction: "up" | "down";
   loading: boolean;
-  rows: TopStockItem[];
-  Icon: typeof ArrowUp;
+  rows: IndexMoverItem[];
 }
 
-function MoverRow({ title, rows, direction, Icon, loading }: MoverRowProps) {
-  const colorClass = direction === "up" ? "text-bullish" : "text-bearish";
-
+function MoverRow({ rows, loading }: MoverRowProps) {
   return (
     <div className="px-3 py-2">
-      <p
-        className={cn(
-          "label mb-1.5 flex items-center gap-1",
-          colorClass,
-        )}
-      >
-        <Icon className="h-2.5 w-2.5" aria-hidden /> {title}
-      </p>
       <div className="-mx-3 grid grid-cols-2 gap-2 px-3 pb-1 sm:grid-cols-3 md:grid-cols-5">
         {loading
-          ? Array.from({ length: 5 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)
           : rows.length === 0
             ? null
             : rows.map((s) => (
@@ -149,7 +83,6 @@ function MoverRow({ title, rows, direction, Icon, loading }: MoverRowProps) {
                   ticker={s.ticker}
                   companyName={s.company_name}
                   percentChange={s.percent_change}
-                  colorClass={colorClass}
                 />
               ))}
       </div>
@@ -161,14 +94,13 @@ function StockCard({
   ticker,
   companyName,
   percentChange,
-  colorClass,
 }: {
   ticker: string;
   companyName: string;
   percentChange: number;
-  colorClass: string;
 }) {
   const positive = percentChange >= 0;
+  const colorClass = positive ? "text-bullish" : "text-bearish";
   const href = `/stock/${ticker}`;
   return (
     <Link
