@@ -34,6 +34,7 @@ export { loadForeignStocks } from "./foreign-stocks";
 export { loadCompositeChart } from "./composite-chart";
 export { loadTrendingStories } from "./trending-stories";
 export { loadHeadlines } from "./headlines";
+export { loadHeadlinesLast7Days } from "./headlines-last-7-days";
 export { loadTopic } from "./topics";
 export { loadListStory } from "./stories";
 export { loadHeadlineById } from "./headline-detail";

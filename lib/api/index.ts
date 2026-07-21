@@ -77,6 +77,9 @@ export type {
   EmbeddedStory,
   HeadlineDetail,
   HeadlineDetailResponse,
+  HeadlineKeyword,
+  HeadlineLast7DaysItem,
+  HeadlinesLast7DaysResponse,
 } from "./types/headline";
 
 // Market Mood

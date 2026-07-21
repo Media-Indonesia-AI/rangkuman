@@ -21,6 +21,7 @@ import { login, register } from "./auth";
 import {
   getHeadlineById,
   getHeadlines,
+  getHeadlinesLast7Days,
   getTrendingStories,
 } from "./headline";
 import { getExchangeRate, getInterestRate, getMarketMood } from "./market";
@@ -154,6 +155,7 @@ export const api = {
   getTrendingStories,
   getHeadlines,
   getHeadlineById,
+  getHeadlinesLast7Days,
   // Story
   getListStory,
   // Topic

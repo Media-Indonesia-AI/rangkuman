@@ -12,13 +12,17 @@
  * topic list (`/topic`) lives next door.
  */
 
-import { request } from "./client";
+import { request, todayIsoDate } from "./client";
 import type {
   StoryFilter,
   StoryResponse,
   TrendingStoriesResponse,
 } from "./types/story";
-import type { HeadlineDetail, HeadlineDetailResponse } from "./types/headline";
+import type {
+  HeadlineDetail,
+  HeadlineDetailResponse,
+  HeadlinesLast7DaysResponse,
+} from "./types/headline";
 
 /**
  * Fetch the current trending-ticker stories.
@@ -88,4 +92,26 @@ export function getHeadlineById(
     `headlines/${encodeURIComponent(id)}`,
     { method: "GET" },
   ).then((res) => res.data);
+}
+
+/**
+ * Fetch the last-7-days headlines for a ticker, as of a given date.
+ *
+ * @param ticker Ticker code (e.g. `"ANTM"`). Uppercased before being
+ *               inserted into the query so callers can pass either case.
+ * @param date   Reference date as `YYYY-MM-DD` — the window is the 7
+ *               days ending on this date. Defaults to today.
+ */
+export function getHeadlinesLast7Days(
+  ticker: string,
+  date?: string,
+): Promise<HeadlinesLast7DaysResponse> {
+  const params = new URLSearchParams({
+    ticker: ticker.toUpperCase(),
+    date: date ?? todayIsoDate(),
+  });
+  return request<HeadlinesLast7DaysResponse>(
+    `headlines/last-7-days?${params.toString()}`,
+    { method: "GET" },
+  );
 }
