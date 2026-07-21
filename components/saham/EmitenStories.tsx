@@ -12,13 +12,22 @@ import { Shimmer } from "../Shimmer";
 /**
  * "Story" widget — multi-date stories for a ticker
  * ("Konteks emiten yang lagi berkembang"). Renders one large featured
- * card (the latest story) followed by a stack of compact list rows.
+ * card (the latest story); the `feed` variant follows it with a stack
+ * of compact list rows, the `highlight` variant wraps everything in a
+ * card and shows only the featured story.
  *
  * Data comes from `GET headlines/multi-date-stories` via
  * `useMultiStories(ticker)`. The endpoint provides ticker, title,
  * summary, sentiment, created_at, keywords, and topics — fields it
  * doesn't provide yet (a lifecycle status, a price move "sejak story",
  * a milestone timeline) render as `N/A` / are omitted.
+ *
+ * Variants:
+ *   - `feed` (default): borderless section for the `/saham` feed —
+ *     featured card + list rows, "Lihat semua (N)" in the header.
+ *   - `highlight`: bordered card for the stock detail page — a
+ *     `HIGHLIGHT` badge, featured story only, "Lihat semua story" at
+ *     the bottom.
  *
  * `ticker` is optional; it defaults to `DEFAULT_TICKER` so the widget
  * works on the non-ticker-scoped `/saham` page.
@@ -40,23 +49,82 @@ const sentimentStyle: Record<
   negatif: { label: "Negatif", pill: "border-bearish/30 text-bearish", dot: "bg-bearish" },
 };
 
+type EmitenStoriesVariant = "feed" | "highlight";
+
 interface EmitenStoriesProps {
   /** Ticker to fetch stories for. Defaults to `DEFAULT_TICKER`. */
   ticker?: string;
+  /** Layout variant (default `"feed"`). */
+  variant?: EmitenStoriesVariant;
   className?: string;
 }
 
 export function EmitenStories({
   ticker = DEFAULT_TICKER,
+  variant = "feed",
   className,
 }: EmitenStoriesProps) {
   const { data: stories, isLoading } = useMultiStories(ticker, STORY_LIMIT);
-
   const [featured, ...rest] = stories;
 
+  const seeAll = (
+    <Link
+      href="/trending"
+      className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-brand-hover"
+    >
+      {variant === "highlight" ? "Lihat semua story" : `Lihat semua (${stories.length})`}
+      <ArrowRight
+        className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
+        aria-hidden
+      />
+    </Link>
+  );
+
+  // ─── HIGHLIGHT variant — bordered card, featured story only ───
+  if (variant === "highlight") {
+    return (
+      <section
+        aria-label="Story emiten"
+        className={cn(
+          "rounded-lg border border-white bg-bg-secondary p-4",
+          className,
+        )}
+      >
+        <div className="mb-3 flex items-start justify-between gap-2 border-b border-white pb-2">
+          <div>
+            <div className="flex items-center gap-1.5">
+              <Newspaper className="h-3.5 w-3.5 text-brand" aria-hidden />
+              <span className="label text-text-secondary">Story</span>
+              <span className="rounded border border-brand/40 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-widest text-brand">
+                Highlight
+              </span>
+            </div>
+            <p className="mt-0.5 text-[12px] text-text-muted">
+              Cerita panjang untuk emiten ini
+            </p>
+          </div>
+          <span className="shrink-0 font-mono text-[10.5px] text-text-faint">
+            {stories.length} cerita · update tiap minggu
+          </span>
+        </div>
+
+        {isLoading ? (
+          <FeaturedSkeleton />
+        ) : stories.length === 0 ? (
+          <EmptyStory ticker={ticker} />
+        ) : (
+          <>
+            <FeaturedStory story={featured} />
+            <div className="mt-3 flex justify-end">{seeAll}</div>
+          </>
+        )}
+      </section>
+    );
+  }
+
+  // ─── FEED variant (default) — borderless, featured + list rows ───
   return (
     <section aria-label="Story emiten" className={className}>
-      {/* Header */}
       <div className="mb-3 flex items-end justify-between gap-2 border-b border-white pb-2">
         <div>
           <div className="flex items-center gap-1.5">
@@ -67,24 +135,13 @@ export function EmitenStories({
             Konteks emiten yang lagi berkembang
           </p>
         </div>
-        <Link
-          href="/trending"
-          className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-brand-hover"
-        >
-          Lihat semua ({stories.length})
-          <ArrowRight
-            className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
-            aria-hidden
-          />
-        </Link>
+        {seeAll}
       </div>
 
       {isLoading ? (
         <StoriesSkeleton />
       ) : stories.length === 0 ? (
-        <p className="py-6 text-center font-mono text-[11px] text-text-faint">
-          Belum ada story untuk {ticker.toUpperCase()}.
-        </p>
+        <EmptyStory ticker={ticker} />
       ) : (
         <>
           <FeaturedStory story={featured} />
@@ -98,6 +155,15 @@ export function EmitenStories({
         </>
       )}
     </section>
+  );
+}
+
+/** Empty-state message when the ticker has no stories. */
+function EmptyStory({ ticker }: { ticker: string }) {
+  return (
+    <p className="py-6 text-center font-mono text-[11px] text-text-faint">
+      Belum ada story untuk {ticker.toUpperCase()}.
+    </p>
   );
 }
 
@@ -230,21 +296,28 @@ function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: bool
   );
 }
 
+/** Skeleton for the featured card block. */
+function FeaturedSkeleton() {
+  return (
+    <div className="rounded-lg border border-border bg-bg-secondary p-4">
+      <div className="flex items-center gap-2">
+        <Shimmer className="h-4 w-12" />
+        <Shimmer className="h-4 w-20" />
+      </div>
+      <Shimmer className="mt-2.5 h-5 w-2/3" />
+      <div className="mt-2 space-y-1.5">
+        <Shimmer className="h-3 w-full" />
+        <Shimmer className="h-3 w-4/5" />
+      </div>
+    </div>
+  );
+}
+
 /** Loading placeholder — one featured block + three compact rows. */
 function StoriesSkeleton() {
   return (
     <div>
-      <div className="rounded-lg border border-border bg-bg-secondary p-4">
-        <div className="flex items-center gap-2">
-          <Shimmer className="h-4 w-12" />
-          <Shimmer className="h-4 w-20" />
-        </div>
-        <Shimmer className="mt-2.5 h-5 w-2/3" />
-        <div className="mt-2 space-y-1.5">
-          <Shimmer className="h-3 w-full" />
-          <Shimmer className="h-3 w-4/5" />
-        </div>
-      </div>
+      <FeaturedSkeleton />
       <ul className="mt-1">
         {Array.from({ length: 3 }).map((_, i) => (
           <li key={i} className="flex gap-3 border-t border-white py-3">

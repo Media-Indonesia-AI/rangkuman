@@ -96,7 +96,7 @@ export default function StockDetailPage({ params }: PageProps) {
               <AggregateSummary kode={kode} />
 
               {/* Story — multi-date stories for this ticker */}
-              <EmitenStories ticker={kode} />
+              <EmitenStories ticker={kode} variant="highlight" />
 
               {/* Price chart 30 days */}
               <PriceChart30d kode={kode} />
