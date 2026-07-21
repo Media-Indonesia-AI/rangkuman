@@ -80,6 +80,7 @@ export type {
   HeadlineKeyword,
   HeadlineLast7DaysItem,
   HeadlinesLast7DaysResponse,
+  MultiDateStoriesResponse,
 } from "./types/headline";
 
 // Market Mood

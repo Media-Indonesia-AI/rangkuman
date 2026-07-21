@@ -134,3 +134,12 @@ export interface HeadlineLast7DaysItem {
 export interface HeadlinesLast7DaysResponse {
   data: HeadlineLast7DaysItem[];
 }
+
+/**
+ * Wire format for `GET headlines/multi-date-stories`: `{ data: [...] }`.
+ * Items reuse the `HeadlineLast7DaysItem` shape (identical fields —
+ * `keywords` is the richer `HeadlineKeyword[]` object array).
+ */
+export interface MultiDateStoriesResponse {
+  data: HeadlineLast7DaysItem[];
+}

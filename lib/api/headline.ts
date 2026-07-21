@@ -22,6 +22,7 @@ import type {
   HeadlineDetail,
   HeadlineDetailResponse,
   HeadlinesLast7DaysResponse,
+  MultiDateStoriesResponse,
 } from "./types/headline";
 
 /**
@@ -120,6 +121,30 @@ export function getHeadlinesLast7Days(
   });
   return request<HeadlinesLast7DaysResponse>(
     `headlines/last-7-days?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch a paginated, multi-date list of stories for a ticker.
+ *
+ * @param ticker Ticker code (e.g. `"ANTM"`). Uppercased before being
+ *               inserted into the query so callers can pass either case.
+ * @param limit  How many stories to return per page (default 5).
+ * @param page   1-based page number (default 1).
+ */
+export function getMultiDateStories(
+  ticker: string,
+  limit = 5,
+  page = 1,
+): Promise<MultiDateStoriesResponse> {
+  const params = new URLSearchParams({
+    ticker: ticker.toUpperCase(),
+    limit: String(limit),
+    page: String(page),
+  });
+  return request<MultiDateStoriesResponse>(
+    `headlines/multi-date-stories?${params.toString()}`,
     { method: "GET" },
   );
 }
