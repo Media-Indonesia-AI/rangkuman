@@ -16,6 +16,7 @@ import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { HeadlineDetailProvider } from "@/components/stock/HeadlineDetailProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
+import { EmitenStories } from "@/components/saham";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 
 interface PageProps {
@@ -93,6 +94,9 @@ export default function StockDetailPage({ params }: PageProps) {
             <div className="min-w-0 space-y-6">
               {/* Aggregate summary */}
               <AggregateSummary kode={kode} />
+
+              {/* Story — multi-date stories for this ticker */}
+              <EmitenStories ticker={kode} />
 
               {/* Price chart 30 days */}
               <PriceChart30d kode={kode} />
