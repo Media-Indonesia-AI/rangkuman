@@ -4,7 +4,7 @@ import Link from "next/link";
 import { TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
 import { type IndexMoverItem } from "@/lib/api";
 import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
-import { LoginPromptOverlay } from "./LoginPromptOverlay";
+import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
 /**

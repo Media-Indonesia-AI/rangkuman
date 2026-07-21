@@ -4,7 +4,7 @@ import Link from "next/link";
 import { RefreshCw, AlertCircle } from "lucide-react";
 import { type IndexMoverItem } from "@/lib/api";
 import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
-import { LoginPromptOverlay } from "./LoginPromptOverlay";
+import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
 /** Skeleton row count shown while the movers list loads. */
