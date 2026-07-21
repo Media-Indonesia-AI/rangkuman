@@ -95,20 +95,28 @@ export function getHeadlineById(
 }
 
 /**
- * Fetch the last-7-days headlines for a ticker, as of a given date.
+ * Fetch the last-7-days headlines for a ticker.
+ *
+ * The `date` query param sent to the backend is an ISO 8601 timestamp
+ * of the window *start* — i.e. the reference date minus 7 days.
  *
  * @param ticker Ticker code (e.g. `"ANTM"`). Uppercased before being
  *               inserted into the query so callers can pass either case.
- * @param date   Reference date as `YYYY-MM-DD` — the window is the 7
- *               days ending on this date. Defaults to today.
+ * @param date   Reference date (window end) as `YYYY-MM-DD`. The value
+ *               actually sent is this date minus 7 days, formatted as an
+ *               ISO 8601 timestamp. Defaults to today.
  */
 export function getHeadlinesLast7Days(
   ticker: string,
   date?: string,
 ): Promise<HeadlinesLast7DaysResponse> {
+  const reference = date ?? todayIsoDate();
+  // Subtract exactly 7×24h from the reference date (parsed as UTC
+  // midnight) and send the resulting instant as an ISO 8601 timestamp.
+  const from = new Date(new Date(reference).getTime() - 7 * 24 * 60 * 60 * 1000);
   const params = new URLSearchParams({
     ticker: ticker.toUpperCase(),
-    date: date ?? todayIsoDate(),
+    date: from.toISOString(),
   });
   return request<HeadlinesLast7DaysResponse>(
     `headlines/last-7-days?${params.toString()}`,

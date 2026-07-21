@@ -4,27 +4,28 @@ import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { useHeadlineStories } from "./HeadlineStoriesProvider";
+import { useHeadlinesLast7Days } from "@/lib/hooks/useHeadlinesLast7Days";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
-import type { EmbeddedStory } from "@/lib/api";
+import type { HeadlineLast7DaysItem, StorySentiment } from "@/lib/api";
 
 interface NewsTimelineProps {
+  /** Ticker code the timeline is scoped to (e.g. `"ANTM"`). */
+  kode: string;
   todayIso: string;
   className?: string;
 }
 
 // Sentiment → Tailwind class. Pill variant (soft background) and dot
 // variant (solid background) share the same mapping.
-const sentimentPillClass = (s: EmbeddedStory["primary_sentiment"]) => {
+const sentimentPillClass = (s: StorySentiment) => {
   const sm = toSentimen(s);
   if (sm === "positif") return "bg-bullish-soft text-bullish";
   if (sm === "negatif") return "bg-bearish-soft text-bearish";
   return "bg-mixed-soft text-mixed";
 };
 
-const sentimentDotClass = (s: EmbeddedStory["primary_sentiment"]) => {
+const sentimentDotClass = (s: StorySentiment) => {
   const sm = toSentimen(s);
   if (sm === "positif") return "bg-bullish";
   if (sm === "negatif") return "bg-bearish";
@@ -33,8 +34,8 @@ const sentimentDotClass = (s: EmbeddedStory["primary_sentiment"]) => {
 
 const SHIMMER_ROW_COUNT = 5;
 
-/** Skeleton list shown while stories are in flight. Row shape
- *  mirrors a real story row so the layout doesn't shift. */
+/** Skeleton list shown while headlines are in flight. Row shape
+ *  mirrors a real headline row so the layout doesn't shift. */
 function StoriesShimmerList() {
   return (
     <ul className="space-y-2 px-3.5 py-3.5">
@@ -55,51 +56,45 @@ function StoriesShimmerList() {
   );
 }
 
-/** News timeline. Renders one cell per day — story rows when the
- *  headline has related stories, a `-` placeholder otherwise. The
- *  day list is derived from the stories' dates when present, sorted
+/** News timeline. Renders one cell per day — headline rows when the
+ *  ticker has headlines that day, a `-` placeholder otherwise. The
+ *  day list is derived from the headlines' `created_at` dates, sorted
  *  **newest-first** so "today" (if present) anchors the top of the
- *  column; within each day, stories are also sorted by `recap_date`
- *  desc so the latest recap leads the cell. When no stories are
- *  available (deep link / fallback headline has none, or no headline
- *  could be resolved), shows an empty-widget branch instead of
- *  fabricating a 7-day placeholder grid. */
-export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
-  const { detail, loading: detailLoading } = useHeadlineDetail();
+ *  column; within each day, headlines are also sorted by `created_at`
+ *  desc so the latest leads the cell. When no headlines are available
+ *  for the ticker's last-7-days window, shows an empty-widget branch
+ *  instead of fabricating a 7-day placeholder grid. */
+export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
+  // Last-7-days headlines for this ticker, fetched via the shared
+  // (ticker, date) request cache. `todayIso` (when set) anchors the
+  // window end; otherwise the hook defaults to today.
+  const { data: headlines, isLoading } = useHeadlinesLast7Days(
+    kode,
+    todayIso || undefined,
+  );
 
-  // Shared headline-scoped stories — fetched once by
-  // <HeadlineStoriesProvider> (mounted above), gated on
-  // `detail !== null` so no wasted request fires when `?id=` is
-  // absent.
-  const { stories, isLoading: storiesLoading } = useHeadlineStories();
+  const isFetchingStories = isLoading;
 
-  // Either fetch stage (detail or stories) should show the shimmer.
-  const isFetchingStories =
-    detailLoading || (detail !== null && storiesLoading);
-
-  // No related stories to plot — either the deep-linked headline
-  // (or the fallback headline derived by HeadlineDetailProvider) has
-  // no related stories, or no headline could be resolved at all.
-  // Either way the timeline has nothing to show, so render the empty
+  // No headlines to plot for this ticker's window — render the empty
   // state instead of fabricating a 7-day placeholder grid.
-  const showEmptyWidget = !isFetchingStories && stories.length === 0;
+  const showEmptyWidget = !isFetchingStories && headlines.length === 0;
 
-  // Bucket stories by local-time date so each cell does an O(1) lookup.
-  const storiesByDay = new Map<string, EmbeddedStory[]>();
-  for (const s of stories) {
-    const dayKey = format(parseISO(s.recap_date), "yyyy-MM-dd");
+  // Bucket headlines by local-time date so each cell does an O(1) lookup.
+  const storiesByDay = new Map<string, HeadlineLast7DaysItem[]>();
+  for (const s of headlines) {
+    const dayKey = format(parseISO(s.created_at), "yyyy-MM-dd");
     const bucket = storiesByDay.get(dayKey);
     if (bucket) bucket.push(s);
     else storiesByDay.set(dayKey, [s]);
   }
 
-  // Sort each day's stories by `recap_date` desc — newest at the
-  // top of the cell. `recap_date` carries the time component so
-  // `Date.parse` gives a real wall-clock comparison; ties stay in
-  // the API's natural order.
+  // Sort each day's headlines by `created_at` desc — newest at the top
+  // of the cell. `created_at` carries the time component so `Date.parse`
+  // gives a real wall-clock comparison; ties stay in the API's natural
+  // order.
   for (const bucket of storiesByDay.values()) {
     bucket.sort(
-      (a, b) => Date.parse(b.recap_date) - Date.parse(a.recap_date),
+      (a, b) => Date.parse(b.created_at) - Date.parse(a.created_at),
     );
   }
 
@@ -115,7 +110,7 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
         )} s/d ${format(parseISO(sortedDayKeys[0]), "dd MMM")}`
       : null;
 
-  // Stories present → one cell per unique date. The empty case is
+  // Headlines present → one cell per unique date. The empty case is
   // handled by the empty-widget branch below, so we don't fabricate a
   // 7-day placeholder grid here.
   const days = sortedDayKeys.map((iso) => parseISO(iso));
@@ -141,11 +136,11 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
         <div className="flex flex-col items-center gap-2 px-3.5 py-10 text-center">
           <Calendar className="h-5 w-5 text-text-faint" aria-hidden />
           <p className="font-mono text-[11px] font-semibold uppercase tracking-widest text-text-muted">
-            Belum ada cerita terkait
+            Belum ada berita terkait
           </p>
           <p className="max-w-xs text-[11.5px] leading-relaxed text-text-faint">
-            Headline ini belum punya cerita terkait. Coba cek headline
-            lain atau kembali ke beranda.
+            Belum ada berita untuk saham ini dalam 7 hari terakhir. Coba
+            cek saham lain atau kembali ke beranda.
           </p>
         </div>
       ) : (
@@ -163,7 +158,7 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
 
           const dayStories = storiesByDay.get(iso) ?? [];
           const dotColor = dayStories.length > 0
-            ? sentimentDotClass(dayStories[0].primary_sentiment)
+            ? sentimentDotClass(dayStories[0].sentiment)
             : "bg-border";
 
           return (
@@ -211,22 +206,22 @@ export function NewsTimeline({ todayIso, className }: NewsTimelineProps) {
                           <span
                             className={cn(
                               "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
-                              sentimentPillClass(s.primary_sentiment),
+                              sentimentPillClass(s.sentiment),
                             )}
                           >
-                            {s.primary_sentiment}
+                            {s.sentiment}
                           </span>
                           <span className="font-mono text-[10px] text-text-muted">
-                            {format(parseISO(s.recap_date), "HH:mm", {
+                            {format(parseISO(s.created_at), "HH:mm", {
                               locale: idLocale,
                             })}
                           </span>
                           <span className="font-mono text-[10px] text-text-muted">
-                            {s.articles?.length ?? 0} artikel
+                            {s.keywords.length} kata kunci
                           </span>
                         </div>
                         <p className="text-[11.5px] leading-snug text-text-primary">
-                          {s.headline}
+                          {s.title}
                         </p>
                       </li>
                     ))}

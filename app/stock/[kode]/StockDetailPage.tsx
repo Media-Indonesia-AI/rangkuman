@@ -101,7 +101,7 @@ export default function StockDetailPage({ params }: PageProps) {
               <KeyMetrics kode={kode} />
 
               {/* News timeline */}
-              <NewsTimeline todayIso={''} />
+              <NewsTimeline kode={kode} todayIso={''} />
 
               {/* Sentiment trail — reads from the shared
                   <HeadlineStoriesProvider> (mounted above). */}
