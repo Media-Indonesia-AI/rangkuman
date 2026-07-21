@@ -29,6 +29,7 @@ import { getSectors } from "./sectors";
 import {
   getCompositeChart,
   getForeignStocks,
+  getIndexMover,
   getKeyMetrics,
   getStockHistorical,
   getTickerInformation,
@@ -135,6 +136,7 @@ export const api = {
   // Stocks
   getTopStocks,
   getTickers,
+  getIndexMover,
   getTickerInformation,
   getKeyMetrics,
   getStockHistorical,

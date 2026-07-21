@@ -161,6 +161,31 @@ export interface KeyMetrics {
   pct_change: number;
 }
 
+// ─── INDEX MOVER ───────────────────────────────────────────────
+
+/**
+ * One entry from `GET stocks/index-mover` — a stock ranked by its
+ * contribution ("mover") to the composite index.
+ *
+ * `percent_change` is the day-change percent (signed; positive = up)
+ * and matches the `TopStockItem` / `TickerItem` field name — *not*
+ * `pct_change`. `weight` is the stock's index weight (raw points),
+ * and `weight_percent` is that weight as a percentage of the index.
+ */
+export interface IndexMoverItem {
+  ticker: string;
+  company_name: string;
+  price: number;
+  percent_change: number;
+  /** Index weight in raw points. */
+  weight: number;
+  /** Index weight as a percentage of the index. */
+  weight_percent: number;
+}
+
+/** Wire format for `GET stocks/index-mover` — a bare array, no wrapper. */
+export type IndexMoverResponse = IndexMoverItem[];
+
 // ─── STOCK HISTORICAL ──────────────────────────────────────────
 
 /**

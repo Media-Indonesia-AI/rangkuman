@@ -14,6 +14,7 @@ import { request, todayIsoDate } from "./client";
 import type {
   CompositeChartResponse,
   ForeignStocksResponse,
+  IndexMoverResponse,
   KeyMetrics,
   StockHistoricalResponse,
   TickerInformation,
@@ -33,6 +34,19 @@ export function getTopStocks(limit = 5): Promise<TopStocksResponse> {
 /** Fetch the full ticker catalog with latest price and day change. */
 export function getTickers(): Promise<TickersResponse> {
   return request<TickersResponse>("stocks/ticker", { method: "GET" });
+}
+
+/**
+ * Fetch the top index movers — stocks ranked by their contribution
+ * to the composite index. `limit` controls how many are returned
+ * (default 10).
+ */
+export function getIndexMover(limit = 10): Promise<IndexMoverResponse> {
+  const params = new URLSearchParams({ limit: String(limit) });
+  return request<IndexMoverResponse>(
+    `stocks/index-mover?${params.toString()}`,
+    { method: "GET" },
+  );
 }
 
 /**

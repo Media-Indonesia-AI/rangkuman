@@ -26,6 +26,8 @@ export type {
   CompositeChartResponse,
   ForeignStockFlow,
   ForeignStocksResponse,
+  IndexMoverItem,
+  IndexMoverResponse,
   KeyMetrics,
   RelatedStock,
   StockHistoricalPoint,
