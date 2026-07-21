@@ -119,7 +119,7 @@ export default function StockDetailPage({ params }: PageProps) {
                   older mock recaps when the fetch returns empty. Self-
                   contained in <ArsipSingkat> so it shares the same data
                   conventions as LatestHeadlines. */}
-              <ArsipSingkat kode={kode} />
+              {/* <ArsipSingkat kode={kode} /> */}
 
               {/* "Tentang {kode}" info card. Sektor / Harga / Perubahan are
                   wired to the live ticker info; Coverage stays as
