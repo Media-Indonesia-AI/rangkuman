@@ -2,23 +2,25 @@
 
 import { TrendingUp, Minus, TrendingDown } from "lucide-react";
 import { useMemo } from "react";
+import { format, parseISO } from "date-fns";
 import type { Sentimen } from "@/lib/mock/recaps";
-import type { EmbeddedStory } from "@/lib/api";
+import type { HeadlineLast7DaysItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
-import { useHeadlineStories } from "./HeadlineStoriesProvider";
+import { useHeadlinesLast7Days } from "@/lib/hooks/useHeadlinesLast7Days";
 
 /** One day's worth of chart data — the calendar date (yyyy-mm-dd)
- *  plus the dominant sentiment for that day's stories. */
+ *  plus the dominant sentiment for that day's headlines. */
 type SentimentDay = { date: string; sentiment: Sentimen };
 
 interface SentimentSparklineProps {
+  /** Ticker code the trail is scoped to (e.g. `"ANTM"`). */
+  kode: string;
   /** ISO date for "today" — used only to highlight the matching
-   *  bar (the one whose `recap_date` equals this). Doesn't pin the
-   *  window size — the chart's range follows the response. The
-   *  headline-scoped stories are provided by
-   *  `<HeadlineStoriesProvider>`, not by this prop. */
+   *  bar (the one whose `created_at` date equals this). Doesn't pin
+   *  the window size — the chart's range follows the response. When
+   *  set, it also anchors the last-7-days window end. */
   todayIso?: string;
   className?: string;
 }
@@ -38,37 +40,40 @@ function dayLabel(dateStr: string): { day: string; date: number } {
 
 /**
  * Mini bar chart showing daily sentiment, one bar per unique day
- * present in the `/stories` response. Green = Positif, gray = Netral,
- * red = Negatif. Netral bars are slightly shorter so the visual
- * hierarchy is clear.
+ * present in the `headlines/last-7-days` response. Green = Positif,
+ * gray = Netral, red = Negatif. Netral bars are slightly shorter so
+ * the visual hierarchy is clear.
  *
- * Data flow: shared via `<HeadlineStoriesProvider>` (mounted by the
- * page). Reads `useHeadlineStories()` to consume the headline-scoped
- * `EmbeddedStory[]` that the provider fetches once per page load —
- * the same fetch that drives `<NewsTimeline>`, `<ArticlesByMediaWidget>`,
- * and `<AggregateSummary>`.
+ * Data flow: `useHeadlinesLast7Days(kode)` fetches the ticker's
+ * last-7-days headlines via the shared (ticker, date) request cache.
  *
- * Each story is bucketed by its `recap_date`'s date portion. The
- * chart's range follows the response — if the API returns stories
+ * Each headline is bucketed by its `created_at`'s date portion. The
+ * chart's range follows the response — if the API returns headlines
  * spanning 1 distinct day, the chart renders 1 bar; 3 days → 3
  * bars; 10 days → 10 narrower bars. A day's bar takes the dominant
- * sentiment across that day's stories, with ties broken in favor
+ * sentiment across that day's headlines, with ties broken in favor
  * of `positif` to match the recaps' "good news dominates" framing.
  *
  * No placeholder neutral bars are rendered for empty days — the
  * chart's window is the actual data span, not a synthetic window.
  */
-export function SentimentSparkline({ todayIso, className }: SentimentSparklineProps) {
-  // Shared headline-scoped fetch owned by <HeadlineStoriesProvider>.
-  const { stories, isLoading: storiesLoading } = useHeadlineStories();
+export function SentimentSparkline({ kode, todayIso, className }: SentimentSparklineProps) {
+  // Last-7-days headlines for this ticker, via the shared request cache.
+  const { data: headlines, isLoading: storiesLoading } = useHeadlinesLast7Days(
+    kode,
+    todayIso || undefined,
+  );
 
-  // Bucket stories by date (yyyy-mm-dd slice of recap_date), then
+  // Bucket headlines by local-time date (matching <NewsTimeline>), then
   // walk the sorted date list and pick each day's dominant sentiment.
   // The resulting array's length is the chart's bar count.
   const data = useMemo<SentimentDay[]>(() => {
-    const storiesByDay = new Map<string, EmbeddedStory[]>();
-    for (const story of stories) {
-      const day = story.recap_date.split("T")[0];
+    const storiesByDay = new Map<string, HeadlineLast7DaysItem[]>();
+    for (const story of headlines) {
+      // Use local-time date (via date-fns) so a headline lands on the
+      // same calendar day the timeline shows it — the UTC date can
+      // differ (e.g. an 18:49Z story is the next day in WIB).
+      const day = format(parseISO(story.created_at), "yyyy-MM-dd");
       const bucket = storiesByDay.get(day);
       if (bucket) bucket.push(story);
       else storiesByDay.set(day, [story]);
@@ -81,7 +86,7 @@ export function SentimentSparkline({ todayIso, className }: SentimentSparklinePr
         const dayStories = storiesByDay.get(day) ?? [];
         const counts = { positif: 0, netral: 0, negatif: 0 };
         for (const s of dayStories) {
-          counts[toSentimen(s.primary_sentiment)] += 1;
+          counts[toSentimen(s.sentiment)] += 1;
         }
         // Tie-break: positif > negatif > netral. Keeps the chart from
         // drifting to neutral just because a busy day had a mix.
@@ -90,7 +95,7 @@ export function SentimentSparkline({ todayIso, className }: SentimentSparklinePr
         else if (counts.negatif >= counts.netral) sentiment = "negatif";
         return { date: day, sentiment };
       });
-  }, [stories]);
+  }, [headlines]);
 
   // SVG layout. `slotW` adapts to the actual number of days in the
   // response so the chart never overflows its viewport. When empty

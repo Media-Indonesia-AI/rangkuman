@@ -103,9 +103,8 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* News timeline */}
               <NewsTimeline kode={kode} todayIso={''} />
 
-              {/* Sentiment trail — reads from the shared
-                  <HeadlineStoriesProvider> (mounted above). */}
-              <SentimentSparkline todayIso={''} />
+              {/* Sentiment trail — last-7-days headlines for this ticker. */}
+              <SentimentSparkline kode={kode} todayIso={''} />
 
               {/* Articles grouped by media — data-driven via the
                   shared headline-scoped stories fetched once by
