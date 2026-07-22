@@ -215,7 +215,7 @@ function PctChangeChip({
 /** Ticker code chip. */
 function TickerBadge({ kode }: { kode: string }) {
   return (
-    <span className="rounded border border-white bg-bg-tertiary px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-text-primary">
+    <span className="rounded border border-white bg-bg-tertiary px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-brand">
       {kode}
     </span>
   );

@@ -102,7 +102,7 @@ export function StockHero({
             >
               {pctChange == null
                 ? "—"
-                : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2).replace(".", ",")}%`}
+                : `${pctChange >= 0 ? "+" : ""}${pctChange.toFixed(2).replace(".", ",")}%`} hari ini
             </p>
           </div>
         </div>
