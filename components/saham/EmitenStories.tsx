@@ -177,7 +177,7 @@ function EmptyStory({ ticker }: { ticker: string }) {
 /** Ticker code chip. */
 function TickerBadge({ kode }: { kode: string }) {
   return (
-    <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-text-primary">
+    <span className="rounded border border-white bg-bg-tertiary px-1.5 py-0.5 font-mono text-[11px] font-semibold tracking-wide text-text-primary">
       {kode}
     </span>
   );
@@ -242,7 +242,7 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
       <h3 className="mt-2.5 text-lg font-bold leading-tight text-text-primary">
         {story.title}
       </h3>
-      <p className="mt-1 text-[13px] leading-relaxed text-text-muted">
+      <p className="mt-1 text-[13px] leading-relaxed text-text-muted line-clamp-1">
         {story.summary}
       </p>
 
@@ -295,7 +295,7 @@ function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: bool
         <h4 className="mt-1 text-[15px] font-semibold leading-tight text-text-primary">
           {story.title}
         </h4>
-        <p className="mt-0.5 text-[12px] leading-snug text-text-muted">
+        <p className="mt-0.5 text-[12px] leading-snug text-text-muted line-clamp-1">
           {story.summary}
         </p>
       </div>
