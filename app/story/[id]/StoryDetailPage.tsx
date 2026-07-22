@@ -5,7 +5,6 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { useListStory } from "@/lib/hooks/useListStory";
 import type { StoryFilter } from "@/lib/api";
 import {
@@ -49,7 +48,6 @@ export default function StoryDetailPage({
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-4xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-6xl lg:px-8">

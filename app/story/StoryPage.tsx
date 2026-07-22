@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ChevronLeft, ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { TopTicker } from "@/components/TopTicker";
 import { useMultiStories } from "@/lib/hooks/useMultiStories";
 import {
   STORY_LIMIT,
@@ -40,7 +39,6 @@ export default function StoryPage() {
 
   return (
     <>
-      <TopTicker />
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-4xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-6xl lg:px-8">

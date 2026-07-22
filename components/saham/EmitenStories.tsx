@@ -34,7 +34,7 @@ import { Shimmer } from "../Shimmer";
  */
 
 /** Fallback ticker when the host page doesn't pass one. */
-const DEFAULT_TICKER = "BBCA";
+const DEFAULT_TICKER = "";
 
 /** How many stories to request (featured + list rows). */
 const STORY_LIMIT = 6;
