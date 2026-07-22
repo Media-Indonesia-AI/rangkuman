@@ -128,6 +128,14 @@ export interface HeadlineLast7DaysItem {
   keywords: HeadlineKeyword[];
   /** Topics this headline is filed under. */
   topics: StoryTopic[];
+  /** Price move on `primary_ticker_code` since the headline was
+   *  created, expressed as a percentage (e.g. `12.5` = +12.5%,
+   *  `-3.2` = -3.2%). Optional — older responses may omit it,
+   *  so consumers must guard. When present, this is the value
+   *  rendered as "pergerakan harga sejak story" on the hero
+   *  strip. Sign convention matches the price APIs:
+   *  positive = up, negative = down. */
+  pct_change_since_story?: number;
 }
 
 /** Wire format for `GET headlines/last-7-days`: `{ data: [...] }`. */

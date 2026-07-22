@@ -1,7 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Newspaper, ArrowRight, Clock } from "lucide-react";
+import {
+  Newspaper,
+  ArrowRight,
+  Clock,
+  TrendingUp,
+  TrendingDown,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { Sentimen } from "@/lib/mock/recaps";
@@ -174,6 +180,38 @@ function EmptyStory({ ticker }: { ticker: string }) {
   );
 }
 
+/**
+ * "Since story" price-move chip — turns `HeadlineLast7DaysItem[
+ * 'pct_change_since_story']` into a sign + color + arrow.
+ * Returns `null` when the field is absent so the caller can fall
+ * back to its own `n/a` placeholder. Sign convention matches the
+ * price APIs: positive = up (bullish, `TrendingUp`), negative =
+ * down (bearish, `TrendingDown`), zero renders as neutral with
+ * `TrendingUp` (no arrow flip on 0).
+ */
+function PctChangeChip({
+  pct,
+}: {
+  pct: number | undefined;
+}) {
+  if (pct === undefined || pct === null) return null;
+  const isPositive = pct >= 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  const color = isPositive ? "text-bullish" : "text-bearish";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 font-mono text-[11px] font-bold tabular-nums",
+        color,
+      )}
+    >
+      <Icon className="h-3 w-3" aria-hidden />
+      {isPositive ? "+" : ""}
+      {pct.toFixed(1)}%
+    </span>
+  );
+}
+
 /** Ticker code chip. */
 function TickerBadge({ kode }: { kode: string }) {
   return (
@@ -260,9 +298,16 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
             <NotAvailable />
           )}
         </div>
-        {/* Price move "sejak story" isn't in the endpoint yet. */}
+        {/* Price move "sejak story" — driven by
+            `pct_change_since_story` on the headline. Falls back to
+            `n/a` when the field is absent (older responses). */}
         <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-faint">
-          <NotAvailable /> sejak story
+          {story.pct_change_since_story !== undefined ? (
+            <PctChangeChip pct={story.pct_change_since_story} />
+          ) : (
+            <NotAvailable />
+          )}
+          sejak story
         </span>
       </div>
     </Link>
@@ -282,8 +327,13 @@ function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: bool
     >
       <div className="flex w-[52px] shrink-0 flex-col items-start gap-1">
         <TickerBadge kode={story.primary_ticker_code} />
-        {/* Price change isn't in the endpoint yet. */}
-        <NotAvailable />
+        {/* Price change "sejak story" — falls back to `n/a` when
+            the endpoint doesn't ship `pct_change_since_story`. */}
+        {story.pct_change_since_story !== undefined ? (
+          <PctChangeChip pct={story.pct_change_since_story} />
+        ) : (
+          <NotAvailable />
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
