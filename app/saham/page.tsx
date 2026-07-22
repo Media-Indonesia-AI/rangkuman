@@ -134,7 +134,7 @@ export default function SahamPage() {
 
               {/* Feed column */}
               <div className="min-w-0 space-y-5">
-                <EmitenStories />
+                <EmitenStories storyLimit={3} />
 
                 {/* Date picker + recap summary */}
                 <div className="flex flex-wrap items-center justify-between gap-3">

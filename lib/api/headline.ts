@@ -126,23 +126,40 @@ export function getHeadlinesLast7Days(
 }
 
 /**
- * Fetch a paginated, multi-date list of stories for a ticker.
+ * Fetch a paginated, multi-date list of stories, optionally scoped
+ * to a single ticker.
  *
- * @param ticker Ticker code (e.g. `"ANTM"`). Uppercased before being
- *               inserted into the query so callers can pass either case.
+ * When `ticker` is provided (non-empty after `trim()`), the request
+ * is scoped to that ticker — useful for the per-emiten Story feed
+ * on `/stock/[kode]`. When `ticker` is omitted / blank, the param
+ * is left off the query entirely and the endpoint returns the
+ * cross-ticker feed — what `/story/` (the listing) renders.
+ *
+ * Same-case insensitive: a passed `"antm"` is uppercased before
+ * being inserted so callers don't need to normalize themselves.
+ *
+ * @param ticker Optional ticker code (e.g. `"ANTM"`). Empty string
+ *               / `undefined` → cross-ticker feed (no `ticker=` param).
  * @param limit  How many stories to return per page (default 5).
  * @param page   1-based page number (default 1).
  */
 export function getMultiDateStories(
-  ticker: string,
+  ticker?: string,
   limit = 5,
   page = 1,
 ): Promise<MultiDateStoriesResponse> {
   const params = new URLSearchParams({
-    ticker: ticker.toUpperCase(),
     limit: String(limit),
     page: String(page),
   });
+  // Only set `ticker=` when the caller actually wants one. Leaving
+  // it off lets the server apply its cross-ticker default. Whitespace-
+  // only input is treated the same as omitted so a stray " " from
+  // a UI field doesn't accidentally filter to ticker `" "`.
+  const trimmed = ticker?.trim();
+  if (trimmed) {
+    params.set("ticker", trimmed.toUpperCase());
+  }
   return request<MultiDateStoriesResponse>(
     `headlines/multi-date-stories?${params.toString()}`,
     { method: "GET" },

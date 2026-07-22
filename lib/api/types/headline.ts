@@ -142,4 +142,5 @@ export interface HeadlinesLast7DaysResponse {
  */
 export interface MultiDateStoriesResponse {
   data: HeadlineLast7DaysItem[];
+  total: number;
 }

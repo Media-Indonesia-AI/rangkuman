@@ -37,7 +37,7 @@ import { Shimmer } from "../Shimmer";
 const DEFAULT_TICKER = "";
 
 /** How many stories to request (featured + list rows). */
-const STORY_LIMIT = 6;
+const STORY_LIMIT = 5;
 
 /** Visual style per sentiment — pill colors + status dot. */
 const sentimentStyle: Record<
@@ -57,14 +57,19 @@ interface EmitenStoriesProps {
   /** Layout variant (default `"feed"`). */
   variant?: EmitenStoriesVariant;
   className?: string;
+  storyLimit?: number;
 }
 
 export function EmitenStories({
   ticker = DEFAULT_TICKER,
   variant = "feed",
   className,
+  storyLimit = STORY_LIMIT,
 }: EmitenStoriesProps) {
-  const { data: stories, isLoading } = useMultiStories(ticker, STORY_LIMIT);
+  const { data: stories, total, isLoading } = useMultiStories(
+    ticker,
+    storyLimit,
+  );
   const [featured, ...rest] = stories;
 
   const seeAll = (
@@ -72,7 +77,9 @@ export function EmitenStories({
       href="/story"
       className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-brand-hover"
     >
-      {variant === "highlight" ? "Lihat semua story" : `Lihat semua (${stories.length})`}
+      {variant === "highlight"
+        ? "Lihat semua story"
+        : `Lihat semua (${total})`}
       <ArrowRight
         className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
         aria-hidden
