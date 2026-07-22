@@ -1,12 +1,10 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { useListStory } from "@/lib/hooks/useListStory";
-import type { StoryFilter } from "@/lib/api";
+import { useHeadlineId } from "@/lib/hooks/useHeadlineId";
 import {
   Hero as StoryHero,
   StoriesList as StoryStoriesList,
@@ -14,34 +12,29 @@ import {
   Sidebar as StorySidebar,
 } from "@/components/story-detail";
 
-/** Page-size for the headline-scoped `/stories` fetch. Mirrors
- *  `HeadlineStoriesProvider.FETCH_LIMIT` — 10 covers the common
- *  case (most deep-linked headlines return a handful of stories). */
-const FETCH_LIMIT = 10;
-
 /**
- * Page for `/story/[id]`. `app/story/[id]/page.tsx` simply
- * re-exports this default — keeping the route entry minimal.
- * Data flows through `useListStory(limit, 0, [{headline_id, eq, id}])`,
- * and each visual block (hero / stories list / articles / sidebar)
- * is its own widget under `@/components/story-detail`.
+ * Page for `/story/[id]` — composes the four
+ * `@/components/story-detail` widgets from the headline detail
+ * fetched by `useHeadlineId()`.
  *
- * `useListStory` lists `filters` in its `useEffect` dep array, so
- * the reference is `useMemo`-pinned to `headlineId` to avoid the
- * "Maximum update depth exceeded" loop an inline array would cause.
+ * The hook owns the route-param lookup + the `loadHeadlineById`
+ * fetch + the loading state, so this page is just data wiring:
+ * destructure `headlineId` / `detail` / `isLoading` from the hook,
+ * split `detail.stories` into featured + rest + sidebar slots, and
+ * pass everything down to the widgets.
+ *
+ * `HeadlineDetail` exposes:
+ *   - StoryItem fields (`title`, `summary`, `primary_ticker_code`,
+ *     `sentiment`, `keywords`, `topics`, `created_at`,
+ *     `updated_at`) — these drive the hero.
+ *   - `stories: EmbeddedStory[]` — the related stories, used by
+ *     the `StoriesList`, the `Articles` widget (liputan from the
+ *     first story), and the `Sidebar`.
  */
-export default function StoryDetailPage({
-  params,
-}: {
-  params: { id: string };
-}) {
-  const headlineId = params.id;
-  const filters = useMemo<StoryFilter[]>(
-    () => [{ field: "headline_id", operator: "eq", value: headlineId }],
-    [headlineId],
-  );
-  const { data: stories, isLoading } = useListStory(FETCH_LIMIT, 0, filters);
+export default function StoryDetailPage() {
+  const { headlineId, detail, isLoading } = useHeadlineId();
 
+  const stories = detail?.stories ?? [];
   const featured = stories[0];
   const rest = stories.slice(1);
   const otherStories = rest.slice(0, 5);
@@ -65,7 +58,7 @@ export default function StoryDetailPage({
           </Link>
         </div>
 
-        <StoryHero featured={featured} isLoading={isLoading} />
+        <StoryHero detail={detail} isLoading={isLoading} />
 
         {/* 2-COL: Stories list + sidebar */}
         <div className="grid gap-6 lg:grid-cols-3">
