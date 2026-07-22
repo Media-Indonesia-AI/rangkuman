@@ -69,7 +69,7 @@ export function EmitenStories({
 
   const seeAll = (
     <Link
-      href="/trending"
+      href="/story"
       className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-brand-hover"
     >
       {variant === "highlight" ? "Lihat semua story" : `Lihat semua (${stories.length})`}
@@ -221,7 +221,7 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
   const topic = story.topics[0]?.name;
   return (
     <Link
-      href={`/stock/${story.primary_ticker_code}`}
+      href={`/story/${story.id}`}
       className="block rounded-lg border border-border bg-bg-secondary p-4 transition-colors hover:border-border-strong"
     >
       <div className="flex flex-wrap items-center gap-2">
@@ -265,7 +265,7 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
 function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: boolean }) {
   return (
     <Link
-      href={`/stock/${story.primary_ticker_code}`}
+      href={`/story/${story.id}`}
       className={cn(
         "flex gap-3 py-3 transition-colors hover:bg-bg-secondary/60",
         // Skip the top divider on the first row so there's no line
