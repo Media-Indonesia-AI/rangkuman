@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useHeadlineId } from "@/lib/hooks/useHeadlineId";
+import { useMultiStories } from "@/lib/hooks/useMultiStories";
 import {
   Hero as StoryHero,
   StoriesList as StoryStoriesList,
@@ -15,29 +16,34 @@ import {
 /**
  * Page for `/story/[id]` — composes the four
  * `@/components/story-detail` widgets from the headline detail
- * fetched by `useHeadlineId()`.
+ * fetched by `useHeadlineId()` and the multi-stories feed fetched
+ * by `useMultiStories()`.
  *
- * The hook owns the route-param lookup + the `loadHeadlineById`
- * fetch + the loading state, so this page is just data wiring:
- * destructure `headlineId` / `detail` / `isLoading` from the hook,
- * split `detail.stories` into featured + rest + sidebar slots, and
- * pass everything down to the widgets.
+ * The hooks own the route-param lookup + network round-trip + the
+ * loading state, so this page is just data wiring: destructure
+ * each hook's payload and pass it down to the matching widget.
  *
- * `HeadlineDetail` exposes:
- *   - StoryItem fields (`title`, `summary`, `primary_ticker_code`,
- *     `sentiment`, `keywords`, `topics`, `created_at`,
- *     `updated_at`) — these drive the hero.
- *   - `stories: EmbeddedStory[]` — the related stories, used by
- *     the `StoriesList`, the `Articles` widget (liputan from the
- *     first story), and the `Sidebar`.
+ * Data sources:
+ *   - `useHeadlineId()` → `HeadlineDetail` (drives the hero and
+ *     the related-stories list). `stories[]` is the older
+ *     `EmbeddedStory` shape used by `StoriesList`.
+ *   - `useMultiStories("", 3)` → `HeadlineLast7DaysItem[]` capped
+ *     at 3, fed to the sidebar's "Story Lainnya" rail. Empty
+ *     ticker pulls the cross-ticker feed so the sidebar previews
+ *     the latest headlines regardless of the current story's
+ *     ticker.
  */
 export default function StoryDetailPage() {
   const { headlineId, detail, isLoading } = useHeadlineId();
+  // Sidebar feed — cross-ticker, 3 items. Empty ticker routes
+  // through the cross-ticker endpoint (no suppression).
+  const {
+    data: otherStories,
+    total: otherTotal,
+    isLoading: isLoadingOther,
+  } = useMultiStories("", 3);
 
   const stories = detail?.stories ?? [];
-  const featured = stories[0];
-  const rest = stories.slice(1);
-  const otherStories = rest.slice(0, 5);
 
   return (
     <>
@@ -65,21 +71,21 @@ export default function StoryDetailPage() {
           {/* MAIN */}
           <div className="lg:col-span-2 space-y-6">
             <StoryStoriesList
-              stories={rest}
+              stories={stories}
               isLoading={isLoading}
               totalCount={stories.length}
             />
-            {featured?.articles && featured.articles.length > 0 && (
+            {/* {featured?.articles && featured.articles.length > 0 && (
               <StoryArticles articles={featured.articles} />
-            )}
+            )} */}
           </div>
 
           {/* SIDEBAR */}
           <StorySidebar
             otherStories={otherStories}
-            isLoading={isLoading}
+            isLoading={isLoadingOther}
             headlineId={headlineId}
-            totalCount={stories.length}
+            totalCount={otherTotal}
           />
         </div>
       </main>

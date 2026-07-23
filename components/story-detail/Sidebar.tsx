@@ -1,27 +1,28 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
-import { cn } from "@/lib/utils";
-import type { EmbeddedStory } from "@/lib/api";
-import { sentimentMeta } from "./shared";
+import type { HeadlineLast7DaysItem } from "@/lib/api";
 
 interface StorySidebarProps {
-  /** Stories to show in the "Story Lainnya" card — typically
-   *  `stories.slice(1, 6)` so we don't duplicate the featured one
-   *  and cap at 5 to keep the card height bounded. */
-  otherStories: EmbeddedStory[];
+  /** Stories to show in the "Story Lainnya" card — fed by
+   *  `useMultiStories(ticker, 3)` on the page. Reuses the same
+   *  feed the `/story/` listing renders, so the rail previews
+   *  the latest headlines instead of the current headline's
+   *  siblings. Empty array renders the empty state. */
+  otherStories: HeadlineLast7DaysItem[];
   isLoading: boolean;
   /** The headline id this page is scoped to — surfaced in the
    *  "Tentang Story" card so the live data is visible at a glance. */
   headlineId: string;
-  /** Total fetched count, surfaced alongside `headlineId`. */
+  /** Total fetched count from the multi-stories feed, surfaced
+   *  alongside `headlineId`. */
   totalCount: number;
 }
 
 /** Right-rail sidebar — "Story Lainnya" (other stories from the
- *  same headline) on top, "Tentang Story" (static blurb + live
- *  data summary) below. Both cards stay mounted across states; the
- *  contents swap between skeleton / list / empty. */
+ *  multi-date stories feed) on top, "Tentang Story" (static blurb
+ *  + live data summary) below. Both cards stay mounted across
+ *  states; the contents swap between skeleton / list / empty. */
 export function Sidebar({
   otherStories,
   isLoading,
@@ -39,38 +40,9 @@ export function Sidebar({
           <OtherStoriesSkeleton />
         ) : otherStories.length > 0 ? (
           <ul className="space-y-2.5">
-            {otherStories.map((s) => {
-              const m = sentimentMeta[s.primary_sentiment];
-              return (
-                <li key={s.id}>
-                  <div className="group flex items-start gap-2">
-                    <span
-                      className={cn(
-                        "shrink-0 rounded border px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider",
-                        m.color,
-                      )}
-                    >
-                      {m.label}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <span className="block text-[12.5px] font-medium leading-snug text-text-primary transition-colors group-hover:text-brand">
-                        {s.headline}
-                      </span>
-                      <div className="mt-0.5 flex items-center gap-1.5 font-mono text-[9.5px] text-text-faint">
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            m.dot,
-                          )}
-                          aria-hidden
-                        />
-                        <time dateTime={s.recap_date}>{s.recap_date}</time>
-                      </div>
-                    </div>
-                  </div>
-                </li>
-              );
-            })}
+            {otherStories.map((story) => (
+              <OtherStoryRow key={story.id} story={story} />
+            ))}
           </ul>
         ) : (
           <p className="text-[11.5px] text-text-muted">
@@ -97,11 +69,55 @@ export function Sidebar({
         <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[10px]">
           <dt className="text-text-faint">Headline ID</dt>
           <dd className="truncate text-text-secondary">{headlineId}</dd>
-          <dt className="text-text-faint">Story diambil</dt>
+          <dt className="text-text-faint">Story total</dt>
           <dd className="text-text-secondary">{totalCount}</dd>
         </dl>
       </div>
     </aside>
+  );
+}
+
+/** One row in the "Story Lainnya" list. The leading badge is the
+ *  stock ticker (matching the hero's `MDKA`-style chip) rather
+ *  than the sentiment — the rail is a browse surface, so showing
+ *  the ticker first helps the eye scan for a known emiten. The
+ *  metadata line below the title still carries the date and pct
+ *  change, with `n/a` fallbacks when the API omits a value. */
+function OtherStoryRow({ story }: { story: HeadlineLast7DaysItem }) {
+  const pct = story.pct_change_since_story;
+  const pctColor =
+    pct === undefined
+      ? "text-text-faint"
+      : pct >= 0
+        ? "text-bullish"
+        : "text-bearish";
+  const pctLabel =
+    pct === undefined
+      ? "n/a"
+      : `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
+
+  return (
+    <li>
+      <Link href={`/story/${story.id}`} className="group block">
+        <div className="flex items-start gap-2">
+          <span className="shrink-0 rounded border border-brand/30 bg-brand/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-tight text-brand">
+            {story.primary_ticker_code || "n/a"}
+          </span>
+          <div className="min-w-0 flex-1">
+            <span className="block text-[12.5px] font-medium leading-snug text-text-primary transition-colors group-hover:text-brand">
+              {story.title || "n/a"}
+            </span>
+            <div className="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-[9.5px] text-text-faint">
+              <time dateTime={story.created_at}>
+                {story.created_at || "n/a"}
+              </time>
+              <span>·</span>
+              <span className={pctColor}>{pctLabel}</span>
+            </div>
+          </div>
+        </div>
+      </Link>
+    </li>
   );
 }
 

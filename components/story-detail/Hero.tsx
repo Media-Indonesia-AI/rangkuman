@@ -1,5 +1,6 @@
 import {
   TrendingUp,
+  TrendingDown,
   Calendar,
   Newspaper,
   Clock,
@@ -55,6 +56,10 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
     0,
   );
   const updateDate = detail.updated_at ?? detail.created_at;
+  // Total stories drives the timeline dot count below. When the
+  // endpoint grows a `story_count` field on the parent headline,
+  // this can be replaced with `detail.story_count`.
+  const totalStories = detail.stories.length;
 
   return (
     <>
@@ -89,6 +94,12 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
       <p className="mt-2 text-[14px] leading-relaxed text-text-secondary sm:text-[15px]">
         {detail.summary}
       </p>
+
+      {/* Timeline — one dot per `detail.stories[]` entry, connected
+          by a thin line. The active (most recent) dot is enlarged
+          and brand-colored; the rest are smaller muted markers.
+          Renders nothing when there are no stories to show. */}
+      {/* <StoryTimeline totalStories={totalStories} /> */}
 
       {/* Stats row — `liputan` (summed) and `update` come from the
           API; `durasi` and `dimulai` are `n/a` since the endpoint
@@ -127,13 +138,34 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         </div>
       </div>
 
-      {/* Price impact — the endpoint doesn't carry a price move
-          since the headline started, so the strip stays as `n/a`.
-          Ticker mirrors the badge above. */}
+      {/* Price impact — driven by `detail.pct_change_since_story`
+          when the headline ships it; falls back to `n/a` for
+          older responses that don't. Sign convention: positive =
+          up (bullish + TrendingUp), negative = down (bearish +
+          TrendingDown). Ticker on the right mirrors the badge
+          above. */}
       <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
-        <span className="inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums text-text-faint">
-          <TrendingUp className="h-4 w-4" aria-hidden />
-          <NotAvailable />
+        <span className="inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums">
+          {detail.pct_change_since_story !== undefined ? (
+            (() => {
+              const pct = detail.pct_change_since_story!;
+              const isPositive = pct >= 0;
+              const Icon = isPositive ? TrendingUp : TrendingDown;
+              const color = isPositive ? "text-bullish" : "text-bearish";
+              return (
+                <span className={cn("inline-flex items-center gap-1", color)}>
+                  <Icon className="h-4 w-4" aria-hidden />
+                  {isPositive ? "+" : ""}
+                  {pct.toFixed(1)}%
+                </span>
+              );
+            })()
+          ) : (
+            <span className="inline-flex items-center gap-1 text-text-faint">
+              <TrendingUp className="h-4 w-4" aria-hidden />
+              <NotAvailable />
+            </span>
+          )}
         </span>
         <span className="font-mono text-[10.5px] text-text-muted">
           Pergerakan harga sejak story
@@ -181,6 +213,57 @@ function HeroSkeleton() {
         <Shimmer className="h-3.5 w-24" />
         <Shimmer className="h-3.5 w-20" />
         <Shimmer className="h-3.5 w-28" />
+      </div>
+    </div>
+  );
+}
+
+/** Dot timeline — one dot per story in the headline, connected by
+ *  a thin horizontal line. The active dot defaults to the most
+ *  recent story (last index) and is rendered larger and brand-
+ *  colored to mark the current position in the sequence; the rest
+ *  are smaller muted markers. Renders nothing when there's nothing
+ *  to show, so callers can pass `totalStories` of zero safely. */
+function StoryTimeline({
+  totalStories,
+  currentIndex,
+}: {
+  totalStories: number;
+  /** Optional override for which dot is rendered as the active one.
+   *  Defaults to the last index (most recent story). */
+  currentIndex?: number;
+}) {
+  if (totalStories <= 0) return null;
+  const active = currentIndex ?? totalStories - 1;
+
+  return (
+    <div className="mt-3 flex items-center gap-3">
+      <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+        Timeline
+      </span>
+      <div className="relative flex flex-1 items-center">
+        {/* Connecting line — sits behind the dots, inset slightly so
+            it doesn't poke out past the first/last marker. */}
+        <div className="absolute inset-x-1.5 top-1/2 h-px -translate-y-1/2 bg-border" />
+        {Array.from({ length: totalStories }).map((_, i) => {
+          const isActive = i === active;
+          return (
+            <div
+              key={i}
+              className="relative z-10 flex flex-1 items-center justify-center"
+            >
+              <span
+                aria-hidden
+                className={cn(
+                  "block rounded-full transition-colors",
+                  isActive
+                    ? "h-2.5 w-2.5 bg-brand"
+                    : "h-1.5 w-1.5 bg-text-muted",
+                )}
+              />
+            </div>
+          );
+        })}
       </div>
     </div>
   );
