@@ -7,7 +7,7 @@
  *   import { Hero, StoriesList, Articles, Sidebar } from "@/components/story-detail";
  */
 export { Hero } from "./Hero";
-export { StoriesList } from "./StoriesList";
+export { StoriesList } from "./StoriesTimeline";
 export { Articles } from "./Articles";
 export { Sidebar } from "./StorySidebar";
 export {
