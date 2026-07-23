@@ -66,12 +66,6 @@ export function Sidebar({
           (mingguan/bulanan). Beda dengan /sorotan/[id]/ yang merupakan
           berita individual. Update tiap minggu dari tim redaksi.
         </p>
-        <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 font-mono text-[10px]">
-          <dt className="text-text-faint">Headline ID</dt>
-          <dd className="truncate text-text-secondary">{headlineId}</dd>
-          <dt className="text-text-faint">Story total</dt>
-          <dd className="text-text-secondary">{totalCount}</dd>
-        </dl>
       </div>
     </aside>
   );
