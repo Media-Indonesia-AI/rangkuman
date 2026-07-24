@@ -8,6 +8,7 @@
 
 import type { StoryArticle, StoryItem, StorySentiment, StoryTopic } from "./story";
 
+
 // ─── HEADLINE DETAIL ───────────────────────────────────────────
 
 /**
@@ -136,6 +137,13 @@ export interface HeadlineLast7DaysItem {
    *  strip. Sign convention matches the price APIs:
    *  positive = up, negative = down. */
   pct_change_since_story?: number;
+  /** Per-headline dot-timeline payload — one entry per related
+   *  story. The endpoint may return this alongside the headline
+   *  so consumers (e.g. the featured story card) can render a
+   *  per-card progress strip without re-fetching the standalone
+   *  stories endpoint. Optional: older responses may omit it, so
+   *  consumers must guard. */
+  stories?: EmbeddedStory[];
 }
 
 /** Wire format for `GET headlines/last-7-days`: `{ data: [...] }`. */

@@ -11,7 +11,7 @@ import {
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { Sentimen } from "@/lib/mock/recaps";
-import type { HeadlineLast7DaysItem } from "@/lib/api";
+import type { HeadlineLast7DaysItem, EmbeddedStory } from "@/lib/api";
 import { useMultiStories } from "@/lib/hooks/useMultiStories";
 import { Shimmer } from "../Shimmer";
 
@@ -262,7 +262,11 @@ function relativeUpdated(iso: string): string {
   return `${mins} menit lalu`;
 }
 
-function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
+function FeaturedStory({
+  story,
+}: {
+  story: HeadlineLast7DaysItem;
+}) {
   const topic = story.topics[0]?.name;
   return (
     <Link
@@ -283,6 +287,15 @@ function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
       <p className="mt-1 text-[13px] leading-relaxed text-text-muted line-clamp-1">
         {story.summary}
       </p>
+
+      {/* Timeline — sits between the summary and the footer so it
+          reads as a per-card progress strip. Sourced from the
+          headline's embedded `stories` payload so the dot count
+          reflects the actual related-story count rather than the
+          size of the parent feed. */}
+      <div className="mt-3">
+        <StoryTimeline stories={story.stories ?? []} />
+      </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-white pt-2.5">
         <div className="flex items-center gap-2">
@@ -350,6 +363,46 @@ function StoryRow({ story, first }: { story: HeadlineLast7DaysItem; first?: bool
         </p>
       </div>
     </Link>
+  );
+}
+
+/**
+ * Dot timeline — one dot per story, equal-weighted and uniform in
+ * color. The track is a single horizontal line that starts at the
+ * left edge of the row and ends at the last dot. Each dot is a
+ * button with a native `title` tooltip so hovering surfaces the
+ * story's title. Renders nothing when the stories array is empty
+ * so callers can safely drop it next to the loading skeleton and
+ * empty state.
+ */
+function StoryTimeline({ stories }: { stories: EmbeddedStory[] }) {
+  if (stories.length === 0) return null;
+
+  return (
+    <div className="flex items-center gap-3">
+      <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+        Timeline
+      </span>
+      <div className="relative flex flex-1 items-center">
+        {/* Track — starts and ends at the center of the first and last
+            dots so the endpoints are anchored cleanly to the timeline. */}
+        <div className="absolute inset-x-1 top-1/2 h-px -translate-y-1/2 bg-border" />
+        <div className="relative z-10 flex flex-1 items-center justify-between">
+          {stories.map((story, index) => {
+            const title = story.headline || "n/a";
+            return (
+              <button
+                key={`${story.id}-${index}`}
+                type="button"
+                title={title}
+                aria-label={title}
+                className="block h-2 w-2 shrink-0 rounded-full bg-bullish transition-transform hover:scale-125 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bullish/40"
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
   );
 }
 
