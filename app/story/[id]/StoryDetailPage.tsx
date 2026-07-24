@@ -9,8 +9,7 @@ import { useMultiStories } from "@/lib/hooks/useMultiStories";
 import {
   Hero as StoryHero,
   StoriesList as StoryStoriesList,
-  Articles as StoryArticles,
-  Sidebar as StorySidebar,
+  StorySidebar,
 } from "@/components/story-detail";
 
 /**

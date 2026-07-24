@@ -23,11 +23,9 @@ interface StorySidebarProps {
  *  multi-date stories feed) on top, "Tentang Story" (static blurb
  *  + live data summary) below. Both cards stay mounted across
  *  states; the contents swap between skeleton / list / empty. */
-export function Sidebar({
+export function StorySidebar({
   otherStories,
   isLoading,
-  headlineId,
-  totalCount,
 }: StorySidebarProps) {
   return (
     <aside className="space-y-4">

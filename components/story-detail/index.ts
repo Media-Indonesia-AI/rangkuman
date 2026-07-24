@@ -9,7 +9,7 @@
 export { Hero } from "./Hero";
 export { StoriesList } from "./StoriesTimeline";
 export { Articles } from "./Articles";
-export { Sidebar } from "./StorySidebar";
+export { StorySidebar } from "./StorySidebar";
 export {
   STATUS_ICON,
   sentimentMeta,
