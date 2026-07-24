@@ -5,7 +5,7 @@
  *
  *   import { EmitenStories, PalingBanyakDiberitakan } from "@/components/saham";
  */
-export { EmitenStories } from "./EmitenStories";
+export { EmitenStories } from "./EmitenStories/EmitenStories";
 export { PalingBanyakDiberitakan } from "./PalingBanyakDiberitakan";
 export { SahamSubTabs, type SahamTab } from "./SahamSubTabs";
 export { MobileTopMovers } from "./MobileTopMovers";
