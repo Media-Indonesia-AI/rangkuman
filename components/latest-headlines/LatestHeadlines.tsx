@@ -8,12 +8,12 @@ import {
   type UIEvent,
 } from "react";
 import type { StoryItem } from "@/lib/api";
-import { headlines as mockHeadlines } from "@/lib/mock/headlines";
 import { loadHeadlines } from "@/lib/api/cache";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
-import { LatestHeadlinesFallbackRow } from "./LatestHeadlinesFallbackRow";
+import { LatestHeadlinesLoginPrompt } from "./LatestHeadlinesLoginPrompt";
 import { LatestHeadlinesSkeleton } from "./LatestHeadlinesSkeleton";
 import {
   LatestHeadlinesLoadingTail,
@@ -32,10 +32,6 @@ const PAGE_LIMIT = 10;
  *  touchpads. */
 const END_REACHED_THRESHOLD_PX = 80;
 
-type RenderSource =
-  | { kind: "live"; items: StoryItem[]; firstPageLoading: boolean }
-  | { kind: "fallback"; items: (typeof mockHeadlines)[number][] };
-
 /**
  * `<LatestHeadlines />` — vertically scrollable timeline of
  * stories with a relative-time rail, ticker badge, sentiment pill,
@@ -44,10 +40,11 @@ type RenderSource =
  * Composes the small widgets in this folder:
  *   - `<LatestHeadlinesHeader />` — clock + title,
  *   - `<LatestHeadlinesRow />` — one live story row,
- *   - `<LatestHeadlinesFallbackRow />` — one mock story row,
  *   - `<LatestHeadlinesSkeleton />` — initial-load shimmer,
  *   - `<LatestHeadlinesLoadingTail />` / `<LatestHeadlinesEndTail />`
- *     — footer feedback while paginating / once the dataset ends.
+ *     — footer feedback while paginating / once the dataset ends,
+ *   - `<LatestHeadlinesLoginPrompt />` — auth gate shown to
+ *     anonymous visitors in place of the timeline.
  *
  * The widget asks the backend for `PAGE_LIMIT` rows per request.
  * The first page is fetched via the existing `useHeadlines` hook
@@ -69,25 +66,41 @@ type RenderSource =
  *   - During the in-flight window the timeline rail shows a
  *     pulsing shimmer skeleton instead of the live list.
  *   - On success, live `StoryItem`s drive the render.
- *   - On failure (auth, network, etc.) the widget silently falls
- *     back to the mock headlines so users still see content.
+ *   - On failure (network, empty backend) the timeline shows an
+ *     inline empty-state row — there is no mock-data fallback, so
+ *     the user always sees what the API actually returned.
+ *
+ * Auth: the widget reads `useCurrentUser()` and replaces the
+ * timeline with `<LatestHeadlinesLoginPrompt />` when the user is
+ * logged out. The fetch is also gated on `user !== null` so
+ * anonymous visitors don't burn a wasted 401 round-trip.
  *
  * Used directly by `app/saham/page.tsx` (mobile collapsed slot +
- * desktop right rail). The previous `<Sidebar />` wrapper that
- * added an outer `<aside>` was removed — this widget already
- * renders a `<section aria-label="Latest headlines">` so the
- * surrounding layout divs on the page provide all the sidebar
- * context the consumers need.
+ * desktop right rail). This widget already renders a `<section
+ * aria-label="Latest headlines">` so the surrounding layout divs
+ * on the page provide all the sidebar context the consumers need.
  */
 export function LatestHeadlines() {
+  // ── Auth gate ──────────────────────────────────────────────────
+  // The `/headlines` endpoint is member-only — anonymous visitors
+  // get a 401, which the hook currently swallows and falls back to
+  // the mock catalog (silently hiding the auth requirement). We
+  // gate explicitly so the user sees a clear "login to see this"
+  // CTA instead. `useCurrentUser()` is `undefined` during localStorage
+  // hydration, `null` when logged out, and a `MockUser` once authed.
+  const user = useCurrentUser();
+
   // Pagination state. `useHeadlines` seeds the first page (so we
   // get a reactive `isLoading` flag for the skeleton); subsequent
   // pages are appended manually so the array grows monotonically
-  // rather than resetting on each `skip` change.
+  // rather than resetting on each `skip` change. The fetch is gated
+  // on `user !== null` so anonymous visitors don't burn a wasted
+  // 401 round-trip — the login prompt below handles their UX path.
   const { data: firstPage, isLoading: isFirstPageLoading } = useHeadlines(
     PAGE_LIMIT,
     0,
     [],
+    user !== null,
   );
   const [items, setItems] = useState<StoryItem[]>([]);
   // Initial-load success flag — once the first page resolves we
@@ -124,18 +137,10 @@ export function LatestHeadlines() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFirstPageLoading, firstPage, firstPageSettled]);
 
-  // Single source-of-truth for the rendered list. Once the first
-  // page has settled:
-  //   - empty `firstPage` (auth/network failure or empty backend)
-  //     → fall back to mock headlines (matches prior behavior),
-  //   - non-empty `firstPage` → render the live list (whether the
-  //     user has scrolled past page 1 or not).
-  // While the first page is still loading we render an empty live
-  // list (so the skeleton branch in the JSX fires).
-  const renderSource: RenderSource =
-    items.length > 0 || !firstPageSettled
-      ? { kind: "live", items, firstPageLoading: isFirstPageLoading }
-      : { kind: "fallback", items: mockHeadlines };
+  // Render the live list straight from `items` + `isFirstPageLoading`.
+  // There is no mock fallback — when the API returns no rows the
+  // widget shows an inline empty-state row (handled in the JSX
+  // below) instead of silently substituting fake content.
 
   // Infinite-scroll trigger. Bound to the `<ol>`'s `onScroll` so we
   // don't need an IntersectionObserver; the cost is one event per
@@ -144,6 +149,11 @@ export function LatestHeadlines() {
   const handleScroll = useCallback(
     (e: UIEvent<HTMLOListElement>) => {
       if (isLoadingMore || !hasMore) return;
+      // Defensive gate — the login prompt returns early above, so
+      // this branch is unreachable in practice, but the guard
+      // documents intent and protects against future refactors that
+      // might render the scroll container before the auth check.
+      if (user === null) return;
       const el = e.currentTarget;
       const distanceToBottom =
         el.scrollHeight - (el.scrollTop + el.clientHeight);
@@ -184,8 +194,23 @@ export function LatestHeadlines() {
         })
         .finally(() => setIsLoadingMore(false));
     },
-    [hasMore, isLoadingMore, skip],
+    [hasMore, isLoadingMore, skip, user],
   );
+
+  // Replace the timeline with the login prompt for anonymous visitors.
+  // We keep the section chrome (border, padding) so the slot still
+  // looks like a sidebar widget rather than a full-bleed CTA panel.
+  if (user === null) {
+    return (
+      <section
+        className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+        aria-label="Latest headlines"
+      >
+        <LatestHeadlinesHeader />
+        <LatestHeadlinesLoginPrompt />
+      </section>
+    );
+  }
 
   return (
     <section
@@ -216,33 +241,35 @@ export function LatestHeadlines() {
         onScroll={handleScroll}
         className="relative max-h-[400px] overflow-y-auto overscroll-contain sm:max-h-[600px]"
       >
-        {renderSource.kind === "live" ? (
-          <>
-            {renderSource.firstPageLoading && (
-              <LatestHeadlinesSkeleton count={PAGE_LIMIT} />
-            )}
+        {isFirstPageLoading && (
+          <LatestHeadlinesSkeleton count={PAGE_LIMIT} />
+        )}
 
-            {renderSource.items.map((story, idx) => (
-              <LatestHeadlinesRow
-                key={story.id}
-                story={story}
-                isLast={idx === renderSource.items.length - 1}
-              />
-            ))}
+        {items.map((story, idx) => (
+          <LatestHeadlinesRow
+            key={story.id}
+            story={story}
+            isLast={idx === items.length - 1}
+          />
+        ))}
 
-            {isLoadingMore && <LatestHeadlinesLoadingTail />}
-            {!hasMore && firstPageSettled && renderSource.items.length > 0 && (
-              <LatestHeadlinesEndTail />
-            )}
-          </>
-        ) : (
-          renderSource.items.map((h) => (
-            <LatestHeadlinesFallbackRow
-              key={h.id}
-              headline={h}
-              isLast={false}
-            />
-          ))
+        {/* Empty state: first page resolved with zero rows. Shown
+            only after the request settled so it doesn't flash during
+            the initial loading window (the skeleton covers that). */}
+        {items.length === 0 && firstPageSettled && !isFirstPageLoading && (
+          <li className="flex flex-col items-center gap-1 px-4 py-8 text-center">
+            <p className="text-[12.5px] font-medium text-text-muted">
+              Belum ada headline hari ini.
+            </p>
+            <p className="font-mono text-[10.5px] text-text-faint">
+              Coba refresh beberapa menit lagi.
+            </p>
+          </li>
+        )}
+
+        {isLoadingMore && <LatestHeadlinesLoadingTail />}
+        {!hasMore && firstPageSettled && items.length > 0 && (
+          <LatestHeadlinesEndTail />
         )}
       </ol>
     </section>
