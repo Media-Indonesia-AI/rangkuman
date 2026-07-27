@@ -170,13 +170,6 @@ export default function SahamPage() {
       {subTab === "sektor" && (
         <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">
           <SektorSection />
-          <p className="mt-6 text-center font-mono text-[10px] text-text-muted">
-            Mau lihat semua 34 emiten? Buka{" "}
-            <Link href="/trending" className="text-text-secondary hover:text-brand">
-              /trending
-            </Link>{" "}
-            atau tambahkan ke watchlist dari halaman saham individual.
-          </p>
         </main>
       )}
       <Footer />
