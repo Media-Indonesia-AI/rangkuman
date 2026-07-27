@@ -3,9 +3,11 @@
 import { Building2 } from "lucide-react";
 import { CommodityPrices } from "@/components/commodity-prices";
 import { Shimmer } from "@/components/Shimmer";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useSectors } from "@/lib/hooks/useSectors";
 import { mapSector } from "@/lib/util/sectorMappers";
 import { SektorCard } from "./SektorCard";
+import { SektorLoginPrompt } from "./SektorLoginPrompt";
 
 interface SektorSectionProps {
   /** Whether to show the commodity prices block above the sector grid. */
@@ -117,7 +119,27 @@ export function SektorSection({
   showCommodities = true,
   className,
 }: SektorSectionProps) {
+  // Auth gate: the `stocks/sectors` endpoint is member-only —
+  // anonymous visitors get a 401 and the widget would silently render
+  // as an empty-state shell. We replace the whole section (sector
+  // grid + the optional CommodityPrices block above it) with a
+  // login prompt so the requirement is explicit. Note that
+  // `<CommodityPrices />` also has its own auth gate — when both
+  // are present, the inner gate returns its own prompt, but because
+  // we early-return at the top of this component for `user === null`,
+  // only the outer (sector) prompt is ever rendered. The inner
+  // gate is a safety net for pages that render CommodityPrices
+  // directly without SektorSection.
+  const user = useCurrentUser();
   const { data, isLoading } = useSectors();
+
+  if (user === null) {
+    return (
+      <div className={className}>
+        <SektorLoginPrompt />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (

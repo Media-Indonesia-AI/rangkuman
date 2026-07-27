@@ -1,6 +1,7 @@
 "use client";
 
 import { useCommodityCategories } from "@/lib/hooks/useCommodityCategories";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 import {
   mapCommodityCategories,
   type CommodityCategorySlug,
@@ -11,6 +12,7 @@ import { styleForBucket } from "./categoryStyles";
 import { CommodityTile } from "./CommodityTile";
 import { CommodityPricesEmpty } from "./CommodityPricesEmpty";
 import { CommodityPricesShimmer } from "./CommodityPricesShimmer";
+import { CommodityLoginPrompt } from "./CommodityLoginPrompt";
 
 interface CommodityPricesProps {
   filter?: CommodityCategorySlug;
@@ -53,7 +55,20 @@ interface CommodityPricesProps {
  *   - `./CommodityPricesEmpty`
  */
 export function CommodityPrices({ filter }: CommodityPricesProps) {
+  // Auth gate: the `/commodities/commodity-categories` endpoint is
+  // member-only — anonymous visitors get a 401, which the hook
+  // currently swallows and the widget silently renders as an empty
+  // grid (or the empty-state shell on `length === 0`). We replace
+  // the whole tree with a login prompt for anonymous visitors so the
+  // auth requirement is explicit. `useCurrentUser()` is `undefined`
+  // during hydration (no flash), `null` when logged out, and a
+  // `MockUser` once authenticated.
+  const user = useCurrentUser();
   const { data, isLoading } = useCommodityCategories();
+
+  if (user === null) {
+    return <CommodityLoginPrompt />;
+  }
 
   if (isLoading) {
     return <CommodityPricesShimmer />;
