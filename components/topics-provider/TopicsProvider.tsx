@@ -2,7 +2,6 @@
 
 import { createContext, useContext, type ReactNode } from "react";
 import type { StoryFilter, StoryTopic } from "@/lib/api";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTopics } from "@/lib/hooks/useTopics";
 
 /**
@@ -88,13 +87,12 @@ export function TopicsProvider({ children }: TopicsProviderProps) {
   // We forward `enabled = user !== null && user !== undefined` to
   // `useTopics` so the fetch fires the moment a session is
   // available (post-login or post-register).
-  const user = useCurrentUser();
-  const isAuthenticated = user !== null && user !== undefined;
+  
   const { data: topics, isLoading } = useTopics(
     10,
     0,
     EMPTY_FILTERS,
-    isAuthenticated,
+    true,
   );
   return (
     <TopicsContext.Provider value={{ topics, isLoading }}>

@@ -5,12 +5,10 @@ import Link from "next/link";
 import { Inbox, ArrowUpRight, Flame, BookOpen } from "lucide-react";
 import type { StoryFilter } from "@/lib/api";
 import { useTopicsContext } from "@/components/topics-provider";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { CryptoSectionHeader } from "./CryptoSectionHeader";
 import { CryptoFeaturedCard } from "./CryptoFeaturedCard";
 import { CryptoStoryCard } from "./CryptoStoryCard";
-import { CryptoLoginPrompt } from "./CryptoLoginPrompt";
 import {
   CRYPTO_PAGE_STORIES,
   findCryptoTopicId,
@@ -75,19 +73,6 @@ export function CryptoRecapTab() {
     topicFilters,
     topicId !== null,
   );
-
-  // ── Auth gate ──────────────────────────────────────────────────
-  // The `/crypto` recap (live API + topic-scoped headlines) is
-  // member-only content. `useCurrentUser()` is `undefined` during
-  // hydration from localStorage, `null` when logged out, and a
-  // `MockUser` once authenticated. We render the recap content
-  // during the undefined phase (it naturally degrades to the mock
-  // fallback / empty state), then swap to the login prompt as
-  // soon as we know the user is anonymous.
-  const user = useCurrentUser();
-  if (user === null) {
-    return <CryptoLoginPrompt />;
-  }
 
   // Single source of truth for the cards:
   //   - When the live feed has rows, adapt each `StoryItem` to

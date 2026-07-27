@@ -9,11 +9,9 @@ import {
 } from "react";
 import type { StoryItem } from "@/lib/api";
 import { loadHeadlines } from "@/lib/api/cache";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
-import { LatestHeadlinesLoginPrompt } from "./LatestHeadlinesLoginPrompt";
 import { LatestHeadlinesSkeleton } from "./LatestHeadlinesSkeleton";
 import {
   LatestHeadlinesLoadingTail,
@@ -42,9 +40,7 @@ const END_REACHED_THRESHOLD_PX = 80;
  *   - `<LatestHeadlinesRow />` — one live story row,
  *   - `<LatestHeadlinesSkeleton />` — initial-load shimmer,
  *   - `<LatestHeadlinesLoadingTail />` / `<LatestHeadlinesEndTail />`
- *     — footer feedback while paginating / once the dataset ends,
- *   - `<LatestHeadlinesLoginPrompt />` — auth gate shown to
- *     anonymous visitors in place of the timeline.
+ *     — footer feedback while paginating / once the dataset ends.
  *
  * The widget asks the backend for `PAGE_LIMIT` rows per request.
  * The first page is fetched via the existing `useHeadlines` hook
@@ -70,37 +66,20 @@ const END_REACHED_THRESHOLD_PX = 80;
  *     inline empty-state row — there is no mock-data fallback, so
  *     the user always sees what the API actually returned.
  *
- * Auth: the widget reads `useCurrentUser()` and replaces the
- * timeline with `<LatestHeadlinesLoginPrompt />` when the user is
- * logged out. The fetch is also gated on `user !== null` so
- * anonymous visitors don't burn a wasted 401 round-trip.
- *
  * Used directly by `app/saham/page.tsx` (mobile collapsed slot +
  * desktop right rail). This widget already renders a `<section
  * aria-label="Latest headlines">` so the surrounding layout divs
  * on the page provide all the sidebar context the consumers need.
  */
 export function LatestHeadlines() {
-  // ── Auth gate ──────────────────────────────────────────────────
-  // The `/headlines` endpoint is member-only — anonymous visitors
-  // get a 401, which the hook currently swallows and falls back to
-  // the mock catalog (silently hiding the auth requirement). We
-  // gate explicitly so the user sees a clear "login to see this"
-  // CTA instead. `useCurrentUser()` is `undefined` during localStorage
-  // hydration, `null` when logged out, and a `MockUser` once authed.
-  const user = useCurrentUser();
-
   // Pagination state. `useHeadlines` seeds the first page (so we
   // get a reactive `isLoading` flag for the skeleton); subsequent
   // pages are appended manually so the array grows monotonically
-  // rather than resetting on each `skip` change. The fetch is gated
-  // on `user !== null` so anonymous visitors don't burn a wasted
-  // 401 round-trip — the login prompt below handles their UX path.
+  // rather than resetting on each `skip` change.
   const { data: firstPage, isLoading: isFirstPageLoading } = useHeadlines(
     PAGE_LIMIT,
     0,
     [],
-    user !== null,
   );
   const [items, setItems] = useState<StoryItem[]>([]);
   // Initial-load success flag — once the first page resolves we
@@ -149,11 +128,6 @@ export function LatestHeadlines() {
   const handleScroll = useCallback(
     (e: UIEvent<HTMLOListElement>) => {
       if (isLoadingMore || !hasMore) return;
-      // Defensive gate — the login prompt returns early above, so
-      // this branch is unreachable in practice, but the guard
-      // documents intent and protects against future refactors that
-      // might render the scroll container before the auth check.
-      if (user === null) return;
       const el = e.currentTarget;
       const distanceToBottom =
         el.scrollHeight - (el.scrollTop + el.clientHeight);
@@ -194,23 +168,8 @@ export function LatestHeadlines() {
         })
         .finally(() => setIsLoadingMore(false));
     },
-    [hasMore, isLoadingMore, skip, user],
+    [hasMore, isLoadingMore, skip],
   );
-
-  // Replace the timeline with the login prompt for anonymous visitors.
-  // We keep the section chrome (border, padding) so the slot still
-  // looks like a sidebar widget rather than a full-bleed CTA panel.
-  if (user === null) {
-    return (
-      <section
-        className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
-        aria-label="Latest headlines"
-      >
-        <LatestHeadlinesHeader />
-        <LatestHeadlinesLoginPrompt />
-      </section>
-    );
-  }
 
   return (
     <section
