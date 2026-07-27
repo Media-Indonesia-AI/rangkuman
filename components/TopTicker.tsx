@@ -129,7 +129,7 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
             ? COINS.map((c, idx) => (
                 <a
                   key={`coin-d${dupIdx}-${c.kode}-${idx}`}
-                  href={`/sorotan/${c.kode === "BTC" ? "cr-btc-2026-06-07" : c.kode === "ETH" ? "cr-eth-2026-06-07" : c.kode === "SOL" ? "cr-sol-2026-06-07" : c.kode === "FET" ? "cr-fet-2026-06-07" : c.kode === "LINK" ? "cr-link-2026-06-07" : c.kode === "DOGE" ? "cr-doge-2026-06-07" : ""}`}
+                  href={`/crypto/detail/${c.kode === "BTC" ? "cr-btc-2026-06-07" : c.kode === "ETH" ? "cr-eth-2026-06-07" : c.kode === "SOL" ? "cr-sol-2026-06-07" : c.kode === "FET" ? "cr-fet-2026-06-07" : c.kode === "LINK" ? "cr-link-2026-06-07" : c.kode === "DOGE" ? "cr-doge-2026-06-07" : ""}`}
                   className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
                 >
                   <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">

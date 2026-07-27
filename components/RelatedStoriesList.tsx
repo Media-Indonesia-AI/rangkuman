@@ -89,7 +89,7 @@ export function RelatedStoriesList({
                 className={i < filtered.length - 1 ? "border-b border-border/50" : ""}
               >
                 <Link
-                  href={`/sorotan/${s.id}`}
+                  href={`/crypto/detail/${s.id}`}
                   className="group block px-3 py-3 transition-colors hover:bg-bg-tertiary/40"
                 >
                   {/* Top accent strip (mini hero) */}
@@ -135,7 +135,7 @@ export function RelatedStoriesList({
               className={i < filtered.length - 1 ? "border-b border-border/50" : ""}
             >
               <Link
-                href={`/sorotan/${s.id}`}
+                href={`/crypto/detail/${s.id}`}
                 className="group block px-3 py-2.5 transition-colors hover:bg-bg-tertiary/40"
               >
                 <div className="mb-1 flex items-center justify-between gap-1.5">

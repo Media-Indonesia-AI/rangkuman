@@ -42,7 +42,7 @@ export function StoryCompact({ highlight, rank }: StoryCompactProps) {
 
   return (
     <Link
-      href={`/sorotan/${highlight.id}`}
+      href={`/crypto/detail/${highlight.id}`}
       className="group block border-b border-border/60 py-3.5 last:border-b-0"
     >
       <div className="flex items-start gap-3">

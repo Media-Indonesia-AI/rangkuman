@@ -1379,7 +1379,7 @@ export function getTopHighlights(n: number = 5): Highlight[] {
   return [...TODAY_HIGHLIGHTS].sort((a, b) => a.rank - b.rank).slice(0, n);
 }
 
-/** Get a single highlight by id (for /sorotan/[id]). */
+/** Get a single highlight by id (for /crypto/detail/[id]). */
 export function getHighlightById(id: string): Highlight | undefined {
   return TODAY_HIGHLIGHTS.find((h) => h.id === id);
 }

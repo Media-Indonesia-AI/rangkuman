@@ -109,7 +109,7 @@ export function StoryHero({ highlight }: StoryHeroProps) {
         )}
 
         {/* Serif headline — more compact */}
-        <Link href={`/sorotan/${highlight.id}`} className="block">
+        <Link href={`/crypto/detail/${highlight.id}`} className="block">
           <h2 className="font-serif text-[22px] font-bold leading-[1.1] tracking-tight text-text-primary transition-colors group-hover:text-text-primary sm:text-[28px] sm:leading-[1.08] lg:text-[32px] lg:leading-[1.05]">
             {highlight.title}
           </h2>
@@ -146,7 +146,7 @@ export function StoryHero({ highlight }: StoryHeroProps) {
 
           {/* CTA */}
           <Link
-            href={`/sorotan/${highlight.id}`}
+            href={`/crypto/detail/${highlight.id}`}
             className="ml-auto inline-flex items-center gap-1 rounded border border-current/30 bg-current/5 px-2 py-0.5 text-[10px] font-semibold text-text-primary transition-all hover:bg-current/10"
           >
             Baca cerita

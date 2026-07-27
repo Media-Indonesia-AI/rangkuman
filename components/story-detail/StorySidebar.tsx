@@ -61,7 +61,7 @@ export function StorySidebar({
         <p className="font-semibold text-text-secondary">Tentang Story</p>
         <p className="mt-1.5">
           Story adalah narasi perkembangan emiten dalam jangka panjang
-          (mingguan/bulanan). Beda dengan /sorotan/[id]/ yang merupakan
+          (mingguan/bulanan). Beda dengan /crypto/detail/[id]/ yang merupakan
           berita individual. Update tiap minggu dari tim redaksi.
         </p>
       </div>

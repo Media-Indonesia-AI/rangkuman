@@ -50,7 +50,7 @@ Buka di browser. Test:
 - [ ] Homepage load
 - [ ] Navbar: klik semua tab (Saham, Bisnis, Ekonomi, Kebijakan, Global, Crypto)
 - [ ] Theme toggle: switch light/dark
-- [ ] Story page: buka `/sorotan/[id]/`
+- [ ] Story page: buka `/crypto/detail/[id]/`
 - [ ] Detail page: `/kebijakan/kenaikan-bbm-subsidi/`
 - [ ] localStorage: login (mock), watchlist, saved
 
@@ -171,7 +171,7 @@ rangkuman-news/
 │   ├── page.tsx                      # Home
 │   ├── saham/  bisnis/  ekonomi/  kebijakan/  global/  crypto/  komoditas/
 │   ├── kebijakan/[slug]/             # 8 policy detail pages
-│   ├── sorotan/[id]/                 # 50 story pages
+│   ├── crypto/  detail/[id]/        # 50 story pages
 │   ├── stock/[kode]/                 # 34 stock pages
 │   ├── sektor/  sektor/[slug]/       # 12 sector pages
 │   ├── trending/  search/  watchlist/  saved/  login/
