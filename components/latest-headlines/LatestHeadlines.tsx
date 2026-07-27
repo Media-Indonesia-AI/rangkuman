@@ -72,8 +72,12 @@ type RenderSource =
  *   - On failure (auth, network, etc.) the widget silently falls
  *     back to the mock headlines so users still see content.
  *
- * `Sidebar` is a server component; this file is the small client
- * island that owns the fetch.
+ * Used directly by `app/saham/page.tsx` (mobile collapsed slot +
+ * desktop right rail). The previous `<Sidebar />` wrapper that
+ * added an outer `<aside>` was removed — this widget already
+ * renders a `<section aria-label="Latest headlines">` so the
+ * surrounding layout divs on the page provide all the sidebar
+ * context the consumers need.
  */
 export function LatestHeadlines() {
   // Pagination state. `useHeadlines` seeds the first page (so we

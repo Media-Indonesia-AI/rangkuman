@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { DatePicker } from "@/components/DatePicker";
-import { Sidebar } from "@/components/Sidebar";
+import { LatestHeadlines } from "@/components/latest-headlines/LatestHeadlines";
 import { MarketMood } from "@/components/MarketMood";
 import { SektorSection } from "@/components/sektor";
 import {
@@ -115,7 +115,7 @@ export default function SahamPage() {
               <MobileTopMovers />
             </div>
             <div className="mt-3 xl:hidden">
-              <Sidebar />
+              <LatestHeadlines />
             </div>
           </div>
 
@@ -158,7 +158,7 @@ export default function SahamPage() {
               {/* Right sidebar — desktop only, contains Market Mood + Headlines + Newsletter */}
               <div className="hidden xl:block">
                 <div className="sticky top-20">
-                  <Sidebar />
+                  <LatestHeadlines />
                 </div>
               </div>
             </div>
