@@ -1,9 +1,19 @@
 "use client";
 
 import { createContext, useContext, type ReactNode } from "react";
-import type { StoryTopic } from "@/lib/api";
+import type { StoryFilter, StoryTopic } from "@/lib/api";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTopics } from "@/lib/hooks/useTopics";
+
+/**
+ * Hoisted to module scope so the reference is stable across renders.
+ * Passing `[]` inline would create a new array on every render, which
+ * triggers `useTopics`' effect (whose deps include `filters`) on every
+ * render — and the effect's `setData([])` then produces another new
+ * reference, sending the provider into an infinite re-render loop.
+ * Stable identity keeps the effect from re-firing.
+ */
+const EMPTY_FILTERS: StoryFilter[] = [];
 
 interface TopicsContextValue {
   /** All topics returned by the API, oldest → newest in the order
@@ -83,7 +93,7 @@ export function TopicsProvider({ children }: TopicsProviderProps) {
   const { data: topics, isLoading } = useTopics(
     10,
     0,
-    [],
+    EMPTY_FILTERS,
     isAuthenticated,
   );
   return (

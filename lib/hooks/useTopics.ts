@@ -48,8 +48,15 @@ export function useTopics(
 
   useEffect(() => {
     if (!enabled) {
-      setData([]);
-      setIsLoading(false);
+      // Functional updater with reference-equality bail-out: only commit
+      // a new state value when the previous one actually differs. Calling
+      // `setData([])` with a fresh literal always produces a new array
+      // identity, which would force a re-render even when nothing
+      // changed — and if the effect re-runs on the next render (because
+      // the caller passed an unstable `filters` ref), that re-render
+      // calls setData again, etc. Bail-out breaks the loop.
+      setData((prev) => (prev.length === 0 ? prev : []));
+      setIsLoading((prev) => (prev === false ? prev : false));
       return;
     }
 
