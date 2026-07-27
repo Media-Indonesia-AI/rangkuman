@@ -55,6 +55,10 @@ function writeJson(key: string, value: unknown): void {
     window.dispatchEvent(
       new CustomEvent("beritainvestor:storage", { detail: { key } }),
     );
+    // Wake in-process subscribers (useCurrentUser, useWatchlist) so they
+    // re-read storage synchronously instead of waiting for a window event
+    // that may not fire in the same tab.
+    listeners.forEach((fn) => fn());
   } catch {
     // Quota exceeded / storage disabled — fail silently.
   }
@@ -67,6 +71,7 @@ function removeKey(key: string): void {
     window.dispatchEvent(
       new CustomEvent("beritainvestor:storage", { detail: { key } }),
     );
+    listeners.forEach((fn) => fn());
   } catch {
     /* noop */
   }
