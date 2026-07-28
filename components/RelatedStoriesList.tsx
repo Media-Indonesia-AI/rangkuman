@@ -1,14 +1,17 @@
+import { useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import * as Icons from "lucide-react";
+import type { StoryFilter, StoryItem } from "@/lib/api";
+import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import {
   CATEGORY_CONFIG,
   type Highlight,
 } from "@/lib/mock/highlights";
-import { cn } from "@/lib/utils";
-
+import { cn, getRelativeTime } from "@/lib/utils";
+import { useTopicsContext } from "./topics-provider";
+import { findCryptoTopicId } from "./crypto-page/cryptoStories";
 interface RelatedStoriesListProps {
-  stories: Highlight[];
   className?: string;
   /** Header label. */
   label?: string;
@@ -22,6 +25,14 @@ interface RelatedStoriesListProps {
    *  - "featured": bigger headlines + summary visible. Good for 2-3 items.
    */
   variant?: "compact" | "featured";
+  /**
+   * The headline id of the story currently being viewed. The rail
+   * filters this id out of BOTH the live-fetched rows and the prop
+   * fallback so the current story can never appear in its own
+   * "Cerita Terkait" sidebar. Required — leaving it empty would
+   * defeat the purpose, so the parent must always pass it.
+   */
+  currentHeadlineId: string;
 }
 
 const HERO_GRADIENT: Record<string, string> = {
@@ -34,21 +45,114 @@ const HERO_GRADIENT: Record<string, string> = {
 };
 
 /**
+ * Best-effort `StoryItem` (live wire) → `Highlight` (mock shape)
+ * adapter for the `RelatedStoriesList` rail. Mirrors the spirit of
+ * `storyItemToCryptoStory` in `components/crypto-page/cryptoStories.ts`
+ * — fill the fields the list actually renders (`id`, `title`,
+ * `summary`, `category`, `timeAgo`, `sourceCount`, `rank`) and
+ * leave the rest at safe defaults so the `Highlight` contract
+ * stays satisfied.
+ *
+ * The live wire doesn't ship:
+ *   - a per-source breakdown  → `sources: []`, `sourceCount: 1`
+ *     (one story ≈ one article count baseline; the crypto adapter
+ *     uses the same default),
+ *   - a category slug         → `category: "crypto"`. The list
+ *     is only rendered from the crypto-detail sidebar today, and
+ *     the `Category` type is a closed union, so anything that
+ *     isn't one of the seven known slugs would break
+ *     `CATEGORY_CONFIG[category]` downstream. If a future caller
+ *     reuses this from a non-crypto route, swap in the real
+ *     topic-derived slug here.
+ *   - events / keyData / etc. → `[]` / `undefined` (the rail
+ *     doesn't render them).
+ *
+ * `rank` uses the fetch order (1-indexed) so the "Sedang
+ * Terjadi"-style `#1 #2 #3 #4` badges read as newest-first
+ * inside the rail. `timeAgo` comes from the shared
+ * `getRelativeTime()` helper so the rail text matches the rest
+ * of the page.
+ */
+function storyItemToHighlight(item: StoryItem, rank: number): Highlight {
+  return {
+    id: item.id,
+    title: item.title,
+    summary: item.summary,
+    category: "crypto",
+    affectedCategories: ["crypto"],
+    sources: [],
+    sourceCount: 1,
+    readTime: "2 mnt",
+    timeAgo: getRelativeTime(item.created_at),
+    tags: item.keywords ?? [],
+    rank,
+    events: [],
+  };
+}
+
+/**
  * Compact vertical list of related stories for sidebar use.
  * - "compact" variant: small dot + category chip + headline + byline. For 4+ items.
  * - "featured" variant: bigger headline + summary visible. For 2-3 items.
  */
 export function RelatedStoriesList({
-  stories,
   className,
   label = "Cerita Terkait",
   meta,
   excludeId,
   variant = "compact",
+  currentHeadlineId,
 }: RelatedStoriesListProps) {
+  // ── Live topic-scoped headlines ────────────────────────────────
+  // When the caller hands us a `topicId`, fire a 4-row
+  // `useHeadlines(topic_id=…)` fetch and let the live result
+  // shadow the `stories` prop. The prop stays in place as a
+  // fallback so existing callers (the crypto-detail sidebar
+  // passes a pre-filtered `related[]` from its orchestrator) keep
+  // rendering until — or instead of — the live response lands.
+  //
+  // The filter array is memoized to keep the request-level cache
+  // slot stable across renders (same array-identity gotcha
+  // documented in `useHeadlines` and `useListStory`).
+  const { topics } = useTopicsContext();
+  const topicId = findCryptoTopicId(topics);
+  const topicFilters = useMemo<StoryFilter[]>(
+    () =>
+      topicId
+        ? [{ field: "topic_id", operator: "eq", value: topicId }]
+        : [],
+    [topicId],
+  );
+  const { data: liveRows } = useHeadlines(
+    4,
+    0,
+    topicFilters,
+    topicId !== undefined && topicId !== "",
+  );
+
+  // Pick the source list:
+  //   - live: hook returned ≥1 row for the topic — use those
+  //     (already adapted to the `Highlight` shape below).
+  //   - mock: hook not active or returned empty — fall back to the
+  //     prop. This is the path the existing `CryptoDetailSidebar`
+  //     call site takes today.
+  //
+  // Either branch drops the current headline id BEFORE mapping, so
+  // the current story can never end up in the rail — its rank
+  // badge, link target, or duplicate card never leaks in. The
+  // `excludeId` prop still applies afterwards as a belt-and-braces
+  // for callers that pass a different id (e.g. some other
+  // pre-filtered list).
+  const baseStories: Highlight[] =
+    topicId && liveRows.length > 0
+      ? liveRows
+          .filter((item) => item.id !== currentHeadlineId)
+          .map((item, i) => storyItemToHighlight(item, i + 1))
+      : [];
+
   const filtered = excludeId
-    ? stories.filter((s) => s.id !== excludeId)
-    : stories;
+    ? baseStories.filter((s) => s.id !== excludeId)
+    : baseStories;
 
   if (filtered.length === 0) return null;
 

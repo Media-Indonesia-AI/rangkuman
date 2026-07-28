@@ -212,13 +212,6 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
   // `/markets/snapshot` endpoint exists.
   const markets: MarketSnapshotItem[] = [];
 
-  // Related stories for the sidebar. The orchestrator already
-  // surfaces them inside `displayStory.events[]` (mapped from the
-  // `/stories?headline_id=` fetch). The sidebar's separate list is
-  // empty for now; it can be repopulated when a dedicated
-  // cross-headline recommendations endpoint exists.
-  const related: Highlight[] = [];
-
   return (
     <>
       <Navbar />
@@ -252,7 +245,6 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
           {/* SIDEBAR (sticky on lg+) */}
           <CryptoDetailSidebar
             markets={markets}
-            related={related}
             storyId={displayStory.id}
           />
         </div>
