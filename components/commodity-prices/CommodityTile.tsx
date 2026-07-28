@@ -146,7 +146,7 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
       />
 
       {/* Related stocks footer — single line, very small */}
-      <div className="-mx-2 -mb-2 flex items-center justify-between border-t border-border bg-bg-tertiary/40 px-2 py-1">
+      {/* <div className="-mx-2 -mb-2 flex items-center justify-between border-t border-border bg-bg-tertiary/40 px-2 py-1">
         <p className="truncate font-mono text-[8.5px] text-text-muted">
           {commodity.relatedStocks.slice(0, 3).map((t, i) => (
             <span key={t}>
@@ -168,7 +168,7 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
           className="h-2.5 w-2.5 shrink-0 text-text-faint transition-colors group-hover:text-brand"
           aria-hidden
         />
-      </div>
+      </div> */}
     </Link>
   );
 }

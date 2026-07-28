@@ -118,7 +118,7 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
           return (
             <div key={cat.id}>
               {/* Category header — inline, very compact */}
-              <div className="mb-1.5 flex items-center gap-1.5">
+              {/* <div className="mb-1.5 flex items-center gap-1.5">
                 <span
                   className={cn(
                     "inline-flex items-center rounded border px-1.5 py-px font-mono text-[9px] font-semibold uppercase tracking-widest",
@@ -132,7 +132,7 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
                 <span className="font-mono text-[9px] text-text-faint">
                   {items.length}
                 </span>
-              </div>
+              </div> */}
 
               {/* Compact tile grid — 2/3/4/5 cols */}
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
