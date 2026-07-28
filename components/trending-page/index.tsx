@@ -1,11 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
+import { type TrendingPeriod } from "@/lib/mock/trending";
 import { TrendingPageHeader } from "./TrendingPageHeader";
+import { TrendingPeriodTabs } from "./TrendingPeriodTabs";
 import { TrendingStatStrip } from "./TrendingStatStrip";
 import { TrendingList } from "./TrendingList";
 import { computeTrendingStats } from "./trendingStats";
@@ -33,6 +36,12 @@ import { computeTrendingStats } from "./trendingStats";
  * its own fetch + state.
  */
 export default function TrendingPage() {
+  // Period filter — owned locally so the tabs render and stay
+  // selectable, but the hook only takes a single `date` so the
+  // selected period is purely visual until a period-aware endpoint
+  // lands. See the docstring on `<TrendingPeriodTabs />` for the
+  // wire-up path.
+  const [period, setPeriod] = useState<TrendingPeriod>("today");
   const { data: rows, isLoading } = useGetStocksTrending();
   const stats = computeTrendingStats(rows);
 
@@ -51,6 +60,8 @@ export default function TrendingPage() {
         </Link>
 
         <TrendingPageHeader />
+
+        <TrendingPeriodTabs active={period} onChange={setPeriod} />
 
         <TrendingStatStrip
           positif={stats.positif}
