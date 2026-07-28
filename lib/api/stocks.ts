@@ -17,6 +17,7 @@ import type {
   IndexMoverResponse,
   KeyMetrics,
   StockHistoricalResponse,
+  StocksTrendingResponse,
   TickerInformation,
   TickersResponse,
   TopStocksResponse,
@@ -138,6 +139,43 @@ export function getStockHistorical(
   const params = new URLSearchParams({ ticker: code });
   return request<StockHistoricalResponse>(
     `stocks/stock/historical?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the day's trending tickers — stocks with the most
+ * editorial coverage, each paired with an AI-written summary,
+ * a per-source article breakdown, and the day's price move.
+ *
+ * Powered by the `stocks/stock/trending` endpoint. `date` is
+ * required (the snapshot is per-trading-day, not live), while
+ * `page` and `limit` are paginated controls that default to
+ * the first page of 20 rows. `limit` is forwarded as-is rather
+ * than capped here so callers can paginate beyond the default
+ * when they need a deeper window.
+ *
+ * Called from the desktop sidebar rail and the mobile top-movers
+ * strip; the response shape is `{ data: StockTrendingItem[] }`
+ * (same wire envelope as `TopStocksResponse` / `StockHistoricalResponse`).
+ *
+ * @param date  ISO date string `YYYY-MM-DD` (required). Defaults to
+ *              `todayIsoDate()` when the caller passes nothing.
+ * @param page  1-indexed page number (default 1).
+ * @param limit Page size (default 20).
+ */
+export function getStocksTrending(
+  date: string = todayIsoDate(),
+  page = 1,
+  limit = 20,
+): Promise<StocksTrendingResponse> {
+  const params = new URLSearchParams({
+    date,
+    page: String(page),
+    limit: String(limit),
+  });
+  return request<StocksTrendingResponse>(
+    `stocks/stock/trending?${params.toString()}`,
     { method: "GET" },
   );
 }

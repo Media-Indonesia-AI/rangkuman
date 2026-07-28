@@ -213,3 +213,58 @@ export interface StockHistoricalPoint {
 export interface StockHistoricalResponse {
   data: StockHistoricalPoint[];
 }
+
+// ─── STOCK TRENDING ────────────────────────────────────────────
+
+/**
+ * One entry in the per-source breakdown of a trending stock —
+ * which media covered it and how many articles each contributed.
+ *
+ * `name` is the publisher slug / hostname the backend uses
+ * (e.g. `"cnbcindonesia"`); `article_count` is the share of the
+ * stock's `article_count` contributed by that source.
+ */
+export interface StockTrendingSource {
+  name: string;
+  article_count: number;
+}
+
+/**
+ * One row from `GET stocks/stock/trending?date=...` — a ticker
+ * with an AI-written summary of today's coverage, the source
+ * breakdown, and the day's price move.
+ *
+ * `description` is the editorial summary (often a long one-paragraph
+ * recap of the catalyst + price action). `sentiment` mirrors the
+ * stock-level sentiment band (same union as `StorySentiment`).
+ * `article_count` is the total articles aggregated across
+ * `sources[]`; `distinct_sources` is the count of unique
+ * publishers, which can be smaller than `sources.length` if the
+ * backend ever de-duplicates by slug.
+ *
+ * `price` is the latest close (raw IDR, unformatted); `pct_change`
+ * is the signed day-change percent (positive = up). Field name
+ * uses `pct_change` like `TickerInformation` / `KeyMetrics` —
+ * *not* `percent_change` (the `TopStockItem` / `TickerItem`
+ * field name).
+ */
+export interface StockTrendingItem {
+  ticker: string;
+  company_name: string;
+  description: string;
+  sentiment: "positive" | "negative" | "neutral";
+  article_count: number;
+  distinct_sources: number;
+  sources: StockTrendingSource[];
+  price: number;
+  pct_change: number;
+}
+
+/**
+ * Wire format for `GET stocks/stock/trending?date=...&page=...&limit=...`.
+ * The backend wraps the array in `{ data: [...] }` (same shape
+ * as `TopStocksResponse` / `StockHistoricalResponse`).
+ */
+export interface StocksTrendingResponse {
+  data: StockTrendingItem[];
+}
