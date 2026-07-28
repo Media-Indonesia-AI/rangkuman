@@ -183,7 +183,7 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
     () => [{ field: "headline_id", operator: "eq", value: storyId }],
     [storyId],
   );
-  const { data: stories } = useListStory(
+  const { data: stories, isLoading: isLoadingStories } = useListStory(
     20,
     0,
     filters,
@@ -231,7 +231,10 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
 
             <CryptoDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
 
-            <CryptoDetailSources sources={displayStory.sources} />
+            <CryptoDetailSources
+              stories={stories}
+              isLoading={isLoadingStories}
+            />
           </article>
 
           {/* SIDEBAR (sticky on lg+) — fetches its own data */}
