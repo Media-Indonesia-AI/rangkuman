@@ -33,6 +33,7 @@ export { loadMarketMood } from "./market-mood";
 export { loadForeignStocks } from "./foreign-stocks";
 export { loadCompositeChart } from "./composite-chart";
 export { loadTrendingStories } from "./trending-stories";
+export { loadStocksTrending } from "./stocks-trending";
 export { loadHeadlines } from "./headlines";
 export { loadHeadlinesLast7Days } from "./headlines-last-7-days";
 export { loadMultiDateStories } from "./multi-date-stories";

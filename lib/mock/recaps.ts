@@ -15,6 +15,8 @@ export interface DailyRecap {
   tanggal: string;
   /** Stock ticker this recap covers. */
   sahamKode: string;
+  /** Company name associated with the stock. */
+  companyName?: string;
   /** 2-3 sentence aggregate summary. */
   ringkasan: string;
   /** Aggregate sentiment across all underlying articles. */

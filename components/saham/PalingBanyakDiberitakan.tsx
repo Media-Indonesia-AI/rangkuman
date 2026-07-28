@@ -2,24 +2,25 @@
 
 import { ArrowUpRight, Flame } from "lucide-react";
 import Link from "next/link";
-import type { TrendingStory } from "@/lib/api";
+import type { StockTrendingItem } from "@/lib/api";
 import type { DailyRecap } from "@/lib/mock/recaps";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "../Shimmer";
 import { StockCard } from "../stock-card";
 
 /**
- * "Paling banyak diberitakan" — the top trending story list on
+ * "Paling banyak diberitakan" — the top trending tickers list on
  * `/saham`. Renders a single `<section>` with a Flame-icon header and
  * a vertical stack of `<StockCard variant="list" />` cards driven by
- * the live trending-stories API.
+ * the live trending-tickers API.
  *
  * Data flow (lives in the parent page, not here):
- *   `useTrendingStories(20)` → `api.getTrendingStories()` →
- *   `GET /story/trending?…` → `mapTrendingStoryToRecap` → `<StockCard>`.
+ *   `useGetStocksTrending()` → `api.getStocksTrending()` →
+ *   `GET /stocks/stock/trending?date=…` → `mapStockTrendingItemToRecap`
+ *   → `<StockCard>`.
  *
  * The parent page does the fetch + mapping and passes the resolved
- * `TrendingStory[]` + loading flag in. This component is purely
+ * `StockTrendingItem[]` + loading flag in. This component is purely
  * presentational — it knows about the section header, the loading
  * skeleton, the empty state, and the "see all" link, nothing else.
  *
@@ -36,39 +37,49 @@ import { StockCard } from "../stock-card";
 const VISIBLE_TRENDING_LIMIT = 10;
 
 interface PalingBanyakDiberitakanProps {
-  trending: TrendingStory[];
+  trending: StockTrendingItem[];
   trendingLoading: boolean;
 }
 
 /**
- * Map a `TrendingStory` (API wire shape) → `DailyRecap` (the shape
+ * Map a `StockTrendingItem` (API wire shape) → `DailyRecap` (the shape
  * `StockCard` consumes). Only the fields `StockCard` reads are
  * filled in; everything else is left at its default.
  *
- * - `id`                       → `id` (API id, e.g. mongo hash)
- * - `created_at` (ISO)         → `tanggal` (YYYY-MM-DD slice)
- * - `primary_ticker_code`      → `sahamKode`
- * - `summary`                  → `ringkasan`
- * - `sentiment` (en)           → `sentimen` (id) via `toSentimen`
- * - `story_count`              → `jumlahBerita`
- * - `medias[]` ({name,count})  → `sumber[]` ({media,jumlah}) so
- *                                 `<SourceBar>` renders the per-publisher
- *                                 breakdown. `logo` isn't in the wire
- *                                 shape and `SourceBar` doesn't read it,
- *                                 so it's left empty.
+ * - `ticker`                    → `id` (used as the React key + the
+ *                                  `StockCard` `id` prop; tickers are
+ *                                  unique within a single snapshot) +
+ *                                  `sahamKode`
+ * - `description`               → `ringkasan` (one-paragraph AI recap)
+ * - `sentiment` (en)            → `sentimen` (id) via `toSentimen`
+ * - `article_count`             → `jumlahBerita`
+ * - `sources[]` ({name,count})  → `sumber[]` ({media,jumlah}) so
+ *                                  `<SourceBar>` renders the
+ *                                  per-publisher breakdown. `logo`
+ *                                  isn't in the wire shape and
+ *                                  `SourceBar` doesn't read it, so
+ *                                  it's left empty.
+ *
+ * `tanggal` isn't per-item on the trending endpoint — the snapshot
+ * is keyed by the `date` query string, not by line. The parent
+ * passes the date via the standard recap-date contract; we leave
+ * `tanggal` empty so `StockCard` doesn't render a misleading date
+ * in the header. If a future call wants the date on each card,
+ * parameterize this mapper with the snapshot date.
  */
-function mapTrendingStoryToRecap(story: TrendingStory): DailyRecap {
+function mapStockTrendingItemToRecap(item: StockTrendingItem): DailyRecap {
   return {
-    id: story.id,
-    tanggal: story.created_at.split("T")[0],
-    sahamKode: story.primary_ticker_code,
-    ringkasan: story.title,
-    sentimen: toSentimen(story.sentiment),
-    jumlahBerita: story.story_count,
-    sumber: (story.medias ?? []).map((m) => ({
-      media: m.name,
+    id: item.ticker,
+    tanggal: "",
+    sahamKode: item.ticker,
+    companyName: item.company_name,
+    ringkasan: item.description,
+    sentimen: toSentimen(item.sentiment),
+    jumlahBerita: item.article_count,
+    sumber: (item.sources ?? []).map((s) => ({
+      media: s.name,
       logo: "",
-      jumlah: m.count,
+      jumlah: s.article_count,
     })),
   };
 }
@@ -119,13 +130,13 @@ export function PalingBanyakDiberitakan({
         </div>
       ) : trending.length > 0 ? (
         <div className="space-y-2.5">
-          {trending.slice(0, VISIBLE_TRENDING_LIMIT).map((story, i) => (
+          {trending.slice(0, VISIBLE_TRENDING_LIMIT).map((item, i) => (
             <StockCard
-              key={story.id}
-              recap={mapTrendingStoryToRecap(story)}
+              key={item.ticker}
+              recap={mapStockTrendingItemToRecap(item)}
               variant="list"
               rank={i + 1}
-              id={story.id}
+              id={item.ticker}
             />
           ))}
         </div>

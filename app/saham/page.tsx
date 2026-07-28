@@ -17,7 +17,7 @@ import {
   WatchlistSection,
   type SahamTab,
 } from "@/components/saham";
-import { useTrendingStories } from "@/lib/hooks/useTrendingStories";
+import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
@@ -48,10 +48,10 @@ export default function SahamPage() {
   const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
 
   // "Paling banyak diberitakan" — live API, independent of the date
-  // picker. The trending endpoint returns the current top stories, not
+  // picker. The trending endpoint returns the current top tickers, not
   // a date-keyed snapshot. Declared before the pre-hydration guard
   // below so the hook order is stable across renders.
-  const { data: trending, isLoading: trendingLoading } = useTrendingStories();
+  const { data: trending, isLoading: trendingLoading } = useGetStocksTrending();
 
   // Hydrate the persisted sub-tab on first mount.
   useEffect(() => {

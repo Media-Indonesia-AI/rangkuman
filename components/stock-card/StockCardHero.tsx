@@ -14,6 +14,12 @@ interface StockCardHeroProps {
   /** Ticker code, rendered as the panel's headline (oversized
    *  monospace). */
   ticker: string;
+  /** Full legal company name (e.g. `"Bank Central Asia Tbk"`).
+   *  Optional — when present, rendered in a smaller line below the
+   *  ticker so the panel reads as `BBCA · Bank Central Asia Tbk`.
+   *  Clamped to two lines so a long name doesn't blow out the
+   *  hero's vertical rhythm. */
+  companyName?: string;
   /** Variant selector — the two variants that use a hero (`featured`
    *  and `list`) have different widths, paddings, and grid-pattern
    *  densities. */
@@ -38,6 +44,7 @@ export function StockCardHero({
   heroGradient,
   rank,
   ticker,
+  companyName,
   variant,
 }: StockCardHeroProps) {
   const isFeatured = variant === "featured";
@@ -91,6 +98,18 @@ export function StockCardHero({
           >
             {ticker}
           </h2>
+          {companyName && (
+            <p
+              className={cn(
+                "mt-1 line-clamp-2 font-mono font-medium leading-tight text-text-primary/75",
+                isFeatured
+                  ? "text-[9.5px] sm:text-[10px]"
+                  : "text-[9.5px]",
+              )}
+            >
+              {companyName}
+            </p>
+          )}
         </div>
       </div>
     </div>

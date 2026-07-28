@@ -11,10 +11,22 @@ export function formatTanggalIndonesia(isoDate: string): string {
 
 /**
  * Format an ISO date string into compact Indonesian form,
- * e.g. "7 Jun".
+ * e.g. "7 Jun". Returns `"N/A"` when the input doesn't parse
+ * into a valid date (e.g. an empty string, a malformed stub, or
+ * a `Date` that `parseISO` can't recover) — date-fns raises
+ * `RangeError: Invalid time value` for those, and propagating
+ * it would crash the entire sidebar rail. Any other error is
+ * re-thrown so genuine bugs aren't silently swallowed.
  */
 export function formatTanggalSingkat(isoDate: string): string {
-  return format(parseISO(isoDate), "d MMM", { locale: idLocale });
+  try {
+    return format(parseISO(isoDate), "d MMM", { locale: idLocale });
+  } catch (err) {
+    if (err instanceof RangeError && err.message === "Invalid time value") {
+      return "N/A";
+    }
+    throw err;
+  }
 }
 
 /** Return today as an ISO date string (YYYY-MM-DD) in the user's local TZ. */

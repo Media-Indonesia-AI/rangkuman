@@ -65,6 +65,7 @@ export function StockCardList({
         rank={rank}
         ticker={recap.sahamKode}
         variant="list"
+        companyName={recap.companyName}
       />
 
       {/* Right side: body */}
