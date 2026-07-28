@@ -1,4 +1,7 @@
+import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
+import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 export interface MarketSnapshotItem {
   id: string;
@@ -9,7 +12,6 @@ export interface MarketSnapshotItem {
 }
 
 interface MarketSnapshotCompactProps {
-  items: MarketSnapshotItem[];
   className?: string;
   /** Header label override. */
   label?: string;
@@ -17,14 +19,11 @@ interface MarketSnapshotCompactProps {
   meta?: string;
 }
 
-const DEFAULT_ITEMS: MarketSnapshotItem[] = [
-  { id: "ihsg", label: "IHSG", value: "7,245", change: 0.87, changeUnit: "%" },
-  { id: "usd", label: "USD/IDR", value: "16,320", change: -0.4, changeUnit: "%" },
-  { id: "bi", label: "BI Rate", value: "6,25%", change: -25, changeUnit: "bps" },
-  { id: "inflasi", label: "Inflasi YoY", value: "2,6%", change: -0.2, changeUnit: "%" },
-  { id: "emas", label: "Emas", value: "$2,480", change: 0.6, changeUnit: "%" },
-  { id: "nikel", label: "Nikel", value: "$16,200", change: -4.0, changeUnit: "%" },
-];
+/** Placeholder rendered for any field whose live source is still
+ *  `null` (fetch in flight or returned nothing). Using `n/a`
+ *  rather than `—` so the missing-value rows scan as "data not
+ *  available" rather than decorative dash separators. */
+const NA = "n/a";
 
 function DirectionText({ value, unit }: { value: number; unit?: string }) {
   const u = unit ?? "%";
@@ -55,15 +54,97 @@ function DirectionText({ value, unit }: { value: number; unit?: string }) {
 }
 
 /**
- * Compact vertical market snapshot for sidebar use. 6 indicators stacked
+ * Compact vertical market snapshot for sidebar use. 5 indicators stacked
  * vertically. Designed for narrow column (sticky, ~280-320px wide).
+ *
+ * Data source: live `useMarketMoodData()` hook → 5 rows mapped
+ * 1-to-1 from the matching fetch payload. No mock fallback. Any
+ * field whose source is still `null` (in-flight or failed fetch)
+ * renders `n/a` in place of the value so the layout stays stable
+ * while the rest of the row is still readable.
+ *
+ * Rendered values:
+ *
+ *   - IHSG        ← `compositeChart[last].price` (formatted with
+ *                   thousand separators), change from `mood.ihsg_pct_change`
+ *   - USD/IDR     ← `exchangeRate.data[last].rate`, change from `mood.usd_idr_pct_change`
+ *   - BI Rate     ← `biRate.rate` (formatted as %, 2 dp), change from `biRate.bps` (bps)
+ *   - Foreign Net ← `foreignFlow.summary.net_value` (compact Rp T/M),
+ *                   change = sign of net value (signed magnitude
+ *                   doesn't read as a direction)
+ *   - Mood        ← `mood.label` + `mood.score` (no delta — the
+ *                   label already encodes the band)
  */
 export function MarketSnapshotCompact({
-  items = DEFAULT_ITEMS,
   className,
   label = "Markets Snapshot",
   meta = "real-time",
 }: MarketSnapshotCompactProps) {
+  const { biRate, exchangeRate, foreignFlow, compositeChart, mood } =
+    useMarketMoodData();
+
+  const items = useMemo<MarketSnapshotItem[]>(() => {
+    // IHSG — composite chart's last point is the freshest closing
+    // value. The mood snapshot's `ihsg_pct_change` is the matching
+    // day-change percent, so we pair them: value = price, change
+    // = pct move.
+    const ihsgClose = compositeChart?.[compositeChart.length - 1]?.price;
+    const ihsgRow: MarketSnapshotItem = {
+      id: "ihsg",
+      label: "IHSG",
+      value: ihsgClose != null ? formatNumber(ihsgClose, 2) : NA,
+      change: mood?.ihsg_pct_change ?? 0,
+      changeUnit: "%",
+    };
+
+    // USD/IDR — exchange rate series' last point. Pair with the
+    // mood's `usd_idr_pct_change` for the day delta.
+    const usdIdr = exchangeRate?.data?.[exchangeRate.data.length - 1]?.rate;
+    const usdRow: MarketSnapshotItem = {
+      id: "usd",
+      label: "USD/IDR",
+      value: usdIdr != null ? formatNumber(usdIdr, 0) : NA,
+      change: mood?.usd_idr_pct_change ?? 0,
+      changeUnit: "%",
+    };
+
+    // BI Rate — dedicated `biRate` snapshot. The `rate` field is
+    // already a percent (e.g. 6.25 → "6,25%"); the matching `bps`
+    // change uses the `bps` unit, not percent.
+    const biRow: MarketSnapshotItem = {
+      id: "bi",
+      label: "BI Rate",
+      value: biRate ? `${formatNumber(biRate.rate, 2).replace(",", ".")}%` : NA,
+      change: biRate?.bps ?? 0,
+      changeUnit: "bps",
+    };
+
+    // Foreign Net — `summary.net_value` is the cross-market flow
+    // in raw IDR. Compact-ify for the sidebar; the `change` field
+    // is the sign (magnitude doesn't read as a direction).
+    const netValue = foreignFlow?.summary.net_value;
+    const foreignRow: MarketSnapshotItem = {
+      id: "foreign",
+      label: "Foreign Net",
+      value: netValue != null ? formatCurrency(netValue, { compact: true }) : NA,
+      change: netValue != null ? Math.sign(netValue) : 0,
+      changeUnit: "%",
+    };
+
+    // Market Mood — composite label band + score. No change
+    // indicator because the label already encodes the band and
+    // the score is the magnitude.
+    const moodRow: MarketSnapshotItem = {
+      id: "mood",
+      label: "Market Mood",
+      value: mood ? `${mood.label} · ${mood.score}` : NA,
+      change: 0,
+      changeUnit: "",
+    };
+
+    return [ihsgRow, usdRow, biRow, foreignRow, moodRow];
+  }, [biRate, exchangeRate, foreignFlow, compositeChart, mood]);
+
   return (
     <section
       aria-label="Pasar hari ini"

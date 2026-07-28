@@ -10,7 +10,6 @@ import type {
 } from "@/lib/api";
 import { getRelativeTime } from "@/lib/utils";
 import type { Highlight, StoryEvent } from "@/lib/mock/highlights";
-import type { MarketSnapshotItem } from "@/components/MarketSnapshotCompact";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CryptoDetailBreadcrumb } from "./CryptoDetailBreadcrumb";
@@ -205,13 +204,6 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
       (cfg, i, self) => self.findIndex((x) => x.label === cfg.label) === i,
     );
 
-  // Right-rail sidebar markets. The macro indicators (IHSG, USD/IDR,
-  // BI Rate, etc.) don't have a single dedicated endpoint yet — pass
-  // an empty list so `MarketSnapshotCompact` renders its header
-  // without rows. Consumers can extend this once a dedicated
-  // `/markets/snapshot` endpoint exists.
-  const markets: MarketSnapshotItem[] = [];
-
   return (
     <>
       <Navbar />
@@ -242,11 +234,8 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
             <CryptoDetailSources sources={displayStory.sources} />
           </article>
 
-          {/* SIDEBAR (sticky on lg+) */}
-          <CryptoDetailSidebar
-            markets={markets}
-            storyId={displayStory.id}
-          />
+          {/* SIDEBAR (sticky on lg+) — fetches its own data */}
+          <CryptoDetailSidebar storyId={displayStory.id} />
         </div>
 
         <CryptoDetailBackLink
