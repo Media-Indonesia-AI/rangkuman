@@ -1,12 +1,38 @@
-import type { TrendingStock } from "@/lib/mock/trending";
+import type { StockTrendingItem } from "@/lib/api";
+import { Shimmer } from "@/components/Shimmer";
 import { TrendingRow } from "./TrendingRow";
 
 interface TrendingListProps {
-  /** The trending rows to render, in display order. */
-  rows: TrendingStock[];
+  /** The trending rows to render, in display order. Drives the
+   *  per-row table + the empty / loading branches below. */
+  rows: StockTrendingItem[];
+  /** Loading flag from the parent fetch — drives the row-shaped
+   *  shimmer so the list doesn't shift when data lands. */
+  isLoading?: boolean;
   /** Human-readable aria-label for the surrounding `<section>`.
-   *  Matches the prior monolith copy: "Daftar 20 saham trending". */
+   *  Matches the prior copy: "Daftar 20 saham trending". */
   ariaLabel?: string;
+}
+
+/** Skeleton placeholder that mirrors the desktop table layout
+ *  (5-column grid + the mobile stacked layout) so the rail
+ *  doesn't shift when data lands. */
+function TrendingRowSkeleton() {
+  return (
+    <li className="px-3 py-3 sm:grid sm:grid-cols-[40px_1fr_60px_120px_120px] sm:items-center sm:gap-3 sm:px-4 sm:py-3">
+      <Shimmer className="hidden h-3 w-6 sm:inline-block" />
+      <div className="flex flex-col gap-1.5 sm:gap-0">
+        <div className="flex items-baseline gap-2">
+          <Shimmer className="h-4 w-16" />
+          <Shimmer className="h-3 w-32" />
+        </div>
+        <Shimmer className="mt-1 h-2.5 w-40 sm:mt-0" />
+      </div>
+      <Shimmer className="hidden h-4 w-12 sm:inline-block" />
+      <Shimmer className="hidden h-4 w-16 sm:inline-block" />
+      <Shimmer className="hidden h-4 w-20 sm:inline-block" />
+    </li>
+  );
 }
 
 /**
@@ -14,9 +40,14 @@ interface TrendingListProps {
  * strip + the row list. Renders inside an `<ol>` so each `<li>`
  * emitted by `<TrendingRow />` is semantically ordered. Pure
  * presentational.
+ *
+ * Loading branch: 5 row-shaped shimmer lines. Empty branch: hidden
+ * (strip + footer note still render, so the page reads as
+ * "fetched but nothing to show" rather than "loading").
  */
 export function TrendingList({
   rows,
+  isLoading = false,
   ariaLabel = "Daftar 20 saham trending",
 }: TrendingListProps) {
   return (
@@ -43,9 +74,13 @@ export function TrendingList({
       </header>
 
       <ol className="divide-y divide-border">
-        {rows.map((r) => (
-          <TrendingRow key={r.kode} stock={r} />
-        ))}
+        {isLoading ? (
+          Array.from({ length: 5 }).map((_, i) => <TrendingRowSkeleton key={i} />)
+        ) : rows.length > 0 ? (
+          rows.map((r, i) => (
+            <TrendingRow key={r.ticker} item={r} rank={i + 1} />
+          ))
+        ) : null}
       </ol>
     </section>
   );
