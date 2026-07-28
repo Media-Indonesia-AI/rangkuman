@@ -2,9 +2,16 @@ import type { StoryEvent } from "@/lib/mock/highlights";
 import { StoryTimeline } from "@/components/StoryTimeline";
 
 interface CryptoDetailTimelineProps {
+  /** Pre-computed events for this headline. The orchestrator
+   *  (`CryptoDetailPage`) fetches them via `useListStory(headline_id)`
+   *  and projects each `EmbeddedStory` into a `StoryEvent` — this
+   *  widget just renders the list as-is. */
   events: StoryEvent[];
-  /** Total number of unique sources covering this story. */
-  sourceCount: number;
+  /** Total number of unique sources covering this story. Optional
+   *  because the orchestrator derives it from the live stories'
+   *  `articles[].source_name` set when present, and falls back to
+   *  `events.length === 0` when no stories have arrived yet. */
+  sourceCount?: number;
 }
 
 /**
@@ -14,7 +21,7 @@ interface CryptoDetailTimelineProps {
  */
 export function CryptoDetailTimeline({
   events,
-  sourceCount,
+  sourceCount = 0,
 }: CryptoDetailTimelineProps) {
   if (events.length === 0) return null;
 

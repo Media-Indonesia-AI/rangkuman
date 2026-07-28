@@ -1,9 +1,9 @@
-import type { Highlight } from "@/lib/mock/highlights";
 import {
   MarketSnapshotCompact,
   type MarketSnapshotItem,
 } from "@/components/MarketSnapshotCompact";
 import { RelatedStoriesList } from "@/components/RelatedStoriesList";
+import type { Highlight } from "@/lib/mock/highlights";
 
 interface CryptoDetailSidebarProps {
   /** Macro indicators to show in the compact snapshot card. */
@@ -38,12 +38,13 @@ export function CryptoDetailSidebar({
           />
         )}
         {related.length > 0 && (
-          <RelatedStoriesList
-            stories={related}
-            excludeId={storyId}
-            className="mt-4"
-            variant="featured"
-          />
+          <div className="mt-4">
+            <RelatedStoriesList
+              stories={related}
+              excludeId={storyId}
+              variant="featured"
+            />
+          </div>
         )}
       </div>
     </aside>

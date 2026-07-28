@@ -1379,9 +1379,16 @@ export function getTopHighlights(n: number = 5): Highlight[] {
   return [...TODAY_HIGHLIGHTS].sort((a, b) => a.rank - b.rank).slice(0, n);
 }
 
-/** Get a single highlight by id (for /crypto/detail/[id]). */
+/** Get a single highlight by id (for /crypto/detail/[id]).
+ *
+ *  Searches the FULL story catalog (today's top stories + per-category
+ *  archives) so it stays consistent with `generateStaticParams` —
+ *  pages are prerendered for every id in `getAllStories()` but a
+ *  narrower lookup here would 404 the per-category ones even though
+ *  Next.js knows about them. Returns `undefined` if the id is unknown
+ *  (e.g. a live API id that doesn't exist in the mock catalog). */
 export function getHighlightById(id: string): Highlight | undefined {
-  return TODAY_HIGHLIGHTS.find((h) => h.id === id);
+  return getAllStories().find((h) => h.id === id);
 }
 
 /** Flatten all stories (top + per-category) into a single list. */

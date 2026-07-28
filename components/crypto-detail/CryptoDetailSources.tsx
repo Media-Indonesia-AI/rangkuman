@@ -1,19 +1,19 @@
 interface CryptoDetailSourcesProps {
-  /** Source names. */
+  /** Pre-extracted, deduped source names for this headline. The
+   *  orchestrator (`CryptoDetailPage`) fetches them via
+   *  `useListStory(headline_id)` and flattens the per-story
+   *  `articles[].source_name` set — this widget just renders the
+   *  list as-is. */
   sources: string[];
-  /** Pre-computed total (matches `sources.length` today, kept
-   *  explicit so future expansion can use a separate count). */
-  count: number;
 }
 
 /**
- * "Daftar sumber" — vertical list of every media covering this story.
- * Each row is a plain mono line with a small `media` tag on the right.
- * Renders only when there's at least one source.
+ * "Daftar sumber" — vertical list of every media covering this
+ * story. Each row is a plain mono line with a small `media` tag
+ * on the right. Renders only when there's at least one source.
  */
 export function CryptoDetailSources({
   sources,
-  count,
 }: CryptoDetailSourcesProps) {
   if (sources.length === 0) return null;
 
@@ -23,7 +23,7 @@ export function CryptoDetailSources({
         <div>
           <h2 className="label text-text-secondary">Sumber</h2>
           <h3 className="text-[15px] font-bold tracking-tight text-text-primary sm:text-[16px]">
-            {count} media meliput cerita ini
+            {sources.length} media meliput cerita ini
           </h3>
         </div>
       </div>

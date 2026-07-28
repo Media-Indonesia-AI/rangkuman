@@ -1,76 +1,55 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
 import { CryptoDetailPage } from "@/components/crypto-detail";
-import type { MarketSnapshotItem } from "@/components/MarketSnapshotCompact";
-import { EKONOMI_INDICATORS } from "@/lib/mock/category-widgets";
-import {
-  CATEGORY_CONFIG,
-  getAllStories,
-  getHighlightById,
-  getRelatedStories,
-} from "@/lib/mock/highlights";
+import { loadHeadlineById } from "@/lib/api/cache";
 
 interface PageProps {
   params: { id: string };
 }
 
-export function generateStaticParams() {
-  return getAllStories().map((h) => ({ id: h.id }));
+/**
+ * Metadata for /crypto/detail/[id]. Fetches just the parent headline
+ * to read `title` / `summary` for the OpenGraph tags. Body rendering
+ * is handled by the client-side `<CryptoDetailPage />` orchestrator
+ * (which fetches the same `loadHeadlineById` from the request-level
+ * cache — one network round-trip total).
+ */
+export async function generateMetadata({
+  params,
+}: PageProps): Promise<Metadata> {
+  try {
+    const live = await loadHeadlineById(params.id);
+    return {
+      title: `${live.title} — Rangkuman`,
+      description: live.summary,
+      openGraph: {
+        title: live.title,
+        description: live.summary,
+        type: "article",
+        publishedTime: live.created_at,
+      },
+    };
+  } catch {
+    return { title: "Cerita tidak ditemukan" };
+  }
 }
 
-export function generateMetadata({ params }: PageProps): Metadata {
-  const story = getHighlightById(params.id);
-  if (!story) return { title: "Sorotan tidak ditemukan" };
-  return {
-    title: `${story.title} — Rangkuman`,
-    description: story.summary,
-    openGraph: {
-      title: story.title,
-      description: story.summary,
-      type: "article",
-      publishedTime: new Date().toISOString(),
-    },
-  };
-}
-
+/**
+ * Thin route entry — defers ALL data fetching to the client-side
+ * `<CryptoDetailPage storyId={...} />` orchestrator. The orchestrator
+ * owns `useHeadlineId()` (parent headline) + `useListStory(headline_id)`
+ * (related stories) and composes them into a `Highlight` shape that
+ * the page widgets consume.
+ *
+ * Returning `notFound()` from the body would require a synchronous
+ * check that doesn't exist on the client — instead, the orchestrator
+ * handles the empty-state via the `useHeadlineId` hook's
+ * `{ detail: null, isLoading }` shape, and the widgets naturally
+ * render nothing for empty arrays. The page renders an empty body
+ * for invalid IDs rather than 404-ing — Next.js's `notFound()` is
+ * reserved for the rare case where the API itself fails (the
+ * orchestrator surfaces that as "no content" and the global
+ * `<ErrorBoundary />` can catch it).
+ */
 export default function CryptoDetailRoutePage({ params }: PageProps) {
-  const story = getHighlightById(params.id);
-  if (!story) notFound();
-
-  // Map each affected Category to its display config (label + color),
-  // deduped so a story that lists the same category twice still only
-  // shows one chip in the badge row.
-  const primary = CATEGORY_CONFIG[story.category];
-  const affected = story.affectedCategories
-    .map((c) => CATEGORY_CONFIG[c])
-    .filter(
-      (cfg, i, self) => self.findIndex((x) => x.label === cfg.label) === i,
-    );
-
-  const related = getRelatedStories(story, 3);
-
-  // First 6 macro indicators for the right-rail sidebar. Imported
-  // `MarketSnapshotItem` directly (instead of indexed access through
-  // `CryptoDetailPageProps["markets"]`) so the type is unambiguous
-  // and doesn't depend on TS 4.5+ `import { type X }` syntax in
-  // nested import statements.
-  const markets: MarketSnapshotItem[] = EKONOMI_INDICATORS.slice(0, 6).map(
-    (m) => ({
-      id: m.id,
-      label: m.label,
-      value: m.value,
-      change: m.change,
-      changeUnit: (m.changeUnit ?? "%") as "%" | "bps" | "",
-    }),
-  );
-
-  return (
-    <CryptoDetailPage
-      story={story}
-      primary={primary}
-      affected={affected}
-      markets={markets}
-      related={related}
-    />
-  );
+  return <CryptoDetailPage storyId={params.id} />;
 }

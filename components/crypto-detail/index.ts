@@ -17,6 +17,5 @@ export { CryptoDetailTags } from "./CryptoDetailTags";
 export { CryptoDetailKeyData } from "./CryptoDetailKeyData";
 export { CryptoDetailTimeline } from "./CryptoDetailTimeline";
 export { CryptoDetailSources } from "./CryptoDetailSources";
-export { CryptoDetailTickers } from "./CryptoDetailTickers";
 export { CryptoDetailSidebar } from "./CryptoDetailSidebar";
 export { CryptoDetailBackLink } from "./CryptoDetailBackLink";
