@@ -109,12 +109,19 @@ export function getHeadlineById(
  */
 export function getHeadlinesLast7Days(
   ticker: string,
-  date?: string,
+  date: string = new Date().toISOString(),
 ): Promise<HeadlinesLast7DaysResponse> {
-  const reference = date ?? todayIsoDate();
+  const parsedDateTime = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(date)
+      ? `${date}T00:00:00.000Z`
+      : date,
+  );
+  const normalizedDateTime = Number.isNaN(parsedDateTime.getTime())
+    ? date
+    : parsedDateTime.toISOString();
   const params = new URLSearchParams({
     ticker: ticker.toUpperCase(),
-    date: reference,
+    date: normalizedDateTime,
   });
   return request<HeadlinesLast7DaysResponse>(
     `headlines/last-7-days?${params.toString()}`,
