@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { type StockTrendingItem } from "@/lib/api";
 import { loadStocksTrending } from "@/lib/api/cache";
 import { todayIsoDate } from "@/lib/api/client";
@@ -31,9 +31,14 @@ export function useGetStocksTrending(
   date: string = todayIsoDate(),
   page = 1,
   limit = 20,
-): { data: StockTrendingItem[]; isLoading: boolean } {
+): {
+  data: StockTrendingItem[];
+  isLoading: boolean;
+  refresh: () => void;
+} {
   const [data, setData] = useState<StockTrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -55,7 +60,11 @@ export function useGetStocksTrending(
     return () => {
       cancelled = true;
     };
-  }, [date, page, limit]);
+  }, [date, page, limit, refreshKey]);
 
-  return { data, isLoading };
+  const refresh = useCallback(() => {
+    setRefreshKey((current) => current + 1);
+  }, []);
+
+  return { data, isLoading, refresh };
 }

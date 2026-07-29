@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowUpRight, Flame } from "lucide-react";
+import { ArrowUpRight, Flame, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { StockTrendingItem } from "@/lib/api";
 import type { DailyRecap } from "@/lib/mock/recaps";
@@ -39,6 +39,7 @@ const VISIBLE_TRENDING_LIMIT = 10;
 interface PalingBanyakDiberitakanProps {
   trending: StockTrendingItem[];
   trendingLoading: boolean;
+  onRefresh: () => void;
 }
 
 /**
@@ -113,6 +114,7 @@ function PalingBanyakSkeleton() {
 export function PalingBanyakDiberitakan({
   trending,
   trendingLoading,
+  onRefresh,
 }: PalingBanyakDiberitakanProps) {
   return (
     <section aria-label="Paling banyak diberitakan">
@@ -140,13 +142,30 @@ export function PalingBanyakDiberitakan({
             />
           ))}
         </div>
-      ) : null}
+      ) : (
+        <div className="rounded-lg border border-border bg-bg-secondary px-4 py-8 text-center">
+          <p className="text-[12.5px] text-text-muted">
+            Belum ada saham yang banyak diberitakan.
+          </p>
+          <p className="mt-1 font-mono text-[10.5px] text-text-faint">
+            Coba pilih tanggal lain atau muat ulang beberapa saat lagi.
+          </p>
+          <button
+            type="button"
+            onClick={onRefresh}
+            className="mt-4 inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-tertiary px-3.5 py-2 text-[12px] font-semibold text-text-secondary transition-colors hover:border-brand hover:text-brand"
+          >
+            <RefreshCw className="h-3 w-3" aria-hidden />
+            Muat ulang
+          </button>
+        </div>
+      )}
 
       {/* "See all" link — always visible once the section is loaded,
           regardless of how many items the API returned. The full
           list lives behind /trending; the cache holds it either way. */}
       {!trendingLoading && (
-        <div className="flex justify-center pt-1">
+        <div className="flex justify-center pt-4">
           <Link
             href="/trending"
             className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand"

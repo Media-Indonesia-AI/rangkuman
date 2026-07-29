@@ -50,8 +50,11 @@ export default function SahamPage() {
   // "Paling banyak diberitakan" — refetches whenever the selected
   // DatePicker value changes. Declared before the pre-hydration guard
   // below so the hook order is stable across renders.
-  const { data: trending, isLoading: trendingLoading } =
-    useGetStocksTrending(isoDate);
+  const {
+    data: trending,
+    isLoading: trendingLoading,
+    refresh: refreshTrending,
+  } = useGetStocksTrending(isoDate);
 
   // Hydrate the persisted sub-tab on first mount.
   useEffect(() => {
@@ -152,6 +155,7 @@ export default function SahamPage() {
                 <PalingBanyakDiberitakan
                   trending={trending}
                   trendingLoading={trendingLoading}
+                  onRefresh={refreshTrending}
                 />
               </div>
 
