@@ -90,11 +90,15 @@ export function StockCardList({
         {/* Desktop meta line + actions */}
         <div className="mb-2 hidden items-start justify-between gap-2 sm:flex">
           <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5 font-mono text-[10.5px] text-text-muted">
-            <span className="inline-flex items-center gap-1">
-              <Clock className="h-2.5 w-2.5" aria-hidden />
-              <span>{formatTanggalSingkat(recap.tanggal)}</span>
-            </span>
-            <span aria-hidden>·</span>
+            {recap.tanggal && (
+              <>
+                <span className="inline-flex items-center gap-1">
+                  <Clock className="h-2.5 w-2.5" aria-hidden />
+                  <span>{formatTanggalSingkat(recap.tanggal)}</span>
+                </span>
+                <span aria-hidden>·</span>
+              </>
+            )}
             <span className="num-tabular text-text-secondary">
               {recap.jumlahBerita} artikel
             </span>
@@ -123,9 +127,13 @@ export function StockCardList({
         {/* Mobile-only footer: date · articles + actions */}
         <div className="mt-1.5 flex items-center justify-between gap-2 sm:hidden">
           <p className="inline-flex items-center gap-1.5 font-mono text-[10.5px] text-text-muted">
-            <Clock className="h-2.5 w-2.5" aria-hidden />
-            <span>{formatTanggalSingkat(recap.tanggal)}</span>
-            <span aria-hidden>·</span>
+            {recap.tanggal && (
+              <>
+                <Clock className="h-2.5 w-2.5" aria-hidden />
+                <span>{formatTanggalSingkat(recap.tanggal)}</span>
+                <span aria-hidden>·</span>
+              </>
+            )}
             <span className="num-tabular text-text-secondary">
               {recap.jumlahBerita} artikel
             </span>
