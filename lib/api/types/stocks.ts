@@ -126,9 +126,19 @@ export interface RelatedStock {
  */
 export interface TickerInformation {
   sector_name: string;
+  description: string;
   price: number;
   pct_change: number;
   related_stocks: RelatedStock[];
+  articles: TickerArticles[];
+}
+
+export interface TickerArticles {
+  id: string;
+  title: string;
+  source_name: string;
+  recap_date: string;
+  content: string;
 }
 
 // ─── KEY METRICS ────────────────────────────────────────────────

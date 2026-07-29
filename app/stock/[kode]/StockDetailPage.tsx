@@ -90,7 +90,11 @@ export default function StockDetailPage({ params }: PageProps) {
             {/* Main column */}
             <div className="min-w-0 space-y-6">
               {/* Aggregate summary */}
-              <AggregateSummary kode={kode} />
+              <AggregateSummary
+                kode={kode}
+                description={tickerInfo?.description ?? null}
+                articles={tickerInfo?.articles ?? []}
+              />
 
               {/* Story — multi-date stories for this ticker */}
               <EmitenStories ticker={kode} variant="highlight" />
