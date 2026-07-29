@@ -23,6 +23,14 @@ import type {
   TopStocksResponse,
 } from "./types/stocks";
 
+/** Normalize a date-only or date-time value to an ISO 8601 timestamp. */
+function toIsoDateTime(value: string): string {
+  const parsed = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(value) ? `${value}T00:00:00.000Z` : value,
+  );
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
 /** Fetch top gainers and top loosers. `limit` controls how many per group (default 5). */
 export function getTopStocks(limit = 5): Promise<TopStocksResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
@@ -52,16 +60,16 @@ export function getIndexMover(limit = 10): Promise<IndexMoverResponse> {
 
 /**
  * Fetch foreign-investor buy/sell flow over a date range.
- * @param startDate ISO date string `YYYY-MM-DD`. Defaults to today.
- * @param endDate ISO date string `YYYY-MM-DD`. Defaults to today.
+ * @param startDate ISO date or date-time. Defaults to today.
+ * @param endDate ISO date or date-time. Defaults to today.
  */
 export function getForeignStocks(
   startDate?: string,
   endDate?: string,
 ): Promise<ForeignStocksResponse> {
   const params = new URLSearchParams({
-    start_date : startDate ?? todayIsoDate(),
-    end_date: endDate ?? todayIsoDate(),
+    start_date: toIsoDateTime(startDate ?? todayIsoDate()),
+    end_date: toIsoDateTime(endDate ?? todayIsoDate()),
   });
   return request<ForeignStocksResponse>(
     `stocks/foreign-stocks?${params.toString()}`,
@@ -168,14 +176,7 @@ export function getStocksTrending(
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
-  const parsedDateTime = new Date(
-    /^\d{4}-\d{2}-\d{2}$/.test(dateTime)
-      ? `${dateTime}T00:00:00.000Z`
-      : dateTime,
-  );
-  const normalizedDateTime = Number.isNaN(parsedDateTime.getTime())
-    ? dateTime
-    : parsedDateTime.toISOString();
+  const normalizedDateTime = toIsoDateTime(dateTime);
   const params = new URLSearchParams({
     date: normalizedDateTime,
     page: String(page),
