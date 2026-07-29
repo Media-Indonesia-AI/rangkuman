@@ -41,6 +41,17 @@ export interface TickersResponse {
   data: TickerItem[];
 }
 
+/** One ticker returned by `GET stocks/search`. */
+export interface StockSearchItem {
+  ticker: string;
+  company_name: string;
+}
+
+/** Wire format for `GET stocks/search`. */
+export interface StocksSearchResponse {
+  data: StockSearchItem[];
+}
+
 // ─── FOREIGN FLOW ───────────────────────────────────────────────
 
 /**

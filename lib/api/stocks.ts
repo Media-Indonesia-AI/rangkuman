@@ -17,6 +17,7 @@ import type {
   IndexMoverResponse,
   KeyMetrics,
   StockHistoricalResponse,
+  StocksSearchResponse,
   StocksTrendingResponse,
   TickerInformation,
   TickersResponse,
@@ -43,6 +44,21 @@ export function getTopStocks(limit = 5): Promise<TopStocksResponse> {
 /** Fetch the full ticker catalog with latest price and day change. */
 export function getTickers(): Promise<TickersResponse> {
   return request<TickersResponse>("stocks/ticker", { method: "GET" });
+}
+
+/** Search stocks by ticker or company name. */
+export function getStocksSearch(
+  q: string,
+  limit = 20,
+): Promise<StocksSearchResponse> {
+  const params = new URLSearchParams({
+    q,
+    limit: String(limit),
+  });
+  return request<StocksSearchResponse>(
+    `stocks/search?${params.toString()}`,
+    { method: "GET" },
+  );
 }
 
 /**

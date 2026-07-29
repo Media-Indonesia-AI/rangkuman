@@ -32,6 +32,8 @@ export type {
   RelatedStock,
   StockHistoricalPoint,
   StockHistoricalResponse,
+  StockSearchItem,
+  StocksSearchResponse,
   StockTrendingItem,
   StocksTrendingResponse,
   StockTrendingSource,
