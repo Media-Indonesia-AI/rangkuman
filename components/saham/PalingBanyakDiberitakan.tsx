@@ -164,7 +164,7 @@ export function PalingBanyakDiberitakan({
       {/* "See all" link — always visible once the section is loaded,
           regardless of how many items the API returned. The full
           list lives behind /trending; the cache holds it either way. */}
-      {!trendingLoading && (
+      {!trendingLoading && trending.length > 10 && (
         <div className="flex justify-center pt-4">
           <Link
             href="/trending"
