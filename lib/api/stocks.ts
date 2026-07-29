@@ -164,12 +164,20 @@ export function getStockHistorical(
  * @param limit    Page size (default 20).
  */
 export function getStocksTrending(
-  date = new Date(),
+  dateTime: string = new Date().toISOString(),
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
+  const parsedDateTime = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(dateTime)
+      ? `${dateTime}T00:00:00.000Z`
+      : dateTime,
+  );
+  const normalizedDateTime = Number.isNaN(parsedDateTime.getTime())
+    ? dateTime
+    : parsedDateTime.toISOString();
   const params = new URLSearchParams({
-    date: String(date),
+    date: normalizedDateTime,
     page: String(page),
     limit: String(limit),
   });
