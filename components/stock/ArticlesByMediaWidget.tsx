@@ -1,8 +1,12 @@
 "use client";
 
-import { Newspaper } from "lucide-react";
+import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
 import type { TickerArticles } from "@/lib/api/types/stocks";
+
+function articleHref(sourceUrl: string): string {
+  return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
+}
 
 interface ArticlesByMediaWidgetProps {
   articles: TickerArticles[];
@@ -58,18 +62,46 @@ export function ArticlesByMediaWidget({
                 </span>
               </header>
               <ul className="divide-y divide-border">
-                {items.map((article) => (
-                  <li key={article.id} className="px-4 py-3">
-                    <h4 className="text-[14px] font-semibold leading-snug text-text-primary">
-                      {article.title}
-                    </h4>
-                    {article.content && (
-                      <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
-                        {article.content}
-                      </p>
-                    )}
-                  </li>
-                ))}
+                {items.map((article) => {
+                  const hasSourceUrl = Boolean(article.source_url?.trim());
+                  const content = (
+                    <>
+                      <h4
+                        className={`text-[14px] font-semibold leading-snug text-text-primary${hasSourceUrl ? " group-hover:text-brand" : ""}`}
+                      >
+                        {article.title}
+                        {hasSourceUrl && (
+                          <ArrowUpRight
+                            className="ml-1 inline-block h-3 w-3 text-text-muted opacity-0 transition-opacity group-hover:opacity-100"
+                            aria-hidden
+                          />
+                        )}
+                      </h4>
+                      {article.content && (
+                        <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
+                          {article.content}
+                        </p>
+                      )}
+                    </>
+                  );
+
+                  return (
+                    <li key={article.id}>
+                      {hasSourceUrl ? (
+                        <a
+                          href={articleHref(article.source_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group block px-4 py-3 transition-colors hover:bg-bg-tertiary"
+                        >
+                          {content}
+                        </a>
+                      ) : (
+                        <div className="px-4 py-3">{content}</div>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

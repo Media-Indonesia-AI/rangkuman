@@ -148,10 +148,9 @@ export function getStockHistorical(
  * editorial coverage, each paired with an AI-written summary,
  * a per-source article breakdown, and the day's price move.
  *
- * Powered by the `stocks/stock/trending` endpoint. `date` is
- * required (the snapshot is per-trading-day, not live), while
- * `page` and `limit` are paginated controls that default to
- * the first page of 20 rows. `limit` is forwarded as-is rather
+ * Powered by the `stocks/stock/trending` endpoint. `date` is sent as
+ * a full ISO 8601 date-time, while `page` and `limit` are pagination
+ * controls that default to the first page of 20 rows. `limit` is forwarded as-is rather
  * than capped here so callers can paginate beyond the default
  * when they need a deeper window.
  *
@@ -159,18 +158,18 @@ export function getStockHistorical(
  * strip; the response shape is `{ data: StockTrendingItem[] }`
  * (same wire envelope as `TopStocksResponse` / `StockHistoricalResponse`).
  *
- * @param date  ISO date string `YYYY-MM-DD` (required). Defaults to
- *              `todayIsoDate()` when the caller passes nothing.
- * @param page  1-indexed page number (default 1).
- * @param limit Page size (default 20).
+ * @param dateTime ISO 8601 date-time. Date-only values (`YYYY-MM-DD`)
+ *                 are normalized to UTC midnight. Defaults to now.
+ * @param page     1-indexed page number (default 1).
+ * @param limit    Page size (default 20).
  */
 export function getStocksTrending(
-  date: string = todayIsoDate(),
+  date = new Date(),
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
   const params = new URLSearchParams({
-    date,
+    date: String(date),
     page: String(page),
     limit: String(limit),
   });

@@ -138,6 +138,7 @@ export interface TickerArticles {
   id: string;
   title: string;
   source_name: string;
+  source_url: string;
   recap_date: string;
   content: string;
 }

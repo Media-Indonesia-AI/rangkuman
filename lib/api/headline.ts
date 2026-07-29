@@ -112,12 +112,9 @@ export function getHeadlinesLast7Days(
   date?: string,
 ): Promise<HeadlinesLast7DaysResponse> {
   const reference = date ?? todayIsoDate();
-  // Subtract exactly 7×24h from the reference date (parsed as UTC
-  // midnight) and send the resulting instant as an ISO 8601 timestamp.
-  const from = new Date(new Date(reference).getTime() - 7 * 24 * 60 * 60 * 1000);
   const params = new URLSearchParams({
     ticker: ticker.toUpperCase(),
-    date: from.toISOString(),
+    date: reference,
   });
   return request<HeadlinesLast7DaysResponse>(
     `headlines/last-7-days?${params.toString()}`,
