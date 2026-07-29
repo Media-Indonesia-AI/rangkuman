@@ -38,6 +38,9 @@ export function useGetStocksTrending(
   useEffect(() => {
     let cancelled = false;
 
+    setData([]);
+    setIsLoading(true);
+
     void loadStocksTrending(date, page, limit)
       .then((res) => {
         if (!cancelled) setData(res.data);

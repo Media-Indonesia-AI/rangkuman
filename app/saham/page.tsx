@@ -47,11 +47,11 @@ export default function SahamPage() {
   // still navigate back via the DatePicker.
   const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
 
-  // "Paling banyak diberitakan" — live API, independent of the date
-  // picker. The trending endpoint returns the current top tickers, not
-  // a date-keyed snapshot. Declared before the pre-hydration guard
+  // "Paling banyak diberitakan" — refetches whenever the selected
+  // DatePicker value changes. Declared before the pre-hydration guard
   // below so the hook order is stable across renders.
-  const { data: trending, isLoading: trendingLoading } = useGetStocksTrending();
+  const { data: trending, isLoading: trendingLoading } =
+    useGetStocksTrending(isoDate);
 
   // Hydrate the persisted sub-tab on first mount.
   useEffect(() => {
