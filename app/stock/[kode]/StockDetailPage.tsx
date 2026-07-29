@@ -135,6 +135,7 @@ export default function StockDetailPage({ params }: PageProps) {
                 sektor={tickerInfo?.sector_name ?? null}
                 price={priceText}
                 pctChange={tickerInfo?.pct_change ?? null}
+                articles={tickerInfo?.articles ?? null}
               />
 
               {/* "Saham Serupa" peer list as its own card — when

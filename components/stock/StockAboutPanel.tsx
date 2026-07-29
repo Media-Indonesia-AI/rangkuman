@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { useHeadlineDetail } from "./HeadlineDetailProvider";
-import { useHeadlineStories } from "./HeadlineStoriesProvider";
 import { cn } from "@/lib/utils";
+import type { TickerArticles } from "@/lib/api/types/stocks";
 
 interface StockAboutPanelProps {
   /** Ticker code; drives the panel header. */
@@ -18,6 +17,7 @@ interface StockAboutPanelProps {
    *  comma separator) and colors it: positive → `text-bullish`,
    *  negative → `text-bearish`. */
   pctChange?: number | null;
+  articles?: TickerArticles[] | null;
 }
 
 /**
@@ -59,27 +59,18 @@ export function StockAboutPanel({
   sektor,
   price,
   pctChange,
+  articles,
 }: StockAboutPanelProps) {
-  const { detail } = useHeadlineDetail();
-  const { stories } = useHeadlineStories();
-
-  // Mirrors `<AggregateSummary />` `sumberFromStories`: flatten
-  // stories.articles and reduce to a Set of `source_name`. The set
-  // size is the "media" count shown in the Coverage row.
-  const mediaCount = useMemo(() => {
+  const { artikelCount, mediaCount } = useMemo(() => {
     const sources = new Set<string>();
-    for (const story of stories) {
-      for (const article of story.articles ?? []) {
-        if (article.source_name) sources.add(article.source_name);
-      }
+    for (const article of articles ?? []) {
+      if (article.source_name) sources.add(article.source_name);
     }
-    return sources.size;
-  }, [stories]);
-
-  // Same source as `<AggregateSummary />` `jumlahBerita`: the
-  // headline's `stories` array length, which is the headline-scoped
-  // article count surfaced to the rest of the page.
-  const artikelCount = detail ? detail.stories.length : 0;
+    return {
+      artikelCount: articles?.length ?? 0,
+      mediaCount: sources.size,
+    };
+  }, [articles]);
 
   return (
     <section className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
