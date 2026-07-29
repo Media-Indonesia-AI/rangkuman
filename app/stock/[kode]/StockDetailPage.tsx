@@ -114,7 +114,7 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Articles grouped by media — data-driven via the
                   shared headline-scoped stories fetched once by
                   <HeadlineStoriesProvider>. */}
-              <ArticlesByMediaWidget />
+              <ArticlesByMediaWidget articles={tickerInfo?.articles ?? []} />
             </div>
 
             {/* Right rail */}
