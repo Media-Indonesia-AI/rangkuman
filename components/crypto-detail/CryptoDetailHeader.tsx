@@ -79,7 +79,7 @@ export function CryptoDetailHeader({
               </span>
             ))}
           <span className="ml-auto font-mono text-[10.5px] text-text-faint">
-            Rank #{story.rank} · {story.timeAgo}
+            {story.timeAgo}
           </span>
         </div>
 
@@ -90,12 +90,7 @@ export function CryptoDetailHeader({
 
         {/* Meta line */}
         <div className="mt-3 flex flex-wrap items-center gap-x-2 gap-y-1 font-mono text-[10.5px] text-text-muted">
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-3 w-3" aria-hidden />
-            {story.readTime} baca
-          </span>
-          <span>·</span>
-          <span className="inline-flex items-center gap-1">
+            <span className="inline-flex items-center gap-1">
             <Newspaper className="h-3 w-3" aria-hidden />
             {story.sourceCount} sumber
           </span>

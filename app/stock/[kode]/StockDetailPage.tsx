@@ -84,6 +84,7 @@ export default function StockDetailPage({ params }: PageProps) {
           chip={tickerInfo?.sector_name ?? "N/A"}
           price={priceText}
           pctChange={tickerInfo?.pct_change ?? null}
+          companyName={tickerInfo?.company_name ?? null}
         />
 
           <div className="grid gap-6 lg:grid-cols-[1fr_300px]">

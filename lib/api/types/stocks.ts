@@ -126,6 +126,7 @@ export interface RelatedStock {
  */
 export interface TickerInformation {
   sector_name: string;
+  company_name: string;
   description: string;
   price: number;
   pct_change: number;
