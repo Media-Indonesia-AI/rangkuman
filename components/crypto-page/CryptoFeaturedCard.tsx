@@ -57,7 +57,7 @@ export function CryptoFeaturedCard({ story }: CryptoFeaturedCardProps) {
           </p>
 
           {/* Price block */}
-          <div className="mt-3 flex flex-wrap items-baseline gap-2 border-t border-border pt-3">
+          {/* <div className="mt-3 flex flex-wrap items-baseline gap-2 border-t border-border pt-3">
             <span className="font-mono text-[20px] font-bold tabular-nums text-text-primary">
               ${formatPrice(story.coinPrice)}
             </span>
@@ -76,9 +76,9 @@ export function CryptoFeaturedCard({ story }: CryptoFeaturedCardProps) {
               {story.coinChange.toFixed(2)}%
               <span className="text-[10px] text-text-faint">· 24 jam</span>
             </span>
-          </div>
+          </div> */}
 
-          <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-text-muted">
+          {/* <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 font-mono text-[10px] text-text-muted">
             <span className="text-text-secondary">By Tim Redaksi</span>
             <span className="text-text-faint">·</span>
             <span>{story.timeAgo}</span>
@@ -93,7 +93,7 @@ export function CryptoFeaturedCard({ story }: CryptoFeaturedCardProps) {
               Baca cerita
               <ArrowUpRight className="h-2.5 w-2.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
             </span>
-          </div>
+          </div> */}
         </div>
       </Link>
     </article>

@@ -54,7 +54,7 @@ export function CryptoStoryCard({ story, compact = false }: CryptoStoryCardProps
             </p>
           )}
           <div className="mt-auto" />
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
+          {/* <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
             <div className="flex items-center gap-2 font-mono text-[9.5px] text-text-muted">
               <span className="font-bold tabular-nums text-cat-amber-500">
                 {story.jumlahBerita}
@@ -77,7 +77,7 @@ export function CryptoStoryCard({ story, compact = false }: CryptoStoryCardProps
                 {story.coinChange.toFixed(2)}%
               </div>
             </div>
-          </div>
+          </div> */}
         </div>
       </Link>
     </article>
