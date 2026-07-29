@@ -25,6 +25,7 @@ const inflight = new Map<string, Promise<TickerInformation>>();
  */
 export function loadTickerInformation(
   ticker: string,
+  date?: string
 ): Promise<TickerInformation> {
   const k = ticker.toUpperCase();
   const hit = cached.get(k);
@@ -32,7 +33,7 @@ export function loadTickerInformation(
   const pending = inflight.get(k);
   if (pending) return pending;
   const promise = api
-    .getTickerInformation(k)
+    .getTickerInformation(k, date)
     .then((res) => {
       cached.set(k, res);
       return res;

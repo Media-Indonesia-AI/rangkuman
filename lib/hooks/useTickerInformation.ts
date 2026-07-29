@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import type { TickerInformation } from "@/lib/api";
 import { loadTickerInformation } from "@/lib/api/cache";
+import { todayIsoDate } from "../api/client";
 
 /**
  * Data hook for `GET stocks/ticker-information/{ticker}`.
@@ -29,6 +30,7 @@ import { loadTickerInformation } from "@/lib/api/cache";
  */
 export function useTickerInformation(
   ticker: string,
+  date?: string,
 ): { data: TickerInformation | null; isLoading: boolean } {
   const [data, setData] = useState<TickerInformation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -40,7 +42,7 @@ export function useTickerInformation(
     setData(null);
     setIsLoading(true);
 
-    void loadTickerInformation(ticker)
+    void loadTickerInformation(ticker, date)
       .then((res) => {
         if (!cancelled) setData(res);
       })

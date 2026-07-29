@@ -104,10 +104,12 @@ export function getCompositeChart(
  */
 export function getTickerInformation(
   ticker: string,
+  date: string = todayIsoDate(),
 ): Promise<TickerInformation> {
   const code = ticker.toUpperCase();
+  const params = new URLSearchParams({ date });
   return request<TickerInformation>(
-    `stocks/ticker-information/${encodeURIComponent(code)}`,
+    `stocks/ticker-information/${encodeURIComponent(code)}?${params.toString()}`,
     { method: "GET" },
   );
 }
