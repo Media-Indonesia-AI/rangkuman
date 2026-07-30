@@ -163,39 +163,47 @@ export function ShareButton({
               <X className="h-3 w-3" aria-hidden />
             </button>
           </div>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleCopy}
-            className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-bg-tertiary"
-          >
-            {copied ? (
-              <Check className="h-3.5 w-3.5 text-bullish" aria-hidden />
-            ) : (
-              <Link2 className="h-3.5 w-3.5 text-text-secondary" aria-hidden />
-            )}
-            <span className="text-[12.5px] text-text-primary">
-              {copied ? "Tersalin!" : "Copy link"}
-            </span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleWhatsApp}
-            className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-bg-tertiary"
-          >
-            <MessageCircle className="h-3.5 w-3.5 text-[#25D366]" aria-hidden />
-            <span className="text-[12.5px] text-text-primary">WhatsApp</span>
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={handleTelegram}
-            className="flex w-full items-center gap-2 px-2.5 py-2 text-left transition-colors hover:bg-bg-tertiary"
-          >
-            <Send className="h-3.5 w-3.5 text-[#26A5E4]" aria-hidden />
-            <span className="text-[12.5px] text-text-primary">Telegram</span>
-          </button>
+          {/* Icon-only actions rendered as a single horizontal
+              strip — three buttons share the row's width via
+              `flex-1`. No dividers between cells; visual
+              separation is provided by the `border-t` against
+              the header above. */}
+          <div className="flex border-t border-border">
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleCopy}
+              aria-label={copied ? "Tersalin!" : "Copy link"}
+              title={copied ? "Tersalin!" : "Copy link"}
+              className="flex flex-1 items-center justify-center py-2 transition-colors hover:bg-bg-tertiary"
+            >
+              {copied ? (
+                <Check className="h-3.5 w-3.5 text-bullish" aria-hidden />
+              ) : (
+                <Link2 className="h-3.5 w-3.5 text-text-secondary" aria-hidden />
+              )}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleWhatsApp}
+              aria-label="WhatsApp"
+              title="WhatsApp"
+              className="flex flex-1 items-center justify-center py-2 transition-colors hover:bg-bg-tertiary"
+            >
+              <MessageCircle className="h-3.5 w-3.5 text-[#25D366]" aria-hidden />
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleTelegram}
+              aria-label="Telegram"
+              title="Telegram"
+              className="flex flex-1 items-center justify-center py-2 transition-colors hover:bg-bg-tertiary"
+            >
+              <Send className="h-3.5 w-3.5 text-[#26A5E4]" aria-hidden />
+            </button>
+          </div>
         </div>
       )}
     </div>
