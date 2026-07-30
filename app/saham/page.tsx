@@ -147,9 +147,6 @@ export default function SahamPage() {
                     todayIso={todayIsoDate()}
                     maxLookbackDays={30}
                   />
-                  <span className="font-mono text-[10.5px] text-text-faint">
-                    {trending.length} recap · {formatTanggalIndonesia(isoDate)}
-                  </span>
                 </div>
 
                 <PalingBanyakDiberitakan
