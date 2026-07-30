@@ -141,7 +141,7 @@ export function ShareButton({
   const handleWhatsApp = useCallback(() => {
     const text = clampTitle(title);
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(text)}`,
+      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
       "_blank",
       "noopener,noreferrer",
     );
