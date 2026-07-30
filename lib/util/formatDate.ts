@@ -4,9 +4,24 @@ import { id as idLocale } from "date-fns/locale";
 /**
  * Format an ISO date string (YYYY-MM-DD) into long Indonesian form,
  * e.g. "Selasa, 7 Juni 2026".
+ *
+ * Returns `isoDate` verbatim when the input doesn't parse into a
+ * valid date (an empty string, a malformed stub, or any string
+ * `parseISO` can't recover) — date-fns raises `RangeError:
+ * Invalid time value` for those, and propagating it would crash
+ * the row render. Same defensive convention as
+ * `formatTanggalSingkat` below; any other error is re-thrown so
+ * genuine bugs aren't silently swallowed.
  */
 export function formatTanggalIndonesia(isoDate: string): string {
-  return format(parseISO(isoDate), "EEEE, d MMMM yyyy", { locale: idLocale });
+  try {
+    return format(parseISO(isoDate), "EEEE, d MMMM yyyy", { locale: idLocale });
+  } catch (err) {
+    if (err instanceof RangeError && err.message === "Invalid time value") {
+      return isoDate;
+    }
+    throw err;
+  }
 }
 
 /**
