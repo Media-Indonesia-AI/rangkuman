@@ -36,6 +36,22 @@ const POPOVER_WIDTH = 176; // w-44
 const POPOVER_GAP = 6; // mt-1.5
 const VIEWPORT_EDGE = 8;
 
+/** Max characters of the share-message title. WhatsApp / Telegram
+ *  previews truncate aggressively (Telegram's preview text caps
+ *  around 100 chars), so we cap the source text here to keep
+ *  previews within the preview's natural rendering and avoid
+ *  receivers seeing a fragmented title. The cap ends with `…`
+ *  so the truncation is signalled rather than silent. */
+const SHARE_TITLE_MAX_LENGTH = 100;
+
+/** Clamp `value` to `SHARE_TITLE_MAX_LENGTH` characters, appending
+ *  a horizontal-ellipsis when truncated. */
+function clampTitle(value: string): string {
+  return value.length > SHARE_TITLE_MAX_LENGTH
+    ? `${value.slice(0, SHARE_TITLE_MAX_LENGTH - 1)}…`
+    : value;
+}
+
 /**
  * Trigger + overlay share menu.
  *
@@ -123,7 +139,7 @@ export function ShareButton({
   }, [url]);
 
   const handleWhatsApp = useCallback(() => {
-    const text = `${title}`;
+    const text = clampTitle(title);
     window.open(
       `https://wa.me/?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -133,7 +149,7 @@ export function ShareButton({
   }, [title, url]);
 
   const handleTelegram = useCallback(() => {
-    const text = `${title}`;
+    const text = clampTitle(title);
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
       "_blank",
