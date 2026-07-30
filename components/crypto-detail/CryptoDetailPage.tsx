@@ -6,6 +6,7 @@ import { useListStory } from "@/lib/hooks/useListStory";
 import type {
   EmbeddedStory,
   HeadlineDetail,
+  HeadlineKeyword,
   StoryFilter,
 } from "@/lib/api";
 import { getRelativeTime } from "@/lib/utils";
@@ -139,7 +140,25 @@ function buildDisplayStory(
     // Placeholders for fields the API doesn't expose yet.
     readTime: "2 mnt",
     timeAgo: getRelativeTime(liveDetail.created_at),
-    tags: liveDetail.keywords ?? [],
+    // `liveDetail.keywords` may arrive as either `string[]` (per the
+    // `StoryItem.keywords: string[]` contract) or the richer
+    // `HeadlineKeyword[]` object form used by the `last-7-days`
+    // endpoint (`{id, label, value, description, sentiment}`).
+    // `CryptoDetailTags` (and the rest of the consumer chain) treats
+    // this field as a flat `string[]`, so we normalize here at the
+    // orchestrator boundary — picking `.label` when an entry is an
+    // object, falling back to the raw string otherwise. Without
+    // this, an object entry renders as a React child and throws
+    // "Objects are not valid as a React child (found: object with
+    // keys {id, label, value, description, sentiment})".
+    // Cast to the runtime union — `StoryItem.keywords: string[]`
+    // is the static type, but at runtime the wire sometimes ships
+    // the richer `HeadlineKeyword[]` shape (same as the
+    // `last-7-days` endpoint). Without the cast, TS narrows `k`
+    // to `never` in the else branch and rejects `k.label`.
+    tags: ((liveDetail.keywords ?? []) as (string | HeadlineKeyword)[]).map(
+      (k) => (typeof k === "string" ? k : k.label),
+    ),
     tickers: liveDetail.primary_ticker_code
       ? [liveDetail.primary_ticker_code]
       : [],
