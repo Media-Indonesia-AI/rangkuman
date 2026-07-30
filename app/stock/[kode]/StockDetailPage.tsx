@@ -21,12 +21,13 @@ import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 
 interface PageProps {
-  params: { kode: string };
+  params: { kode: string, recapDate?: string };
 }
 
 export default function StockDetailPage({ params }: PageProps) {
   const router = useRouter();
   const kode = params.kode.toUpperCase();
+  const recapDate = params.recapDate;
 
   // Auth gate — show the login prompt dialog on first paint when the
   // visitor is anonymous. `useCurrentUser()` is `undefined` during
@@ -48,7 +49,7 @@ export default function StockDetailPage({ params }: PageProps) {
   // so it shows a shimmer skeleton instead of flashing mock data
   // while the API response is in flight.
   const { data: tickerInfo, isLoading: tickerLoading } =
-    useTickerInformation(kode);
+    useTickerInformation(kode, recapDate);
 
   const priceText = tickerInfo
     ? tickerInfo.price.toLocaleString("id-ID")
@@ -95,6 +96,7 @@ export default function StockDetailPage({ params }: PageProps) {
                 kode={kode}
                 description={tickerInfo?.description ?? null}
                 articles={tickerInfo?.articles ?? []}
+                recapDate={recapDate}
               />
 
               {/* Story — multi-date stories for this ticker */}

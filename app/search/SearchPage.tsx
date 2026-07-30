@@ -159,10 +159,24 @@ function SuggestionChip({ item }: { item: SearchItem }) {
   );
 }
 
+/**
+ * Trim a date-only or date-time ISO string to its `YYYY-MM-DD`
+ * prefix. Used for URL path segments so a wire-format date
+ * (`2026-07-30`) and a wire-format date-time
+ * (`2026-07-30T07:00:00+07:00`) produce the same path value.
+ * Falls back to the original input when the string doesn't start
+ * with a recognizable date — malformed data should surface as a
+ * 404, not be silently coerced to an empty string.
+ */
+function toYmd(value: string): string {
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value);
+  return match ? match[1] : value;
+}
+
 function TickerArticleCard({ item }: { item: TickerListItem }) {
   return (
     <Link
-      href={`/stock/${encodeURIComponent(item.ticker)}`}
+      href={`/stock/${encodeURIComponent(item.ticker)}/${encodeURIComponent(toYmd(item.recap_date))}`}
       className="group block rounded-lg border border-border bg-bg-secondary p-3.5 transition-all hover:border-border-strong hover:shadow-card-hover"
     >
       <div className="mb-1.5 flex items-center justify-between gap-2">

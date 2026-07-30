@@ -55,10 +55,18 @@ export function AggregateSummary({
   kode,
   description,
   articles,
+  recapDate,
 }: {
   kode: string;
   description?: string | null;
   articles: TickerArticles[];
+  /** Calendar day the recap is for (`YYYY-MM-DD`). When set, the
+   *  card header shows "Ringkasan AI · Kamis, 30 Juli 2026" for
+   *  that specific day instead of today. Sourced from the
+   *  `/stock/[kode]/[recapDate]` URL segment; absent on
+   *  `/stock/[kode]` (no date) — in that case the card stays
+   *  on today's date. */
+  recapDate?: string;
 }) {
   const sumber = useMemo<Sumber[]>(() => {
     const acc = new Map<string, { count: number }>();
@@ -75,7 +83,13 @@ export function AggregateSummary({
   }, [articles]);
 
   const sentimen = "netral" as const;
-  const tanggalLabel = formatTanggalIndonesia(new Date().toISOString());
+  // When the URL pins a recap day (`/stock/{kode}/{recapDate}`), the
+  // card header reflects that day; on the bare `/stock/{kode}` route
+  // we fall through to today. Falsy values (undefined / empty string)
+  // both take the today branch.
+  const tanggalLabel = recapDate
+    ? formatTanggalIndonesia(recapDate)
+    : formatTanggalIndonesia(new Date().toISOString());
   const summaryText = stripSumberSuffix(description ?? "");
   const jumlahBerita = articles.length;
   const Icon = SentimenIcon[sentimen];
