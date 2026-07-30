@@ -22,6 +22,7 @@ export { loadTopStocks } from "./top-stocks";
 export { loadTickers, peekTickers } from "./tickers";
 export { loadIndexMover } from "./index-mover";
 export { loadTickerInformation } from "./ticker-information";
+export { loadTickerListArticles } from "./ticker-list-articles";
 export { loadKeyMetrics } from "./key-metrics";
 export { loadStockHistorical } from "./stock-historical";
 export { loadSectors, peekSectors } from "./sectors";

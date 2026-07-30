@@ -11,6 +11,7 @@
  */
 
 import { request, todayIsoDate } from "./client";
+import type { StoryFilter } from "./types/story";
 import type {
   CompositeChartResponse,
   ForeignStocksResponse,
@@ -20,6 +21,7 @@ import type {
   StocksSearchResponse,
   StocksTrendingResponse,
   TickerInformation,
+  TickerListResponse,
   TickersResponse,
   TopStocksResponse,
 } from "./types/stocks";
@@ -126,6 +128,35 @@ export function getTickerInformation(
   const params = new URLSearchParams({ date });
   return request<TickerInformation>(
     `stocks/ticker-information/${encodeURIComponent(code)}?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the list of ticker-tagged articles.
+ *
+ * @param limit   Page size (default 20).
+ * @param page    Page index (default 0).
+ * @param filters Structured `{ field, operator, value }` filters to
+ *                narrow the result set (default `[]`). The list is
+ *                JSON-encoded into a single `filters` query param, e.g.
+ *                `filters=[{"field":"stock_ticker","operator":"eq","value":"ANTM"}]`.
+ *                Empty list omits the param entirely.
+ */
+export function getTickerListArticles(
+  limit = 20,
+  page = 0,
+  filters: StoryFilter[] = [],
+): Promise<TickerListResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    page: String(page),
+  });
+  if (filters.length > 0) {
+    params.set("filters", JSON.stringify(filters));
+  }
+  return request<TickerListResponse>(
+    `stocks/ticker-information?${params.toString()}`,
     { method: "GET" },
   );
 }

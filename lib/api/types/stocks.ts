@@ -154,6 +154,19 @@ export interface TickerArticles {
   content: string;
 }
 
+export interface TickerListResponse {
+  data: TickerListItem[];
+}
+
+export interface TickerListItem {
+  id: string;
+  ticker: string;
+  recap_date: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // ─── KEY METRICS ────────────────────────────────────────────────
 
 /**

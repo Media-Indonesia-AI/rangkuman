@@ -37,6 +37,7 @@ import {
   getStocksSearch,
   getStocksTrending,
   getTickerInformation,
+  getTickerListArticles,
   getTickers,
   getTopStocks,
 } from "./stocks";
@@ -142,6 +143,7 @@ export const api = {
   getTickers,
   getIndexMover,
   getTickerInformation,
+  getTickerListArticles,
   getKeyMetrics,
   getStockHistorical,
   getStocksSearch,
