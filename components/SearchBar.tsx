@@ -1,10 +1,16 @@
 "use client";
 
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Search, TrendingUp, Hash, ArrowRight, X } from "lucide-react";
-import { searchAll, groupByType, type SearchItem } from "@/lib/mock/search";
+import { Search, TrendingUp, ArrowRight, X, AlertCircle } from "lucide-react";
+import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
 import { cn } from "@/lib/utils";
+
+interface StockSuggestion {
+  href: string;
+  label: string;
+  hint: string;
+}
 
 interface SearchBarProps {
   className?: string;
@@ -20,19 +26,14 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Filtered suggestions
-  const suggestions = useMemo<SearchItem[]>(() => {
-    if (!query.trim()) return [];
-    return searchAll(query, 8);
-  }, [query]);
+  const { data: stocks, isLoading: stocksLoading, error } = useStocksSearch(query, 10);
 
-  const { stocks: stockResults, topics: topicResults } = useMemo(
-    () => groupByType(suggestions),
-    [suggestions],
-  );
-
-  // Flatten for keyboard navigation
-  const flat = useMemo(() => [...stockResults, ...topicResults], [stockResults, topicResults]);
+  const stockResults: StockSuggestion[] = stocks.map((stock) => ({
+    // href: `/stock/${stock.ticker}`,
+    href: `/search/${stock.ticker}`,
+    label: stock.ticker,
+    hint: stock.company_name,
+  }));
 
   // Reset active index when suggestions change
   useEffect(() => {
@@ -61,7 +62,7 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
     return () => document.removeEventListener("keydown", onKey);
   }, []);
 
-  const navigate = (item: SearchItem) => {
+  const navigate = (item: StockSuggestion) => {
     setOpen(false);
     setQuery("");
     router.push(item.href);
@@ -69,8 +70,8 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (flat[activeIdx]) {
-      navigate(flat[activeIdx]);
+    if (stockResults[activeIdx]) {
+      navigate(stockResults[activeIdx]);
       return;
     }
     if (query.trim().length > 0) {
@@ -83,7 +84,7 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
     if (!open) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActiveIdx((i) => Math.min(i + 1, flat.length - 1));
+      setActiveIdx((i) => Math.min(i + 1, stockResults.length - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActiveIdx((i) => Math.max(i - 1, 0));
@@ -147,10 +148,16 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
           role="listbox"
           className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[420px] overflow-y-auto rounded-lg border border-border bg-bg-secondary p-1.5 shadow-2xl"
         >
-          {flat.length === 0 ? (
+          {stocksLoading ? (
+            <div className="px-3 py-6 text-center">
+              <p className="font-mono text-[11px] text-text-muted">
+                Mencari saham…
+              </p>
+            </div>
+          ) : stockResults.length === 0 || error ? (
             <div className="px-3 py-6 text-center">
               <p className="text-[12px] text-text-muted">
-                Gak ada hasil untuk &ldquo;<span className="font-mono text-text-primary">{query}</span>&rdquo;.
+                {error ? error.message : 'Gak ada hasil untuk &ldquo;<span className="font-mono text-text-primary">{query}</span>&rdquo;.'}
               </p>
               <button
                 type="button"
@@ -173,52 +180,15 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
                   </p>
                   {stockResults.map((item, idx) => (
                     <SuggestionRow
-                      key={item.id}
+                      key={item.label}
                       item={item}
                       active={idx === activeIdx}
                       onClick={() => navigate(item)}
                       onHover={() => setActiveIdx(idx)}
-                      Icon={TrendingUp}
-                      iconClass="text-bullish"
                     />
                   ))}
                 </div>
               )}
-
-              {topicResults.length > 0 && (
-                <div>
-                  <p className="px-2 pb-1 pt-1.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-faint">
-                    Topik
-                  </p>
-                  {topicResults.map((item, idx) => {
-                    const absoluteIdx = stockResults.length + idx;
-                    return (
-                      <SuggestionRow
-                        key={item.id}
-                        item={item}
-                        active={absoluteIdx === activeIdx}
-                        onClick={() => navigate(item)}
-                        onHover={() => setActiveIdx(absoluteIdx)}
-                        Icon={Hash}
-                        iconClass="text-brand"
-                      />
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Footer: "view all results" link */}
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  router.push(`/search/?q=${encodeURIComponent(query.trim())}`);
-                }}
-                className="mt-1 flex w-full items-center justify-between rounded px-2 py-1.5 text-[11.5px] font-semibold text-text-secondary transition-colors hover:bg-bg-tertiary hover:text-brand"
-              >
-                <span>Lihat semua hasil untuk &ldquo;{query}&rdquo;</span>
-                <ArrowRight className="h-3 w-3" aria-hidden />
-              </button>
             </>
           )}
         </div>
@@ -228,15 +198,13 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
 }
 
 interface SuggestionRowProps {
-  item: SearchItem;
+  item: StockSuggestion;
   active: boolean;
   onClick: () => void;
   onHover: () => void;
-  Icon: typeof TrendingUp;
-  iconClass: string;
 }
 
-function SuggestionRow({ item, active, onClick, onHover, Icon, iconClass }: SuggestionRowProps) {
+function SuggestionRow({ item, active, onClick, onHover }: SuggestionRowProps) {
   return (
     <button
       type="button"
@@ -249,13 +217,8 @@ function SuggestionRow({ item, active, onClick, onHover, Icon, iconClass }: Sugg
         active ? "bg-bg-tertiary" : "hover:bg-bg-tertiary/60",
       )}
     >
-      <span
-        className={cn(
-          "inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-bg-tertiary",
-          iconClass,
-        )}
-      >
-        <Icon className="h-3 w-3" aria-hidden />
+      <span className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded border border-border bg-bg-tertiary text-bullish">
+        <TrendingUp className="h-3 w-3" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
         <span className="block truncate text-[12.5px] font-semibold text-text-primary">
@@ -265,13 +228,8 @@ function SuggestionRow({ item, active, onClick, onHover, Icon, iconClass }: Sugg
           {item.hint}
         </span>
       </span>
-      <span
-        className={cn(
-          "shrink-0 font-mono text-[9.5px] font-semibold uppercase tracking-widest",
-          item.type === "stock" ? "text-bullish" : "text-brand",
-        )}
-      >
-        {item.type === "stock" ? "Saham" : "Topik"}
+      <span className="shrink-0 font-mono text-[9.5px] font-semibold uppercase tracking-widest text-bullish">
+        Saham
       </span>
     </button>
   );
