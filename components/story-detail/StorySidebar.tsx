@@ -47,13 +47,6 @@ export function StorySidebar({
             Belum ada story lain.
           </p>
         )}
-        <Link
-          href="/saham"
-          className="mt-3 inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-text-primary"
-        >
-          Kembali ke /saham/
-          <ArrowRight className="h-3 w-3" aria-hidden />
-        </Link>
       </div>
 
       {/* Tentang Story */}
@@ -61,8 +54,7 @@ export function StorySidebar({
         <p className="font-semibold text-text-secondary">Tentang Story</p>
         <p className="mt-1.5">
           Story adalah narasi perkembangan emiten dalam jangka panjang
-          (mingguan/bulanan). Beda dengan /crypto/detail/[id]/ yang merupakan
-          berita individual. Update tiap minggu dari tim redaksi.
+          (mingguan/bulanan).
         </p>
       </div>
     </aside>

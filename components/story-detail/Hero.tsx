@@ -190,7 +190,7 @@ function HeroEmpty() {
       </p>
       <p className="mt-1 text-[12.5px] text-text-faint">
         ID headline ini tidak ada di server — coba cek URL-nya
-        atau kembali ke /saham/.
+        atau kembali ke saham.
       </p>
     </div>
   );

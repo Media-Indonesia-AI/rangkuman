@@ -56,10 +56,10 @@ export default function StoryDetailPage() {
         <div className="mb-3">
           <Link
             href="/saham"
-            className="inline-flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-widest text-text-muted transition-colors hover:text-text-primary"
+            className="inline-flex items-center gap-1 font-mono text-[10.5px] tracking-widest text-text-muted transition-colors hover:text-text-primary"
           >
             <ChevronLeft className="h-3 w-3" aria-hidden />
-            Kembali ke /saham/
+            Kembali ke Saham
           </Link>
         </div>
 
