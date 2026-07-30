@@ -123,7 +123,7 @@ export function ShareButton({
   }, [url]);
 
   const handleWhatsApp = useCallback(() => {
-    const text = `${title} - ${url}`;
+    const text = `${title}`;
     window.open(
       `https://wa.me/?text=${encodeURIComponent(text)}`,
       "_blank",
@@ -133,7 +133,7 @@ export function ShareButton({
   }, [title, url]);
 
   const handleTelegram = useCallback(() => {
-    const text = `${title} - ${url}`;
+    const text = `${title}`;
     window.open(
       `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
       "_blank",

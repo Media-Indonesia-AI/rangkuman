@@ -114,7 +114,7 @@ export function StockCardList({
               publishedAt={recap.tanggal}
               tone="dark"
               href={href}
-              title={`${recap.sahamKode} — Rangkuman`}
+              title={`Rangkuman — ${recap.ringkasan}`}
             />
           </div>
         </div>
@@ -143,7 +143,7 @@ export function StockCardList({
             publishedAt={recap.tanggal}
             tone="dark"
             href={href}
-            title={`${recap.sahamKode} — Rangkuman`}
+            title={`Rangkuman — ${recap.ringkasan}`}
           />
         </div>
 

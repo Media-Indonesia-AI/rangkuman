@@ -138,7 +138,6 @@ export function PalingBanyakDiberitakan({
               recap={mapStockTrendingItemToRecap(item)}
               variant="list"
               rank={i + 1}
-              id={item.ticker}
             />
           ))}
         </div>

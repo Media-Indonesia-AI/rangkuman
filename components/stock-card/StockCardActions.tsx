@@ -47,18 +47,30 @@ export function StockCardActions({
         tone={tone}
       />
       {/*
-        `href` is built by `<StockCard />` as a path that always
-        carries a leading slash (e.g. `/stock/BBCA?id=ABC`), so a
-        straight concatenation with `SITE_URL` produces the
-        correct absolute URL. Sourcing the origin from
-        `lib/og.ts` keeps the production domain in one place —
-        change it there, every caller picks up the new value.
+        The share URL becomes a daily-recap deep link by
+        appending today's date (`yyyy-MM-dd`, derived from
+        `new Date()` in the user's local TZ via `toISOString`'s
+        slice) as a path segment. That lands on
+        `/stock/[kode]/[recapDate]` and shows the current day's
+        snapshot when the recipient opens the link. The optional
+        `?id=...` backend-headline query on `href` is preserved
+        by splitting before the `?` and re-appending after.
+
+        URL-shape pre/post:
+          href: /stock/BBCA           → /<origin>/stock/BBCA/2026-07-30
+          href: /stock/BBCA?id=ABC    → /<origin>/stock/BBCA/2026-07-30?id=ABC
       */}
-      <ShareButton
-        url={`${SITE_URL}${href}`}
-        title={title}
-        tone={tone}
-      />
+      {(() => {
+        const today = new Date().toISOString().slice(0, 10); // yyyy-MM-dd
+        const url = `${SITE_URL}${href}/${today}`;
+        return (
+          <ShareButton
+            url={url}
+            title={title}
+            tone={tone}
+          />
+        );
+      })()}
     </div>
   );
 }

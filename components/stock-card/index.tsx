@@ -13,10 +13,6 @@ export interface StockCardProps {
   variant?: "feed" | "featured" | "compact" | "list";
   className?: string;
   rank?: number;
-  /** Optional backend headline id. When set, the navigation href
-   *  becomes `/stock/{kode}?id={id}` so the detail page can call
-   *  `api.getHeadlineById(id)` on mount. */
-  id?: string;
 }
 
 /**
@@ -48,13 +44,8 @@ export function StockCard({
   variant = "feed",
   className,
   rank,
-  id,
 }: StockCardProps) {
-  // Build href once. With an `id`, append it as a query param so the
-  // stock detail page can deep-link to a specific headline; without,
-  // the href is identical to the pre-existing behavior.
-  const params = id ? new URLSearchParams({ id }).toString() : "";
-  const href = `/stock/${recap.sahamKode}${params ? `?${params}` : ""}`;
+  const href = `/stock/${recap.sahamKode}`;
 
   // `stock` is accepted for API parity with the original monolith
   // but the variants render the recap directly; the unused lookup
