@@ -2,6 +2,7 @@
 
 import { SavedButton } from "@/components/SavedButton";
 import { ShareButton } from "@/components/ShareButton";
+import { SITE_URL } from "@/lib/og";
 
 interface StockCardActionsProps {
   /** Ticker / share id passed to `<SavedButton />` (the saved items
@@ -45,8 +46,16 @@ export function StockCardActions({
         publishedAt={publishedAt}
         tone={tone}
       />
+      {/*
+        `href` is built by `<StockCard />` as a path that always
+        carries a leading slash (e.g. `/stock/BBCA?id=ABC`), so a
+        straight concatenation with `SITE_URL` produces the
+        correct absolute URL. Sourcing the origin from
+        `lib/og.ts` keeps the production domain in one place —
+        change it there, every caller picks up the new value.
+      */}
       <ShareButton
-        url={`https://rangkuman.news${href}`}
+        url={`${SITE_URL}${href}`}
         title={title}
         tone={tone}
       />

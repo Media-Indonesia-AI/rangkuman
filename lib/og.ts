@@ -1,7 +1,27 @@
 import type { Metadata } from "next";
 
-const SITE_URL = "https://rangkuman.news";
+/**
+ * Canonical public site origin. Single source of truth for any
+ * component that needs to assemble a fully-qualified absolute URL
+ * (Open Graph, share links, mailto targets, etc.).
+ *
+ * Reads `window.location.origin` at module load when running on
+ * the client, so dev tunnels (`http://192.168.0.105:8080/`),
+ * staging hosts, and production all report the right host
+ * without changing source. Falls back to the production origin
+ * when there's no `window` (SSR / Node-side metadata builders
+ * and OG crawler responses), so server-rendered Twitter cards
+ * and Open Graph tags continue to emit the real absolute URL
+ * even though they can't introspect the request host there.
+ */
+export const SITE_URL =
+  typeof window !== "undefined"
+    ? window.location.origin
+    : "https://rangkuman.news";
+
+/** Display name shown in OG / Twitter card metadata. */
 const SITE_NAME = "Rangkuman";
+
 const LOCALE = "id_ID";
 
 interface BuildOgInput {
