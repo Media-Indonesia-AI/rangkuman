@@ -255,9 +255,6 @@ export function SentimentSparkline({ kode, todayIso, className }: SentimentSpark
             <LegendItem color="bg-text-muted" label="Netral" count={counts.netral} />
             <LegendItem color="bg-bearish" label="Negatif" count={counts.negatif} />
           </div>
-          <span className="font-mono text-[9.5px] text-text-faint">
-            Sumber: agregat media, dikurasi harian
-          </span>
         </div>
       </div>
     </section>

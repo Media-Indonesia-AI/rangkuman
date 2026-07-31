@@ -97,9 +97,6 @@ export function EmitenStories({
               Cerita panjang untuk emiten ini
             </p>
           </div>
-          <span className="shrink-0 font-mono text-[10.5px] text-text-faint">
-            {stories.length} cerita · update tiap minggu
-          </span>
         </div>
 
         {isLoading ? (

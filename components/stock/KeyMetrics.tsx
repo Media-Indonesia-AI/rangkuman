@@ -72,9 +72,6 @@ function KeyMetricsShimmer() {
       <header className="flex items-center gap-1.5 border-b border-border bg-bg-tertiary px-3.5 py-2">
         <BarChart3 className="h-3.5 w-3.5 text-brand" aria-hidden />
         <h3 className="label">Key Metrics</h3>
-        <span className="ml-auto font-mono text-[9.5px] text-text-faint">
-          live data
-        </span>
       </header>
 
       <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3">
@@ -148,9 +145,6 @@ export function KeyMetrics({ kode, className }: KeyMetricsProps) {
       <header className="flex items-center gap-1.5 border-b border-border bg-bg-tertiary px-3.5 py-2">
         <BarChart3 className="h-3.5 w-3.5 text-brand" aria-hidden />
         <h3 className="label">Key Metrics</h3>
-        <span className="ml-auto font-mono text-[9.5px] text-text-faint">
-          {isEmpty ? "no data" : "live data"}
-        </span>
       </header>
 
       <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3">
