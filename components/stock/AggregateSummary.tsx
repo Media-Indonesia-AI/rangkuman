@@ -2,7 +2,8 @@
 
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
-import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { DatePicker } from "@/components/DatePicker";
+import { hariIniIso } from "@/lib/util/formatDate";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import type { TickerArticles } from "@/lib/api/types/stocks";
 import { EmptyState } from "@/components/EmptyState";
@@ -83,13 +84,17 @@ export function AggregateSummary({
   }, [articles]);
 
   const sentimen = "netral" as const;
+  // The card header now hosts a date picker (was a static label).
   // When the URL pins a recap day (`/stock/{kode}/{recapDate}`), the
-  // card header reflects that day; on the bare `/stock/{kode}` route
-  // we fall through to today. Falsy values (undefined / empty string)
-  // both take the today branch.
-  const tanggalLabel = recapDate
-    ? formatTanggalIndonesia(recapDate)
-    : formatTanggalIndonesia(new Date().toISOString());
+  // picker reflects that day; on the bare `/stock/{kode}` route we
+  // fall through to today. Picking a new date navigates to the same
+  // `/stock/{kode}/{iso}` URL via `DatePicker`'s `hrefFor` builder,
+  // so `StockDetailPage` re-renders with the new `params.recapDate`,
+  // the `useTickerInformation` hook refetches, and the new summary
+  // lands in `tickerInfo`. Navigation is fully declarative — Next.js
+  // `<Link>` prefetches the destination so the recap day loads
+  // instantly and we don't need a `useRouter` hook here at all.
+  const isoDate = recapDate ?? hariIniIso();
   const summaryText = stripSumberSuffix(description ?? "");
   const jumlahBerita = articles.length;
   const Icon = SentimenIcon[sentimen];
@@ -119,9 +124,12 @@ export function AggregateSummary({
           <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-primary">
             Ringkasan AI
           </span>
-          <span className="font-mono text-[10.5px] text-text-muted num-tabular">
-            · {tanggalLabel}
-          </span>
+          <DatePicker
+            value={isoDate}
+            hrefFor={(iso) => `/stock/${kode}/${iso}`}
+            todayIso={hariIniIso()}
+            maxLookbackDays={30}
+          />
         </div>
         <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
           {jumlahBerita} artikel
