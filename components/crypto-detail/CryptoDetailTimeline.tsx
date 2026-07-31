@@ -34,9 +34,6 @@ export function CryptoDetailTimeline({
             {events.length} peristiwa dari {sourceCount} media
           </h3>
         </div>
-        <span className="font-mono text-[10.5px] text-text-faint">
-          Kronologis
-        </span>
       </div>
 
       <StoryTimeline events={events} />

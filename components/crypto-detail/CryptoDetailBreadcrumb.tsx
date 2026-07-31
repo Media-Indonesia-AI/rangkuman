@@ -15,7 +15,7 @@ export function CryptoDetailBreadcrumb({ rank }: CryptoDetailBreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="mb-3 flex items-center gap-1 font-mono text-[10.5px] uppercase tracking-widest text-text-muted"
+      className="mb-3 flex items-center gap-1 font-mono text-[10.5px] tracking-widest text-text-muted"
     >
       <Link
         href="/crypto"

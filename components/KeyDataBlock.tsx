@@ -66,9 +66,6 @@ export function KeyDataBlock({ keywords, className }: KeyDataBlockProps) {
         <h3 className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
           Data Kunci
         </h3>
-        <span className="ml-auto font-mono text-[9.5px] uppercase tracking-widest text-text-faint">
-          angka-angka terpenting
-        </span>
       </div>
 
       <dl
