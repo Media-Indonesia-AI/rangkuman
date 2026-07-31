@@ -18,8 +18,6 @@ interface RelatedStoriesListProps {
   label?: string;
   /** Right-side meta text under label. */
   meta?: string;
-  /** Optional current story id to exclude (in case helper didn't filter it). */
-  excludeId?: string;
   /**
    * Visual variant:
    *  - "compact" (default): text-only, dense list. Good for 4+ items.
@@ -85,7 +83,8 @@ function storyItemToHighlight(item: StoryItem, rank: number): Highlight {
     sourceCount: 1,
     readTime: "2 mnt",
     timeAgo: getRelativeTime(item.created_at),
-    tags: item.keywords ?? [],
+    keywords: item.keywords ?? [],
+    tags: [],
     rank,
     events: [],
   };
@@ -100,7 +99,6 @@ export function RelatedStoriesList({
   className,
   label = "Cerita Terkait",
   meta,
-  excludeId,
   variant = "compact",
   currentHeadlineId,
 }: RelatedStoriesListProps) {
@@ -144,16 +142,12 @@ export function RelatedStoriesList({
   // `excludeId` prop still applies afterwards as a belt-and-braces
   // for callers that pass a different id (e.g. some other
   // pre-filtered list).
-  const baseStories: Highlight[] =
+  const filtered: Highlight[] =
     topicId && liveRows.length > 0
       ? liveRows
           .filter((item) => item.id !== currentHeadlineId)
           .map((item, i) => storyItemToHighlight(item, i + 1))
       : [];
-
-  const filtered = excludeId
-    ? baseStories.filter((s) => s.id !== excludeId)
-    : baseStories;
 
   if (filtered.length === 0) return null;
 
@@ -226,7 +220,7 @@ export function RelatedStoriesList({
                     {s.summary}
                   </p>
                   <p className="mt-1.5 font-mono text-[9px] text-text-muted">
-                    {s.timeAgo} · {s.sourceCount} sumber
+                    {s.timeAgo}
                   </p>
                 </Link>
               </li>

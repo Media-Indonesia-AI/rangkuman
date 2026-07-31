@@ -31,7 +31,6 @@ export function CryptoDetailSidebar({ storyId }: CryptoDetailSidebarProps) {
             with no fallback rows, or its own fetch returned empty). */}
         <div className="mt-4">
           <RelatedStoriesList
-            excludeId={storyId}
             currentHeadlineId={storyId}
             variant="featured"
           />

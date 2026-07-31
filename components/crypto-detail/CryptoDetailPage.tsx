@@ -244,8 +244,8 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
             />
 
             <CryptoDetailSummary summary={displayStory.summary} />
-            <CryptoDetailTags tags={displayStory.tags} />
             <CryptoDetailKeyData keywords={liveDetail?.keywords ?? []} />
+            <CryptoDetailTags tags={displayStory.tags} />
 
             <CryptoDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
 

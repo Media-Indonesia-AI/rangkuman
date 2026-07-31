@@ -9,6 +9,8 @@
  * used for color/positioning.
  */
 
+import { KeywordItem } from "../api/types/story";
+
 export type Category = "saham" | "bisnis" | "ekonomi" | "kebijakan" | "global" | "komoditas" | "crypto";
 
 /** Single event in a story's timeline. */
@@ -70,6 +72,7 @@ export interface Highlight {
   events: StoryEvent[];
   /** 2-4 key data points shown as a callout block on the story page. */
   keyData?: KeyDataPoint[];
+  keywords?: KeywordItem[];
 }
 
 /** Today's curated highlights. */
