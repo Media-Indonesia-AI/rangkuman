@@ -68,7 +68,7 @@ export function StorySidebar({
  *  metadata line below the title still carries the date and pct
  *  change, with `n/a` fallbacks when the API omits a value. */
 function OtherStoryRow({ story }: { story: HeadlineLast7DaysItem }) {
-  const pct = story.pct_change_since_story;
+  const pct = story?.pct_change_since_story??0;
   const pctColor =
     pct === undefined
       ? "text-text-faint"

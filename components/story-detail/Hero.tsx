@@ -8,7 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Shimmer } from "@/components/Shimmer";
-import { cn } from "@/lib/utils";
+import { cn, getRelativeTime } from "@/lib/utils";
 import type { HeadlineDetail } from "@/lib/api";
 import { NotAvailable, STATUS_ICON, sentimentMeta } from "./shared";
 
@@ -127,13 +127,15 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
           <Clock className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
             Update{" "}
-            <span className="font-bold text-text-primary">{updateDate}</span>
+            <span className="font-bold text-text-primary">
+              {getRelativeTime(updateDate)}
+            </span>
           </span>
         </div>
         <div className="flex items-center gap-1.5">
           <Tag className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
-            Dimulai <NotAvailable />
+            Dimulai {getRelativeTime(detail.created_at)}
           </span>
         </div>
       </div>
@@ -170,8 +172,8 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         <span className="font-mono text-[10.5px] text-text-muted">
           Pergerakan harga sejak story
         </span>
-        <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] text-text-faint">
-          ticker <span className="text-text-muted">{detail.primary_ticker_code}</span>
+        <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-brand">
+          {detail.primary_ticker_code}
         </span>
       </div>
     </>
