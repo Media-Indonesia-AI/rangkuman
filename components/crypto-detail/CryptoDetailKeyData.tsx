@@ -1,8 +1,8 @@
-import type { KeyDataPoint } from "@/lib/mock/highlights";
 import { KeyDataBlock } from "@/components/KeyDataBlock";
+import { KeywordItem } from "@/lib/api/types/story";
 
 interface CryptoDetailKeyDataProps {
-  points: KeyDataPoint[];
+  keywords: KeywordItem[];
 }
 
 /**
@@ -10,11 +10,11 @@ interface CryptoDetailKeyDataProps {
  * caller passes an empty array (KeyDataBlock itself doesn't render
  * a guard — this keeps the JSX at the call site clean).
  */
-export function CryptoDetailKeyData({ points }: CryptoDetailKeyDataProps) {
-  if (points.length === 0) return null;
+export function CryptoDetailKeyData({ keywords }: CryptoDetailKeyDataProps) {
+  if (keywords.length === 0) return null;
   return (
     <div className="mt-4">
-      <KeyDataBlock points={points} />
+      <KeyDataBlock keywords={keywords} />
     </div>
   );
 }

@@ -1,25 +1,37 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import type { KeyDataPoint } from "@/lib/mock/highlights";
 import { cn } from "@/lib/utils";
+import { KeywordItem, type StorySentiment } from "@/lib/api/types/story";
 
 interface KeyDataBlockProps {
   /** 2-4 key data points. */
-  points: KeyDataPoint[];
+  keywords: KeywordItem[];
   className?: string;
 }
 
-function TrendIndicator({ trend }: { trend?: KeyDataPoint["trend"] }) {
-  if (trend === "up") {
+/**
+ * Trend chip in front of each tile. Uses the `text-bullish` /
+ * `text-bearish` semantic tokens (defined in `app/globals.css`) so
+ * the chip stays consistent with the rest of the app — green for
+ * positive (Naik), red for negative (Turun), muted for neutral
+ * (Netral). Switched off the older `text-cat-saham` /
+ * `text-cat-kebijakan` category tokens, which conflated
+ * sentiment with stock category and produced a colder,
+ * category-locked green rather than the saturated bullish hue
+ * the design now uses.
+ */
+function TrendIndicator({ sentiment }: { sentiment: StorySentiment }) {
+  if (sentiment === "positive") {
     return (
-      <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-cat-saham">
+      <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-bullish">
         <TrendingUp className="h-2.5 w-2.5" aria-hidden />
         Naik
       </span>
     );
   }
-  if (trend === "down") {
+  if (sentiment === "negative") {
     return (
-      <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-cat-kebijakan">
+      <span className="inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider text-bearish">
         <TrendingDown className="h-2.5 w-2.5" aria-hidden />
         Turun
       </span>
@@ -38,8 +50,8 @@ function TrendIndicator({ trend }: { trend?: KeyDataPoint["trend"] }) {
  * a short label, optional sublabel, and trend indicator. Borderless,
  * divided by vertical lines, designed to read in <2 seconds.
  */
-export function KeyDataBlock({ points, className }: KeyDataBlockProps) {
-  if (points.length === 0) return null;
+export function KeyDataBlock({ keywords, className }: KeyDataBlockProps) {
+  if (keywords.length === 0) return null;
 
   return (
     <section
@@ -62,34 +74,34 @@ export function KeyDataBlock({ points, className }: KeyDataBlockProps) {
       <dl
         className={cn(
           "grid divide-x divide-border",
-          points.length === 2 && "grid-cols-2",
-          points.length === 3 && "grid-cols-1 sm:grid-cols-3",
-          points.length === 4 && "grid-cols-2 sm:grid-cols-4",
+          keywords.length === 2 && "grid-cols-2",
+          keywords.length === 3 && "grid-cols-1 sm:grid-cols-3",
+          keywords.length === 4 && "grid-cols-2 sm:grid-cols-4",
         )}
       >
-        {points.map((pt, i) => (
+        {keywords.map((keyword, i) => (
           <div
-            key={i}
+            key={keyword.id}
             className={cn(
               "px-1 py-2 first:pl-0 last:pr-0 sm:px-4",
               // 2-col layout: divide only between cells in same row
-              points.length === 2 && i % 2 === 0 ? "border-r border-border" : "",
+              keywords.length === 2 && i % 2 === 0 ? "border-r border-border" : "",
             )}
           >
             <div className="mb-1">
-              <TrendIndicator trend={pt.trend} />
+              <TrendIndicator sentiment={keyword.sentiment} />
             </div>
             <dd className="font-mono text-[22px] font-bold leading-none tracking-tight text-text-primary sm:text-[26px]">
-              {pt.value}
+              {keyword.value}
             </dd>
             <dt className="mt-1.5 text-[12.5px] font-semibold leading-tight text-text-primary sm:text-[13px]">
-              {pt.label}
+              {keyword.label}
             </dt>
-            {pt.sublabel && (
+            {/* {keyword.sublabel && (
               <p className="mt-0.5 line-clamp-1 font-mono text-[10.5px] text-text-muted">
-                {pt.sublabel}
+                {keyword.sublabel}
               </p>
-            )}
+            )} */}
           </div>
         ))}
       </dl>
