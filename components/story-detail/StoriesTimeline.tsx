@@ -99,7 +99,7 @@ function TimelineItem({ story }: { story: EmbeddedStory }) {
             "h-4 w-4",
             story.primary_sentiment === "neutral"
               ? "text-text-muted"
-              : "text-bg-primary",
+              : "text-white",
           )}
         />
       </span>

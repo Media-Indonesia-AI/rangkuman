@@ -42,8 +42,12 @@ export default function StoryDetailPage() {
     isLoading: isLoadingOther,
   } = useMultiStories("", 3);
 
-  const stories = detail?.stories ?? [];
-  stories.reverse();
+  // Reverse on a fresh copy — `detail.stories` is owned by the
+  // hook payload, so mutating it in place would corrupt the
+  // upstream cache and toggle between reversed / forward on
+  // every Strict Mode double-render. Spreading first makes the
+  // order stable across renders.
+  const stories = [...(detail?.stories ?? [])].reverse();
 
   return (
     <>
