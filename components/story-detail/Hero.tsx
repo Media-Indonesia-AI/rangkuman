@@ -8,7 +8,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Shimmer } from "@/components/Shimmer";
-import { cn, getRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getRelativeTime } from "@/lib/util/formatDate";
 import type { HeadlineDetail } from "@/lib/api";
 import { NotAvailable, STATUS_ICON, sentimentMeta } from "./shared";
 

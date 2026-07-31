@@ -4,7 +4,7 @@ import { Clock } from "lucide-react";
 import Link from "next/link";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import { getRecapsForStock } from "@/lib/mock/recaps";
-import { formatTanggalSingkat } from "@/lib/util/formatDate";
+import { formatSingkat } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
 import type { StoryFilter, StoryItem } from "@/lib/api";
 import { SentimentBadge } from "@/components/SentimentBadge";
@@ -111,7 +111,7 @@ export function ArsipSingkat({ kode }: ArsipSingkatProps) {
           <li key={r.id} className="px-3 py-2.5">
             <div className="mb-1.5 flex items-center gap-2">
               <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-muted num-tabular">
-                {formatTanggalSingkat(r.tanggal)}
+                {formatSingkat(r.tanggal)}
               </span>
               <SentimentBadge sentiment={r.sentimen} size="sm" />
             </div>
@@ -150,7 +150,7 @@ function ArsipRow({ story, kode }: { story: StoryItem; kode: string }) {
       >
         <div className="mb-1.5 flex items-center gap-2">
           <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-muted num-tabular">
-            {formatTanggalSingkat(tanggal)}
+            {formatSingkat(tanggal)}
           </span>
           <SentimentBadge sentiment={sentiment} size="sm" />
         </div>

@@ -43,25 +43,6 @@ export function percentColorClass(value: number): string {
   return "text-neutral";
 }
 
-/** Return human-readable relative time in Indonesian. */
-export function getRelativeTime(date: Date | string | number, now: Date = new Date()): string {
-  const target = date instanceof Date ? date : new Date(date);
-  const diffMs = now.getTime() - target.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) return "Baru saja";
-  if (diffMin < 60) return `${diffMin} menit lalu`;
-  if (diffHour < 24) return `${diffHour} jam lalu`;
-  if (diffDay === 1) return "Kemarin";
-  if (diffDay < 7) return `${diffDay} hari lalu`;
-  if (diffDay < 30) return `${Math.floor(diffDay / 7)} minggu lalu`;
-  if (diffDay < 365) return `${Math.floor(diffDay / 30)} bulan lalu`;
-  return `${Math.floor(diffDay / 365)} tahun lalu`;
-}
-
 /** Truncate text to a max length with ellipsis. */
 export function truncate(text: string, maxLength: number): string {
   if (text.length <= maxLength) return text;

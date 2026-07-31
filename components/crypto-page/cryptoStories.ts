@@ -10,7 +10,7 @@
 import type { Sentimen } from "@/lib/mock/crypto";
 import type { StoryItem, StoryTopic } from "@/lib/api";
 import { toSentimen } from "@/lib/util/sentiment";
-import { getRelativeTime } from "@/lib/utils";
+import { getRelativeTime } from "@/lib/util/formatDate";
 
 export interface CryptoStory {
   id: string;

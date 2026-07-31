@@ -1,5 +1,6 @@
 import { Shimmer } from "@/components/Shimmer";
-import { cn, getRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { DATE_FORMAT_ISO, formatSingkat, getRelativeTime } from "@/lib/util/formatDate";
 import type { EmbeddedStory } from "@/lib/api";
 import { STATUS_ICON, sentimentMeta, SectionHeader } from "./shared";
 
@@ -113,7 +114,7 @@ function TimelineItem({ story }: { story: EmbeddedStory }) {
           dateTime={story.recap_date}
           className="mt-0.5 block font-mono text-[10.5px] text-text-faint"
         >
-          {story.recap_date || "n/a"}
+          {formatSingkat(story.recap_date, DATE_FORMAT_ISO)}
         </time>
 
         {article && (

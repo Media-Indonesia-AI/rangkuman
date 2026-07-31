@@ -4,7 +4,8 @@ import { BookOpen } from "lucide-react";
 import type { StoryItem } from "@/lib/api";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { toSentimen } from "@/lib/util/sentiment";
-import { cn, getRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getRelativeTime } from "@/lib/util/formatDate";
 import { SentimentBadge } from "@/components/SentimentBadge";
 
 /** Tailwind dot/rail color for a story's sentiment. */

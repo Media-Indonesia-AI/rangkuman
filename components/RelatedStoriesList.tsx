@@ -8,7 +8,8 @@ import {
   CATEGORY_CONFIG,
   type Highlight,
 } from "@/lib/mock/highlights";
-import { cn, getRelativeTime } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { getRelativeTime } from "@/lib/util/formatDate";
 import { useTopicsContext } from "./topics-provider";
 import { findCryptoTopicId } from "./crypto-page/cryptoStories";
 interface RelatedStoriesListProps {

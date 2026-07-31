@@ -8,7 +8,7 @@ import { StockCard } from "@/components/stock-card";
 import { EmptyState } from "@/components/EmptyState";
 import { stocks } from "@/lib/mock/stocks";
 import { recaps, getRecapForStock, TODAY_ISO } from "@/lib/mock/recaps";
-import { formatTanggalSingkat } from "@/lib/util/formatDate";
+import { formatSingkat } from "@/lib/util/formatDate";
 import { initialsOf } from "@/lib/util/formatMedia";
 import { cn } from "@/lib/utils";
 
@@ -203,7 +203,7 @@ function SearchFormInner() {
                               className="flex items-baseline gap-2 text-[12px] text-text-secondary"
                             >
                               <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-                                {formatTanggalSingkat(r.tanggal)}
+                                {formatSingkat(r.tanggal)}
                               </span>
                               <span className="line-clamp-1">
                                 {r.ringkasan.length > 100

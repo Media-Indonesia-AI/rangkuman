@@ -9,7 +9,7 @@ import type {
   HeadlineKeyword,
   StoryFilter,
 } from "@/lib/api";
-import { getRelativeTime } from "@/lib/utils";
+import { getRelativeTime } from "@/lib/util/formatDate";
 import type { Highlight, StoryEvent } from "@/lib/mock/highlights";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";

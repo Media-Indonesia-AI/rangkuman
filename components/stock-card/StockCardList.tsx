@@ -7,7 +7,7 @@ import { StockCardFooter } from "./StockCardFooter";
 import { StockCardHero } from "./StockCardHero";
 import { StockCardOverlayLink } from "./StockCardOverlayLink";
 import { cn } from "@/lib/utils";
-import { formatTanggalSingkat } from "@/lib/util/formatDate";
+import { formatSingkat } from "@/lib/util/formatDate";
 import { pickHeroGradient } from "@/lib/util/heroGradient";
 import type { DailyRecap } from "@/lib/mock/recaps";
 
@@ -94,7 +94,7 @@ export function StockCardList({
               <>
                 <span className="inline-flex items-center gap-1">
                   <Clock className="h-2.5 w-2.5" aria-hidden />
-                  <span>{formatTanggalSingkat(recap.tanggal)}</span>
+                  <span>{formatSingkat(recap.tanggal)}</span>
                 </span>
                 <span aria-hidden>·</span>
               </>
@@ -130,7 +130,7 @@ export function StockCardList({
             {recap.tanggal && (
               <>
                 <Clock className="h-2.5 w-2.5" aria-hidden />
-                <span>{formatTanggalSingkat(recap.tanggal)}</span>
+                <span>{formatSingkat(recap.tanggal)}</span>
                 <span aria-hidden>·</span>
               </>
             )}

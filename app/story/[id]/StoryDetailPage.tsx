@@ -43,6 +43,7 @@ export default function StoryDetailPage() {
   } = useMultiStories("", 3);
 
   const stories = detail?.stories ?? [];
+  stories.reverse();
 
   return (
     <>
