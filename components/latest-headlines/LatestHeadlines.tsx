@@ -74,17 +74,15 @@ const END_REACHED_THRESHOLD_PX = 80;
  * on the page provide all the sidebar context the consumers need.
  */
 export function LatestHeadlines() {
-  const { data: topics, isLoading: topicsLoading } = useTopics();
-  const cryptoTopicId = findCryptoTopicId(topics);
-  const LATEST_FILTERS: StoryFilter[] = cryptoTopicId
-    ? [
+  // const { data: topics, isLoading: topicsLoading } = useTopics();
+  // const cryptoTopicId = findCryptoTopicId(topics);
+  const LATEST_FILTERS: StoryFilter[] = [
         {
           field: "topic_id",
           operator: "ne",
-          value: cryptoTopicId,
+          value: "6a3a496df8d49a8eb8617ff4",
         },
-      ]
-    : [];
+      ];
 
   // Pagination state. `useHeadlines` seeds the first page (so we
   // get a reactive `isLoading` flag for the skeleton); subsequent
@@ -96,7 +94,6 @@ export function LatestHeadlines() {
     PAGE_LIMIT,
     0,
     LATEST_FILTERS,
-    !topicsLoading,
   );
   const [items, setItems] = useState<StoryItem[]>([]);
   // Initial-load success flag — once the first page resolves we
