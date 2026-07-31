@@ -206,7 +206,11 @@ export interface KeyMetrics {
  * `percent_change` is the day-change percent (signed; positive = up)
  * and matches the `TopStockItem` / `TickerItem` field name — *not*
  * `pct_change`. `weight` is the stock's index weight (raw points),
- * and `weight_percent` is that weight as a percentage of the index.
+ * `weight_percent` is that weight as a percentage of the index, and
+ * `jci_point` is the stock's signed contribution to the composite
+ * index in raw points (matches the top-level "Jakarta Composite
+ * Index" mover concept — the leader side of the wire response will
+ * have positive `jci_point`, the lagging side negative).
  */
 export interface IndexMoverItem {
   ticker: string;
@@ -217,10 +221,25 @@ export interface IndexMoverItem {
   weight: number;
   /** Index weight as a percentage of the index. */
   weight_percent: number;
+  /** Signed point contribution to the composite index (positive
+   *  for leaders, negative for laggers). */
+  jci_point: number;
 }
 
-/** Wire format for `GET stocks/index-mover` — a bare array, no wrapper. */
-export type IndexMoverResponse = IndexMoverItem[];
+/**
+ * Wire format for `GET stocks/index-mover`. The endpoint used to
+ * return a bare flat array; it now splits movers by contribution
+ * sign so consumers can render the "leading" and "lagging" groups
+ * separately. The `leading` array always carries contributors with
+ * `jci_point >= 0`, and the `lagging` array those with
+ * `jci_point < 0`. Either array may be empty on quiet sessions.
+ */
+export interface IndexMoverResponse {
+  /** Stocks whose contribution to the index is positive (top side). */
+  leading: IndexMoverItem[];
+  /** Stocks whose contribution to the index is negative (bottom side). */
+  lagging: IndexMoverItem[];
+}
 
 // ─── STOCK HISTORICAL ──────────────────────────────────────────
 

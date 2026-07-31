@@ -7,14 +7,15 @@ import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
 import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
-/** Skeleton row count shown while the movers list loads. */
-const SKELETON_ROWS = 10;
+/** Skeleton rows per Leading/Lagging group while the movers load. */
+const GROUP_SKELETON_ROWS = 5;
 
 /**
  * Left rail — Index Movers. Visible on desktop only. Fetches live data
- * from /stocks/index-mover and renders the list in the order the API
- * returns it. Renders:
- * - Skeleton rows while loading
+ * from /stocks/index-mover and renders the response as two titled
+ * groups — `Leading` (positive JCI point contributors) above
+ * `Lagging` (negative). Renders:
+ * - Skeleton rows in both groups while loading
  * - Error message + retry when the request fails
  * - Real rows once data arrives
  *
@@ -22,16 +23,20 @@ const SKELETON_ROWS = 10;
  * colored by its own day-change sign.
  */
 export function LeftSidebar() {
-  const { state, refetch } = useIndexMovers(10);
+  const { state, refetch } = useIndexMovers();
 
   // A 401 means the endpoint is auth-gated and the user is logged out.
   // The LoginPromptOverlay already covers the strip, so treat it as an
   // empty (non-error) list rather than showing a failure message.
   const isError = state.kind === "error" && state.status !== 401;
   const loading = state.kind === "loading";
-  const movers = state.kind === "ready" ? state.movers : [];
+  const leading = state.kind === "ready" ? state.leading : [];
+  const lagging = state.kind === "ready" ? state.lagging : [];
 
-  const total = state.kind === "ready" ? movers.length : SKELETON_ROWS;
+  const total =
+    state.kind === "ready"
+      ? leading.length + lagging.length
+      : GROUP_SKELETON_ROWS * 2;
 
   return (
     <aside className="space-y-4" aria-label="Index movers kiri">
@@ -61,7 +66,20 @@ export function LeftSidebar() {
               onRetry={refetch}
             />
           ) : (
-            <MoverList loading={loading} rows={movers} />
+            <>
+              <MoverList
+                loading={loading}
+                rows={leading}
+                title="Leading"
+                tone="bullish"
+              />
+              <MoverList
+                loading={loading}
+                rows={lagging}
+                title="Lagging"
+                tone="bearish"
+              />
+            </>
           )}
           <LoginPromptOverlay />
         </div>
@@ -73,14 +91,35 @@ export function LeftSidebar() {
 interface MoverListProps {
   loading: boolean;
   rows: IndexMoverItem[];
+  /** Section title shown above the rows (e.g. "Leading"). */
+  title: string;
+  /** Sign of the section's `jci_point` — drives the title accent so
+   *  the header reads as bullish (green) for leaders and bearish
+   *  (red) for laggers without changing layout. */
+  tone: "bullish" | "bearish";
 }
 
-function MoverList({ loading, rows }: MoverListProps) {
+function MoverList({ loading, rows, title, tone }: MoverListProps) {
   return (
     <div className="px-3 py-2">
+      <div className="mb-1 flex items-center justify-between">
+        <h4
+          className={cn(
+            "label",
+            tone === "bullish" ? "text-bullish" : "text-bearish",
+          )}
+        >
+          {title}
+        </h4>
+        {!loading && (
+          <span className="font-mono text-[10px] text-text-faint num-tabular">
+            {rows.length}
+          </span>
+        )}
+      </div>
       <ul className="space-y-0.5">
         {loading
-          ? Array.from({ length: SKELETON_ROWS }).map((_, i) => (
+          ? Array.from({ length: GROUP_SKELETON_ROWS }).map((_, i) => (
               <SkeletonRow key={i} />
             ))
           : rows.length === 0

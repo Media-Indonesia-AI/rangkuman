@@ -13,7 +13,13 @@ import { useCurrentUser } from "@/lib/hooks/useAuth";
  */
 export type IndexMoversState =
   | { kind: "loading" }
-  | { kind: "ready"; movers: IndexMoverItem[] }
+  | {
+      kind: "ready";
+      /** Stocks whose index contribution is positive (top side). */
+      leading: IndexMoverItem[];
+      /** Stocks whose index contribution is negative (bottom side). */
+      lagging: IndexMoverItem[];
+    }
   | { kind: "error"; message: string; status?: number };
 
 /**
@@ -31,9 +37,9 @@ export type IndexMoversState =
  * Errors are surfaced (not swallowed) so the strip can show a retry
  * affordance; `refetch` re-runs the request on demand.
  *
- * @param limit How many movers to request (default 10).
+ * @param limit How many movers to request (default 6).
  */
-export function useIndexMovers(limit = 10): {
+export function useIndexMovers(limit = 6): {
   state: IndexMoversState;
   refetch: () => void;
 } {
@@ -47,7 +53,11 @@ export function useIndexMovers(limit = 10): {
     void loadIndexMover(limit)
       .then((res) => {
         if (runId === runIdRef.current) {
-          setState({ kind: "ready", movers: res });
+          setState({
+            kind: "ready",
+            leading: res.leading,
+            lagging: res.lagging,
+          });
         }
       })
       .catch((err) => {

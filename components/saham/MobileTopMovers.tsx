@@ -7,11 +7,15 @@ import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
 import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
+/** Skeleton cards per Leading/Lagging group while the movers load. */
+const GROUP_SKELETON_CARDS = 5;
+
 /**
  * Index Movers strip — horizontal scrollable cards of the stocks
- * moving the composite index, shown in the order the API returns.
+ * moving the composite index, split into titled `Leading` (positive
+ * JCI point) and `Lagging` (negative) groups stacked vertically.
  * Fetches live data from /stocks/index-mover. Renders:
- * - Shimmer skeletons while loading
+ * - Shimmer skeletons in both groups while loading
  * - Error state with retry on failure
  * - Real cards when ready
  *
@@ -19,14 +23,20 @@ import { cn } from "@/lib/utils";
  * colored by its own day-change sign (up = bullish, down = bearish).
  */
 export function MobileTopMovers() {
-  const { state, refetch } = useIndexMovers(10);
+  const { state, refetch } = useIndexMovers();
 
   // A 401 means the endpoint is auth-gated and the user is logged out.
   // The LoginPromptOverlay already covers the strip, so treat it as an
   // empty (non-error) list rather than showing a failure message.
   const isError = state.kind === "error" && state.status !== 401;
   const loading = state.kind === "loading";
-  const movers = state.kind === "ready" ? state.movers : [];
+  const leading = state.kind === "ready" ? state.leading : [];
+  const lagging = state.kind === "ready" ? state.lagging : [];
+
+  const total =
+    state.kind === "ready"
+      ? leading.length + lagging.length
+      : GROUP_SKELETON_CARDS * 2;
 
   return (
     <section
@@ -38,7 +48,7 @@ export function MobileTopMovers() {
         <h2 className="label">Index Movers · IDX</h2>
         <span className="ml-auto font-mono text-[10px] text-text-faint num-tabular">
           {state.kind === "ready"
-            ? `${movers.length} saham`
+            ? `${total} saham`
             : loading
               ? "…"
               : "-"}
@@ -56,7 +66,20 @@ export function MobileTopMovers() {
             onRetry={refetch}
           />
         ) : (
-          <MoverRow loading={loading} rows={movers} />
+          <>
+            <MoverRow
+              loading={loading}
+              rows={leading}
+              title="Leading"
+              tone="bullish"
+            />
+            <MoverRow
+              loading={loading}
+              rows={lagging}
+              title="Lagging"
+              tone="bearish"
+            />
+          </>
         )}
         <LoginPromptOverlay />
       </div>
@@ -67,14 +90,36 @@ export function MobileTopMovers() {
 interface MoverRowProps {
   loading: boolean;
   rows: IndexMoverItem[];
+  /** Section title shown above the cards (e.g. "Leading"). */
+  title: string;
+  /** Sign of the section's `jci_point` — colors the section title
+   *  so the bullish / bearish tone reads at a glance. */
+  tone: "bullish" | "bearish";
 }
 
-function MoverRow({ rows, loading }: MoverRowProps) {
+function MoverRow({ rows, loading, title, tone }: MoverRowProps) {
   return (
     <div className="px-3 py-2">
+      <div className="mb-1 flex items-center justify-between">
+        <h3
+          className={cn(
+            "label",
+            tone === "bullish" ? "text-bullish" : "text-bearish",
+          )}
+        >
+          {title}
+        </h3>
+        {!loading && (
+          <span className="font-mono text-[10px] text-text-faint num-tabular">
+            {rows.length}
+          </span>
+        )}
+      </div>
       <div className="-mx-3 grid grid-cols-2 gap-2 px-3 pb-1 sm:grid-cols-3 md:grid-cols-5">
         {loading
-          ? Array.from({ length: 10 }).map((_, i) => <SkeletonCard key={i} />)
+          ? Array.from({ length: GROUP_SKELETON_CARDS }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))
           : rows.length === 0
             ? null
             : rows.map((s) => (

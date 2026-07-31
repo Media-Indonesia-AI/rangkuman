@@ -1,7 +1,7 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
 import type { HeadlineLast7DaysItem } from "@/lib/api";
+import { formatSingkat } from "@/lib/util/formatDate";
 
 interface StorySidebarProps {
   /** Stories to show in the "Story Lainnya" card — fed by
@@ -93,7 +93,7 @@ function OtherStoryRow({ story }: { story: HeadlineLast7DaysItem }) {
             </span>
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-[9.5px] text-text-faint">
               <time dateTime={story.created_at}>
-                {story.created_at || "n/a"}
+                {formatSingkat(story.created_at) || "n/a"}
               </time>
               <span>·</span>
               <span className={pctColor}>{pctLabel}</span>
