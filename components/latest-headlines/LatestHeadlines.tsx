@@ -7,9 +7,11 @@ import {
   useState,
   type UIEvent,
 } from "react";
-import type { StoryItem } from "@/lib/api";
+import type { StoryFilter, StoryItem } from "@/lib/api";
 import { loadHeadlines } from "@/lib/api/cache";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
+import { useTopics } from "@/lib/hooks/useTopics";
+import { findCryptoTopicId } from "../crypto-page/cryptoStories";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
 import { LatestHeadlinesSkeleton } from "./LatestHeadlinesSkeleton";
@@ -72,14 +74,29 @@ const END_REACHED_THRESHOLD_PX = 80;
  * on the page provide all the sidebar context the consumers need.
  */
 export function LatestHeadlines() {
+  const { data: topics, isLoading: topicsLoading } = useTopics();
+  const cryptoTopicId = findCryptoTopicId(topics);
+  const LATEST_FILTERS: StoryFilter[] = cryptoTopicId
+    ? [
+        {
+          field: "topic_id",
+          operator: "ne",
+          value: cryptoTopicId,
+        },
+      ]
+    : [];
+
   // Pagination state. `useHeadlines` seeds the first page (so we
   // get a reactive `isLoading` flag for the skeleton); subsequent
   // pages are appended manually so the array grows monotonically
-  // rather than resetting on each `skip` change.
+  // rather than resetting on each `skip` change. The `enabled` flag
+  // holds the fetch off until topics resolve — see the long-form
+  // comment above.
   const { data: firstPage, isLoading: isFirstPageLoading } = useHeadlines(
     PAGE_LIMIT,
     0,
-    [],
+    LATEST_FILTERS,
+    !topicsLoading,
   );
   const [items, setItems] = useState<StoryItem[]>([]);
   // Initial-load success flag — once the first page resolves we
@@ -147,7 +164,7 @@ export function LatestHeadlines() {
       // same distance twice is a free dedup hit (no network).
       setIsLoadingMore(true);
       const nextSkip = skip + PAGE_LIMIT;
-      void loadHeadlines(PAGE_LIMIT, nextSkip, [])
+      void loadHeadlines(PAGE_LIMIT, nextSkip, LATEST_FILTERS)
         .then((res) => {
           setItems((prev) => {
             const seen = new Set(prev.map((s) => s.id));

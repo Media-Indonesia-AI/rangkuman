@@ -13,10 +13,10 @@ import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
   { href: "/saham", label: "Saham" },
-  { href: "/bisnis", label: "Bisnis" },
-  { href: "/ekonomi", label: "Ekonomi" },
-  { href: "/kebijakan", label: "Kebijakan" },
-  { href: "/global", label: "Global" },
+  // { href: "/bisnis", label: "Bisnis" },
+  // { href: "/ekonomi", label: "Ekonomi" },
+  // { href: "/kebijakan", label: "Kebijakan" },
+  // { href: "/global", label: "Global" },
   { href: "/crypto", label: "Crypto" },
 ];
 
