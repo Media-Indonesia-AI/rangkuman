@@ -18,4 +18,3 @@ export { CryptoDetailKeyData } from "./CryptoDetailKeyData";
 export { CryptoDetailTimeline } from "./CryptoDetailTimeline";
 export { CryptoDetailSources } from "./CryptoDetailSources";
 export { CryptoDetailSidebar } from "./CryptoDetailSidebar";
-export { CryptoDetailBackLink } from "./CryptoDetailBackLink";

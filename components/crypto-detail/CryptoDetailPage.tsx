@@ -21,7 +21,6 @@ import { CryptoDetailKeyData } from "./CryptoDetailKeyData";
 import { CryptoDetailTimeline } from "./CryptoDetailTimeline";
 import { CryptoDetailSources } from "./CryptoDetailSources";
 import { CryptoDetailSidebar } from "./CryptoDetailSidebar";
-import { CryptoDetailBackLink } from "./CryptoDetailBackLink";
 
 interface CategoryConfig {
   label: string;
@@ -259,11 +258,6 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
           {/* SIDEBAR (sticky on lg+) — fetches its own data */}
           <CryptoDetailSidebar storyId={displayStory.id} />
         </div>
-
-        <CryptoDetailBackLink
-          categorySlug={primary.label.toLowerCase()}
-          categoryLabel={primary.label}
-        />
       </main>
       <Footer />
     </>
