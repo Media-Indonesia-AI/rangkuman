@@ -116,7 +116,7 @@ export function CryptoRecapTab() {
             icon={<Flame className="h-3 w-3" aria-hidden />}
             title="Sedang Terjadi"
             subtitle="Cerita penting lainnya"
-            count={`Top ${sedangTerjadi.length} · 1 jam terakhir`}
+            count={`Top ${sedangTerjadi.length} cerita`}
           />
           <div className="grid gap-2.5 sm:grid-cols-2">
             {sedangTerjadi.map((s) => (
