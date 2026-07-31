@@ -130,7 +130,7 @@ export interface StoryItem {
   /** ISO timestamp of when the record was last updated. */
   updated_at: string;
   /** Keywords tagged on this story. */
-  keywords: string[];
+  keywords: KeywordItem[];
   /** Topics this story is filed under. */
   topics: StoryTopic[];
   /** Price move on `primary_ticker_code` since the story was
@@ -141,6 +141,19 @@ export interface StoryItem {
    *  strip. Sign convention matches the price APIs:
    *  positive = up, negative = down. */
   pct_change_since_story?: number;
+}
+
+export interface KeywordItem {
+  /** Keyword ID. */
+  id: string;
+  /** Human-readable keyword label (e.g. `"Serapan Emas ANTM"`). */
+  label: string;
+  /** The extracted / highlighted value (e.g. `"100 persen"`). */
+  value: string;
+  /** One-line description of what the keyword captures. */
+  description: string;
+  /** Net sentiment direction for this keyword. */
+  sentiment: StorySentiment;
 }
 
 /** Wire format the backend actually returns: `{ data: [...] }`. */
