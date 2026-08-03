@@ -53,6 +53,25 @@ export function StoriesList({
  *  to the last dot's center — dots are sized at 28px (h-7 w-7) so
  *  the line inset matches their radius. */
 function TimelineList({ stories }: { stories: EmbeddedStory[] }) {
+  // Sort descending by `recap_date` so the most recent recap
+  // sits at the top of the timeline and older events trail
+  // downward — matches the way news feeds typically render
+  // and lets the user scan the latest development first
+  // before scrolling back through the arc. ISO 8601 strings
+  // sort lexicographically as timestamps, so `localeCompare`
+  // is enough — no `Date` parsing needed for the comparison.
+  // Stories missing a `recap_date` sort to the end so the
+  // populated entries still form a coherent sequence rather
+  // than being interleaved with placeholders. The spread
+  // avoids mutating the prop array — the parent may reuse it
+  // across renders.
+  const sortedStories = [...stories].sort((a, b) => {
+    if (!a.recap_date && !b.recap_date) return 0;
+    if (!a.recap_date) return 1;
+    if (!b.recap_date) return -1;
+    return b.recap_date.localeCompare(a.recap_date);
+  });
+
   return (
     <div className="relative rounded-lg border border-border-strong bg-bg-secondary/30 p-4 sm:p-5">
       {/* Vertical track — sits behind the dots, inset so the line
@@ -64,7 +83,7 @@ function TimelineList({ stories }: { stories: EmbeddedStory[] }) {
         className="pointer-events-none absolute bottom-7 left-[27px] top-7 w-px bg-border"
       />
       <ol className="space-y-5">
-        {stories.map((story) => (
+        {sortedStories.map((story) => (
           <TimelineItem key={story.id} story={story} />
         ))}
       </ol>

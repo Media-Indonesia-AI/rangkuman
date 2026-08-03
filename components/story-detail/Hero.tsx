@@ -62,6 +62,44 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
   // this can be replaced with `detail.story_count`.
   const totalStories = detail.stories.length;
 
+  // Berjalan (duration) — span from the earliest related story
+  // to the headline's last update. The single-relative-time
+  // label couldn't tell a story cluster that's been collecting
+  // articles for a week apart from one that just started today,
+  // so we compute the cluster's full lifetime instead: sort
+  // `detail.stories[]` ascending by `recap_date`, take the
+  // first entry's date as the cluster's start, then floored-
+  // day delta against `updateDate`. The sort direction matches
+  // `<StoriesTimeline />` (ascending there too — see
+  // `StoriesTimeline.tsx` for the same comparator) so both
+  // widgets agree on which story is "the start" of the cluster.
+  // ISO 8601 strings sort lexicographically as timestamps, so
+  // `localeCompare` is enough — no `Date` parsing needed for
+  // the comparison. Stories missing `recap_date` sort to the
+  // end, so the index-0 entry either carries a date or the
+  // array was empty / entirely date-less — both fall through to
+  // the `?? null` and render `<NotAvailable />`. The spread
+  // avoids mutating the prop array — the parent may reuse it
+  // across renders.
+  const sortedStories = [...detail.stories].sort((a, b) => {
+    if (!a.recap_date && !b.recap_date) return 0;
+    if (!a.recap_date) return 1;
+    if (!b.recap_date) return -1;
+    return a.recap_date.localeCompare(b.recap_date);
+  });
+  const earliestStoryDate = sortedStories[0]?.recap_date ?? null;
+  const berjalanDays =
+    earliestStoryDate && updateDate
+      ? Math.max(
+          0,
+          Math.floor(
+            (new Date(updateDate).getTime() -
+              new Date(earliestStoryDate).getTime()) /
+              86_400_000,
+          ),
+        )
+      : null;
+
   return (
     <>
       {/* Status + ticker + sector badges — `ticker` and `sektor`
@@ -110,7 +148,7 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
           <Calendar className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
             <span className="font-bold text-text-primary">
-              <NotAvailable />
+              {berjalanDays !== null ? `${berjalanDays} hari` : <NotAvailable />}
             </span>{" "}
             berjalan
           </span>
