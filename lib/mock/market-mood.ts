@@ -27,6 +27,15 @@ export interface MarketWidget {
   barRightLabel?: string;
   /** Static sub-label below the value (e.g. "+25 bps" or "Tahan"). Required if type="static". */
   staticSubLabel?: string;
+  /** Optional override for the right-column **badge** text — when
+   *  set, the cell renders this in the badge slot instead of
+   *  `staticSubLabel` (which would otherwise be reused for both
+   *  slots). Useful when the sub-label and the badge should show
+   *  different facts (e.g. BI Rate: bps in the sub-label, decision
+   *  date in the badge) rather than a combined string. Falls back
+   *  to `staticSubLabel` when omitted, so existing static widgets
+   *  keep their current behavior untouched. */
+  staticBadgeLabel?: string;
   /** Static badge — controls color of sub-label (matches sentiment palette). */
   staticBadge?: "bullish" | "bearish" | "mixed";
   /**

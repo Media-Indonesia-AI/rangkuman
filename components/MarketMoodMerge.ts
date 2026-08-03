@@ -51,8 +51,13 @@ const PLACEHOLDER = "—";
  * Build the BI Rate widget from `loadInterestRate`'s payload. While
  * loading the widget renders with `value`/`staticSubLabel` as "—" so
  * the shimmer slot has shape to occupy. When data lands, formats
- * the rate as `"5,75%"` and the bps change as `"+25 bps"`, with the
- * badge color driven by the bps sign via `bpsBadge()`.
+ * the rate as `"5,75%"`, the left-column sub-label as the raw bps
+ * delta (`"25 bps"` — no `+` prefix, per request), and the right-
+ * column badge as the previous rate decision's `last_rate_date`
+ * (`"3 Agt 2026"`). Decoupling the two lets the cell show two
+ * distinct facts side-by-side instead of a single combined string,
+ * and the existing `staticSubLabel` slot stays untouched in case
+ * future consumers want it back.
  */
 export function buildBiRateWidget(
   biRate: InterestRate | null,
@@ -64,7 +69,10 @@ export function buildBiRateWidget(
     value: biRate ? formatRate(biRate.rate) : PLACEHOLDER,
     changePercent: 0,
     type: "static",
-    staticSubLabel: biRate ? formatBps(biRate.bps) : PLACEHOLDER,
+    staticSubLabel: biRate ? `${biRate.bps} bps` : PLACEHOLDER,
+    staticBadgeLabel: biRate
+      ? formatSingkat(biRate.last_rate_date, "d MMM y")
+      : undefined,
     staticBadge: biRate ? bpsBadge(biRate.bps) : "mixed",
     loading,
   };

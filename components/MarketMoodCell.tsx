@@ -71,7 +71,7 @@ export function MarketMoodCell({ widget }: MarketMoodCellProps) {
               !widget.staticBadge && "text-text-muted",
             )}
           >
-            {widget.staticSubLabel}
+            {widget.staticBadgeLabel ?? widget.staticSubLabel}
           </span>
         ) : widget.type === "bar" && widget.staticSubLabel ? (
           // `bar` widgets reuse the `staticSubLabel` slot to
