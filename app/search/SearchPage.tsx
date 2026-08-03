@@ -1,16 +1,24 @@
 "use client";
 
-import { useMemo, Suspense } from "react";
+import { useEffect, useMemo, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Search, Clock, TrendingUp, Hash } from "lucide-react";
+import { ArrowLeft, Search, Clock, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import type { StoryFilter, TickerListItem } from "@/lib/api";
-import { searchAll, type SearchItem } from "@/lib/mock/search";
+import type { StoryFilter, TickerItem, TickerListItem } from "@/lib/api";
+import { loadTickers, peekTickers } from "@/lib/api/cache";
 import { useGetTickerListArticles } from "@/lib/hooks/useGetTickerListArticles";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
-import { cn } from "@/lib/utils";
+
+/** Shape consumed by `<SuggestionChip />`. Inline here (rather than
+ *  re-exporting from `@/lib/mock/search`, which the page no longer
+ *  touches) so the type travels with the component that uses it. */
+interface SuggestionItem {
+  id: string;
+  label: string;
+  href: string;
+}
 
 function SearchPageContent() {
   const params = useSearchParams();
@@ -32,7 +40,49 @@ function SearchPageContent() {
     Boolean(query),
   );
 
-  const suggestions = useMemo(() => searchAll(query, 6), [query]);
+  // Live ticker catalog (replaces the previous mock-driven
+  // `searchAll`). Initialized lazily from the shared cache so a
+  // remount that happens after another instance has already
+  // fetched shows the data on the first render (no flash of an
+  // empty saran-cepat strip). The cache is shared app-wide, so
+  // `<TopTicker />` and any other consumer of `loadTickers()`
+  // don't duplicate the round-trip.
+  const [tickers, setTickers] = useState<TickerItem[] | null>(
+    () => peekTickers()?.data ?? null,
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    void loadTickers()
+      .then((res) => {
+        if (!cancelled) setTickers(res.data);
+      })
+      .catch(() => {
+        // Swallow — saran cepat collapses to empty until the
+        // next mount retries. The widget still renders the
+        // `<EmptyState />` for the no-query branch and the
+        // "Gak ada hasil" card for the loaded-no-results branch.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Build saran-cepat chips from the live ticker list:
+  //   - non-empty query → match against `ticker` OR `company_name`
+  //     (case-insensitive substring); fall back to the first 6
+  //     tickers when the query is a no-match (e.g. `"BSBR"`, a
+  //     ticker not in the catalog).
+  //   - empty query       → first 6 tickers as the default browse
+  //     list.
+  const suggestions = useMemo<SuggestionItem[]>(() => {
+    const q = query.trim().toLowerCase();
+    return [{
+      id: q,
+      label: q.toUpperCase(),
+      href: `/stock/${q.toUpperCase()}`,
+    }];
+  }, [query, tickers]);
 
   return (
     <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-6xl lg:px-8">
@@ -69,6 +119,17 @@ function SearchPageContent() {
         )}
       </header>
 
+      {suggestions.length > 0 && (
+        <section className="mb-5" aria-label="Saran cepat">
+          <p className="label mb-1.5">Saran cepat</p>
+          <div className="flex flex-wrap gap-1.5">
+            {suggestions.map((s) => (
+              <SuggestionChip key={s.id} item={s} />
+            ))}
+          </div>
+        </section>
+      )}
+
       {!query ? (
         <EmptyState />
       ) : isLoading ? (
@@ -76,38 +137,23 @@ function SearchPageContent() {
           <p className="font-mono text-[12px] text-text-muted">Memuat…</p>
         </div>
       ) : (
-        <>
-          {/* Quick suggestions */}
-          {suggestions.length > 0 && (
-            <section className="mb-5" aria-label="Saran cepat">
-              <p className="label mb-1.5">Saran cepat</p>
-              <div className="flex flex-wrap gap-1.5">
-                {suggestions.map((s) => (
-                  <SuggestionChip key={`${s.type}-${s.id}`} item={s} />
-                ))}
-              </div>
-            </section>
+        <section aria-label="Hasil ticker" className="space-y-3">
+          {tickerArticles.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-bg-secondary/50 px-6 py-10 text-center">
+              <Search className="mx-auto h-6 w-6 text-text-faint" aria-hidden />
+              <p className="mt-2 text-[13.5px] font-semibold text-text-primary">
+                Gak ada hasil untuk &ldquo;{query}&rdquo;
+              </p>
+              <p className="mt-1 text-[12px] text-text-muted">
+                Coba ticker lain, misal BBCA, ANTM, TLKM.
+              </p>
+            </div>
+          ) : (
+            tickerArticles.map((item) => (
+              <TickerArticleCard key={item.id} item={item} />
+            ))
           )}
-
-          {/* Result list */}
-          <section aria-label="Hasil ticker" className="space-y-3">
-            {tickerArticles.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-bg-secondary/50 px-6 py-10 text-center">
-                <Search className="mx-auto h-6 w-6 text-text-faint" aria-hidden />
-                <p className="mt-2 text-[13.5px] font-semibold text-text-primary">
-                  Gak ada hasil untuk &ldquo;{query}&rdquo;
-                </p>
-                <p className="mt-1 text-[12px] text-text-muted">
-                  Coba ticker lain, misal BBCA, ANTM, TLKM.
-                </p>
-              </div>
-            ) : (
-              tickerArticles.map((item) => (
-                <TickerArticleCard key={item.id} item={item} />
-              ))
-            )}
-          </section>
-        </>
+        </section>
       )}
     </main>
   );
@@ -139,22 +185,14 @@ function EmptyState() {
   );
 }
 
-function SuggestionChip({ item }: { item: SearchItem }) {
-  const Icon = item.type === "stock" ? TrendingUp : Hash;
+function SuggestionChip({ item }: { item: SuggestionItem }) {
   return (
     <Link
       href={item.href}
       className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-2.5 py-1 text-[11.5px] transition-colors hover:border-brand hover:bg-bg-tertiary"
     >
-      <Icon
-        className={cn(
-          "h-3 w-3",
-          item.type === "stock" ? "text-bullish" : "text-brand",
-        )}
-        aria-hidden
-      />
+      <TrendingUp className="h-3 w-3 text-bullish" aria-hidden />
       <span className="font-semibold text-text-primary">{item.label}</span>
-      <span className="text-text-muted">{item.hint}</span>
     </Link>
   );
 }
