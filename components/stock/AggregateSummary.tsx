@@ -3,6 +3,7 @@
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { DatePicker } from "@/components/DatePicker";
+import { Shimmer } from "@/components/Shimmer";
 import { hariIniIso } from "@/lib/util/formatDate";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import type { TickerArticles } from "@/lib/api/types/stocks";
@@ -57,6 +58,7 @@ export function AggregateSummary({
   description,
   articles,
   recapDate,
+  isLoading = false,
 }: {
   kode: string;
   description?: string | null;
@@ -68,6 +70,15 @@ export function AggregateSummary({
    *  `/stock/[kode]` (no date) — in that case the card stays
    *  on today's date. */
   recapDate?: string;
+  /** When `true`, the body renders `<Shimmer />` placeholders
+   *  (paragraph lines for the AI summary + a row of pill blocks
+   *  for the source bar) instead of the real `<LinkifiedText>`
+   *  / `<SourceBar>`. The header (chip, sentiment icon, date
+   *  picker) and the section chrome stay mounted — only the
+   *  content slots swap, so the page layout doesn't reflow when
+   *  the response lands. Falls through to the normal
+   *  EmptyState / populated branch when `false`. */
+  isLoading?: boolean;
 }) {
   const sumber = useMemo<Sumber[]>(() => {
     const acc = new Map<string, { count: number }>();
@@ -101,6 +112,7 @@ export function AggregateSummary({
 
   return (
     <section
+      aria-busy={isLoading || undefined}
       className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
       aria-label="Ringkasan agregat"
     >
@@ -120,21 +132,68 @@ export function AggregateSummary({
             maxLookbackDays={30}
           />
         </div>
-        <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-          {jumlahBerita} artikel
-          {sumber.length > 0 && ` · ${sumber.length} media`}
-        </span>
+        {isLoading ? (
+          // `!bg-bg-tertiary/60` overrides the `<Shimmer />`
+          // default (`bg-bg-tertiary`). On this card's light
+          // `bg-bg-secondary` body, the full-strength token
+          // read as a near-black blob that competed with the
+          // header bar — too heavy for a placeholder. 60%
+          // opacity keeps the same warm-gray tone but lifts it
+          // toward the section background so the shimmer
+          // registers as a subtle "waiting" block rather than
+          // a heavy divider. The `!` prefix is Tailwind v3's
+          // important modifier; it forces the override
+          // regardless of class-name order.
+          <Shimmer className="!bg-bg-tertiary/60 h-3 w-28" />
+        ) : (
+          <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
+            {jumlahBerita} artikel
+            {sumber.length > 0 && ` · ${sumber.length} media`}
+          </span>
+        )}
       </div>
 
       <div className="p-4 sm:p-5">
-        {/* Body switches on whether the ticker description
-            produced usable prose. The header (icon, label, date
-            picker, article count) stays visible in both states so
-            the user can still navigate to a different recap day
-            even when there's no summary for this one — the
-            picker is the only path to a non-empty recap on a
-            "blank day". */}
-        {summaryText.trim() === "" ? (
+        {/* Three-state body. Loading wins over the EmptyState
+            check so a fetch in flight on a "blank" day still
+            shows the user something's happening (rather than
+            flashing the empty message before swapping to the
+            prose). The header (icon, label, date picker) stays
+            visible across all three states so the user can
+            still navigate to a different recap day during the
+            loading window — the picker is the only path to a
+            non-empty recap on a "blank day". */}
+        {isLoading ? (
+          <div className="space-y-4">
+            {/* Summary prose — three lines that taper in width
+                so the block reads as a paragraph (rather than a
+                rectangular bar) when the real text lands. The
+                h-3.5 height matches the body's text-[15px]
+                line-height (~24px) so the placeholder and the
+                populated paragraph occupy roughly the same
+                vertical space, avoiding a visible jump when
+                data lands. */}
+            <div className="space-y-2">
+              <Shimmer className="!bg-bg-tertiary/60 h-3.5 w-full" />
+              <Shimmer className="!bg-bg-tertiary/60 h-3.5 w-11/12" />
+              <Shimmer className="!bg-bg-tertiary/60 h-3.5 w-10/12" />
+            </div>
+            {/* Source bar — label + a few pill placeholders
+                sized to match the real `<SourceBar />` chips.
+                Three pills is a reasonable middle ground: the
+                ticker typically has 2–5 media sources so the
+                shimmer hints at the layout without committing
+                to a count. */}
+            <div className="border-t border-border pt-4">
+              <Shimmer className="!bg-bg-tertiary/60 mb-2.5 h-3 w-24" />
+              <div className="flex flex-wrap gap-2">
+                <Shimmer className="!bg-bg-tertiary/60 h-6 w-20" />
+                <Shimmer className="!bg-bg-tertiary/60 h-6 w-16" />
+                <Shimmer className="!bg-bg-tertiary/60 h-6 w-24" />
+              </div>
+            </div>
+          </div>
+        ) : summaryText.trim() === "" ? (
           <EmptyState
             title="Belum ada ringkasan"
             description={`Ringkasan AI belum tersedia untuk ${kode}.`}

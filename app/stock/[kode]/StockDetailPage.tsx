@@ -98,6 +98,7 @@ export default function StockDetailPage({ params }: PageProps) {
                 description={tickerInfo?.description ?? null}
                 articles={tickerInfo?.articles ?? []}
                 recapDate={recapDate}
+                isLoading={tickerLoading}
               />
 
               {/* Story — multi-date stories for this ticker */}
