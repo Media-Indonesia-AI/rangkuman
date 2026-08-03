@@ -86,6 +86,7 @@ export default function StockDetailPage({ params }: PageProps) {
           price={priceText}
           pctChange={tickerInfo?.pct_change ?? null}
           companyName={tickerInfo?.company_name ?? null}
+          isLoading={tickerLoading}
         />
 
           <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
