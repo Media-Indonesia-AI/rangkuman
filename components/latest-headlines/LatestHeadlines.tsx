@@ -8,9 +8,7 @@ import {
   type UIEvent,
 } from "react";
 import type { StoryFilter, StoryItem } from "@/lib/api";
-import { loadHeadlines } from "@/lib/api/cache";
-import { useHeadlines } from "@/lib/hooks/useHeadlines";
-import { useTopics } from "@/lib/hooks/useTopics";
+import { loadHeadlines, loadTopic } from "@/lib/api/cache";
 import { findCryptoTopicId } from "../crypto-page/cryptoStories";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
@@ -25,6 +23,13 @@ import {
  *  fetches (`HeadlineStoriesProvider`, etc.) already use, so each
  *  page lands on a cache slot shape we already understand. */
 const PAGE_LIMIT = 10;
+
+/** Topic fetch filter — empty list asks for the full topic
+ *  catalogue. Hoisted to module scope so the reference is stable
+ *  across renders; passing `[]` inline would change the cache key
+ *  on every call and defeat the request-level dedup inside
+ *  `loadTopic()`. */
+const EMPTY_TOPIC_FILTERS: StoryFilter[] = [];
 
 /** Pixel distance from the bottom of the scroll container that
  *  counts as "reached the end" for the infinite-scroll trigger.
@@ -45,24 +50,33 @@ const END_REACHED_THRESHOLD_PX = 80;
  *     — footer feedback while paginating / once the dataset ends.
  *
  * The widget asks the backend for `PAGE_LIMIT` rows per request.
- * The first page is fetched via the existing `useHeadlines` hook
- * (so the shimmer skeleton stays reactive to `isLoading`); once
- * the user scrolls within `END_REACHED_THRESHOLD_PX` of the bottom
- * of the scroll container, the next page is fetched via
- * `loadHeadlines(PAGE_LIMIT, skip+1, [])` — i.e. `skip` advances
- * by **+1 per scroll trigger**, not by `PAGE_LIMIT`. That means the
- * request asks for 10 rows but 9 of them overlap with rows already
- * on screen, so the response is deduped by `id` before appending
- * and the **visible** increment per scroll is exactly +1 row.
+ * The fetch happens in two steps, mirroring
+ * `<HeadlineDetailProvider />`:
  *
- * No "visible count" cap is applied — once the widget is
- * scrollable, the timeline shows every loaded row the user has
- * uncovered, instead of slicing to a fixed N like the previous
- * `VISIBLE_COUNT = 6` non-scrollable implementation did.
+ *   1. `loadTopic()` first — pulls the topic catalogue so we can
+ *      derive the crypto `topic_id` via `findCryptoTopicId()`
+ *      (slug match → name match → first-topic fallback). The
+ *      widget excludes crypto-tagged stories (those live on
+ *      `/crypto` with their own recap feed), so we need that id
+ *      before we can build the headline filter.
+ *   2. Once the topic id resolves, fire
+ *      `loadHeadlines(PAGE_LIMIT, 0, …)` with the
+ *      `{ topic_id ne cryptoTopicId }` filter. The pagination
+ *      handler below reuses the same filter for each subsequent
+ *      page.
  *
- * Data path: `useHeadlines` + `loadHeadlines` → `api.getHeadlines`.
- *   - During the in-flight window the timeline rail shows a
- *     pulsing shimmer skeleton instead of the live list.
+ * Both calls go through the request-level cache in
+ * `lib/api/cache`, so a warm cache short-circuits the round-trip.
+ * The layout-level `<TopicsProvider />` typically warms the topic
+ * slot in parallel — by the time `loadTopic()` resolves here it's
+ * usually a cache hit, and the headline fetch is what actually
+ * hits the wire.
+ *
+ * Loading state:
+ *   - `<LatestHeadlinesSkeleton />` renders while the topic fetch
+ *     OR the headline fetch is in flight, so the widget shows one
+ *     continuous shimmer from mount to first paint (no flicker at
+ *     the handoff between the two requests).
  *   - On success, live `StoryItem`s drive the render.
  *   - On failure (network, empty backend) the timeline shows an
  *     inline empty-state row — there is no mock-data fallback, so
@@ -74,32 +88,21 @@ const END_REACHED_THRESHOLD_PX = 80;
  * on the page provide all the sidebar context the consumers need.
  */
 export function LatestHeadlines() {
-  // const { data: topics, isLoading: topicsLoading } = useTopics();
-  // const cryptoTopicId = findCryptoTopicId(topics);
-  const LATEST_FILTERS: StoryFilter[] = [
-        {
-          field: "topic_id",
-          operator: "ne",
-          value: "6a3a496df8d49a8eb8617ff4",
-        },
-      ];
-
-  // Pagination state. `useHeadlines` seeds the first page (so we
-  // get a reactive `isLoading` flag for the skeleton); subsequent
-  // pages are appended manually so the array grows monotonically
-  // rather than resetting on each `skip` change. The `enabled` flag
-  // holds the fetch off until topics resolve — see the long-form
-  // comment above.
-  const { data: firstPage, isLoading: isFirstPageLoading } = useHeadlines(
-    PAGE_LIMIT,
-    0,
-    LATEST_FILTERS,
-  );
-  const [items, setItems] = useState<StoryItem[]>([]);
-  // Initial-load success flag — once the first page resolves we
+  // ── Two-step fetch state ───────────────────────────────────────
+  // The sequential fetch (loadTopic → loadHeadlines) isn't
+  // expressible through a single hook, so we manage the in-flight
+  // / settled flags here the same way `<HeadlineDetailProvider />`
+  // does for its headline-by-id resolution (loadHeadlines →
+  // loadHeadlineById). `loading` stays true until *both* steps
+  // have settled (success or failure), so the skeleton below
+  // covers the entire window — including the brief handoff
+  // between the two requests — with no flicker.
+  const [loading, setLoading] = useState(true);
+  // Initial-load success flag — once the headline fetch settles we
   // stop showing the shimmer even if the result is empty (an empty
   // backend response is a valid "no headlines" state, not an error).
   const [firstPageSettled, setFirstPageSettled] = useState(false);
+  const [items, setItems] = useState<StoryItem[]>([]);
   // Cumulative skip across pages (mirrors the backend's offset).
   const [skip, setSkip] = useState(0);
   // Latched false the moment a page comes back short of PAGE_LIMIT,
@@ -110,30 +113,86 @@ export function LatestHeadlines() {
   // against the scroll handler firing twice in the same tick (and
   // also lets the trailing "Memuat…" footer render correctly).
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Filters resolved once topics arrive, reused for every paginated
+  // request below. Held in a ref so the scroll handler closure
+  // always reads the latest value without needing it in its dep
+  // array (the filter never changes after the initial resolve).
+  const filtersRef = useRef<StoryFilter[]>([]);
   const listRef = useRef<HTMLOListElement | null>(null);
 
-  // Seed items from the first-page hook once it resolves. Lives in
-  // its own effect so a 200 with `data: []` still settles the
-  // loading flag (and so a `[]` initial value doesn't trigger a
-  // re-render storm).
+  // Sequential fetch: load topics to resolve the crypto topic_id,
+  // then load headlines with the derived exclusion filter. Same
+  // shape as `<HeadlineDetailProvider />`'s
+  // `loadHeadlines(…) → loadHeadlineById(…)` chain.
   useEffect(() => {
-    if (firstPageSettled) return;
-    if (isFirstPageLoading) return;
-    setFirstPageSettled(true);
-    if (firstPage.length === 0) {
-      setHasMore(false);
-      return;
-    }
-    setItems(firstPage);
-    setSkip(0);
-    if (firstPage.length < PAGE_LIMIT) setHasMore(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isFirstPageLoading, firstPage, firstPageSettled]);
+    let cancelled = false;
 
-  // Render the live list straight from `items` + `isFirstPageLoading`.
-  // There is no mock fallback — when the API returns no rows the
-  // widget shows an inline empty-state row (handled in the JSX
-  // below) instead of silently substituting fake content.
+    // Step 1: load topics to find the crypto `topic_id`. The
+    // request-level cache inside `loadTopic()` means the
+    // layout-level `<TopicsProvider />` may already have warmed
+    // this slot; in that case this resolves synchronously off the
+    // cache and we move straight to the headline fetch.
+    void loadTopic(10, 0, EMPTY_TOPIC_FILTERS)
+      .then((res) => {
+        if (cancelled) return;
+        const cryptoTopicId = findCryptoTopicId(res.data);
+
+        if (!cryptoTopicId) {
+          // No crypto topic registered — nothing to filter against.
+          // Settle the widget with zero items so the empty state
+          // can render below.
+          setFirstPageSettled(true);
+          setLoading(false);
+          setHasMore(false);
+          return;
+        }
+
+        const filters: StoryFilter[] = [
+          { field: "topic_id", operator: "ne", value: cryptoTopicId },
+        ];
+        filtersRef.current = filters;
+
+        // Step 2: load headlines with the crypto topic excluded.
+        // Same chain shape as `<HeadlineDetailProvider />`: the
+        // first response is consumed inside this `.then` to
+        // extract an id, and the second fetch is fired with that
+        // id in hand.
+        return loadHeadlines(PAGE_LIMIT, 0, filters)
+          .then((res) => {
+            if (cancelled) return;
+            setItems(res.data);
+            setSkip(0);
+            if (res.data.length < PAGE_LIMIT) setHasMore(false);
+          })
+          .catch(() => {
+            // First-page fetch failed — leave items empty; the
+            // empty state below renders once we've settled.
+          })
+          .finally(() => {
+            if (!cancelled) {
+              setFirstPageSettled(true);
+              setLoading(false);
+            }
+          });
+      })
+      .catch(() => {
+        // Topics fetch failed — settle the widget with no items.
+        if (!cancelled) {
+          setFirstPageSettled(true);
+          setLoading(false);
+          setHasMore(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Render the live list straight from `items`. There is no mock
+  // fallback — when the API returns no rows the widget shows an
+  // inline empty-state row (handled in the JSX below) instead of
+  // silently substituting fake content.
 
   // Infinite-scroll trigger. Bound to the `<ol>`'s `onScroll` so we
   // don't need an IntersectionObserver; the cost is one event per
@@ -152,16 +211,16 @@ export function LatestHeadlines() {
       // frame (rare, but possible on touch devices) sees the guard
       // and bails.
       //
-      // `skip` advances by **+1**, not by `PAGE_LIMIT`, so each
-      // request asks the backend for 10 rows but 9 of them overlap
-      // with rows already on screen. The dedup-by-id merge below
-      // ensures the *visible* increment per scroll is exactly +1
-      // row; the request shape stays at `limit=10`. Each (limit,
-      // skip) tuple lands on its own cache slot, so scrolling the
-      // same distance twice is a free dedup hit (no network).
+      // `skip` advances by **+PAGE_LIMIT** so each request asks
+      // the backend for a fresh page that doesn't overlap with
+      // what's already on screen. The dedup-by-id merge below
+      // is a safety net for the cache-warm path; in the cold
+      // path it's a no-op. Each (limit, skip, filters) tuple
+      // lands on its own cache slot, so scrolling the same
+      // distance twice is a free dedup hit (no network).
       setIsLoadingMore(true);
       const nextSkip = skip + PAGE_LIMIT;
-      void loadHeadlines(PAGE_LIMIT, nextSkip, LATEST_FILTERS)
+      void loadHeadlines(PAGE_LIMIT, nextSkip, filtersRef.current)
         .then((res) => {
           setItems((prev) => {
             const seen = new Set(prev.map((s) => s.id));
@@ -214,9 +273,12 @@ export function LatestHeadlines() {
         onScroll={handleScroll}
         className="relative max-h-[400px] overflow-y-auto overscroll-contain sm:max-h-[600px]"
       >
-        {isFirstPageLoading && (
-          <LatestHeadlinesSkeleton count={PAGE_LIMIT} />
-        )}
+        {/* One continuous shimmer from mount to first paint.
+            `loading` stays true across both the topic-resolution
+            window AND the headline fetch — including the handoff
+            between the two — so the skeleton never flashes off
+            only to come back a tick later. */}
+        {loading && <LatestHeadlinesSkeleton count={PAGE_LIMIT} />}
 
         {items.map((story, idx) => (
           <LatestHeadlinesRow
@@ -229,7 +291,7 @@ export function LatestHeadlines() {
         {/* Empty state: first page resolved with zero rows. Shown
             only after the request settled so it doesn't flash during
             the initial loading window (the skeleton covers that). */}
-        {items.length === 0 && firstPageSettled && !isFirstPageLoading && (
+        {items.length === 0 && firstPageSettled && !loading && (
           <li className="flex flex-col items-center gap-1 px-4 py-8 text-center">
             <p className="text-[12.5px] font-medium text-text-muted">
               Belum ada headline hari ini.
