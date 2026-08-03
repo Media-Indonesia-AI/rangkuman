@@ -25,9 +25,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // If already logged in, jump straight to /watchlist.
+  // If already logged in, jump straight to Beranda (the home
+  // page) — same destination as a fresh successful login.
   useEffect(() => {
-    if (user) router.replace("/watchlist");
+    if (user) router.replace("/");
   }, [user, router]);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -42,7 +43,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithIdentifier(identifier, password);
-      router.push("/watchlist");
+      router.push("/");
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal masuk";
       // Server usually returns one generic "wrong credentials" message —

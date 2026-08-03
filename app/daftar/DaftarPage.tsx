@@ -30,9 +30,10 @@ export default function DaftarPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // If already logged in, jump straight to /watchlist.
+  // If already logged in, jump straight to Beranda (the home
+  // page) — same destination as a fresh successful registration.
   useEffect(() => {
-    if (user) router.replace("/watchlist");
+    if (user) router.replace("/");
   }, [user, router]);
 
   // Validate all fields and return the errors object (also sets state).
@@ -75,7 +76,7 @@ export default function DaftarPage() {
         email: email.trim(),
         password,
       });
-      router.push("/watchlist");
+      router.push("/");
     } catch (err) {
       // Map server-side / network errors back to the relevant field when possible.
       const msg = err instanceof Error ? err.message : "Gagal daftar";
