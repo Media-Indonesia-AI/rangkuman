@@ -70,10 +70,6 @@ export function SektorDetailHeader({ sektor }: SektorDetailHeaderProps) {
           <h2 className="text-[24px] font-bold leading-tight tracking-tight text-text-primary sm:text-[30px]">
             {sektor.name}
           </h2>
-          <p className="mt-1 max-w-2xl text-[12.5px] leading-[1.55] text-text-secondary">
-            Sentimen, saham unggulan, dan rata-rata perubahan hari ini untuk
-            sektor {sektor.name.toLowerCase()}.
-          </p>
         </div>
 
         {/* Mini stats */}

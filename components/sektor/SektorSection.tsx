@@ -180,10 +180,6 @@ export function SektorSection({
               <h2 className="text-[15px] font-bold tracking-tight text-text-primary">
                 {sectors.length} Sektor Pasar Modal Indonesia
               </h2>
-              <p className="mt-1 text-[11.5px] leading-relaxed text-text-muted">
-                Sentimen, saham unggulan, dan rata-rata perubahan hari ini. Klik
-                untuk lihat detail emiten &amp; berita per-sektor.
-              </p>
             </div>
           </header>
 
