@@ -32,8 +32,15 @@ import {
  * `MarketMoodCell.tsx`. This file only wires them together.
  */
 export function MarketMood() {
-  const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
-    useMarketMoodData();
+  const {
+    biRate,
+    exchangeRate,
+    foreignFlow,
+    foreignFlowDate,
+    compositeChart,
+    mood,
+    isLoading,
+  } = useMarketMoodData();
 
   // Drive the badge styling off the API's label band. While the
   // snapshot is still in flight or after a fetch error, fall back to
@@ -49,9 +56,23 @@ export function MarketMood() {
   // returns a complete widget (or placeholder values + `loading: true`
   // while the fetch is in flight). Order matches the strip's
   // left-to-right layout.
+  //
+  // Foreign Flow carries `foreignFlowDate` — the effective date the
+  // cache wrapper actually got a 200 response for. That can differ
+  // from "today" when the API shifted back a day on 503 (typical
+  // before market close), so the widget sub-label tracks the data,
+  // not the request — `<MarketMoodCell>` renders this in place of
+  // the previous hardcoded `"Harian"`. `null` while the fetch is in
+  // flight or after an error; the widget builder leaves the
+  // sub-label undefined in that case so the cell falls back to
+  // `"Harian"` instead of showing a misleading date.
   const widgets: MarketWidget[] = [
     buildIhsgWidget(compositeChart, mood, isLoading.compositeChart),
-    buildForeignFlowWidget(foreignFlow, isLoading.foreignFlow),
+    buildForeignFlowWidget(
+      foreignFlow,
+      isLoading.foreignFlow,
+      foreignFlowDate,
+    ),
     buildUsdIdrWidget(exchangeRate, mood, isLoading.exchangeRate),
     buildBiRateWidget(biRate, isLoading.biRate),
     buildFearGreedWidget(mood, false),

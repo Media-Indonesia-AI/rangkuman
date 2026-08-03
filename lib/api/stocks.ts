@@ -11,6 +11,7 @@
  */
 
 import { request, todayIsoDate } from "./client";
+import { toIsoDateTime, toIsoWithTimezone } from "@/lib/util/formatDate";
 import type { StoryFilter } from "./types/story";
 import type {
   CompositeChartResponse,
@@ -25,43 +26,6 @@ import type {
   TickersResponse,
   TopStocksResponse,
 } from "./types/stocks";
-
-/**
- * Numeric offset for the Indonesia Stock Exchange (IDX) — trades on
- * WIB (Asia/Jakarta). Indonesia does not observe DST, so the offset
- * is fixed at +07:00 year-round. The stocks API only ever deals with
- * IDX calendar days, so we hard-code this instead of reading the
- * system timezone (which on a non-Asia/Jakarta server would silently
- * shift the wire form).
- */
-const WIB_OFFSET = "+07:00";
-
-/**
- * Normalize a date value to a query-string parameter.
- *
- * The stocks API is anchored to IDX / WIB, so a date-only input is
- * emitted as midnight at the project's fixed offset rather than
- * UTC midnight (which would silently shift the calendar day for
- * non-UTC users) or a bare `YYYY-MM-DD` (which leaves the timezone
- * implicit and forces the backend to guess). The wire form is
- * always timezone-explicit.
- *
- * - Date-only (`YYYY-MM-DD`): emitted as `YYYY-MM-DDT00:00:00+07:00`.
- *   e.g. `2026-07-30` → `2026-07-30T00:00:00+07:00`.
- * - Date-time (already carrying `Z` or a numeric offset, e.g.
- *   `2026-07-30T07:00:00+07:00`): the caller has specified an
- *   instant, so normalize to canonical ISO 8601 UTC for the wire.
- * - Anything that doesn't parse: returned verbatim, so the request
- *   fails at the backend with a clear date error rather than
- *   silently emitting `Invalid Date`.
- */
-function toIsoDateTime(value: string): string {
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return `${value}T00:00:00${WIB_OFFSET}`;
-  }
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
-}
 
 /** Fetch top gainers and top loosers. `limit` controls how many per group (default 5). */
 export function getTopStocks(limit = 5): Promise<TopStocksResponse> {
@@ -255,7 +219,7 @@ export function getStocksTrending(
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
-  const normalizedDateTime = toIsoDateTime(dateTime);
+  const normalizedDateTime = toIsoWithTimezone(dateTime, "+07:00");
   const params = new URLSearchParams({
     date: normalizedDateTime,
     page: String(page),

@@ -73,6 +73,17 @@ export function MarketMoodCell({ widget }: MarketMoodCellProps) {
           >
             {widget.staticSubLabel}
           </span>
+        ) : widget.type === "bar" && widget.staticSubLabel ? (
+          // `bar` widgets reuse the `staticSubLabel` slot to
+          // surface per-widget context — e.g. Foreign Flow shows
+          // the date the caller asked `/stocks/foreign-stocks`
+          // for. Renders muted (no sentiment badge), same slot as
+          // the previous hardcoded `"Harian"` so the cell layout
+          // stays stable. Falls through to `"Harian"` below when
+          // the builder didn't supply a label.
+          <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
+            {widget.staticSubLabel}
+          </span>
         ) : (
           <span className="font-mono text-[9.5px] font-semibold leading-none text-text-muted">
             Harian

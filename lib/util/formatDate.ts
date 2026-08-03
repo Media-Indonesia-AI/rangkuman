@@ -100,3 +100,70 @@ export function getRelativeTime(
   if (diffDay < 365) return `${Math.floor(diffDay / 30)} bulan lalu`;
   return `${Math.floor(diffDay / 365)} tahun lalu`;
 }
+
+/**
+ * Normalize a date value to a UTC ISO 8601 string for query
+ * parameters.
+ *
+ * - Date-only (`YYYY-MM-DD`): emitted as `YYYY-MM-DDT00:00:00.000Z`
+ *   (UTC midnight). Used when the caller wants a calendar day, not
+ *   an instant.
+ * - Date-time (any string the `Date` constructor can parse, e.g.
+ *   `"2026-07-30T07:00:00+07:00"`): re-emitted via `toISOString()`
+ *   so the wire form is canonical UTC regardless of the caller's
+ *   local timezone.
+ * - Anything that doesn't parse: returned verbatim, so the request
+ *   fails at the backend with a clear date error rather than
+ *   silently emitting `Invalid Date`.
+ *
+ * Lives here (rather than next to the API endpoint that uses it)
+ * because it's a pure date-formatting helper — same family as
+ * `formatSingkat` / `formatTanggalIndonesia` — and pulling it into
+ * one place keeps the IDX-specific offset constant out of files
+ * that shouldn't need to know about it.
+ */
+export function toIsoDateTime(value: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00.000Z`;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
+/**
+ * Normalize a date value to a timezone-explicit ISO 8601 string for
+ * query parameters, anchored to a caller-specified offset.
+ *
+ * Counterpart to `toIsoDateTime`: where `toIsoDateTime` always emits
+ * UTC for date-only inputs (so a non-UTC caller would silently get
+ * the previous calendar day), `toIsoWithTimezone` lets the caller
+ * pick the offset the calendar day should be anchored to. Useful for
+ * IDX / WIB flows that want `+07:00` midnight, or any other
+ * project-local timezone.
+ *
+ * - Date-only (`YYYY-MM-DD`): emitted as
+ *   `YYYY-MM-DDT00:00:00<offset>`, e.g. `2026-07-30` + `"+07:00"` →
+ *   `"2026-07-30T00:00:00+07:00"`.
+ * - Date-time (any string the `Date` constructor can parse): the
+ *   instant is preserved and re-emitted via `toISOString()` —
+ *   `Date` doesn't expose a "format in this offset" primitive in
+ *   JS, and the wire form must be unambiguous, so the canonical UTC
+ *   form is the safest output. The caller's `offset` only changes
+ *   the wire form for date-only inputs.
+ * - Anything that doesn't parse: returned verbatim, so the request
+ *   fails at the backend with a clear date error rather than
+ *   silently emitting `Invalid Date`.
+ *
+ * @param value  Date-only (`YYYY-MM-DD`) or full date-time string.
+ * @param offset Timezone offset suffix to attach, e.g. `"+07:00"`
+ *               (WIB), `"-05:00"`, `"Z"`.
+ */
+export function toIsoWithTimezone(value: string, offset: string): string {
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return `${value}T00:00:00${offset}`;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();
+}
+
+

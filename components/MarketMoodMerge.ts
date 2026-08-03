@@ -32,6 +32,7 @@ import type {
   MarketMood,
 } from "@/lib/api";
 import type { MarketWidget } from "@/lib/mock/market-mood";
+import { formatSingkat } from "@/lib/util/formatDate";
 import {
   bpsBadge,
   buyRatioPercent,
@@ -120,13 +121,28 @@ export function buildUsdIdrWidget(
  * and `barValue` is the buy/sell ratio (used by the progress bar to
  * indicate buy-side dominance visually).
  *
+ * `requestDate` is the **effective** ISO date (`YYYY-MM-DD`) the
+ * payload actually represents — the cache wrapper may have shifted
+ * back a day on 503 before landing a 200, and the date the widget
+ * shows should match the data, not the caller's initial request.
+ * Surfaced as the sub-label slot (e.g. `"3 Agt 2026"`) so the
+ * user sees which trading session the net-flow numbers represent.
+ *
+ * `null` while the fetch is in flight or after an error — no
+ * successful response → no effective date to show, so
+ * `staticSubLabel` is left undefined and `<MarketMoodCell>` falls
+ * back to its `"Harian"` placeholder instead of flashing a stale
+ * or misleading date.
+ *
  * When the snapshot is missing or has no flow to display (all zeros),
  * `value` becomes "—" and `barValue` is undefined so the bar slot
- * renders nothing.
+ * renders nothing; the date label still surfaces so the user knows
+ * the snapshot is current.
  */
 export function buildForeignFlowWidget(
   foreignFlow: ForeignStocksResponse | null,
   loading: boolean,
+  requestDate: string | null,
 ): MarketWidget {
   const empty = isEmptyForeignFlow(foreignFlow);
   const s = empty ? null : foreignFlow!.summary;
@@ -140,6 +156,18 @@ export function buildForeignFlowWidget(
     barValue,
     barLeftLabel: "Net Sell",
     barRightLabel: "Net Buy",
+    // Reused as the sub-label slot — `<MarketMoodCell>` renders
+    // `staticSubLabel` for `type === "bar"` (muted) in place of
+    // the previous hardcoded `"Harian"`. `formatSingkat` returns
+    // `"N/A"` if the date is malformed, which is preferable to
+    // crashing on bad input. We only set the label when the
+    // hook has handed us a real effective date — `null` →
+    // undefined here so the cell's `Harian` fallback fires
+    // instead of showing a misleading label during loading /
+    // error states.
+    staticSubLabel: requestDate
+      ? formatSingkat(requestDate, "d MMM y")
+      : undefined,
     loading,
   };
 }

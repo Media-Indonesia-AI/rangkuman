@@ -36,6 +36,14 @@ export interface UseMarketMoodDataResult {
   biRate: InterestRate | null;
   exchangeRate: ExchangeRateChartResponse | null;
   foreignFlow: ForeignStocksResponse | null;
+  /** Effective date the foreign-flow payload actually represents —
+   *  may differ from the caller's requested date when the cache
+   *  wrapper walked back a day on a 503 response. `null` while the
+   *  fetch is in flight or after a failed fetch (no successful
+   *  response → no effective date to surface). The Market Mood
+   *  strip uses this to label the Foreign Flow widget so the
+   *  shown date matches the data, not just the request. */
+  foreignFlowDate: string | null;
   compositeChart: CompositeChartPoint[] | null;
   /** Composite market-mood snapshot (score, label, narrative, and the
    *  aggregated market data behind it). `null` while in flight or on
@@ -76,6 +84,7 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
   const [foreignFlow, setForeignFlow] = useState<ForeignStocksResponse | null>(
     null,
   );
+  const [foreignFlowDate, setForeignFlowDate] = useState<string | null>(null);
   const [compositeChart, setCompositeChart] = useState<
     CompositeChartPoint[] | null
   >(null);
@@ -118,9 +127,10 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
       });
 
     void loadForeignStocks()
-      .then((data) => {
+      .then(({ data, effectiveDate }) => {
         if (!cancelled) {
           setForeignFlow(data);
+          setForeignFlowDate(effectiveDate);
           setIsForeignFlowLoading(false);
         }
       })
@@ -160,6 +170,7 @@ export function useMarketMoodData(): UseMarketMoodDataResult {
     biRate,
     exchangeRate,
     foreignFlow,
+    foreignFlowDate,
     compositeChart,
     mood,
     isLoading: {

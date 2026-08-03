@@ -9,14 +9,28 @@
  * ORIGINAL key, so subsequent calls for "today" get yesterday's data
  * without re-trying the 503 chain. Errors clear the in-flight slot so
  * the next mount can retry.
+ *
+ * The wrapper exposes not just the payload but the **effective date**
+ * — the ISO date the data actually represents. That's the date that
+ * landed a 200 (after any 503 fallback shift) and is what the
+ * Market Mood strip wants to show next to the net-flow number; the
+ * caller's requested date may differ from it on fallback days.
  */
 
 import { todayIsoDate } from "../client";
 import { api } from "../client";
 import type { ForeignStocksResponse } from "../types/stocks";
 
-const cached = new Map<string, ForeignStocksResponse>();
-const inflight = new Map<string, Promise<ForeignStocksResponse>>();
+/** Tuple shape returned by `loadForeignStocks` — payload plus the
+ *  date the payload actually represents (may differ from the
+ *  requested date after a 503 fallback). */
+export interface ForeignStocksResult {
+  data: ForeignStocksResponse;
+  effectiveDate: string;
+}
+
+const cached = new Map<string, ForeignStocksResult>();
+const inflight = new Map<string, Promise<ForeignStocksResult>>();
 
 /** Cache key for a given date range. Empty range = "default (today only)". */
 function key(startDate?: string, endDate?: string): string {
@@ -49,22 +63,30 @@ const MAX_FALLBACK_ATTEMPTS = 5;
  * shift has a concrete base — otherwise the first 503 would re-send
  * the same `undefined` dates, which the client would re-resolve to
  * "today" again, defeating the fallback.
+ *
+ * Returns the payload alongside the **shifted** date string that
+ * actually landed a 200 — callers that just want the body can ignore
+ * the second tuple field, but the Market Mood strip uses it to label
+ * the widget with the session the net-flow numbers represent.
  */
 function fetchWithFallback(
   startDate?: string,
   endDate?: string,
   attempt = 0,
-): Promise<ForeignStocksResponse> {
+): Promise<ForeignStocksResult> {
   const effectiveStart = startDate ?? todayIsoDate();
   const effectiveEnd = endDate ?? todayIsoDate();
   const s = shiftIsoDate(effectiveStart, -attempt);
   const e = shiftIsoDate(effectiveEnd, -attempt);
-  return api.getForeignStocks(s, e).catch((err: { status?: number }) => {
-    if (err?.status === 503 && attempt < MAX_FALLBACK_ATTEMPTS) {
-      return fetchWithFallback(startDate, endDate, attempt + 1);
-    }
-    throw err;
-  });
+  return api
+    .getForeignStocks(s, e)
+    .then((data) => ({ data, effectiveDate: s }))
+    .catch((err: { status?: number }) => {
+      if (err?.status === 503 && attempt < MAX_FALLBACK_ATTEMPTS) {
+        return fetchWithFallback(startDate, endDate, attempt + 1);
+      }
+      throw err;
+    });
 }
 
 /**
@@ -73,9 +95,11 @@ function fetchWithFallback(
  *
  * Concurrent and subsequent callers for the same range share one
  * network chain (including any retries). Only successful responses are
- * cached — and they are cached under the ORIGINAL key, so subsequent
- * calls for today get yesterday's data without re-trying. Errors clear
- * the in-flight slot so the next mount can retry.
+ * cached — and they are cached under the ORIGINAL key along with the
+ * effective date that landed the success, so subsequent calls for
+ * "today" get yesterday's data AND see the correct shifted date
+ * without re-trying. Errors clear the in-flight slot so the next
+ * mount can retry.
  *
  * @param startDate ISO date string `YYYY-MM-DD` (defaults to today).
  * @param endDate ISO date string `YYYY-MM-DD` (defaults to today).
@@ -83,7 +107,7 @@ function fetchWithFallback(
 export function loadForeignStocks(
   startDate?: string,
   endDate?: string,
-): Promise<ForeignStocksResponse> {
+): Promise<ForeignStocksResult> {
   const k = key(startDate, endDate);
   const hit = cached.get(k);
   if (hit) return Promise.resolve(hit);
