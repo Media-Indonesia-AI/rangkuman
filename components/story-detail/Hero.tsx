@@ -127,63 +127,53 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
-            Update{" "}
             <span className="font-bold text-text-primary">
               {getRelativeTime(updateDate)}
             </span>
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
-          <Tag className="h-3.5 w-3.5 text-text-faint" aria-hidden />
-          <span className="font-mono text-text-secondary">
-            Dimulai {getRelativeTime(detail.created_at)}
-          </span>
-        </div>
       </div>
 
-      {/* Price impact — driven by `detail.pct_change_since_story`
-          when the headline ships it; falls back to `n/a` for
-          older responses that don't. Sign convention: positive =
-          up (bullish + TrendingUp), negative = down (bearish +
-          TrendingDown). Ticker on the right mirrors the badge
-          above. */}
-      <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
-        <span className="inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums">
-          {/* `!= null` (not `!== undefined`) because the live wire
-              has shipped `null` for older headlines whose price
-              snapshot wasn't captured — `null !== undefined`, so a
-              strict undefined check would slip through and crash on
-              `pct.toFixed(1)` below. `!= null` covers both
-              nullish values and TypeScript narrows `pct` to
-              `number` automatically inside the IIFE. */}
-          {detail.pct_change_since_story != null ? (
-            (() => {
-              const pct = detail.pct_change_since_story;
-              const isPositive = pct >= 0;
-              const Icon = isPositive ? TrendingUp : TrendingDown;
-              const color = isPositive ? "text-bullish" : "text-bearish";
-              return (
-                <span className={cn("inline-flex items-center gap-1", color)}>
+      {/* Price impact — only renders when the headline carries a
+          `pct_change_since_story` value. Older headlines (or those
+          whose price snapshot wasn't captured) leave the field
+          null, and we hide the strip entirely rather than fall
+          back to `n/a`. Sign convention: positive = up (bullish +
+          TrendingUp), negative = down (bearish + TrendingDown).
+
+          `!= null` (not `!== undefined`) because the live wire has
+          shipped `null` for those older headlines, and a strict
+          undefined check would let `null` through and crash on
+          `pct.toFixed(1)`. `!= null` covers both nullish values
+          and TypeScript narrows `pct` to `number` automatically
+          inside the IIFE. */}
+      {detail.pct_change_since_story != null && (
+        <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
+          {(() => {
+            const pct = detail.pct_change_since_story;
+            const isPositive = pct >= 0;
+            const Icon = isPositive ? TrendingUp : TrendingDown;
+            const color = isPositive ? "text-bullish" : "text-bearish";
+            return (
+              <>
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums",
+                    color,
+                  )}
+                >
                   <Icon className="h-4 w-4" aria-hidden />
                   {isPositive ? "+" : ""}
                   {pct.toFixed(1)}%
                 </span>
-              );
-            })()
-          ) : (
-            <span className="inline-flex items-center gap-1 text-text-faint">
-              <TrendingUp className="h-4 w-4" aria-hidden />
-              <NotAvailable />
-            </span>
-          )}
-        </span>
-        <span className="font-mono text-[10.5px] text-text-muted">
-          Pergerakan harga sejak story
-        </span>
-        <span className="ml-auto inline-flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-brand">
-          {detail.primary_ticker_code}
-        </span>
-      </div>
+                <span className="font-mono text-[10.5px] text-text-muted">
+                  Pergerakan harga sejak story
+                </span>
+              </>
+            );
+          })()}
+        </div>
+      )}
     </>
   );
 }
