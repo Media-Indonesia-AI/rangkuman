@@ -66,7 +66,6 @@ export function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
           ) : (
             <NotAvailable />
           )}
-          sejak story
         </span>
       </div>
     </Link>

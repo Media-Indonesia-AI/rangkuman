@@ -122,9 +122,6 @@ export function EmitenStories({
             <Newspaper className="h-3.5 w-3.5 text-brand" aria-hidden />
             <span className="label text-text-secondary">Story</span>
           </div>
-          <p className="mt-0.5 text-[12px] text-text-muted">
-            Konteks emiten yang lagi berkembang
-          </p>
         </div>
         {seeAll}
       </div>
