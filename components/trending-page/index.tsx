@@ -61,7 +61,7 @@ export default function TrendingPage() {
 
         <TrendingPageHeader />
 
-        <TrendingPeriodTabs active={period} onChange={setPeriod} />
+        {/* <TrendingPeriodTabs active={period} onChange={setPeriod} /> */}
 
         <TrendingStatStrip
           positif={stats.positif}
