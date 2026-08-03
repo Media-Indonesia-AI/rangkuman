@@ -2,21 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { X, UserPlus, LogIn, Sparkles, Loader2 } from "lucide-react";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
-import { registerUser } from "@/lib/auth";
-
-/** How long the dialog stays hidden on a fresh page load (1 minute). */
-const DELAY_MS = 60_000;
-
-/** Generates a random suffix of N lowercase alphanumeric chars (0-9a-z). */
-function rand(n: number): string {
-  let s = "";
-  for (let i = 0; i < n; i++) {
-    s += Math.floor(Math.random() * 36).toString(36);
-  }
-  return s;
-}
+import { X, UserPlus, LogIn } from "lucide-react";
 
 /** Event name any surface can dispatch on `window` to force the dialog open. */
 export const GUEST_LOGIN_DIALOG_OPEN_EVENT = "guest-login-dialog:open";
@@ -30,26 +16,27 @@ export const GUEST_LOGIN_DIALOG_OPEN_EVENT = "guest-login-dialog:open";
  * - If the user dismisses it (X / Escape / backdrop), the timer
  *   resets — another 1 minute will pass before it reappears
  * - Hidden on /login and /daftar itself (redundant)
- * - Auto-hides when the user becomes logged in (any of the 3 flows)
+ * - Auto-hides when the user becomes logged in
  *
- * Three actions:
- *  1. "Masuk sebagai tamu" -> auto-registers a random account, user is logged in
- *  2. "Daftar akun baru" -> navigates to /daftar
- *  3. "Masuk" -> navigates to /login
+ * Two actions (the previous "Masuk sebagai tamu" one-click random
+ * account path was removed — accounts now flow exclusively through
+ * `<DaftarPage />` for create and `<LoginPage />` for sign-in, so
+ * there's no longer any random-account provisioning from this
+ * dialog):
+ *  1. "Daftar akun baru" → navigates to /daftar
+ *  2. "Masuk"          → navigates to /login
  *
  * External trigger:
  *  Other surfaces (e.g. the "Lanjutkan dengan Google" button on
  *  /login) can force the dialog open by dispatching the
  *  `guest-login-dialog:open` window event. The dialog opens regardless
- *  of route / timer state and clears the force-open flag once the user
- *  logs in or dismisses it.
+ *  of route / timer state and clears the force-open flag once the
+ *  user logs in or dismisses it.
  */
 export function GuestLoginDialog() {
   const router = useRouter();
   const pathname = usePathname();
-  const user = useCurrentUser();
-  const [loading, setLoading] = useState<null | "tamu">(null);
-  const [error, setError] = useState<string | null>(null);
+  const user = useCurrentUserLite();
   const [showDialog, setShowDialog] = useState(false);
   /**
    * Set by an external `guest-login-dialog:open` event. Overrides the
@@ -93,15 +80,10 @@ export function GuestLoginDialog() {
     return () => window.clearTimeout(t);
   }, [shouldArmTimer, pathname, resetKey, forceOpen]);
 
-  // The component instance persists across login/logout cycles (the
-  // `if (!isOpen) return null` early return doesn't unmount it), so
-  // transient states like `loading` and `error` from a previous
-  // session would otherwise leak into the next session. Reset them
-  // whenever the auth user changes. Also clear `forceOpen` so the
-  // timer can take over again on the next eligible route.
+  // Clear `forceOpen` whenever the auth user changes so the timer can
+  // take over again on the next eligible route. The dialog itself
+  // unmounts because `shouldArmTimer` flips false on login.
   useEffect(() => {
-    setLoading(null);
-    setError(null);
     if (user) setForceOpen(false);
   }, [user]);
 
@@ -129,25 +111,6 @@ export function GuestLoginDialog() {
 
   if (!isOpen) return null;
 
-  const handleTamu = async () => {
-    setLoading("tamu");
-    setError(null);
-    try {
-      await registerUser({
-        username: `tamu${rand(10)}`, // 14 chars, regex-compliant
-        name: `Tamu ${rand(8)}`,
-        email: `tamu-${rand(10)}@guest.local`, // unique-ish per click
-        password: `Tamu!${rand(12)}`, // 18 chars
-      });
-      // registerUser persists the session -> useCurrentUser returns the
-      // new user on next render -> shouldArmTimer flips false -> dialog
-      // auto-unmounts.
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal daftar tamu");
-      setLoading(null);
-    }
-  };
-
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-bg-primary/80 p-4 backdrop-blur-sm"
@@ -167,7 +130,8 @@ export function GuestLoginDialog() {
               Lanjut menjelajahi Rangkuman
             </h2>
             <p className="mt-1 text-[12.5px] text-text-secondary">
-              Masuk untuk menyimpan watchlist, atau coba sebagai tamu.
+              Masuk atau daftar untuk menyimpan watchlist dan akses recap
+              yang dipersonalisasi.
             </p>
           </div>
           <button
@@ -182,44 +146,14 @@ export function GuestLoginDialog() {
 
         {/* Body */}
         <div className="space-y-2 p-4">
-          {/* Primary action: Masuk sebagai tamu */}
-          <button
-            type="button"
-            onClick={handleTamu}
-            disabled={loading !== null}
-            className="flex w-full items-center gap-3 rounded-md border border-brand/30 bg-brand/10 px-4 py-3 text-left transition-colors hover:border-brand hover:bg-brand/20 disabled:opacity-60"
-          >
-            <Sparkles
-              className="h-5 w-5 shrink-0 text-brand"
-              aria-hidden
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-[14px] font-semibold text-text-primary">
-                {loading === "tamu"
-                  ? "Membuat akun tamu…"
-                  : "Masuk sebagai tamu"}
-              </p>
-              <p className="text-[12px] text-text-muted">
-                Akun otomatis dibuat. Bisa simpan watchlist.
-              </p>
-            </div>
-            {loading === "tamu" && (
-              <Loader2
-                className="h-4 w-4 shrink-0 animate-spin text-brand"
-                aria-hidden
-              />
-            )}
-          </button>
-
           {/* Daftar akun baru */}
           <button
             type="button"
             onClick={() => router.push("/daftar")}
-            disabled={loading !== null}
-            className="flex w-full items-center gap-3 rounded-md border border-border bg-bg-tertiary px-4 py-3 text-left transition-colors hover:border-border-strong disabled:opacity-60"
+            className="flex w-full items-center gap-3 rounded-md border border-brand/30 bg-brand/10 px-4 py-3 text-left transition-colors hover:border-brand hover:bg-brand/20"
           >
             <UserPlus
-              className="h-5 w-5 shrink-0 text-text-secondary"
+              className="h-5 w-5 shrink-0 text-brand"
               aria-hidden
             />
             <div className="min-w-0 flex-1">
@@ -236,8 +170,7 @@ export function GuestLoginDialog() {
           <button
             type="button"
             onClick={() => router.push("/login")}
-            disabled={loading !== null}
-            className="flex w-full items-center gap-3 rounded-md border border-border bg-bg-tertiary px-4 py-3 text-left transition-colors hover:border-border-strong disabled:opacity-60"
+            className="flex w-full items-center gap-3 rounded-md border border-border bg-bg-tertiary px-4 py-3 text-left transition-colors hover:border-border-strong"
           >
             <LogIn
               className="h-5 w-5 shrink-0 text-text-secondary"
@@ -252,17 +185,52 @@ export function GuestLoginDialog() {
               </p>
             </div>
           </button>
-
-          {error && (
-            <p
-              role="alert"
-              className="mt-1 font-mono text-[11px] text-bearish"
-            >
-              ⚠ {error}
-            </p>
-          )}
         </div>
       </div>
     </div>
   );
+}
+
+/** How long the dialog stays hidden on a fresh page load (1 minute). */
+const DELAY_MS = 60_000;
+
+/**
+ * Local re-implementation of `useCurrentUser` — we need only the
+ * `null`-vs-non-null signal (to flip `shouldArmTimer`), not the full
+ * `MockUser` shape, and importing `useAuth` here would pull in a
+ * transitive `useSyncExternalStore` that we don't otherwise need in
+ * this dialog. The dialog subscribes to the same `localStorage`
+ * + `beritainvestor:storage` event the hook reads from, so the
+ * "user just logged in → dialog should unmount" path stays in sync.
+ */
+function useCurrentUserLite(): MockUserLite | null {
+  const [user, setUser] = useState<MockUserLite | null>(readUserLite);
+  useEffect(() => {
+    const handler = () => setUser(readUserLite());
+    window.addEventListener("storage", handler);
+    window.addEventListener("beritainvestor:storage", handler);
+    return () => {
+      window.removeEventListener("storage", handler);
+      window.removeEventListener("beritainvestor:storage", handler);
+    };
+  }, []);
+  return user;
+}
+
+interface MockUserLite {
+  email: string;
+  username: string;
+}
+
+function readUserLite(): MockUserLite | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem("beritainvestor:user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as MockUserLite;
+    if (parsed?.email && parsed?.username) return parsed;
+    return null;
+  } catch {
+    return null;
+  }
 }
