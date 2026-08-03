@@ -15,6 +15,13 @@ import { sentimentStyle } from "./shared";
 export function StoryTimeline({ stories }: { stories: EmbeddedStory[] }) {
   if (stories.length === 0) return null;
 
+  const sortedStories = [...stories].sort((a, b) => {
+    if (!a.recap_date && !b.recap_date) return 0;
+    if (!a.recap_date) return 1;
+    if (!b.recap_date) return -1;
+    return b.recap_date.localeCompare(a.recap_date);
+  }).reverse();
+
   return (
     <div className="flex items-center gap-3">
       <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
@@ -25,7 +32,7 @@ export function StoryTimeline({ stories }: { stories: EmbeddedStory[] }) {
             dots so the endpoints are anchored cleanly to the timeline. */}
         <div className="absolute inset-x-1 top-1/2 h-px -translate-y-1/2 bg-border" />
         <div className="relative z-10 flex flex-1 items-center justify-between">
-          {stories.map((story, index) => {
+          {sortedStories.map((story, index) => {
             const title = story.headline || "n/a";
             const { dot } = sentimentStyle[toSentimen(story.primary_sentiment)];
             return (
