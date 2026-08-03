@@ -149,9 +149,16 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
           above. */}
       <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
         <span className="inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums">
-          {detail.pct_change_since_story !== undefined ? (
+          {/* `!= null` (not `!== undefined`) because the live wire
+              has shipped `null` for older headlines whose price
+              snapshot wasn't captured — `null !== undefined`, so a
+              strict undefined check would slip through and crash on
+              `pct.toFixed(1)` below. `!= null` covers both
+              nullish values and TypeScript narrows `pct` to
+              `number` automatically inside the IIFE. */}
+          {detail.pct_change_since_story != null ? (
             (() => {
-              const pct = detail.pct_change_since_story!;
+              const pct = detail.pct_change_since_story;
               const isPositive = pct >= 0;
               const Icon = isPositive ? TrendingUp : TrendingDown;
               const color = isPositive ? "text-bullish" : "text-bearish";
