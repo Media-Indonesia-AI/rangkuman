@@ -99,17 +99,6 @@ export function AggregateSummary({
   const jumlahBerita = articles.length;
   const Icon = SentimenIcon[sentimen];
 
-  // No summary prose (the ticker description was empty).
-  if (summaryText.trim() === "") {
-    return (
-      <EmptyState
-        title="Belum ada ringkasan"
-        description={`Ringkasan AI belum tersedia untuk ${kode}.`}
-        suggestion="Coba cek headline lain atau kembali ke beranda."
-      />
-    );
-  }
-
   return (
     <section
       className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
@@ -138,14 +127,31 @@ export function AggregateSummary({
       </div>
 
       <div className="p-4 sm:p-5">
-        <p className="text-[15px] leading-[1.65] text-text-primary">
-          <LinkifiedText text={summaryText} />
-        </p>
+        {/* Body switches on whether the ticker description
+            produced usable prose. The header (icon, label, date
+            picker, article count) stays visible in both states so
+            the user can still navigate to a different recap day
+            even when there's no summary for this one — the
+            picker is the only path to a non-empty recap on a
+            "blank day". */}
+        {summaryText.trim() === "" ? (
+          <EmptyState
+            title="Belum ada ringkasan"
+            description={`Ringkasan AI belum tersedia untuk ${kode}.`}
+            suggestion="Coba cek headline lain atau kembali ke beranda."
+          />
+        ) : (
+          <>
+            <p className="text-[15px] leading-[1.65] text-text-primary">
+              <LinkifiedText text={summaryText} />
+            </p>
 
-        <div className="mt-5 border-t border-border pt-4">
-          <p className="label mb-2.5">Disebut dalam</p>
-          <SourceBar sumber={sumber} />
-        </div>
+            <div className="mt-5 border-t border-border pt-4">
+              <p className="label mb-2.5">Disebut dalam</p>
+              <SourceBar sumber={sumber} />
+            </div>
+          </>
+        )}
       </div>
     </section>
   );

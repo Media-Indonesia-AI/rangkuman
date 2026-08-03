@@ -273,14 +273,14 @@ export function DatePicker({
               const isBeforeMin = isBefore(d, minDate);
               const disabled = isFuture || isBeforeMin;
               const dayClassName = cn(
-                "relative h-8 rounded font-mono text-[11.5px] font-medium transition-colors",
+                "relative text-center h-8 rounded font-mono text-[11.5px] font-medium transition-colors",
                 disabled
-                  ? "cursor-not-allowed text-text-faint/40"
+                  ? "cursor-not-allowed text-text-faint"
                   : isSelected
                     ? "bg-brand text-bg-primary"
                     : inMonth
                       ? "text-text-primary hover:bg-bg-tertiary"
-                      : "text-text-faint hover:bg-bg-tertiary/50",
+                      : "text-text-primary hover:bg-bg-tertiary/50",
               );
               const dayLabel = format(d, "EEEE, d MMMM yyyy", { locale: idLocale });
               // In link mode, an enabled day becomes a <Link>; a
