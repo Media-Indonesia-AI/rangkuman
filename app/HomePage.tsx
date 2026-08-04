@@ -21,13 +21,6 @@ export default function HomePage() {
         {/* Brand slogan — above-the-fold memo lock */}
         <BrandSlogan />
 
-        {/* Date label — minimal context, just the date */}
-        <div className="mb-2 flex items-center justify-end">
-          <span className="font-mono text-[10px] uppercase tracking-widest text-text-faint">
-            Edisi 7 Juni 2026
-          </span>
-        </div>
-
         {/* Live headlines rail: 1 lead + 4 sedang terjadi + 10 cerita lain. */}
         <HomeHeadlines />
 

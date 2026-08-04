@@ -122,8 +122,6 @@ export function StoryHero({ highlight }: StoryHeroProps) {
 
         {/* Byline / meta row */}
         <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-border pt-2.5 font-mono text-[10px] text-text-muted">
-          <span className="text-text-secondary">By Tim Redaksi</span>
-          <span className="text-text-faint">·</span>
           <span>{highlight.timeAgo}</span>
           <span className="text-text-faint">·</span>
           <span className="inline-flex items-center gap-1">
