@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { loginWithIdentifier } from "@/lib/auth";
+import { getAuthRedirectTarget, loginWithIdentifier } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { GUEST_LOGIN_DIALOG_OPEN_EVENT } from "@/components/GuestLoginDialog";
 import { cn } from "@/lib/utils";
@@ -19,17 +19,20 @@ type FieldErrors = {
 
 export default function LoginPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useCurrentUser();
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // If already logged in, jump straight to Beranda (the home
-  // page) — same destination as a fresh successful login.
+  // If already logged in, jump straight to wherever the user was
+  // headed — usually the page they were reading when they hit the
+  // "Login" button (`/saham`, `/crypto`, …). Falls back to the
+  // home page when no prior path was captured.
   useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+    if (user) router.replace(getAuthRedirectTarget(searchParams));
+  }, [user, router, searchParams]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -43,7 +46,47 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await loginWithIdentifier(identifier, password);
-      router.push("/");
+      // Hard-navigate after a successful login. Same race as
+      // DaftarPage: loginWithIdentifier writes the session via
+      // writeJson, which synchronously wakes the useCurrentUser
+      // subscriber (queues setUser). A soft `router.replace` from
+      // the user-effect races with that in-flight setUser and can
+      // be swallowed, leaving the page stuck on /login with the
+      // loading button forever. window.location.assign bypasses
+      // the App Router and is guaranteed to commit. (The
+      // user-effect's router.replace still handles the orthogonal
+      // "logged-in user navigates to /login" case — no race
+      // there, useCurrentUser reads storage on mount without
+      // firing listeners.)
+      const target = getAuthRedirectTarget(searchParams);
+      console.log("[login-success] reached success path");
+      console.log("[login-success] current pathname:", window.location.pathname);
+      console.log("[login-success] redirect target:", target);
+      console.log("[login-success] sessionStorage prev-path:", window.sessionStorage.getItem("rangkuman:auth-prev-path"));
+      console.log("[login-success] localStorage user:", window.localStorage.getItem("beritainvestor:user"));
+      console.log("[login-success] firing window.location.assign…");
+      window.location.assign(target);
+      // Self-diagnostic: if we're still on /login 3 seconds later, the
+      // navigation never committed (page didn't unload). That can happen
+      // if HMR served stale code, if a service worker intercepted the
+      // request, or if the App Router's RedirectBoundary swallowed it.
+      // If the navigation worked, this setTimeout fires into a torn-down
+      // page and never logs.
+      setTimeout(() => {
+        if (typeof window === "undefined") return;
+        if (window.location.pathname.startsWith("/login")) {
+          console.error(
+            "[login-success] STILL ON /login 3s after window.location.assign — navigation did not commit",
+          );
+          console.error("[login-success] current state snapshot:", {
+            pathname: window.location.pathname,
+            href: window.location.href,
+            readyState: document.readyState,
+            sessionStorage_prev: window.sessionStorage.getItem("rangkuman:auth-prev-path"),
+            localStorage_user: window.localStorage.getItem("beritainvestor:user"),
+          });
+        }
+      }, 3000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Gagal masuk";
       // Server usually returns one generic "wrong credentials" message —
@@ -61,9 +104,10 @@ export default function LoginPage() {
   const handleGoogleLogin = () => {
     setErrors({});
     // Open the global GuestLoginDialog so the user picks the auth
-    // method (tamu / Google / daftar / login) in one place. Once they
-    // sign in, useCurrentUser flips and the login page's redirect
-    // effect sends them to /watchlist.
+    // method (tamu / Google / daftar / login) in one place. Once
+    // they sign in, the layout-level `<TopicsProvider />` and
+    // `useCurrentUser` flip and the login page's redirect effect
+    // sends them back to where they came from.
     window.dispatchEvent(new CustomEvent(GUEST_LOGIN_DIALOG_OPEN_EVENT));
   };
 

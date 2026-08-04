@@ -5,11 +5,88 @@
  */
 
 import { api, type ApiError, type RegisterResponse } from "./api";
+import { AUTH_PREV_PATH_KEY } from "@/components/PathnameTracker";
 
 const USER_KEY = "beritainvestor:user";
 const SETUP_TOKEN_KEY = "beritainvestor:setupToken";
 const WATCHLIST_KEY = "beritainvestor:watchlist";
 const MAX_WATCHLIST = 10;
+
+/**
+ * Pick the URL the auth flow should send the user to after a
+ * successful login or registration. Three sources, in priority
+ * order:
+ *
+ *  1. Explicit `?next=<path>` query parameter — links that
+ *     want to override the default (e.g. a deep-link email
+ *     "finish setting up your account" flow).
+ *  2. The most recent non-auth pathname captured by
+ *     `<PathnameTracker />` in the root layout — i.e. the page
+ *     the user was on before they clicked "Login" / "Daftar".
+ *     This is the common case: the user is reading `/saham`,
+ *     clicks "Masuk", authenticates, and lands back on `/saham`
+ *     instead of being dropped on the home page.
+ *  3. `"/"` (Beranda) as the final fallback.
+ *
+ * The returned path is always validated — must be a relative
+ * URL (starts with `/`), must not be protocol-relative
+ * (`//evil.com/...`), and must not point back at the auth pages
+ * themselves. This blocks open-redirect attacks where an attacker
+ * crafts a link like `/login?next=//evil.example.com` and the
+ * post-auth push dutifully follows it.
+ *
+ * Also reads `?next=` first when present so direct navigation
+ * to `/login?next=/watchlist` still works without going through
+ * a "previous page" capture.
+ */
+export function getAuthRedirectTarget(
+  searchParams: URLSearchParams | ReadonlyURLSearchParams,
+): string {
+  const fromQuery = searchParams.get("next");
+  if (fromQuery && isSafeRedirectPath(fromQuery)) return fromQuery;
+
+  try {
+    const fromStorage = sessionStorage.getItem(AUTH_PREV_PATH_KEY);
+    if (fromStorage && isSafeRedirectPath(fromStorage)) return fromStorage;
+  } catch {
+    // sessionStorage disabled — fall through to "/".
+  }
+
+  return "/";
+}
+
+/** Validate a post-auth redirect target. Rejects anything that
+ *  isn't a clean in-app relative path — see `getAuthRedirectTarget`
+ *  for the threat model.
+ *
+ *  Note: `next.config.js` has `trailingSlash: true`, so Next.js
+ *  canonicalizes `/login` → `/login/`, `/saham/BBRI` → `/saham/BBRI/`,
+ *  etc. We strip the trailing slash before the auth-page check so
+ *  `/login/` (the form's actual URL) is also recognized as an auth
+ *  surface — otherwise a logged-in submit would no-op back onto the
+ *  same URL instead of navigating away. */
+function isSafeRedirectPath(path: string): boolean {
+  if (!path.startsWith("/")) return false;
+  // `//host/path` is a protocol-relative URL — opens a window
+  // for an open-redirect via a crafted `?next=//evil.example.com`.
+  if (path.startsWith("//")) return false;
+  // Strip trailing slash for the auth-page comparison only —
+  // `"/login/"` and `"/login"` both refer to the same route under
+  // `trailingSlash: true`. Anything else (query string, hash) is
+  // preserved.
+  const normalized = path.length > 1 && path.endsWith("/") ? path.slice(0, -1) : path;
+  // Don't bounce the user straight back to the auth surface
+  // they just authenticated on.
+  if (normalized === "/login" || normalized === "/daftar") return false;
+  return true;
+}
+
+/** Readonly variant of `URLSearchParams` for environments where
+ *  `useSearchParams()` returns a frozen instance. Functionally
+ *  identical to the standard constructor — `get` works the same. */
+type ReadonlyURLSearchParams = {
+  get(key: string): string | null;
+};
 
 export interface MockUser {
   /** Server-assigned user id (MongoDB-style). Empty for legacy local sessions. */

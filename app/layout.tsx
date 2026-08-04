@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
+import { PathnameTracker } from "@/components/PathnameTracker";
 import { ToastContainer } from "@/components/Toast";
 import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
@@ -107,6 +108,12 @@ export default function RootLayout({
         <TopicsProvider>
           <TopTickerRouter />
           <BfcacheRecovery />
+          {/* Side-effect-only: writes the current pathname to
+              sessionStorage on every navigation so the auth
+              pages know which page the user came from and can
+              route them back there after a successful login /
+              register. */}
+          <PathnameTracker />
           {children}
           <NewsletterFloatingPill />
           <ToastContainer />

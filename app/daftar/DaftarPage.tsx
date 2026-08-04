@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect, type FormEvent } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AtSign, User, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { registerUser } from "@/lib/auth";
+import { getAuthRedirectTarget, registerUser } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -22,6 +22,7 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function DaftarPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const user = useCurrentUser();
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
@@ -30,11 +31,13 @@ export default function DaftarPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  // If already logged in, jump straight to Beranda (the home
-  // page) — same destination as a fresh successful registration.
+  // If already logged in, jump straight to wherever the user
+  // was headed — usually the page they were reading when they
+  // hit the "Daftar" button (`/saham`, `/crypto`, …). Falls
+  // back to the home page when no prior path was captured.
   useEffect(() => {
-    if (user) router.replace("/");
-  }, [user, router]);
+    if (user) router.replace(getAuthRedirectTarget(searchParams));
+  }, [user, router, searchParams]);
 
   // Validate all fields and return the errors object (also sets state).
   function validate(): FieldErrors {
@@ -76,7 +79,24 @@ export default function DaftarPage() {
         email: email.trim(),
         password,
       });
-      router.push("/");
+      // Hard-navigate after a successful register. The flow is:
+      //   1. registerUser writes the new session via writeJson
+      //   2. writeJson synchronously fires the useCurrentUser
+      //      subscriber, which queues a setUser(newSession)
+      //   3. the user-effect above will eventually re-run and try
+      //      a SOFT router.replace to the home page
+      // In Next.js 14 App Router, that soft router.replace races
+      // with the in-flight setUser — same pattern that bit the
+      // logout path (see WatchlistPage.handleLogoutConfirm):
+      // the soft navigation is sometimes swallowed, leaving the
+      // page stuck on /daftar with the loading button forever.
+      // window.location.assign bypasses the App Router entirely
+      // and is guaranteed to commit. The user-effect's
+      // `router.replace` covers the orthogonal case where a
+      // logged-in user lands on /daftar directly (no race —
+      // useCurrentUser just reads storage on mount, no listeners
+      // fire).
+      window.location.assign(getAuthRedirectTarget(searchParams));
     } catch (err) {
       // Map server-side / network errors back to the relevant field when possible.
       const msg = err instanceof Error ? err.message : "Gagal daftar";

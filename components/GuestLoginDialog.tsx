@@ -47,9 +47,20 @@ export function GuestLoginDialog() {
   /** Incremented on each dismiss so the timer effect re-arms. */
   const [resetKey, setResetKey] = useState(0);
 
-  const onAuthPage = pathname === "/login" || pathname === "/daftar";
+  // `next.config.js` has `trailingSlash: true`, so `pathname` is e.g.
+  // `"/login/"` not `"/login"`. Compare on the normalized form so the
+  // dialog's "never appear on auth pages" gate actually matches both.
+  const normalizedPathname =
+    pathname.length > 1 && pathname.endsWith("/")
+      ? pathname.slice(0, -1)
+      : pathname;
+  const onAuthPage = normalizedPathname === "/login" || normalizedPathname === "/daftar";
   const shouldArmTimer = user === null && !onAuthPage;
-  const isOpen = showDialog || forceOpen;
+  // The dialog never appears on /login or /daftar, regardless of
+  // whether it was triggered by the timer or an external
+  // force-open event. The auth pages have their own UI for picking an
+  // auth method, so a "guest login" prompt would be redundant.
+  const isOpen = (showDialog || forceOpen) && !onAuthPage;
 
   // External trigger: any surface can open the dialog by dispatching the
   // event. No-ops if the user is already logged in (defensive — the
@@ -80,12 +91,13 @@ export function GuestLoginDialog() {
     return () => window.clearTimeout(t);
   }, [shouldArmTimer, pathname, resetKey, forceOpen]);
 
-  // Clear `forceOpen` whenever the auth user changes so the timer can
-  // take over again on the next eligible route. The dialog itself
-  // unmounts because `shouldArmTimer` flips false on login.
+  // Clear `forceOpen` whenever the auth user changes, OR while the
+  // route is /login or /daftar. Without the auth-page arm, a force-open
+  // that landed while the user was on /login would pop the dialog back
+  // up the moment they navigated back to a normal page.
   useEffect(() => {
-    if (user) setForceOpen(false);
-  }, [user]);
+    if (user || onAuthPage) setForceOpen(false);
+  }, [user, onAuthPage]);
 
   // Escape-to-dismiss. Same effect as clicking the X / backdrop —
   // resets the timer by bumping resetKey.
@@ -149,7 +161,10 @@ export function GuestLoginDialog() {
           {/* Daftar akun baru */}
           <button
             type="button"
-            onClick={() => router.push("/daftar")}
+            onClick={() => {
+              dismiss();
+              router.push("/daftar");
+            }}
             className="flex w-full items-center gap-3 rounded-md border border-brand/30 bg-brand/10 px-4 py-3 text-left transition-colors hover:border-brand hover:bg-brand/20"
           >
             <UserPlus
@@ -169,7 +184,10 @@ export function GuestLoginDialog() {
           {/* Masuk (login) */}
           <button
             type="button"
-            onClick={() => router.push("/login")}
+            onClick={() => {
+              dismiss();
+              router.push("/login");
+            }}
             className="flex w-full items-center gap-3 rounded-md border border-border bg-bg-tertiary px-4 py-3 text-left transition-colors hover:border-border-strong"
           >
             <LogIn
