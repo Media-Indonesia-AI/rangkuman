@@ -30,3 +30,24 @@ export function login(
     body: JSON.stringify(body),
   });
 }
+
+/**
+ * Trade a one-time Google OAuth token (delivered by the backend in
+ * the `/auth/google/callback` redirect) for the same envelope used
+ * by `/auth/login` and `/auth/register`. Consumed by the
+ * `/auth/callback` page when the backend ships only a token in the
+ * URL — the page hits this endpoint, builds a `MockUser` from the
+ * response, persists it via `writeJson`, then hard-navigates to
+ * the post-auth destination.
+ *
+ * If the backend instead ships a base64-encoded session/user in
+ * the URL, the callback page prefers that path and never calls
+ * this endpoint. Kept as a fallback in case the response shape
+ * differs once we probe it.
+ */
+export function googleSession(token: string): Promise<RegisterResponse> {
+  return request<RegisterResponse>(
+    `auth/google/session?token=${encodeURIComponent(token)}`,
+    { method: "GET" },
+  );
+}

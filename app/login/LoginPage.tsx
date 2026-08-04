@@ -7,7 +7,11 @@ import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { getAuthRedirectTarget, loginWithIdentifier } from "@/lib/auth";
+import {
+  getAuthRedirectTarget,
+  loginWithGoogle,
+  loginWithIdentifier,
+} from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { GUEST_LOGIN_DIALOG_OPEN_EVENT } from "@/components/GuestLoginDialog";
 import { cn } from "@/lib/utils";
@@ -102,13 +106,13 @@ function LoginPageContent() {
   };
 
   const handleGoogleLogin = () => {
+    // Clear any pre-existing field errors so a user retrying from a
+    // failed email/password submit starts the OAuth flow with a
+    // clean form. `loginWithGoogle` then kicks off the OAuth
+    // navigation — see its docstring in lib/auth.ts for the rest
+    // of the flow (backend → Google → /auth/callback → home).
     setErrors({});
-    // Open the global GuestLoginDialog so the user picks the auth
-    // method (tamu / Google / daftar / login) in one place. Once
-    // they sign in, the layout-level `<TopicsProvider />` and
-    // `useCurrentUser` flip and the login page's redirect effect
-    // sends them back to where they came from.
-    window.dispatchEvent(new CustomEvent(GUEST_LOGIN_DIALOG_OPEN_EVENT));
+    loginWithGoogle();
   };
 
   const clearError = (field: keyof FieldErrors) =>

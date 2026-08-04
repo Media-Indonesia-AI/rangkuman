@@ -7,8 +7,13 @@
 import { api, type ApiError, type RegisterResponse } from "./api";
 import { AUTH_PREV_PATH_KEY } from "@/components/PathnameTracker";
 
-const USER_KEY = "beritainvestor:user";
-const SETUP_TOKEN_KEY = "beritainvestor:setupToken";
+// Exported because `app/auth/callback/page.tsx` (Google OAuth
+// landing route) also writes the session through `writeJson` after
+// completing the OAuth dance. Keeping these as the canonical
+// storage keys lets the email flow and the Google flow share one
+// persistence path (and one listener-bus fan-out).
+export const USER_KEY = "beritainvestor:user";
+export const SETUP_TOKEN_KEY = "beritainvestor:setupToken";
 const WATCHLIST_KEY = "beritainvestor:watchlist";
 const MAX_WATCHLIST = 10;
 
@@ -123,8 +128,15 @@ function readJson<T>(key: string): T | null {
   }
 }
 
-/** Write JSON to localStorage safely. */
-function writeJson(key: string, value: unknown): void {
+/**
+ * Write JSON to localStorage safely. Exported so external flows
+ * (e.g. `app/auth/callback/page.tsx` for Google OAuth) can persist
+ * a session the same way `registerUser` / `loginWithIdentifier`
+ * do — keeping a single persistence path for email and Google
+ * auth, and ensuring the in-process listener bus wakes
+ * `useCurrentUser` synchronously.
+ */
+export function writeJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
@@ -219,17 +231,30 @@ export async function loginWithIdentifier(
   return session;
 }
 
-/** Demo Google login (mock) — preserves the prior one-click sign-in. */
-export function loginWithGoogle(): MockUser {
-  const user: MockUser = {
-    email: "investor.berita@gmail.com",
-    username: "investor.berita",
-    name: "Investor Berita",
-    loggedInAt: new Date().toISOString(),
-    provider: "google",
-  };
-  writeJson(USER_KEY, user);
-  return user;
+/**
+ * Initiates the Google sign-in flow by navigating the browser to the
+ * backend's `/auth/google` entrypoint. From there the backend takes
+ * over — it 302-redirects to Google's consent screen, exchanges the
+ * code on Google's callback, and finally 302-redirects back to our
+ * frontend `/auth/callback` page (handled by
+ * `app/auth/callback/page.tsx`) with session data for that page to
+ * persist.
+ *
+ * Returns `void` because the page is being navigated away from; the
+ * caller (the "Lanjutkan dengan Google" button) doesn't await a
+ * result. The actual session-write happens in the callback route.
+ *
+ * No new npm dependencies are needed — the existing `request()`
+ * client in `lib/api/client.ts` and `writeJson` /
+ * `useCurrentUser()` chain handle the post-callback side, mirroring
+ * what `loginWithIdentifier` (above) does for email sign-in.
+ */
+export function loginWithGoogle(): void {
+  if (typeof window === "undefined") return;
+  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
+  // `base` already ends with `/api/` (see .env.development), so
+  // concatenation is straightforward.
+  window.location.assign(`${base}auth/google`);
 }
 
 /**
