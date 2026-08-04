@@ -10,6 +10,7 @@ import {
 import { StoryHero } from "@/components/StoryHero";
 import { StoryEditorial } from "@/components/StoryEditorial";
 import { GradientDivider } from "@/components/GradientDivider";
+import { Shimmer } from "@/components/Shimmer";
 import { getRelativeTime } from "@/lib/util/formatDate";
 
 /** Total stories to fetch for the homepage rail. Matches the sum
@@ -124,21 +125,154 @@ function storyItemToHighlight(
 }
 
 /**
+ * Shimmer skeleton matching the three-layer rail above. One pulse-
+ * per-slot pattern (gradient bar + headline + summary + meta) sized
+ * to the real cards' dimensions so the transition from skeleton →
+ * populated data doesn't reflow the page. Rendered while
+ * `useHeadlines` is still in flight; replaced with the real rail
+ * once `data` lands. `aria-busy` on each section so screen readers
+ * know the content is still loading.
+ */
+function HomeHeadlinesSkeleton() {
+  return (
+    <>
+      {/* 🔥 LAYER 1: SOROTAN — 1 large card */}
+      <section aria-label="Sorotan" aria-busy className="mt-4">
+        <div className="mb-3 flex items-end justify-between border-b-2 border-text-primary pb-1.5">
+          <div>
+            <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+              <Flame className="h-3 w-3" aria-hidden />
+              Sorotan
+            </h2>
+            <p className="mt-0.5 text-[11px] text-text-muted">
+              Cerita paling penting hari ini
+            </p>
+          </div>
+          <Shimmer className="h-3 w-12" />
+        </div>
+        <div className="overflow-hidden rounded-xl border border-border-strong bg-bg-secondary">
+          <Shimmer className="h-28 w-full sm:h-32" />
+          <div className="space-y-3 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Shimmer className="h-3 w-12" />
+              <Shimmer className="h-3 w-10" />
+              <Shimmer className="h-3 w-10" />
+            </div>
+            <Shimmer className="h-6 w-5/6 sm:h-7 lg:h-8" />
+            <Shimmer className="h-3 w-full" />
+            <Shimmer className="h-3 w-4/5" />
+            <div className="mt-2 flex items-center justify-between border-t border-border pt-2.5">
+              <Shimmer className="h-3 w-24" />
+              <Shimmer className="h-6 w-20" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 📋 LAYER 2: SEDANG TERJADI — 4 cards in 2-col grid */}
+      <section aria-label="Sedang terjadi" aria-busy className="mt-8">
+        <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
+          <div>
+            <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+              <ClipboardList className="h-3 w-3" aria-hidden />
+              Sedang Terjadi
+            </h2>
+            <p className="mt-0.5 text-[11px] text-text-muted">
+              Cerita penting lainnya
+            </p>
+          </div>
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-2">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+            >
+              <Shimmer className="h-1.5 w-full" />
+              <div className="space-y-2.5 p-3.5 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <Shimmer className="h-3 w-16" />
+                  <Shimmer className="h-3 w-10" />
+                </div>
+                <Shimmer className="h-5 w-5/6" />
+                <Shimmer className="h-3 w-full" />
+                <Shimmer className="h-3 w-3/4" />
+                <div className="flex items-center justify-between border-t border-border pt-2">
+                  <Shimmer className="h-3 w-20" />
+                  <Shimmer className="h-3 w-3" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <GradientDivider spacing="my-8" />
+
+      {/* 📚 LAYER 3: CERITA LAIN — 10 cards in 3-col grid, compact */}
+      <section aria-label="Cerita lain" aria-busy className="mt-2">
+        <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
+          <div>
+            <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+              <BookOpen className="h-3 w-3" aria-hidden />
+              Cerita Lain
+            </h2>
+            <p className="mt-0.5 text-[11px] text-text-muted">
+              Berita tambahan hari ini
+            </p>
+          </div>
+          <Shimmer className="h-3 w-12" />
+        </div>
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 10 }).map((_, i) => (
+            <div
+              key={i}
+              className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+            >
+              <Shimmer className="h-1.5 w-full" />
+              <div className="space-y-2.5 p-3.5 sm:p-4">
+                <div className="flex items-center justify-between">
+                  <Shimmer className="h-3 w-14" />
+                  <Shimmer className="h-3 w-10" />
+                </div>
+                <Shimmer className="h-4 w-4/5" />
+                <Shimmer className="h-3 w-3/4" />
+                <div className="flex items-center justify-between border-t border-border pt-2">
+                  <Shimmer className="h-3 w-16" />
+                  <Shimmer className="h-3 w-3" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+/**
  * The live homepage rail — Sorotan (1) + Sedang Terjadi (4) +
  * Cerita Lain (10) sourced from `useHeadlines(15)`. Lives in a
  * client component because the hook owns `useEffect` / `useState`
  * state; the surrounding server component (`app/HomePage.tsx`)
  * stays untouched and renders the rest of the page chrome.
  *
- * Each layer only renders when it has at least one item to show,
- * so a partially-loaded dataset (e.g. backend returning 6 rows
- * today) gracefully degrades — the hero still appears, the second
- * layer drops, and the third layer shows however many rows landed
- * in slot 5..15.
+ * Loading state: while `useHeadlines` is in flight, render the
+ * `<HomeHeadlinesSkeleton />` (same three-layer shape, sized to
+ * the real cards) so the visitor sees a stable layout rather than
+ * a blank wall. The skeleton is replaced wholesale — not section-
+ * by-section — so the page never mixes half-populated layers with
+ * half-skeleton layers during a slow load.
+ *
+ * Empty state: when the fetch settles with zero rows, return
+ * `null` (no mock fallback) so a backend outage renders the rest
+ * of the page chrome (Navbar, BrandSlogan, MarketsStrip, Footer)
+ * without a misleading empty rail.
  */
 export function HomeHeadlines() {
-  const { data } = useHeadlines(HEADLINES_LIMIT);
+  const { data, isLoading } = useHeadlines(HEADLINES_LIMIT);
 
+  if (isLoading) return <HomeHeadlinesSkeleton />;
   if (data.length === 0) return null;
 
   const stories = data.map(storyItemToHighlight);

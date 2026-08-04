@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
+import { Shimmer } from "@/components/Shimmer";
 import { formatCompactIdr } from "@/lib/util/formatNumber";
 import { cn, formatNumber } from "@/lib/utils";
 
@@ -130,7 +131,16 @@ function Direction({ value }: { value: number }) {
  *  array it short-circuits the hook, so a unit test can render the
  *  strip with a static fixture and avoid wiring up the whole
  *  cache + fetcher chain. In production usage callers omit the
- *  prop and the live hook is used. */
+ *  prop and the live hook is used.
+ *
+ *  Per-source loading: each row's shimmer state is bound to the
+ *  matching `isLoading.*` flag from the hook, so an indicator
+ *  whose fetch is still in flight shows a `<Shimmer />` for both
+ *  its value and its direction arrow. Rows whose fetch has
+ *  settled (success or failure) render their real data. The label
+ *  stays visible during loading — same convention the rest of the
+ *  app uses — so the user always sees *which* indicator is
+ *  loading, not just a row of empty pulses. */
 export function MarketsStrip({
   indicators,
   className,
@@ -140,7 +150,7 @@ export function MarketsStrip({
  // rules-of-hooks; the early `??` keeps the hook unconditional
  // by deriving `liveIndicators` first, then preferring the prop
  // when present.
-  const { biRate, exchangeRate, foreignFlow, compositeChart, mood } =
+  const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
     useMarketMoodData();
 
   const liveIndicators = useMemo(
@@ -150,8 +160,23 @@ export function MarketsStrip({
 
   const rows = indicators ?? liveIndicators;
 
+  // Per-row loading lookup. Keys match `buildIndicators()` labels
+ // exactly — when the hook bundle says a source is still in
+ // flight, the matching row renders shimmer for its value +
+ // direction. When a caller supplies their own `indicators` prop
+ // (test fixture path), every row gets `false` since no
+ // `isLoading` state applies; shimmer is purely a live-data
+ // concern.
+  const rowLoading: Record<string, boolean> = {
+    IHSG: isLoading.compositeChart,
+    "USD/IDR": isLoading.exchangeRate,
+    "BI Rate": isLoading.biRate,
+    "Foreign Flow": isLoading.foreignFlow,
+  };
+
   return (
     <div
+      aria-busy={indicators === undefined && Object.values(isLoading).some(Boolean) ? true : undefined}
       className={cn(
         "flex flex-wrap items-center justify-between gap-2 border-y border-border-strong bg-bg-secondary/50 px-4 py-2.5 sm:gap-4 sm:px-5",
         className,
@@ -164,17 +189,28 @@ export function MarketsStrip({
         </span>
       </div>
       <div className="flex flex-1 flex-wrap items-center gap-x-5 gap-y-1.5 sm:justify-end">
-        {rows.map((ind) => (
-          <div key={ind.label} className="flex items-center gap-1.5">
-            <span className="font-mono text-[10.5px] uppercase tracking-wider text-text-muted">
-              {ind.label}
-            </span>
-            <span className="font-mono text-[12px] font-semibold tabular-nums text-text-primary">
-              {ind.value}
-            </span>
-            <Direction value={ind.change} />
-          </div>
-        ))}
+        {rows.map((ind) => {
+          const loading = rowLoading[ind.label] ?? false;
+          return (
+            <div key={ind.label} className="flex items-center gap-1.5">
+              <span className="font-mono text-[10.5px] uppercase tracking-wider text-text-muted">
+                {ind.label}
+              </span>
+              {loading ? (
+                <Shimmer className="h-4 w-16" />
+              ) : (
+                <span className="font-mono text-[12px] font-semibold tabular-nums text-text-primary">
+                  {ind.value}
+                </span>
+              )}
+              {loading ? (
+                <Shimmer className="h-3 w-10" />
+              ) : (
+                <Direction value={ind.change} />
+              )}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
