@@ -247,8 +247,6 @@ function FeaturedGlobalCard({ story }: { story: ReturnType<typeof getStoriesByCa
             {story.summary}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-border pt-2.5 font-mono text-[10px] text-text-muted">
-            <span className="text-text-secondary">By Tim Redaksi</span>
-            <span className="text-text-faint">·</span>
             <span>{story.timeAgo}</span>
             {story.flag && (
               <>

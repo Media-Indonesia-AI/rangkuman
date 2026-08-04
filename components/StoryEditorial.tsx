@@ -34,13 +34,6 @@ export function StoryEditorial({
   className,
 }: StoryEditorialProps) {
   const cfg = CATEGORY_CONFIG[highlight.category];
-  const IconComponent =
-    (Icons as unknown as Record<string, Icons.LucideIcon>)[
-      cfg.icon
-        .split("-")
-        .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
-        .join("")
-    ] ?? TrendingUp;
 
   return (
     <article
@@ -60,16 +53,41 @@ export function StoryEditorial({
         />
 
         <div className="flex flex-1 flex-col gap-2 p-3.5 sm:p-4">
-          {/* Category + time */}
-          <div className="flex items-center justify-between gap-2">
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 font-mono text-[9.5px] font-semibold uppercase tracking-widest",
-                cfg.colorClass,
-              )}
-            >
-              <IconComponent className="h-3 w-3" aria-hidden />
-              {cfg.label}
+          {/* Category + time. Instead of pinning only the primary
+              `cfg.label`, render the full `affectedCategories[]`
+              inline — every topic the story is filed under gets its
+              own icon + label chip — so a multi-topic card
+              ("ekonomi" that also touches "saham" and "kebijakan")
+              reads as one rich row instead of two stacked rows.
+              Layout mirrors `timeAgo`: on `sm:`+ the list sits on
+              the left of the same flex row with `justify-between`
+              pushing `timeAgo` to the right; on smaller widths the
+              row stacks vertically (`flex-col`) so a long list
+              never gets squeezed. */}
+          <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
+            <span className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+              {highlight.affectedCategories.map((c) => {
+                const cc = CATEGORY_CONFIG[c];
+                const CategoryIcon =
+                  (Icons as unknown as Record<string, Icons.LucideIcon>)[
+                    cc.icon
+                      .split("-")
+                      .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+                      .join("")
+                  ] ?? TrendingUp;
+                return (
+                  <span
+                    key={c}
+                    className={cn(
+                      "inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest",
+                      cc.colorClass,
+                    )}
+                  >
+                    <CategoryIcon className="h-3 w-3" aria-hidden />
+                    {cc.label}
+                  </span>
+                );
+              })}
             </span>
             <span className="font-mono text-[9.5px] text-text-faint">
               {highlight.timeAgo}
@@ -83,42 +101,10 @@ export function StoryEditorial({
 
           {/* Optional summary (12px text-secondary) */}
           {showSummary && (
-            <p className="line-clamp-2 text-[12px] leading-snug text-text-secondary">
+            <p className="text-[12px] leading-snug text-text-secondary">
               {highlight.summary}
             </p>
           )}
-
-          {/* Spacer pushes meta to bottom */}
-          <div className="mt-auto" />
-
-          {/* Meta line — bold source count + category color */}
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2 font-mono text-[9.5px] text-text-muted">
-            <span className="line-clamp-1">
-              {highlight.flag && (
-                <span className="mr-1 text-[11px]" aria-hidden>
-                  {highlight.flag}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-0.5">
-                <Newspaper className="h-2.5 w-2.5" aria-hidden />
-                <span
-                  className={cn(
-                    "font-bold tabular-nums",
-                    cfg.colorClass,
-                  )}
-                >
-                  {highlight.sourceCount}
-                </span>
-                <span> sumber</span>
-              </span>
-              <span className="mx-1">·</span>
-              <span>{highlight.readTime}</span>
-            </span>
-            <ArrowRight
-              className="h-3 w-3 text-text-faint transition-all group-hover:translate-x-0.5 group-hover:text-text-secondary"
-              aria-hidden
-            />
-          </div>
         </div>
       </Link>
     </article>
