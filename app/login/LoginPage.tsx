@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
@@ -17,7 +17,7 @@ type FieldErrors = {
   password?: string;
 };
 
-export default function LoginPage() {
+function LoginPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useCurrentUser();
@@ -130,10 +130,7 @@ export default function LoginPage() {
     ) : null;
 
   return (
-    <>
-      <Navbar />
-
-      <main className="relative z-10 mx-auto max-w-md px-4 pb-16 pt-10 sm:px-6">
+    <main className="relative z-10 mx-auto max-w-md px-4 pb-16 pt-10 sm:px-6">
         {/* Card */}
         <div className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
           <div className="border-b border-border bg-bg-tertiary px-5 py-4">
@@ -274,6 +271,23 @@ export default function LoginPage() {
           </Link>
         </p>
       </main>
+  );
+}
+
+/**
+ * Default-exported page entry. Wraps `<LoginPageContent />` in a
+ * `<Suspense>` boundary so `useSearchParams()` (called inside the
+ * content) doesn't blow up at static-prerender time — Next.js
+ * prerenders the chrome (Navbar / Footer) and streams the
+ * content in client-side. Mirrors `app/search/SearchPage.tsx:162-172`.
+ */
+export default function LoginPage() {
+  return (
+    <>
+      <Navbar />
+      <Suspense fallback={null}>
+        <LoginPageContent />
+      </Suspense>
       <Footer />
     </>
   );
