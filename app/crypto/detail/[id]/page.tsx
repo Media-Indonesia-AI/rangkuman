@@ -12,6 +12,19 @@ interface PageProps {
  * is handled by the client-side `<CryptoDetailPage />` orchestrator
  * (which fetches the same `loadHeadlineById` from the request-level
  * cache — one network round-trip total).
+ *
+ * The fallback is intentionally **generic** rather than
+ * `"Cerita tidak ditemukan"` — the server-side fetch can fail
+ * for reasons that don't reflect the page itself (the server may
+ * not have outbound access to the API host, or the SSR fetch
+ * may be rate-limited), while the client-side `useHeadlineId`
+ * hook still resolves the story correctly. A "tidak ditemukan"
+ * title then reads as "the page is broken" when the body renders
+ * fine. A neutral "Detail Cerita — Rangkuman" + the orchestrator's
+ * client-side `document.title` write (see `<CryptoDetailPage />`)
+ * keep the tab honest in both branches: the server sets a
+ * neutral baseline, the client upgrades it to the real title
+ * once the data lands.
  */
 export async function generateMetadata({
   params,
@@ -29,7 +42,10 @@ export async function generateMetadata({
       },
     };
   } catch {
-    return { title: "Cerita tidak ditemukan" };
+    return {
+      title: "Detail Cerita — Rangkuman",
+      description: "Rangkuman cerita crypto, saham, dan bisnis dari berbagai sumber.",
+    };
   }
 }
 

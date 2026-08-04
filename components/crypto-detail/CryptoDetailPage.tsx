@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useHeadlineId } from "@/lib/hooks/useHeadlineId";
 import { useListStory } from "@/lib/hooks/useListStory";
 import type {
@@ -196,6 +196,30 @@ function buildDisplayStory(
  */
 export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
   const { detail: liveDetail } = useHeadlineId();
+
+  // Server-side `generateMetadata` runs against the same API host
+  // but in a different network context — when the SSR fetch fails
+  // (e.g. the server is behind a firewall that blocks outbound
+  // traffic to the API), the tab title lands on the neutral
+  // "Detail Cerita — Rangkuman" fallback. The client-side
+  // `useHeadlineId` hook above resolves the same data on the
+  // browser side, so once the live detail lands we overwrite
+  // `document.title` with the real story title. SSR sets the
+  // baseline, the client upgrades it; both branches land on
+  // the correct title without a visible flash because the
+  // server baseline is intentionally generic. The effect
+  // cleans up to the baseline on unmount so navigating away
+  // doesn't leave a stale story title lingering in the tab.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    if (liveDetail?.title) {
+      document.title = `${liveDetail.title} — Rangkuman`;
+    }
+    return () => {
+      if (typeof document === "undefined") return;
+      document.title = "Rangkuman";
+    };
+  }, [liveDetail?.title]);
 
   const filters = useMemo<StoryFilter[]>(
     () => [{ field: "headline_id", operator: "eq", value: storyId }],
