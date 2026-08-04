@@ -4,7 +4,6 @@ import * as Icons from "lucide-react";
 import {
   CATEGORY_CONFIG,
   type Highlight,
-  type Category,
 } from "@/lib/mock/highlights";
 import { cn } from "@/lib/utils";
 
@@ -44,10 +43,6 @@ export function StoryHero({ highlight }: StoryHeroProps) {
         .join("")
     ] ?? TrendingUp;
 
-  const otherAffected = highlight.affectedCategories
-    .filter((c: Category) => c !== highlight.category)
-    .map((c) => CATEGORY_CONFIG[c]);
-
   return (
     <article className="group relative overflow-hidden rounded-xl border border-border-strong bg-bg-secondary">
       {/* Full-bleed gradient hero "image" */}
@@ -65,7 +60,9 @@ export function StoryHero({ highlight }: StoryHeroProps) {
             HERO_PATTERN[highlight.category] ?? "pattern-dot-grid",
           )}
         />
-        {/* Big watermark icon (decorative) */}
+        {/* Big watermark icon (decorative). Uses the PRIMARY
+            category icon only — this is the "hero image"
+            watermark, not a multi-topic indicator. */}
         <IconComponent
           className="absolute -right-4 -top-4 h-32 w-32 rotate-12 text-white/[0.06] sm:-right-6 sm:-top-6 sm:h-40 sm:w-40"
           strokeWidth={1.2}
@@ -73,12 +70,40 @@ export function StoryHero({ highlight }: StoryHeroProps) {
         />
         {/* Gradient fade-to-bg for text legibility */}
         <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-bg-secondary to-transparent" />
-        {/* Category badge floating top-left */}
-        <div className="absolute left-3 top-3 flex items-center gap-1.5 sm:left-4 sm:top-4">
-          <span className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
-            <IconComponent className="h-2.5 w-2.5" aria-hidden />
-            {cfg.label}
-          </span>
+        {/* Category badge strip floating top-left. Renders the
+            full `affectedCategories[]` — every topic the story
+            is filed under — each as its own icon + label chip,
+            matching the same visual vocabulary as the top row of
+            `<StoryEditorial />` and `<StockHero />`. Replaces the
+            prior "primary only" badge so a multi-topic story
+            (e.g. an "ekonomi" piece that also touches "saham"
+            and "kebijakan") shows all three pills here instead
+            of relying on a separate "Pengaruh ke:" strip in the
+            content area — the strip below is removed. The LIVE
+            pill stays as the rightmost element so the freshness
+            signal isn't lost. `flex-wrap` lets the pills wrap
+            onto a second line when the list is long, preventing
+            overflow into the headline / CTA. */}
+        <div className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-1.5 sm:left-4 sm:top-4">
+          {highlight.affectedCategories.map((c) => {
+            const cc = CATEGORY_CONFIG[c];
+            const CategoryIcon =
+              (Icons as unknown as Record<string, Icons.LucideIcon>)[
+                cc.icon
+                  .split("-")
+                  .map((s) => s.charAt(0).toUpperCase() + s.slice(1))
+                  .join("")
+              ] ?? TrendingUp;
+            return (
+              <span
+                key={c}
+                className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm"
+              >
+                <CategoryIcon className="h-2.5 w-2.5" aria-hidden />
+                {cc.label}
+              </span>
+            );
+          })}
           <span className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
             <span className="h-1.5 w-1.5 rounded-full bg-brand" />
             LIVE
@@ -88,26 +113,6 @@ export function StoryHero({ highlight }: StoryHeroProps) {
 
       {/* Content area */}
       <div className="px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-4">
-        {/* Secondary category chips (other affected) */}
-        {otherAffected.length > 0 && (
-          <div className="mb-2 flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-[9px] font-semibold uppercase tracking-widest text-text-muted">
-              Pengaruh ke:
-            </span>
-            {otherAffected.slice(0, 3).map((c) => (
-              <span
-                key={c.label}
-                className={cn(
-                  "inline-flex items-center rounded border border-current/20 bg-bg-tertiary/60 px-1.5 py-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
-                  c.colorClass,
-                )}
-              >
-                {c.label}
-              </span>
-            ))}
-          </div>
-        )}
-
         {/* Serif headline — more compact */}
         <Link href={`/crypto/detail/${highlight.id}`} className="block">
           <h2 className="font-serif text-[22px] font-bold leading-[1.1] tracking-tight text-text-primary transition-colors group-hover:text-text-primary sm:text-[28px] sm:leading-[1.08] lg:text-[32px] lg:leading-[1.05]">
