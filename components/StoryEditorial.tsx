@@ -105,38 +105,6 @@ export function StoryEditorial({
               {highlight.summary}
             </p>
           )}
-
-          {/* Spacer pushes meta to bottom */}
-          <div className="mt-auto" />
-
-          {/* Meta line — bold source count + category color */}
-          <div className="flex items-center justify-between gap-2 border-t border-border pt-2 font-mono text-[9.5px] text-text-muted">
-            <span className="line-clamp-1">
-              {highlight.flag && (
-                <span className="mr-1 text-[11px]" aria-hidden>
-                  {highlight.flag}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-0.5">
-                <Newspaper className="h-2.5 w-2.5" aria-hidden />
-                <span
-                  className={cn(
-                    "font-bold tabular-nums",
-                    cfg.colorClass,
-                  )}
-                >
-                  {highlight.sourceCount}
-                </span>
-                <span> sumber</span>
-              </span>
-              <span className="mx-1">·</span>
-              <span>{highlight.readTime}</span>
-            </span>
-            <ArrowRight
-              className="h-3 w-3 text-text-faint transition-all group-hover:translate-x-0.5 group-hover:text-text-secondary"
-              aria-hidden
-            />
-          </div>
         </div>
       </Link>
     </article>

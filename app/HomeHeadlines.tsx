@@ -185,9 +185,6 @@ export function HomeHeadlines() {
                 Cerita penting lainnya
               </p>
             </div>
-            <span className="font-mono text-[10px] text-text-faint">
-              Top {sedangTerjadi.length} · 1 jam terakhir
-            </span>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
             {sedangTerjadi.map((h) => (

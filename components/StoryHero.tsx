@@ -123,24 +123,6 @@ export function StoryHero({ highlight }: StoryHeroProps) {
         {/* Byline / meta row */}
         <div className="mt-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 border-t border-border pt-2.5 font-mono text-[10px] text-text-muted">
           <span>{highlight.timeAgo}</span>
-          <span className="text-text-faint">·</span>
-          <span className="inline-flex items-center gap-1">
-            <Newspaper className="h-2.5 w-2.5" aria-hidden />
-            <span
-              className={cn(
-                "font-bold tabular-nums",
-                cfg.colorClass,
-              )}
-            >
-              {highlight.sourceCount}
-            </span>
-            <span> sumber</span>
-          </span>
-          <span className="text-text-faint">·</span>
-          <span className="inline-flex items-center gap-1">
-            <Clock className="h-2.5 w-2.5" aria-hidden />
-            {highlight.readTime}
-          </span>
 
           {/* CTA */}
           <Link
