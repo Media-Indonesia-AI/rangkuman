@@ -42,7 +42,7 @@ const VIEWPORT_EDGE = 8;
  *  previews within the preview's natural rendering and avoid
  *  receivers seeing a fragmented title. The cap ends with `…`
  *  so the truncation is signalled rather than silent. */
-const SHARE_TITLE_MAX_LENGTH = 100;
+const SHARE_TITLE_MAX_LENGTH = 150;
 
 /** Clamp `value` to `SHARE_TITLE_MAX_LENGTH` characters, appending
  *  a horizontal-ellipsis when truncated. */
