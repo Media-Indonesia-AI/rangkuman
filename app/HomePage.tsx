@@ -28,23 +28,6 @@ export default function HomePage() {
         <div className="mt-6">
           <MarketsStrip />
         </div>
-
-        <GradientDivider spacing="my-8" />
-
-        {/* About link footer */}
-        <div className="mt-8 flex flex-col items-center gap-2 border-t border-border pt-5 sm:flex-row sm:justify-between">
-          <p className="font-mono text-[10.5px] text-text-muted">
-            © 2026 Rangkuman · Jakarta ·{" "}
-            <span className="text-text-secondary">Baca lebih sedikit, tahu lebih banyak.</span>
-          </p>
-          <Link
-            href="/tentang"
-            className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-muted transition-colors hover:text-brand"
-          >
-            About Rangkuman
-            <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
-          </Link>
-        </div>
       </main>
       <Footer />
     </>
