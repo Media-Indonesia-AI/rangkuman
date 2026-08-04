@@ -324,7 +324,22 @@ export function ShareButton({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            setOpen((v) => !v);
+            // Compute the popover position BEFORE flipping `open`
+            // so the first render that mounts the popover already
+            // has the correct `top` / `left`. Otherwise the
+            // popover mounts at the state initializer (`0, 0`),
+            // and even though `useLayoutEffect` re-measures
+            // synchronously, the CSS `slide-in-from-top-1` /
+            // `slide-in-from-bottom-1` animation has already
+            // started and the position change rides on top of it
+            // — visually the popover appears to slide from the
+            // top-left corner to its real spot near the trigger.
+            // Skipped on the close path: the popover is already
+            // unmounting, no fresh measurement needed.
+            setOpen((v) => {
+              if (!v) computePos();
+              return !v;
+            });
           }}
           aria-label={ariaLabel}
           aria-haspopup="menu"
