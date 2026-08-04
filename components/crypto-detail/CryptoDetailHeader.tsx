@@ -1,7 +1,10 @@
+"use client";
+
 import { Clock, Newspaper, Tag } from "lucide-react";
 import type { Highlight } from "@/lib/mock/highlights";
 import { ShareButton } from "@/components/ShareButton";
 import { SavedButton } from "@/components/SavedButton";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 
 interface CategoryConfig {
@@ -115,6 +118,15 @@ export function CryptoDetailHeader({
           />
         </div>
       </div>
+
+      {/*
+        Auth gate. The hero card's `<header>` is already
+        `relative overflow-hidden`, so the overlay positions
+        correctly over the whole hero. Hidden automatically when
+        the user is signed in (`LoginPromptOverlay` early-returns
+        on truthy user).
+      */}
+      <LoginPromptOverlay title="Masuk dulu untuk lihat headline crypto ini" />
     </header>
   );
 }
