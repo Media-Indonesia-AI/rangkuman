@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
@@ -54,6 +55,26 @@ export default function StockDetailPage({ params }: PageProps) {
   const priceText = tickerInfo
     ? tickerInfo.price.toLocaleString("id-ID")
     : null;
+
+  // Sync the browser tab title with the current ticker so the
+  // address bar / tab strip reflects the page the visitor is on.
+  // Mirrors the same pattern in `/crypto/detail/[id]` — the
+  // page is a "use client" component, so there's no server-side
+  // `generateMetadata` to set the title; without this effect the
+  // tab would stay on the global layout default ("Rangkuman")
+  // while the body shows `ANTM` / `BBCA` / etc. The format
+  // `Rangkuman - ${ticker}` matches the user's request. Cleanup
+  // resets the tab to "Rangkuman" on unmount so navigating back
+  // to the layout default doesn't leave a stale ticker code in
+  // the tab.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.title = `Rangkuman - ${kode}`;
+    return () => {
+      if (typeof document === "undefined") return;
+      document.title = "Rangkuman";
+    };
+  }, [kode]);
 
   return (
     <>
