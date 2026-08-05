@@ -30,12 +30,28 @@ const PAYMENT_METHODS: ReadonlyArray<{
   { id: "va-bca", label: "Virtual Account BCA", Icon: Banknote },
 ];
 
+/** Minimum custom top-up amount. Matches the smallest quick-pick
+ *  chip (Rp 50.000) so the user gets a clear "your value is too
+ *  low" error if they enter, e.g., 5.000. */
+const MIN_AMOUNT = 50_000;
+
+/** Maximum custom top-up amount — caps the input so the user
+ *  can't type a 12-digit number that overflows the ID formatter
+ *  or the gateway's transaction limit. */
+const MAX_AMOUNT = 10_000_000;
+
+/** Indonesian PPN (Pajak Pertambahan Nilai) rate. Effective 11% as
+ *  of 2022; the same rate applies to most digital goods and
+ *  services. Surfaced as a separate line item so the user can see
+ *  the tax breakdown, not just an opaque grand total. */
+const PPN_RATE = 0.11;
+
 /**
  * `/profile/top-up/` — Top Up section.
  *
  * Renders four sub-blocks, each in its own card:
  *
- *   1. **Saldo** — current wallet balance (placeholder zero with
+ *   1. **Koin** — current wallet balance (placeholder zero with
  *      a "Coming soon" note until the wallet backend lands).
  *   2. **Pilih nominal** — three quick-pick amount chips + a
  *      custom-amount input.
@@ -61,37 +77,56 @@ export default function TopUpPage() {
   };
 
   // Custom-amount parsing — only accept clean digit strings;
-  // anything else is treated as "no value". Caps at Rp 10jt
-  // until the gateway validates larger amounts.
-  const customParsed = (() => {
+  // anything else is treated as "no value". Returns null when the
+  // amount is below the minimum (with an error message so the
+  // input can show "Min. Rp 50.000"); caps at MAX_AMOUNT so the
+  // gateway never sees a number that overflows the formatter.
+  const customValidation = (() => {
     const digits = customAmount.replace(/\D/g, "");
-    if (!digits) return null;
+    if (!digits) return { value: null as number | null, error: null as string | null };
     const n = parseInt(digits, 10);
-    if (Number.isNaN(n) || n <= 0) return null;
-    return Math.min(n, 10_000_000);
+    if (Number.isNaN(n) || n <= 0) return { value: null, error: null };
+    if (n < MIN_AMOUNT) {
+      return {
+        value: null,
+        error: `Minimum top-up adalah Rp ${MIN_AMOUNT.toLocaleString("id-ID")}`,
+      };
+    }
+    if (n > MAX_AMOUNT) {
+      return {
+        value: Math.min(n, MAX_AMOUNT),
+        error: `Maksimum top-up adalah Rp ${MAX_AMOUNT.toLocaleString("id-ID")}`,
+      };
+    }
+    return { value: Math.min(n, MAX_AMOUNT), error: null };
   })();
 
-  const effectiveAmount = amount ?? customParsed;
-  const formattedAmount = effectiveAmount
-    ? `Rp ${effectiveAmount.toLocaleString("id-ID")}`
-    : "—";
+  const effectiveAmount = amount ?? customValidation.value;
+  const ppnAmount =
+    effectiveAmount != null ? Math.round(effectiveAmount * PPN_RATE) : null;
+  const grandTotal =
+    effectiveAmount != null && ppnAmount != null
+      ? effectiveAmount + ppnAmount
+      : null;
+
+  const fmt = (n: number) =>
+    `Rp ${n.toLocaleString("id-ID")}`;
+  const formattedAmount = effectiveAmount ? fmt(effectiveAmount) : "—";
+  const formattedPpn = ppnAmount != null ? fmt(ppnAmount) : "—";
+  const formattedGrandTotal = grandTotal != null ? fmt(grandTotal) : "—";
 
   return (
     <div className="flex flex-col gap-4">
       <header className="border-b border-border-strong pb-3">
         <div className="mb-1 flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden />
-          <span className="label text-text-secondary">Top Up</span>
+          <h1 className="text-[22px] font-bold leading-tight tracking-tight text-text-primary sm:text-[26px]">
+            Top Up Koin
+          </h1>
         </div>
-        <h1 className="text-[22px] font-bold leading-tight tracking-tight text-text-primary sm:text-[26px]">
-          Top Up saldo
-        </h1>
-        <p className="mt-1 text-[12.5px] leading-[1.55] text-text-muted">
-          Top up saldo lo buat pakai fitur premium Rangkuman. Coming soon.
-        </p>
       </header>
 
-      {/* Saldo card — current balance placeholder. The "Coming
+      {/* Koin card — current balance placeholder. The "Coming
           soon" badge keeps the field honest about its stub
           status. */}
       <section className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-4">
@@ -103,15 +138,12 @@ export default function TopUpPage() {
         </span>
         <div className="min-w-0 flex-1">
           <p className="text-[10.5px] font-semibold uppercase tracking-widest text-text-muted">
-            Saldo saat ini
+            Koin saat ini
           </p>
           <p className="mt-0.5 font-mono text-[20px] font-bold tabular-nums text-text-primary">
-            Rp 0
+            0
           </p>
         </div>
-        <span className="inline-flex items-center rounded-full border border-border bg-bg-tertiary px-2 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-muted">
-          Coming soon
-        </span>
       </section>
 
       {/* Nominal — quick-pick chips + custom input. Selecting a
@@ -162,50 +194,33 @@ export default function TopUpPage() {
               setCustomAmount(v);
               if (v) setAmount(null);
             }}
-            placeholder="cth: 150000"
-            className="mt-1 block h-10 w-full rounded-md border border-border bg-bg-card px-3 font-mono text-[13px] tabular-nums text-text-primary placeholder:text-text-faint focus:border-brand focus:outline-none"
+            placeholder={`cth: 150000 (min. ${MIN_AMOUNT.toLocaleString("id-ID")})`}
+            aria-invalid={customValidation.error ? true : undefined}
+            aria-describedby={
+              customValidation.error ? "top-up-custom-error" : undefined
+            }
+            className={cn(
+              "mt-1 block h-10 w-full rounded-md border bg-bg-card px-3 font-mono text-[13px] tabular-nums text-text-primary placeholder:text-text-faint focus:outline-none",
+              customValidation.error
+                ? "border-bearish focus:border-bearish"
+                : "border-border focus:border-brand",
+            )}
           />
+          {customValidation.error && (
+            <p
+              id="top-up-custom-error"
+              role="alert"
+              className="mt-1 font-mono text-[10.5px] text-bearish"
+            >
+              {customValidation.error}
+            </p>
+          )}
+          {!customValidation.error && (
+            <p className="mt-1 font-mono text-[10.5px] text-text-faint">
+              Minimum {MIN_AMOUNT.toLocaleString("id-ID")}
+            </p>
+          )}
         </div>
-      </section>
-
-      {/* Metode pembayaran — disabled radios so the layout is
-          visible but no real selection is recorded. The form
-          below uses the same disabled state. */}
-      <section className="rounded-lg border border-border bg-bg-secondary p-4">
-        <p className="label">Metode pembayaran</p>
-        <div className="mt-2.5 grid gap-2 sm:grid-cols-2">
-          {PAYMENT_METHODS.map((m) => {
-            const active = method === m.id;
-            return (
-              <label
-                key={m.id}
-                className={cn(
-                  "flex cursor-not-allowed items-center gap-2.5 rounded-md border px-3 py-2.5 opacity-60",
-                  active
-                    ? "border-brand bg-brand-soft"
-                    : "border-border bg-bg-card",
-                )}
-              >
-                <input
-                  type="radio"
-                  name="payment-method"
-                  value={m.id}
-                  disabled
-                  checked={active}
-                  onChange={() => setMethod(m.id)}
-                  className="h-3.5 w-3.5 accent-brand"
-                />
-                <m.Icon className="h-4 w-4 text-text-muted" aria-hidden />
-                <span className="text-[12.5px] font-medium text-text-primary">
-                  {m.label}
-                </span>
-              </label>
-            );
-          })}
-        </div>
-        <p className="mt-2 font-mono text-[10.5px] text-text-faint">
-          Metode pembayaran akan tersedia setelah payment gateway live.
-        </p>
       </section>
 
       {/* Submit — sticky-style CTA at the bottom of the section.
@@ -213,22 +228,25 @@ export default function TopUpPage() {
           "Coming soon" toast is wired up so the click still
           surfaces feedback. */}
       <div className="sticky bottom-3 z-10 rounded-lg border border-border-strong bg-bg-secondary/95 p-3 backdrop-blur">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="min-w-0">
             <p className="text-[10.5px] font-semibold uppercase tracking-widest text-text-muted">
               Total top-up
             </p>
-            <p className="font-mono text-[18px] font-bold tabular-nums text-text-primary">
-              {formattedAmount}
+            <p className="font-mono text-[11.5px] tabular-nums text-text-secondary">
+              PPN (11%) {formattedPpn}
+            </p>
+            <p className="mt-0.5 font-mono text-[18px] font-bold tabular-nums text-text-primary">
+              {formattedGrandTotal}
             </p>
           </div>
           <button
             type="button"
             onClick={handleNotImplemented}
-            disabled={!effectiveAmount || !method}
+            disabled={!effectiveAmount || !method || customValidation.error !== null}
             className={cn(
               "inline-flex h-10 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors",
-              !effectiveAmount || !method
+              !effectiveAmount || !method || customValidation.error !== null
                 ? "cursor-not-allowed bg-bg-tertiary text-text-faint"
                 : "bg-brand text-bg-primary hover:bg-brand-hover",
             )}
