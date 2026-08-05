@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { LogOut } from "lucide-react";
 
 interface LogoutConfirmDialogProps {
@@ -8,14 +10,39 @@ interface LogoutConfirmDialogProps {
 }
 
 /**
- * Confirmation dialog before signing out. Backdrop click or Escape
- * triggers `onCancel`. Red `bg-bearish` destructive button on the right,
- * safe default (`autoFocus`) on `Batal`.
+ * Confirmation dialog before signing out. Red `bg-bearish` destructive
+ * button on the right, safe default (`autoFocus`) on `Batal`.
+ *
+ * Rendered via `createPortal` into `document.body` so the dialog
+ * escapes the calling component's stacking context entirely. This
+ * matters when the trigger lives inside `<ProfileShell />` —
+ * the sidebar is a sibling of the page's main content, so without
+ * the portal the dialog's `fixed inset-0 z-50` gets trapped in
+ * the sidebar's stacking context (z-50 is relative to the nearest
+ * positioned ancestor with a z-index, not the root). Lifting the
+ * dialog into `document.body` puts it at the top of the root
+ * stacking context, so it always paints above the page content
+ * regardless of which surface triggered it (sidebar / page /
+ * mobile pill row / header button).
+ *
+ * Backdrop click or Escape triggers `onCancel`. The `mounted`
+ * state gates the portal on the client so SSR doesn't try to
+ * render `document.body`, mirroring `<ShareButton />`'s mount
+ * pattern.
  */
 export function LogoutConfirmDialog({ onCancel, onConfirm }: LogoutConfirmDialogProps) {
-  return (
+  const [mounted, setMounted] = useState(false);
+
+  // createPortal needs `document` — gate SSR.
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-bg-primary/80 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-bg-primary/80 p-4 backdrop-blur-sm"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
@@ -57,6 +84,7 @@ export function LogoutConfirmDialog({ onCancel, onConfirm }: LogoutConfirmDialog
           </button>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
