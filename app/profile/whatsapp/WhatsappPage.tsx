@@ -4,26 +4,39 @@ import { useState } from "react";
 import { MessageCircle, Send, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+/** Allowed time-of-day slots the user can opt into. Mirrors
+ *  the `FREQUENCY` constant below but extracted as a type so
+ *  the `useState` declaration + the toggle helper can share the
+ *  same union. */
+type FrequencyId = "pagi" | "siang" | "sore";
+
 /** Frequency options — exposed as a small list so the terminology
- *  stays consistent across the UI. `daily` = one morning brief with
- *  the day's top story; `realtime` = breaking-news ping only (the
- *  highest-impact events). `off` is implicit in the toggle — we
- *  always pass an explicit value so the saved preference is
- *  unambiguous even when the user disables the integration. */
+ *  stays consistent across the UI. The user picks one OR MORE
+ *  of the time-of-day slots the brief is delivered at: pagi
+ *  (morning brief), siang (midday update), sore (end-of-day
+ *  recap). Checkboxes replace the previous radio so the user
+ *  can subscribe to multiple slots in one go. `off` is implicit
+ *  in the toggle — when the toggle is off, the saved set is
+ *  preserved on the client but no message is sent. */
 const FREQUENCY: ReadonlyArray<{
-  id: "off" | "daily" | "realtime";
+  id: FrequencyId;
   label: string;
   description: string;
 }> = [
   {
-    id: "daily",
-    label: "Harian",
-    description: "1 cerita terbaik tiap pagi, sekitar jam 07.00 WIB.",
+    id: "pagi",
+    label: "Pagi",
+    description: "Ringkasan pagi, sekitar jam 07.00 WIB.",
   },
   {
-    id: "realtime",
-    label: "Real-time",
-    description: "Cuma breaking news — cerita yang gerak-gerakin pasar.",
+    id: "siang",
+    label: "Siang",
+    description: "Update siang, sekitar jam 12.00 WIB.",
+  },
+  {
+    id: "sore",
+    label: "Sore",
+    description: "Ringkasan sore, sekitar jam 17.00 WIB.",
   },
 ];
 
@@ -35,7 +48,8 @@ const FREQUENCY: ReadonlyArray<{
  *   1. **Nomor WhatsApp** — country code selector + phone number
  *      input. Defaults to `+62 🇮🇩` (the user's primary market).
  *   2. **Aktifkan notifikasi** — toggle. Off by default.
- *   3. **Frekuensi** — radio group (Harian / Real-time). Hidden
+ *   3. **Frekuensi** — checkbox group (Pagi / Siang / Sore) so
+ *      the user can opt into multiple time-of-day slots. Hidden
  *      when the toggle is off.
  *   4. **Tes kirim pesan** — disabled until the toggle is on and
  *      a valid number is entered. Fires a "Coming soon" toast.
@@ -49,8 +63,12 @@ const FREQUENCY: ReadonlyArray<{
 export default function WhatsappPage() {
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
-  const [frequency, setFrequency] = useState<"off" | "daily" | "realtime">(
-    "daily",
+  // Set of selected time-of-day slots. The user can pick any
+  // combination — e.g. ["pagi", "sore"] for morning + evening
+  // briefs. `off` is implicit in the toggle above (the set is
+  // preserved when the toggle is off, but no message is sent).
+  const [frequencies, setFrequencies] = useState<Set<FrequencyId>>(
+    () => new Set<FrequencyId>(["pagi"]),
   );
 
   const handleNotImplemented = () => {
@@ -60,6 +78,21 @@ export default function WhatsappPage() {
         detail: "Coming soon — lagi digarap.",
       }),
     );
+  };
+
+  // Toggle one slot on/off. Always produces a fresh `Set` so the
+  // reference changes per toggle and React re-renders the checkbox
+  // group. (Mutating the same Set in place would skip the update.)
+  const toggleFrequency = (id: FrequencyId) => {
+    setFrequencies((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
   };
 
   // Minimal phone validation — strip non-digits, require at least
@@ -75,14 +108,13 @@ export default function WhatsappPage() {
       <header className="border-b border-border-strong pb-3">
         <div className="mb-1 flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden />
-          <span className="label text-text-secondary">WhatsApp</span>
+          <h1 className="text-[22px] font-bold leading-tight tracking-tight text-text-primary sm:text-[26px]">
+            WhatsApp
+          </h1>
         </div>
-        <h1 className="text-[22px] font-bold leading-tight tracking-tight text-text-primary sm:text-[26px]">
-          Kirim berita ke WhatsApp
-        </h1>
         <p className="mt-1 text-[12.5px] leading-[1.55] text-text-muted">
           Aktifin notifikasi WhatsApp biar gak ketinggalan cerita
-          penting. Coming soon.
+          penting.
         </p>
       </header>
 
@@ -118,9 +150,9 @@ export default function WhatsappPage() {
       </section>
 
       {/* Toggle — primary affordance. Off by default so the user
-          has to opt-in. Records an explicit frequency so the
-          saved preference is unambiguous even when the toggle
-          is off (the API will receive `frequency: "off"`). */}
+          has to opt-in. Records an explicit frequency set so the
+          saved preference is unambiguous even when the toggle is
+          off (the API will receive an empty set). */}
       <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-secondary p-4">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-text-primary">
@@ -149,15 +181,20 @@ export default function WhatsappPage() {
         </button>
       </section>
 
-      {/* Frequency — visible only when the toggle is on. Radio
-          group with a description per option so the user knows
-          what each frequency actually delivers. */}
+      {/* Frequency — visible only when the toggle is on. Checkbox
+          group so the user can opt into multiple time-of-day
+          slots at once (e.g. Pagi + Sore). Each row is a full
+          clickable label with the description below — no hidden
+          helper text needed. */}
       {enabled && (
         <section className="rounded-lg border border-border bg-bg-secondary p-4">
           <p className="label">Frekuensi</p>
+          <p className="mt-1 font-mono text-[10.5px] text-text-faint">
+            Pilih satu atau lebih slot notifikasi.
+          </p>
           <div className="mt-2.5 space-y-2">
             {FREQUENCY.map((f) => {
-              const active = frequency === f.id;
+              const active = frequencies.has(f.id);
               return (
                 <label
                   key={f.id}
@@ -169,11 +206,9 @@ export default function WhatsappPage() {
                   )}
                 >
                   <input
-                    type="radio"
-                    name="wa-frequency"
-                    value={f.id}
+                    type="checkbox"
                     checked={active}
-                    onChange={() => setFrequency(f.id)}
+                    onChange={() => toggleFrequency(f.id)}
                     className="mt-0.5 h-3.5 w-3.5 accent-brand"
                   />
                   <div className="min-w-0">
@@ -190,36 +225,6 @@ export default function WhatsappPage() {
           </div>
         </section>
       )}
-
-      {/* Test send — disabled until the toggle is on and a valid
-          number is entered. The underlying "Coming soon" toast
-          is wired up so the click still surfaces feedback. */}
-      <section className="rounded-lg border border-border bg-bg-secondary p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="text-[13px] font-semibold text-text-primary">
-              Tes kirim pesan
-            </p>
-            <p className="mt-0.5 text-[11.5px] text-text-muted">
-              Kirim satu pesan contoh ke nomor lo buat ngecek format & tampilannya.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={handleNotImplemented}
-            disabled={!canTest}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-md px-3.5 text-[12.5px] font-semibold transition-colors",
-              !canTest
-                ? "cursor-not-allowed bg-bg-tertiary text-text-faint"
-                : "bg-brand text-bg-primary hover:bg-brand-hover",
-            )}
-          >
-            <Send className="h-3.5 w-3.5" aria-hidden />
-            Tes kirim
-          </button>
-        </div>
-      </section>
 
       {/* Sample preview — visual constraint: the user has to
           see what the message will look like before opting in. We
