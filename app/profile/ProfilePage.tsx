@@ -50,7 +50,7 @@ export default function ProfilePage() {
           Informasi akun
         </h1>
         <p className="mt-1 text-[12.5px] leading-[1.55] text-text-muted">
-          Detail akun lo di Rangkuman. Edit profil bakal tersedia segera.
+          Detail akun di Rangkuman. Edit profil bakal tersedia segera.
         </p>
       </header>
 

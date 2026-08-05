@@ -114,18 +114,6 @@ export function ProfileShell({ user, content }: ProfileShellProps) {
             </div>
           </aside>
 
-          {/* Mobile pill row — visible <md only. The user card
-              stays above the pill row for context. The
-              destructive logout action reuses
-              <LogoutButton /> so the dialog flow is identical
-              to the desktop path. */}
-          <div className="md:hidden">
-            <ProfileMenuMobile
-              userName={user.name}
-              userEmail={user.email}
-            />
-          </div>
-
           {/* Right pane — the calling layout's page content
               renders here. The `min-w-0` prevents the section
               from forcing the grid to overflow when the content
