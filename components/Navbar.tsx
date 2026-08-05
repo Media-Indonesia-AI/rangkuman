@@ -83,21 +83,6 @@ export function Navbar() {
         <div className="ml-auto flex items-center gap-2 sm:ml-2">
           <ThemeToggle />
 
-          {/* Saved count badge — only visible when count > 0 */}
-          {savedCount > 0 && (
-            <Link
-              href="/saved"
-              aria-label={`Lihat ${savedCount} berita tersimpan`}
-              className="inline-flex h-9 items-center gap-1.5 rounded-md border border-brand/30 bg-brand/10 px-2.5 text-[12.5px] font-medium text-brand transition-colors hover:border-brand/60 hover:bg-brand/20"
-            >
-              <Bookmark className="h-3.5 w-3.5" aria-hidden />
-              <span className="font-mono text-[11px] font-bold tabular-nums">
-                {savedCount}
-              </span>
-              <span className="hidden sm:inline">Tersimpan</span>
-            </Link>
-          )}
-
           {user ? (
             <Link
               href="/profile/"
