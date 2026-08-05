@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -49,6 +49,38 @@ export function Navbar() {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [menuOpen]);
+
+  // Lock body scroll while the drawer is open so the page behind
+  // doesn't scroll when the user scrolls the drawer. The drawer's
+  // own `overflow-y-auto` then handles the inner scroll in
+  // isolation. Saves / restores the original `overflow` value so
+  // any other component that touched it (e.g. `<ShareButton />`)
+  // isn't clobbered on unmount.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const original = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = original;
+    };
+  }, [menuOpen]);
+
+  /**
+   * Drawer-internal click handler. Closes the menu when the user
+   * clicks any `<a>` or `<button>` inside the drawer — covers the
+   * common "user picked an option, hide the menu now" path. The
+   * logout button doesn't navigate, so without this the menu
+   * would stay open after the confirm dialog appears. The search
+   * input is intentionally exempt — `closest('a, button')` only
+   * matches links and buttons, so typing into the search bar
+   * doesn't dismiss the drawer.
+   */
+  const handleDrawerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLElement;
+    if (target.closest("a, button")) {
+      setMenuOpen(false);
+    }
+  };
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -138,12 +170,35 @@ export function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile menu drawer */}
+      {/* Backdrop — sits behind the drawer. Click anywhere on
+          it to close the menu (the same Escape / route-change
+          close already exists). The backdrop is `pointer-events-none`
+          when the menu is closed so it doesn't intercept clicks
+          on the page below. `md:hidden` keeps it out of the
+          desktop layout entirely. */}
+      <div
+        aria-hidden
+        className={cn(
+          "fixed inset-0 z-30 bg-bg-primary/60 backdrop-blur-sm transition-opacity duration-200 md:hidden",
+          menuOpen
+            ? "opacity-100"
+            : "pointer-events-none opacity-0",
+        )}
+        onClick={() => setMenuOpen(false)}
+      />
+
+      {/* Mobile menu drawer — fixed position so it doesn't push
+          page content, with its own `overflow-y-auto` so the inner
+          scroll is isolated from the body (paired with the
+          `useEffect` body-scroll-lock above). */}
       <div
         id="mobile-menu"
+        onClick={handleDrawerClick}
         className={cn(
-          "overflow-y-auto overflow-x-hidden border-t border-border bg-bg-secondary transition-[max-height,opacity] duration-200 md:hidden",
-          menuOpen ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0",
+          "fixed left-0 right-0 top-14 z-40 overflow-y-auto overflow-x-hidden border-t border-border bg-bg-secondary transition-[max-height,opacity] duration-200 md:hidden",
+          menuOpen
+            ? "max-h-[calc(100vh-3.5rem)] opacity-100"
+            : "max-h-0 opacity-0",
         )}
       >
         {/* Mobile search */}
@@ -176,22 +231,14 @@ export function Navbar() {
                 <Link
                   href={link.href}
                   className={cn(
-                    "flex items-center justify-between rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
+                    "flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
                     active
-                      ? "bg-bg-tertiary text-text-primary"
+                      ? "bg-brand-soft text-brand"
                       : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
                   )}
                 >
-                  <span className="inline-flex items-center gap-2">
-                    <Icon className="h-3.5 w-3.5" aria-hidden />
-                    {link.label}
-                  </span>
-                  {active && (
-                    <span
-                      aria-hidden
-                      className="h-1.5 w-1.5 rounded-full bg-brand"
-                    />
-                  )}
+                  <Icon className="h-3.5 w-3.5" aria-hidden />
+                  {link.label}
                 </Link>
               </li>
             );
@@ -207,13 +254,13 @@ export function Navbar() {
             <>
               <li className="px-2 pt-3 pb-1">
                 <p className="font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-faint">
-                  Profil
+                  Akun
                 </p>
               </li>
               <li>
                 <Link
                   href="/profile/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
                   aria-current={pathname === "/profile/" ? "page" : undefined}
                 >
                   <User className="h-3.5 w-3.5" aria-hidden />
@@ -223,7 +270,7 @@ export function Navbar() {
               <li>
                 <Link
                   href="/profile/top-up/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
                   aria-current={pathname === "/profile/top-up/" ? "page" : undefined}
                 >
                   <Wallet className="h-3.5 w-3.5" aria-hidden />
@@ -239,7 +286,7 @@ export function Navbar() {
               <li>
                 <Link
                   href="/watchlist/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
                   aria-current={pathname === "/watchlist/" ? "page" : undefined}
                 >
                   <ListChecks className="h-3.5 w-3.5" aria-hidden />
@@ -249,7 +296,7 @@ export function Navbar() {
               <li>
                 <Link
                   href="/saved/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
                   aria-current={pathname === "/saved/" ? "page" : undefined}
                 >
                   <Bookmark className="h-3.5 w-3.5" aria-hidden />
@@ -259,7 +306,7 @@ export function Navbar() {
               <li>
                 <Link
                   href="/profile/whatsapp/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary"
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
                   aria-current={pathname === "/profile/whatsapp/" ? "page" : undefined}
                 >
                   <MessageCircle className="h-3.5 w-3.5" aria-hidden />
