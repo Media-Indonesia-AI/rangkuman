@@ -29,21 +29,15 @@ export default function SavedPage() {
 
   return (
     <>
-      <Navbar />
-
-      <main className="mx-auto max-w-4xl px-4 py-6 sm:px-6 sm:py-8">
+      <main className="flex flex-col gap-4">
         {/* Header */}
         <header className="mb-5 border-b border-border-strong pb-3">
           <div className="mb-1 flex items-center gap-1.5">
             <Bookmark className="h-3.5 w-3.5 text-brand" aria-hidden />
-            <span className="label text-text-secondary">Koleksi lo</span>
-            <span className="font-mono text-[10.5px] text-text-muted">
-              · {count} item · {stockCount} saham · {storyCount} cerita
-            </span>
+            <h1 className="text-[20px] font-bold tracking-tight text-text-primary sm:text-[24px]">
+              Berita Tersimpan
+            </h1>
           </div>
-          <h1 className="text-[20px] font-bold tracking-tight text-text-primary sm:text-[24px]">
-            Berita Tersimpan
-          </h1>
           <p className="mt-1 text-[12.5px] leading-relaxed text-text-muted">
             Koleksi berita yang lo simpan buat dibaca nanti. Disimpan lokal di browser, gak perlu akun.
           </p>
@@ -95,8 +89,6 @@ export default function SavedPage() {
           </>
         )}
       </main>
-
-      <Footer />
     </>
   );
 }
