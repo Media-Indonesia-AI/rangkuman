@@ -100,14 +100,14 @@ export function Navbar() {
 
           {user ? (
             <Link
-              href="/watchlist"
+              href="/profile/"
               className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-2.5 text-[12.5px] font-medium text-text-primary transition-colors hover:border-border-strong"
-              aria-label={`Watchlist (${user.name})`}
+              aria-label={`Profil (${user.name})`}
             >
               <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-brand/20 text-[10px] font-bold uppercase text-brand">
                 {user.name.charAt(0).toUpperCase()}
               </span>
-              <span className="hidden sm:inline">Watchlist</span>
+              <span className="hidden sm:inline">Profil</span>
             </Link>
           ) : (
             <Link
@@ -165,12 +165,12 @@ export function Navbar() {
           {user && (
             <li>
               <Link
-                href="/watchlist"
+                href="/profile/"
                 className="flex items-center justify-between rounded-md bg-bullish-soft px-3 py-2.5 text-[14px] font-medium text-bullish"
               >
                 <span className="inline-flex items-center gap-2">
                   <User className="h-4 w-4" aria-hidden />
-                  Watchlist ({user.name})
+                  Profil ({user.name})
                 </span>
               </Link>
             </li>
