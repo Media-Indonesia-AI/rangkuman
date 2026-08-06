@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { SavedClientShell } from "./SavedClientShell";
 
 export const metadata: Metadata = {
   title: "Berita Tersimpan · Rangkuman",
@@ -20,6 +21,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function SavedLayout({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+/**
+ * `/saved/` server layout. Same split as `/watchlist/` — the
+ * server only owns the static metadata + OpenGraph image (for
+ * social card unfurls) and delegates the visual chrome
+ * (sidebar + content slot) to the client-side
+ * `<SavedClientShell />`. Saved is local-only, so no auth gate.
+ */
+export default function SavedLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <SavedClientShell>{children}</SavedClientShell>;
 }
