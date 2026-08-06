@@ -12,6 +12,7 @@ import { SektorDetailNews } from "./SektorDetailNews";
 import { SektorDetailEmpty } from "./SektorDetailEmpty";
 import { SektorDetailSkeleton } from "./SektorDetailSkeleton";
 import { SektorTopStocks } from "./SektorTopStocks";
+import { useEffect } from "react";
 
 interface PageProps {
   params: { slug: string };
@@ -48,6 +49,24 @@ interface PageProps {
 export default function SektorDetailPage({ params }: PageProps) {
   const { data, isLoading } = useSectors();
 
+  // Map wire sectors → display shape, then look up the slug.
+  // Falls back to an empty array when data is null so the find
+  // below produces an "unknown slug" instead of crashing.
+  const sectors: SektorDisplay[] = data ? data.map(mapSector) : [];
+  const sektor = sectors.find((s) => s.slug === params.slug);
+
+  // Sync tab title with the sector name once we have one.
+  // Hooks must be called unconditionally — run before the early
+  // returns so the hook count stays stable across renders.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.title = sektor ? `Rangkuman - ${sektor.name}` : "Rangkuman";
+    return () => {
+      if (typeof document === "undefined") return;
+      document.title = "Rangkuman";
+    };
+  }, [sektor]);
+
   if (isLoading) {
     return (
       <>
@@ -57,12 +76,6 @@ export default function SektorDetailPage({ params }: PageProps) {
       </>
     );
   }
-
-  // Map wire sectors → display shape, then look up the slug.
-  // Falls back to an empty array when data is null so the find
-  // below produces an "unknown slug" instead of crashing.
-  const sectors: SektorDisplay[] = data ? data.map(mapSector) : [];
-  const sektor = sectors.find((s) => s.slug === params.slug);
 
   if (!sektor) {
     notFound();
