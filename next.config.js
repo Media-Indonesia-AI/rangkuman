@@ -8,14 +8,6 @@ const nextConfig = {
   images: { unoptimized: true },
   reactStrictMode: true,
   trailingSlash: true,
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: `${process.env.API_BACKEND_URL || ""}/:path*`,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
