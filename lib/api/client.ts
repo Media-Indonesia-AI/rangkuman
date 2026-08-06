@@ -46,7 +46,7 @@ import { getTopic } from "./topic";
 import type { ApiError } from "./types/error";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";;
 
 /**
  * Build the HTTP Basic auth header from the active session stored in
