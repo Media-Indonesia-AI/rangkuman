@@ -45,12 +45,12 @@ const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
  *  just adds a discoverability path so the user can reach them
  *  from the profile area too. */
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
-  { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
   {
     href: "/profile/whatsapp/",
     label: "Kirim Berita ke WhatsApp",
     Icon: MessageCircle,
   },
+  { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
 ];
 
 /**
