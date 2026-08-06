@@ -213,7 +213,7 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
   useEffect(() => {
     if (typeof document === "undefined") return;
     if (liveDetail?.title) {
-      document.title = `${liveDetail.title} — Rangkuman`;
+      document.title = `Rangkuman — ${liveDetail.title}`;
     }
     return () => {
       if (typeof document === "undefined") return;
