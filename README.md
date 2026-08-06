@@ -84,7 +84,7 @@ rangkuman-news/
 │   ├── stock/[kode]/                 # 34 stock detail pages
 │   ├── sektor/[slug]/                # 12 sector detail pages
 │   │
-│   ├── trending/  search/  watchlist/  saved/  login/
+│   ├── trending/  search/  watchlist/  login/
 │   ├── tentang/  disclaimer/  privasi/  syarat-ketentuan/
 │   ├── pedoman-media-siber/  tim-redaksi/  kontak/  karir/
 │   │
@@ -340,7 +340,7 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 - `/global/`, `/crypto/` — News portals (sub-tab + info bar)
 - `/sektor/`, `/sektor/[slug]/` — 12 sector pages
 - `/stock/[kode]/` — 34 stock pages
-- `/trending/`, `/search/`, `/watchlist/`, `/saved/`, `/login/`
+- `/trending/`, `/search/`, `/watchlist/`, `/login/`
 - `/tentang/`, `/disclaimer/`, `/privasi/`, `/syarat-ketentuan/`
 - `/pedoman-media-siber/`, `/tim-redaksi/`, `/kontak/`, `/karir/`
 
@@ -423,7 +423,7 @@ npm run build      # generates ./out/
 | `/sektor/[slug]/` | 118 kB (12 pages) |
 | `/saham/` | 157 kB |
 | `/crypto/` | 285 kB (heaviest, charts) |
-| `/saved/`, `/login/`, `/search/` | 120-133 kB |
+| `/login/`, `/search/` | 120-133 kB |
 
 Total chunks: ~1.9 MB (well-cached across pages).
 

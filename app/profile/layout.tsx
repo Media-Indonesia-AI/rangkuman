@@ -23,7 +23,7 @@ import { useCurrentUser } from "@/lib/hooks/useAuth";
  *
  * All visual chrome (Navbar, two-column grid, Footer, sidebar,
  * mobile pill row) is delegated to `<ProfileShell />` so the
- * `/watchlist/` and `/saved/` routes can reuse the same frame.
+ * `/watchlist/` route can reuse the same frame.
  */
 export default function ProfileLayout({
   children,

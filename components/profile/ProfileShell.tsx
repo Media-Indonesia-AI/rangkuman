@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bookmark,
   ListChecks,
   MessageCircle,
   User,
@@ -40,7 +39,6 @@ const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
 ];
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
   { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
-  { href: "/saved/", label: "Tersimpan", Icon: Bookmark },
 ];
 
 interface ProfileShellProps {
@@ -52,9 +50,7 @@ interface ProfileShellProps {
    * (renders the full layout with sidebar + content).
    *
    * The shell intentionally does NOT own the redirect effect —
-   * each route's `layout.tsx` decides whether to gate (e.g.
-   * `/saved/` is local-only, so it accepts `null` and renders the
-   * page anyway, just without the user card in the sidebar).
+   * each route's `layout.tsx` decides whether to gate.
    */
   user: MockUser | null | undefined;
   /** Tab title override. When the calling layout wants the same
@@ -65,7 +61,7 @@ interface ProfileShellProps {
 }
 
 /**
- * Shared two-column shell for the profile/watchlist/saved routes.
+ * Shared two-column shell for the profile/watchlist routes.
  *
  * Layout:
  *   - `Navbar` on top.

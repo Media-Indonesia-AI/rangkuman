@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bookmark,
   ListChecks,
   MessageCircle,
   User,
@@ -42,12 +41,11 @@ const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
 
 /** Content lists — the user's own collections. Lives outside the
  *  `/profile/` tree (these pages already existed before the side
- *  nav was built): Watchlist is at `/watchlist/` and Saved News
- *  is at `/saved/`. The sidebar just adds a discoverability
- *  path so the user can reach them from the profile area too. */
+ *  nav was built): Watchlist is at `/watchlist/`. The sidebar
+ *  just adds a discoverability path so the user can reach them
+ *  from the profile area too. */
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
   { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
-  { href: "/saved/", label: "Berita Tersimpan", Icon: Bookmark },
   {
     href: "/profile/whatsapp/",
     label: "Kirim Berita ke WhatsApp",

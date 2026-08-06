@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bitcoin,
-  Bookmark,
   ListChecks,
   Menu,
   MessageCircle,
@@ -291,16 +290,6 @@ export function Navbar() {
                 >
                   <ListChecks className="h-3.5 w-3.5" aria-hidden />
                   Watchlist
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/saved/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/saved/" ? "page" : undefined}
-                >
-                  <Bookmark className="h-3.5 w-3.5" aria-hidden />
-                  Berita Tersimpan
                 </Link>
               </li>
               <li>
