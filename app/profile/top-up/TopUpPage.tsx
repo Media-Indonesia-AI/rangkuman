@@ -2,44 +2,16 @@
 
 import { useState } from "react";
 import { Banknote, CreditCard, Smartphone, Sparkles, Wallet, type LucideIcon } from "lucide-react";
+import type { TopupBundle } from "@/lib/api";
+import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { cn } from "@/lib/utils";
 
 /** Coin-to-IDR rate. 1 koin costs Rp 3.000 — surfaced in the
- *  balance card, on every quick-pick chip, and in the total
- *  block so the value is visible at the moment of decision. */
+ *  balance card and in the custom-input helper so the value of
+ *  one koin is always in context when the user is entering
+ *  arbitrary amounts. The bundle chips don't need it: their
+ *  `coin_amount` comes straight from the API. */
 const RUPIAH_PER_KOIN = 3_000;
-
-/** Quick-pick amounts — exposed as a small fixed list so the
- *  formatting stays consistent across the chips. Wider amounts
- *  (e.g. Rp 1.000.000) can be entered via the custom input
- *  below. Matches the typical Indonesian e-wallet / pulsa
- *  top-up UX. Each chip carries its coin equivalent so the
- *  user sees the value they're buying, not just the price. */
-const QUICK_PICKS: ReadonlyArray<{
-  id: string;
-  label: string;
-  koinLabel: string;
-  value: number;
-}> = [
-  {
-    id: "50k",
-    label: "Rp 50.000",
-    koinLabel: `≈ ${Math.floor(50_000 / RUPIAH_PER_KOIN).toLocaleString("id-ID")} koin`,
-    value: 50_000,
-  },
-  {
-    id: "100k",
-    label: "Rp 100.000",
-    koinLabel: `≈ ${Math.floor(100_000 / RUPIAH_PER_KOIN).toLocaleString("id-ID")} koin`,
-    value: 100_000,
-  },
-  {
-    id: "250k",
-    label: "Rp 250.000",
-    koinLabel: `≈ ${Math.floor(250_000 / RUPIAH_PER_KOIN).toLocaleString("id-ID")} koin`,
-    value: 250_000,
-  },
-];
 
 /** Payment methods — placeholder until the gateway lands. Each
  *  option is rendered as a disabled radio so the user can see
@@ -88,8 +60,12 @@ const PPN_RATE = 0.11;
  *
  *   1. **Koin** — current wallet balance (placeholder zero with
  *      a "Coming soon" note until the wallet backend lands).
- *   2. **Pilih nominal** — three quick-pick amount chips + a
- *      custom-amount input.
+ *   2. **Pilih paket bundling** — bundle chips sourced from
+ *      `GET wallet/topup/bundle` via `useGetTopupBundle()`, plus
+ *      a custom-amount input that lets the user enter a coin
+ *      count outside the catalogue. Bundle and custom input are
+ *      mutually exclusive — picking a chip clears the custom
+ *      input and vice-versa.
  *   3. **Metode pembayaran** — radio group of e-wallet / VA
  *      options (currently disabled pending gateway integration).
  *   4. **Riwayat top-up** — empty-state list ("Belum ada top-up").
@@ -98,9 +74,24 @@ const PPN_RATE = 0.11;
  * the Akun section) so the affordance exists for the user.
  */
 export default function TopUpPage() {
-  const [amount, setAmount] = useState<number | null>(100_000);
+  // ID of the currently-selected bundle chip, or `null` when
+  // the user is entering a custom amount (or hasn't picked
+  // anything yet). Drives `selectedBundle` below; `effectiveAmount`
+  // falls back to the custom-input value when no bundle is picked.
+  const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
   const [method, setMethod] = useState<string | null>(null);
+
+  // Curated top-up catalogue — small fixed list owned by the
+  // wallet API. Sorted by `sort` ascending inside the hook so
+  // the API's "front" bundle always renders first regardless of
+  // the wire order. While loading, the section renders a
+  // "Memuat…" placeholder; the totals block stays empty until
+  // either a bundle is picked or the custom input is typed.
+  const { data: bundles, isLoading: bundlesLoading } = useGetTopupBundle();
+  const selectedBundle: TopupBundle | undefined = selectedBundleId
+    ? bundles.find((b) => b.id === selectedBundleId)
+    : undefined;
 
   const handleNotImplemented = () => {
     if (typeof window === "undefined") return;
@@ -138,19 +129,28 @@ export default function TopUpPage() {
     return { value: koin * RUPIAH_PER_KOIN, error: null };
   })();
 
-  const effectiveAmount = amount ?? customValidation.value;
+  // Bundle's price wins when a chip is selected; otherwise fall
+  // through to the custom-input value. `null` until either path
+  // produces a number, which keeps the totals block and the
+  // submit button correctly disabled.
+  const effectiveAmount = selectedBundle?.price ?? customValidation.value;
   const ppnAmount =
     effectiveAmount != null ? Math.round(effectiveAmount * PPN_RATE) : null;
   const grandTotal =
     effectiveAmount != null && ppnAmount != null
       ? effectiveAmount + ppnAmount
       : null;
-  // Coins the user actually receives — floored so the user never
-  // sees a fractional count, and any unspent remainder from a
-  // non-multiple top-up is honestly dropped (the "≈" prefix in
-  // the UI signals the approximation).
-  const koinAmount =
-    effectiveAmount != null
+  // Coins the user actually receives. When a bundle is selected,
+  // the count comes straight from `bundle.coin_amount` (the API
+  // is authoritative — a bundle might be priced independently of
+  // the Rp/koin rate, e.g. a promo that gives 17 koin for
+  // Rp 50.000 even though 17 × 3.000 = 51.000). When a custom
+  // amount is typed, we floor the derived count so the user
+  // never sees a fractional number; the "≈" prefix in the UI
+  // signals the approximation.
+  const koinAmount = selectedBundle
+    ? selectedBundle.coin_amount
+    : effectiveAmount != null
       ? Math.floor(effectiveAmount / RUPIAH_PER_KOIN)
       : null;
 
@@ -192,39 +192,65 @@ export default function TopUpPage() {
         </div>
       </section>
 
-      {/* Nominal — quick-pick chips + custom input. Selecting a
-          quick-pick clears the custom input; entering a custom
-          amount clears the quick-pick. Mutually exclusive by
-          design so the displayed total is unambiguous. */}
+      {/* Paket bundling — bundle chips sourced from
+          `useGetTopupBundle()`. Each chip's top line carries the
+          coin count (with the bonus — `add_up_coin_amount` —
+          highlighted in brand color when present); the bundle
+          name is the action-target on the second line. The full
+          breakdown (base + bonus + price) lives in `aria-label`
+          so screen readers get the same context sighted users
+          derive from the totals block below. */}
       <section className="rounded-lg border border-border bg-bg-secondary p-4">
         <p className="label">Pilih Paket Bundling</p>
-        <div className="mt-2.5 flex flex-wrap gap-2">
-          {QUICK_PICKS.map((q) => {
-            const active = amount === q.value;
-            return (
-              <button
-                key={q.id}
-                type="button"
-                onClick={() => {
-                  setAmount(q.value);
-                  setCustomAmount("");
-                }}
-                aria-pressed={active}
-                className={cn(
-                  "inline-flex h-auto min-h-9 flex-col items-center justify-center gap-0 rounded-md border px-3 py-1.5 font-mono text-[12.5px] font-semibold tabular-nums transition-colors",
-                  active
-                    ? "border-brand bg-brand-soft text-brand"
-                    : "border-border bg-bg-card text-text-secondary hover:border-border-strong hover:text-text-primary",
-                )}
-              >
-                <span className="text-[10px] font-medium opacity-80">
-                  {q.koinLabel}
-                </span>
-                <span>{q.label}</span>
-              </button>
-            );
-          })}
-        </div>
+        {bundlesLoading ? (
+          <p className="mt-2.5 font-mono text-[11.5px] text-text-muted">
+            Memuat paket bundling…
+          </p>
+        ) : bundles.length === 0 ? (
+          <p className="mt-2.5 text-[11.5px] text-text-muted">
+            Paket bundling belum tersedia.
+          </p>
+        ) : (
+          <div className="mt-2.5 flex flex-wrap gap-2">
+            {bundles.map((bundle) => {
+              const active = selectedBundleId === bundle.id;
+              const bonusLabel =
+                bundle.add_up_coin_amount > 0
+                  ? ` +${bundle.add_up_coin_amount.toLocaleString("id-ID")}`
+                  : "";
+              return (
+                <button
+                  key={bundle.id}
+                  type="button"
+                  onClick={() => {
+                    setSelectedBundleId(bundle.id);
+                    setCustomAmount("");
+                  }}
+                  aria-pressed={active}
+                  aria-label={
+                    `${bundle.name} — ${bundle.base_coin_amount.toLocaleString("id-ID")} koin` +
+                    (bonusLabel ? ` (${bonusLabel.trim()} bonus)` : "") +
+                    `, Rp ${bundle.price.toLocaleString("id-ID")}`
+                  }
+                  className={cn(
+                    "inline-flex h-auto min-h-9 flex-col items-center justify-center gap-0 rounded-md border px-3 py-1.5 font-mono text-[12.5px] font-semibold tabular-nums transition-colors",
+                    active
+                      ? "border-brand bg-brand-soft text-brand"
+                      : "border-border bg-bg-card text-text-secondary hover:border-border-strong hover:text-text-primary",
+                  )}
+                >
+                  <span className="text-[10px] font-medium opacity-80">
+                    {bundle.base_coin_amount.toLocaleString("id-ID")} koin
+                    {bonusLabel && (
+                      <span className="ml-1 text-[12px] font-semibold text-brand">{bonusLabel}</span>
+                    )}
+                  </span>
+                  <span>{bundle.name}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
         <div className="mt-3">
           <label
             htmlFor="top-up-custom"
@@ -242,7 +268,7 @@ export default function TopUpPage() {
               onChange={(e) => {
                 const v = e.target.value.replace(/\D/g, "");
                 setCustomAmount(v);
-                if (v) setAmount(null);
+                if (v) setSelectedBundleId(null);
               }}
               placeholder="cth: 50"
               aria-invalid={customValidation.error ? true : undefined}

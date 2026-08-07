@@ -44,6 +44,8 @@ export interface TopupBundle {
   id: string;
   code: string;
   name: string;
+  base_coin_amount: number;
+  add_up_coin_amount: number;
   coin_amount: number;
   price: number;
   sort: number;
