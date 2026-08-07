@@ -17,8 +17,9 @@ interface ShareButtonProps {
   url: string;
   /** Title/text used for WhatsApp & Telegram. */
   title: string;
-  /** Variant affects padding — "compact" for card overlays, "default" for standalone. */
-  variant?: "compact" | "default";
+  /** Variant affects padding — "xs" for tight list rows,
+   *  "compact" for card overlays, "default" for standalone. */
+  variant?: "xs" | "compact" | "default";
   /** Color theme override.
    *
    *  - `"light"` — static white-on-dark styling. Use for
@@ -262,8 +263,14 @@ export function ShareButton({
     };
   }, [open, computePos]);
 
-  const sizeClasses = variant === "compact" ? "h-7 w-7" : "h-8 px-2.5";
-  const iconSize = "h-3.5 w-3.5";
+  const sizeClasses =
+    variant === "xs"
+      ? "h-5 w-5"
+      : variant === "compact"
+        ? "h-7 w-7"
+        : "h-8 px-2.5";
+  const iconSize =
+    variant === "xs" ? "h-3 w-3" : "h-3.5 w-3.5";
   const baseTone =
     resolvedTone === "light"
       ? "border-white/20 bg-white/10 text-white/90 hover:border-white/40 hover:bg-white/15 hover:text-white"
@@ -381,7 +388,7 @@ export function ShareButton({
             baseTone,
           )}
         >
-          {variant === "compact" ? (
+          {variant !== "default" ? (
             <Share2 className={iconSize} aria-hidden />
           ) : (
             <>
