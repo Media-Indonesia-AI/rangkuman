@@ -10,6 +10,7 @@ import {
 import { createPortal } from "react-dom";
 import { Check, Link2, MessageCircle, Send, Share2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface ShareButtonProps {
   /** Full URL to share (e.g. "https://rangkuman.news/stock/BBCA"). */
@@ -18,7 +19,23 @@ interface ShareButtonProps {
   title: string;
   /** Variant affects padding — "compact" for card overlays, "default" for standalone. */
   variant?: "compact" | "default";
-  /** Color theme: "light" for dark backgrounds (default), "dark" for light backgrounds. */
+  /** Color theme override.
+   *
+   *  - `"light"` — static white-on-dark styling. Use for
+   *    backgrounds that don't change with the theme (e.g. a
+   *    hero gradient). The button does NOT adapt to theme
+   *    toggles in this mode.
+   *  - `"dark"`  — theme tokens (`bg-bg-tertiary`,
+   *    `text-text-secondary`, …) that flip with the site's
+   *    `.dark` class. Use when the surrounding background
+   *    stays light across both themes.
+   *  - omitted   — auto: picks `"light"` styling in dark mode
+   *    and `"dark"` (theme tokens) in light mode. Best for
+   *    buttons on cards whose background color follows the
+   *    theme (e.g. `<AggregateSummary />` on a `bg-bg-secondary`
+   *    card). The server has no document, so the SSR default
+   *    is theme tokens; the first client render upgrades to
+   *    light styling if the site is in dark mode. */
   tone?: "light" | "dark";
   /** Accessible label override. */
   ariaLabel?: string;
@@ -86,9 +103,23 @@ export function ShareButton({
   url,
   title,
   variant = "compact",
-  tone = "light",
+  tone,
   ariaLabel = "Bagikan",
 }: ShareButtonProps) {
+  // Auto-pick the right styling when no explicit `tone` is given:
+  // - dark mode → `"light"` styling (white-on-dark for the dark
+  //   page background)
+  // - light mode → `"dark"` styling (theme tokens that flip with
+  //   the theme)
+  // `theme === null` is the pre-mount window (SSR + first client
+  // render before the hook reads `document`). The default of
+  // `"dark"` (theme tokens) keeps the SSR markup consistent with
+  // the first client render; once the theme lands, the component
+  // re-renders to the correct side.
+  const theme = useTheme();
+  const resolvedTone: "light" | "dark" =
+    tone ?? (theme === "dark" ? "light" : "dark");
+
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -234,7 +265,7 @@ export function ShareButton({
   const sizeClasses = variant === "compact" ? "h-7 w-7" : "h-8 px-2.5";
   const iconSize = "h-3.5 w-3.5";
   const baseTone =
-    tone === "light"
+    resolvedTone === "light"
       ? "border-white/20 bg-white/10 text-white/90 hover:border-white/40 hover:bg-white/15 hover:text-white"
       : "border-border bg-bg-tertiary text-text-secondary hover:border-border-strong hover:text-text-primary";
 

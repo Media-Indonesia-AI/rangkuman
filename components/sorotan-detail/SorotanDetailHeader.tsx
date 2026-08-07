@@ -102,9 +102,14 @@ export function SorotanDetailHeader({
           </span>
           {/* Share button — pushed to the right edge of the meta
               line via `ml-auto` (ShareButton doesn't accept a
-              className prop, so we wrap it). */}
+              className prop, so we wrap it). `tone="light"`
+              pins the static white-on-dark styling because the
+              hero gradient is dark in both themes (it doesn't
+              follow the `.dark` class), so the auto-detection
+              would pick the wrong side in light mode. */}
           <div className="ml-auto">
             <ShareButton
+              tone="light"
               title={story.title}
               url={`${SITE_URL}/sorotan/detail/${story.id}`}
             />
