@@ -131,7 +131,7 @@ export function getHeadlinesLast7Days(
 
 /**
  * Fetch a paginated, multi-date list of stories, optionally scoped
- * to a single ticker.
+ * to a single ticker and/or a single topic.
  *
  * When `ticker` is provided (non-empty after `trim()`), the request
  * is scoped to that ticker — useful for the per-emiten Story feed
@@ -139,18 +139,30 @@ export function getHeadlinesLast7Days(
  * is left off the query entirely and the endpoint returns the
  * cross-ticker feed — what `/story/` (the listing) renders.
  *
- * Same-case insensitive: a passed `"antm"` is uppercased before
- * being inserted so callers don't need to normalize themselves.
+ * `topicId` is an independent orthogonal filter (e.g. the resolved
+ * id of the "saham" or "crypto" topic). When supplied the request
+ * is sent with `topic_id=<id>`; when omitted the param is left off
+ * and the server applies its cross-topic default. Both `ticker`
+ * and `topicId` can be combined or used independently.
  *
- * @param ticker Optional ticker code (e.g. `"ANTM"`). Empty string
- *               / `undefined` → cross-ticker feed (no `ticker=` param).
- * @param limit  How many stories to return per page (default 5).
- * @param page   1-based page number (default 1).
+ * Same-case insensitive on `ticker`: a passed `"antm"` is uppercased
+ * before being inserted so callers don't need to normalize themselves.
+ * `topicId` is forwarded verbatim — topic ids are backend-issued
+ * strings the caller already has in canonical form.
+ *
+ * @param ticker  Optional ticker code (e.g. `"ANTM"`). Empty string
+ *                / `undefined` → cross-ticker feed (no `ticker=` param).
+ * @param limit   How many stories to return per page (default 5).
+ * @param page    1-based page number (default 1).
+ * @param topicId Optional topic id (e.g. `"saham"`, `"crypto"`).
+ *                Empty / `undefined` → cross-topic feed (no
+ *                `topic_id=` param).
  */
 export function getMultiDateStories(
   ticker?: string,
   limit = 5,
   page = 1,
+  topicId?: string,
 ): Promise<MultiDateStoriesResponse> {
   const params = new URLSearchParams({
     limit: String(limit),
@@ -163,6 +175,14 @@ export function getMultiDateStories(
   const trimmed = ticker?.trim();
   if (trimmed) {
     params.set("ticker", trimmed.toUpperCase());
+  }
+  // Same treatment for `topic_id=`. A blank/whitespace-only id is
+  // treated as "no topic filter" rather than as the literal empty
+  // string, so an undefined/empty `topicId` doesn't accidentally
+  // pin the request to a topic the caller never intended.
+  const trimmedTopicId = topicId?.trim();
+  if (trimmedTopicId) {
+    params.set("topic_id", trimmedTopicId);
   }
   return request<MultiDateStoriesResponse>(
     `headlines/multi-date-stories?${params.toString()}`,

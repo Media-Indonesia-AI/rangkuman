@@ -17,7 +17,9 @@ import {
   WatchlistSection,
   type SahamTab,
 } from "@/components/saham";
+import { useTopicsContext } from "@/components/topics-provider";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
+import type { StoryTopic } from "@/lib/api";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
@@ -33,6 +35,45 @@ function isSahamTab(value: unknown): value is SahamTab {
   return value === "recap" || value === "sektor";
 }
 
+/**
+ * Resolve the `topic_id` that drives the `/saham` page's Story
+ * feed. Prefers the canonical **slug** match (URL-safe identifier,
+ * stable across renames), then a case-insensitive **name** match.
+ * If neither lands on a topic, the first entry in the list wins
+ * as a resilience fallback so the page still renders even before
+ * a "saham" topic is registered. Mirror of
+ * `findCryptoTopicId` (in `components/crypto-page/cryptoStories.ts`)
+ * — keep the two helpers in lockstep so the page-level contracts
+ * stay symmetric.
+ *
+ * Return shape mirrors `findCryptoTopicId`: `null` only when the
+ * topics list is empty (still loading or backend returned nothing).
+ * Every other path returns a string id.
+ */
+function findSahamTopicId(
+  topics: readonly StoryTopic[],
+): string | null {
+  // 1. Canonical slug match — preferred since slugs are stable,
+  //    URL-friendly identifiers the backend exposes as the
+  //    authoritative foreign key reference.
+  const slugHit = topics.find((t) => t.slug === "saham");
+  if (slugHit) return slugHit.id;
+
+  // 2. Case-insensitive name match — covers backends that ship
+  //    `name: "Saham"` / `"SAHAM"` while the slug is something
+  //    else (e.g. `"saham-indonesia"`).
+  const nameHit = topics.find(
+    (t) => t.name.trim().toLowerCase() === "saham",
+  );
+  if (nameHit) return nameHit.id;
+
+  // 3. First-topic fallback — keeps the page rendering even if
+  //    no "saham"-tagged topic exists in the dataset yet. The
+  //    caller treats any non-null id as "fetch with this filter";
+  //    we'd rather show *something* than wait forever.
+  return topics[0]?.id ?? null;
+}
+
 export default function SahamPage() {
   /** Sub-tab active: "recap" (default) | "sektor". The user's
    *  last selection is persisted to localStorage so navigating
@@ -46,6 +87,17 @@ export default function SahamPage() {
   // first visit, not the hardcoded mock "2026-06-07"). The user can
   // still navigate back via the DatePicker.
   const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
+
+  // Topics catalog — resolves the "saham" topic id so the
+  // `<EmitenStories />` Story feed below is scoped to saham-scoped
+  // stories instead of the cross-topic default. `findSahamTopicId`
+  // returns `null` only while the topics list is still loading;
+  // the helper then maps it to `undefined` for the prop, which
+  // leaves the underlying request on its cross-topic slot until
+  // topics land. Same null/undefined coalescing convention used
+  // by `<CryptoRecapTab />` for the crypto feed.
+  const { topics } = useTopicsContext();
+  const sahamTopicId = findSahamTopicId(topics);
 
   // "Paling banyak diberitakan" — refetches whenever the selected
   // DatePicker value changes. Declared before the pre-hydration guard
@@ -137,7 +189,7 @@ export default function SahamPage() {
 
               {/* Feed column */}
               <div className="min-w-0 space-y-5">
-                <EmitenStories storyLimit={3} />
+                <EmitenStories storyLimit={3} topicId={sahamTopicId ?? undefined} />
 
                 {/* Date picker + recap summary */}
                 <div className="flex flex-wrap items-center justify-between gap-3">

@@ -117,9 +117,11 @@ export function CryptoRecapTab() {
           story threads the headline is part of, before moving
           on to the next cluster of recent stories. Uses the
           default `feed` variant — borderless, flows with the
-          tab chrome. */}
+          tab chrome. Scoped to the "crypto" topic via
+          `topicId` so the feed shows crypto-tagged stories
+          instead of the cross-topic default. */}
       <div className="mt-8">
-        <EmitenStories storyLimit={3}/>
+        <EmitenStories storyLimit={3} topicId={topicId ?? undefined} />
       </div>
 
       {/* 📋 LAYER 2: SEDANG TERJADI — 4 cards in 2-col */}

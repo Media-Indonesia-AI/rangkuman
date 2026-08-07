@@ -35,6 +35,10 @@ import { StoryRow } from "./StoryRow";
 /** Fallback ticker when the host page doesn't pass one. */
 const DEFAULT_TICKER = "";
 
+/** Fallback topic id when the host page doesn't pass one — `""`
+ *  routes the underlying request through the cross-topic feed. */
+const DEFAULT_TOPIC_ID = "";
+
 /** How many stories to request (featured + list rows). */
 const STORY_LIMIT = 5;
 
@@ -43,6 +47,12 @@ type EmitenStoriesVariant = "feed" | "highlight";
 interface EmitenStoriesProps {
   /** Ticker to fetch stories for. Defaults to `DEFAULT_TICKER`. */
   ticker?: string;
+  /** Optional topic id (e.g. resolved `"saham"` or `"crypto"`
+   *  id from the topics catalog). Forwarded as `topic_id=` to the
+   *  multi-date-stories endpoint so each host page shows topic-
+   *  scoped stories instead of the cross-topic default. Empty /
+   *  `undefined` → cross-topic feed. */
+  topicId?: string;
   /** Layout variant (default `"feed"`). */
   variant?: EmitenStoriesVariant;
   className?: string;
@@ -51,6 +61,7 @@ interface EmitenStoriesProps {
 
 export function EmitenStories({
   ticker = DEFAULT_TICKER,
+  topicId = DEFAULT_TOPIC_ID,
   variant = "feed",
   className,
   storyLimit = STORY_LIMIT,
@@ -58,6 +69,9 @@ export function EmitenStories({
   const { data: stories, total, isLoading } = useMultiStories(
     ticker,
     storyLimit,
+    1,
+    true,
+    topicId,
   );
   const [featured, ...rest] = stories;
 
