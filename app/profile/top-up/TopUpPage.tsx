@@ -197,7 +197,7 @@ export default function TopUpPage() {
           amount clears the quick-pick. Mutually exclusive by
           design so the displayed total is unambiguous. */}
       <section className="rounded-lg border border-border bg-bg-secondary p-4">
-        <p className="label">Pilih nominal</p>
+        <p className="label">Pilih Paket Bundling</p>
         <div className="mt-2.5 flex flex-wrap gap-2">
           {QUICK_PICKS.map((q) => {
             const active = amount === q.value;

@@ -101,3 +101,9 @@ export {
   labelToSentiment,
   sentimentConfig,
 } from "./types/moods";
+
+// Wallet
+export type {
+  TopupBundle,
+  TopupBundlesResponse,
+} from "./types/wallet";
