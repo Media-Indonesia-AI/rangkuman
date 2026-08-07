@@ -1,15 +1,13 @@
 "use client";
 
 import { SentimentBadge } from "@/components/SentimentBadge";
-import { SavedButton } from "@/components/SavedButton";
 import { StockCardOverlayLink } from "./StockCardOverlayLink";
 import { cn } from "@/lib/utils";
 import type { DailyRecap } from "@/lib/mock/recaps";
 
 interface StockCardCompactProps {
   /** Recap data — `sahamKode`, `sentimen`, `jumlahBerita`, and
-   *  `tanggal` (for the save button's `publishedAt`) drive the
-   *  row content. */
+   *  `tanggal` drive the row content. */
   recap: DailyRecap;
   /** Card's deep-link href, including the optional `?id=` query
    *  param when the parent knows the backend headline id. */
@@ -24,10 +22,10 @@ interface StockCardCompactProps {
  * diberitakan" sidebar rows) where the full hero + summary +
  * footer layout would be too tall.
  *
- * Layout: ticker · sentiment · article count, with the Save
- * button at the right edge and a stretched overlay link covering
- * the whole row for the full-hit-area navigation. Save sits at
- * `z-10` and cancels the overlay's navigation on click.
+ * Layout: ticker · sentiment · article count, with a stretched
+ * overlay link covering the whole row for the full-hit-area
+ * navigation. The link sits above the static content so a click
+ * anywhere on the row navigates to the detail page.
  */
 export function StockCardCompact({ recap, href, className }: StockCardCompactProps) {
   return (
@@ -48,18 +46,6 @@ export function StockCardCompact({ recap, href, className }: StockCardCompactPro
         <span className="num-tabular text-[11px] text-text-muted">
           {recap.jumlahBerita}
         </span>
-      </div>
-      {/* Save button must stay reachable — z-10 lifts it above the
-          stretched link. Its own onClick calls preventDefault +
-          stopPropagation, so the link's navigation is cancelled
-          when the button is clicked. */}
-      <div className="relative z-10">
-        <SavedButton
-          id={recap.sahamKode}
-          kind="stock"
-          publishedAt={recap.tanggal}
-          tone="dark"
-        />
       </div>
       <StockCardOverlayLink href={href} label={recap.sahamKode} />
     </div>

@@ -4,7 +4,6 @@ import { useState, useMemo } from "react";
 import Link from "next/link";
 import { Newspaper, ArrowUpRight, ChevronDown, ChevronUp } from "lucide-react";
 import { ShareButton } from "./ShareButton";
-import { SavedButton } from "./SavedButton";
 import { Shimmer } from "./Shimmer";
 import { getNewsStoriesByDate, getStoryCountsByDate, getLatestTime, type NewsCategory } from "@/lib/mock/general-news";
 import { useTopics } from "@/lib/hooks/useTopics";
@@ -219,7 +218,6 @@ function StoryItem({ story, isoDate }: { story: Story; isoDate: string }) {
                 {story.sources.length} sumber
               </p>
               <div className="flex items-center gap-1">
-                <SavedButton id={story.id} kind="story" publishedAt={isoDate} tone="dark" />
                 <ShareButton
                   url={`https://rangkuman.news/?date=${isoDate}#${story.id}`}
                   title={story.title}
@@ -269,7 +267,6 @@ function StoryItem({ story, isoDate }: { story: Story; isoDate: string }) {
             </p>
           </div>
           <div className="flex items-start gap-1">
-            <SavedButton id={story.id} kind="story" publishedAt={isoDate} tone="dark" />
             <ShareButton
               url={`https://rangkuman.news/?date=${isoDate}#${story.id}`}
               title={story.title}

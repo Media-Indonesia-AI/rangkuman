@@ -136,7 +136,7 @@ rangkuman-news/
 │   │   └── index.ts                    # barrel
 │   │
 │   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
-│   ├── ShareButton.tsx  SavedButton.tsx
+│   ├── ShareButton.tsx
 │   ├── SearchBar.tsx  ThemeToggle.tsx
 │   ├── InfoPage.tsx                  # Template for static legal/about pages
 │   ├── KeyDataBlock.tsx              # Story detail key data
