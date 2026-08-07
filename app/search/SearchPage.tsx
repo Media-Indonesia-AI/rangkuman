@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useMemo, useState, Suspense } from "react";
+import { useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Search, Clock, TrendingUp } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import type { StoryFilter, TickerItem, TickerListItem } from "@/lib/api";
-import { loadTickers, peekTickers } from "@/lib/api/cache";
+import type { StoryFilter, TickerListItem } from "@/lib/api";
 import { useGetTickerListArticles } from "@/lib/hooks/useGetTickerListArticles";
+import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 
 /** Shape consumed by `<SuggestionChip />`. Inline here (rather than
@@ -40,49 +40,29 @@ function SearchPageContent() {
     Boolean(query),
   );
 
-  // Live ticker catalog (replaces the previous mock-driven
-  // `searchAll`). Initialized lazily from the shared cache so a
-  // remount that happens after another instance has already
-  // fetched shows the data on the first render (no flash of an
-  // empty saran-cepat strip). The cache is shared app-wide, so
-  // `<TopTicker />` and any other consumer of `loadTickers()`
-  // don't duplicate the round-trip.
-  const [tickers, setTickers] = useState<TickerItem[] | null>(
-    () => peekTickers()?.data ?? null,
+  // Search the live ticker catalog for the user's query (same hook
+  // the inline `<SearchBar />` uses for its autocomplete dropdown —
+  // brings the "list of stock" into this page). Doubles as the
+  // "is this query a saham?" gate below: when the API has any
+  // matching ticker, the query is treated as a stock and the
+  // "Saran cepat" chip strip is shown; when it returns nothing, the
+  // strip is hidden so a generic keyword like "dividen" doesn't claim
+  // to be a stock by faking a ticker chip.
+  const { data: stockMatches } = useStocksSearch(query, 10);
+  const isSaham = stockMatches.length > 0;
+
+  // Saran-cepat chips, one per matched ticker. When the query has no
+  // matches we intentionally return an empty list so the wrapper
+  // section can collapse to nothing.
+  const suggestions = useMemo<SuggestionItem[]>(
+    () =>
+      stockMatches.map((s) => ({
+        id: s.ticker,
+        label: s.ticker,
+        href: `/stock/${encodeURIComponent(s.ticker)}`,
+      })),
+    [stockMatches],
   );
-
-  useEffect(() => {
-    let cancelled = false;
-    void loadTickers()
-      .then((res) => {
-        if (!cancelled) setTickers(res.data);
-      })
-      .catch(() => {
-        // Swallow — saran cepat collapses to empty until the
-        // next mount retries. The widget still renders the
-        // `<EmptyState />` for the no-query branch and the
-        // "Gak ada hasil" card for the loaded-no-results branch.
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  // Build saran-cepat chips from the live ticker list:
-  //   - non-empty query → match against `ticker` OR `company_name`
-  //     (case-insensitive substring); fall back to the first 6
-  //     tickers when the query is a no-match (e.g. `"BSBR"`, a
-  //     ticker not in the catalog).
-  //   - empty query       → first 6 tickers as the default browse
-  //     list.
-  const suggestions = useMemo<SuggestionItem[]>(() => {
-    const q = query.trim().toLowerCase();
-    return [{
-      id: q,
-      label: q.toUpperCase(),
-      href: `/stock/${q.toUpperCase()}`,
-    }];
-  }, [query, tickers]);
 
   return (
     <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-6xl lg:px-8">
@@ -119,7 +99,11 @@ function SearchPageContent() {
         )}
       </header>
 
-      {suggestions.length > 0 && (
+      {/* "Saran cepat" only renders when the query is confirmed as a
+          saham (matches against the live ticker catalog via
+          `useStocksSearch`). Unmatched queries — e.g. "dividen" —
+          don't pretend to be a stock. */}
+      {isSaham && suggestions.length > 0 && (
         <section className="mb-5" aria-label="Saran cepat">
           <p className="label mb-1.5">Saran cepat</p>
           <div className="flex flex-wrap gap-1.5">

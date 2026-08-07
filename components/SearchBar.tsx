@@ -18,7 +18,7 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export function SearchBar({ className, placeholder = "Cari saham atau topik..." }: SearchBarProps) {
+export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -29,7 +29,6 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
   const { data: stocks, isLoading: stocksLoading, error } = useStocksSearch(query, 10);
 
   const stockResults: StockSuggestion[] = stocks.map((stock) => ({
-    // href: `/stock/${stock.ticker}`,
     href: `/search/${stock.ticker}`,
     label: stock.ticker,
     hint: stock.company_name,
@@ -113,7 +112,7 @@ export function SearchBar({ className, placeholder = "Cari saham atau topik..." 
             onFocus={() => setOpen(true)}
             onKeyDown={handleKeyDown}
             placeholder={placeholder}
-            aria-label="Cari saham atau topik"
+            aria-label="Cari saham"
             aria-autocomplete="list"
             className={cn(
               "h-9 w-full rounded-md border border-border bg-bg-secondary pl-8 pr-16 text-[12.5px] text-text-primary placeholder:text-text-muted",
