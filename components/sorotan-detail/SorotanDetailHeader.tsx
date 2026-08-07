@@ -106,7 +106,7 @@ export function SorotanDetailHeader({
           <div className="ml-auto">
             <ShareButton
               title={story.title}
-              url={`${SITE_URL}sorotan/detail/${story.id}`}
+              url={`${SITE_URL}/sorotan/detail/${story.id}`}
             />
           </div>
         </div>

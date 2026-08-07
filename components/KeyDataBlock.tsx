@@ -94,11 +94,11 @@ export function KeyDataBlock({ keywords, className }: KeyDataBlockProps) {
             <dt className="mt-1.5 text-[12.5px] font-semibold leading-tight text-text-primary sm:text-[13px]">
               {keyword.label}
             </dt>
-            {/* {keyword.sublabel && (
-              <p className="mt-0.5 line-clamp-1 font-mono text-[10.5px] text-text-muted">
-                {keyword.sublabel}
+            {keyword.description && (
+              <p className="mt-0.5 font-mono text-[10.5px] text-text-muted">
+                {keyword.description}
               </p>
-            )} */}
+            )}
           </div>
         ))}
       </dl>
