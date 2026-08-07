@@ -1,11 +1,11 @@
 "use client";
 
-import { Clock, Newspaper, Tag } from "lucide-react";
+import { Newspaper, Tag } from "lucide-react";
 import type { Highlight } from "@/lib/mock/highlights";
 import { ShareButton } from "@/components/ShareButton";
-import { SavedButton } from "@/components/SavedButton";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { cn } from "@/lib/utils";
+import { SITE_URL } from "@/lib/og";
 
 interface CategoryConfig {
   label: string;
@@ -30,11 +30,11 @@ const HERO_GRADIENT: Record<string, string> = {
 
 /**
  * Hero card at the top of the detail page — category gradient strip,
- * category badge row, the story title, the meta line (read time /
- * sources), and the Share + Save action row.
+ * category badge row, the story title, and the meta line
+ * (source count + sources + share button on the right).
  *
- * Server component: the underlying `<ShareButton>` / `<SavedButton>`
- * are the only client islands and they handle their own state.
+ * Server component: the underlying `<ShareButton>` is the only
+ * client island and handles its own state.
  */
 export function SorotanDetailHeader({
   story,
@@ -47,7 +47,7 @@ export function SorotanDetailHeader({
       <div
         className={cn(
           "absolute inset-x-0 top-0 h-1.5 opacity-90",
-          HERO_GRADIENT[story.category] ?? "bg-hero-saham",
+          HERO_GRADIENT['global'],
         )}
         aria-hidden
       />
@@ -65,11 +65,9 @@ export function SorotanDetailHeader({
             )}
           >
             <Tag className="h-2.5 w-2.5" aria-hidden />
-            {primary.label}
+            {story.tickers ?? primary.label}
           </span>
           {affected
-            .filter((c) => c.label !== primary.label)
-            .slice(0, 4)
             .map((c) => (
               <span
                 key={c.label}
@@ -102,20 +100,15 @@ export function SorotanDetailHeader({
             {story.sources.slice(0, 3).join(", ")}
             {story.sources.length > 3 && ` +${story.sources.length - 3}`}
           </span>
-        </div>
-
-        {/* Action row */}
-        <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
-          <ShareButton
-            title={story.title}
-            url={`https://rangkuman.news/sorotan/detail/${story.id}`}
-          />
-          <SavedButton
-            id={story.id}
-            kind="story"
-            publishedAt={new Date().toISOString().slice(0, 10)}
-            variant="default"
-          />
+          {/* Share button — pushed to the right edge of the meta
+              line via `ml-auto` (ShareButton doesn't accept a
+              className prop, so we wrap it). */}
+          <div className="ml-auto">
+            <ShareButton
+              title={story.title}
+              url={`${SITE_URL}sorotan/detail/${story.id}`}
+            />
+          </div>
         </div>
       </div>
 

@@ -10,7 +10,7 @@ import type {
   StoryFilter,
 } from "@/lib/api";
 import { getRelativeTime } from "@/lib/util/formatDate";
-import type { Highlight, StoryEvent } from "@/lib/mock/highlights";
+import type { Category, Highlight, StoryEvent } from "@/lib/mock/highlights";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SorotanDetailBreadcrumb } from "./SorotanDetailBreadcrumb";
@@ -133,7 +133,20 @@ function buildDisplayStory(
     // Gated to "crypto" by convention; if a future category reuses
     // this route we can derive `category` from `liveDetail.topics[0].slug`.
     category: "crypto",
-    affectedCategories: ["crypto"],
+    // Derive from `liveDetail.topics` so multi-category headlines
+    // surface their secondary categories in the badge row. The
+    // `|| ["crypto"]` fallback can't sit on the right of `.map()`
+    // — `Array.prototype.map` always returns an array (even when
+    // the source is empty), so `[] || [...]` still yields `[]`. Use
+    // an explicit length check, falling back to a single-element
+    // `["crypto"]` so the affected row never renders empty. Cast
+    // to `Category[]` because the live API doesn't narrow
+    // `StoryTopic.slug` to the closed union.
+    affectedCategories: (
+      liveDetail.topics.length > 0
+        ? liveDetail.topics.map((t) => t.slug)
+        : ["crypto"]
+    ) as Category[],
     sources: Array.from(sourcesSet),
     sourceCount: sourcesSet.size,
     // Placeholders for fields the API doesn't expose yet.
