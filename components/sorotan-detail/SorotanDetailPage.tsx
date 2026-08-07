@@ -152,7 +152,7 @@ function buildDisplayStory(
     affectedCategories: (
       liveDetail.topics.length > 0
         ? liveDetail.topics.map((t) => t.slug)
-        : ["crypto"]
+        : []
     ) as Category[],
     sources: Array.from(sourcesSet),
     sourceCount: sourcesSet.size,
