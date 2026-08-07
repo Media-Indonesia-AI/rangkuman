@@ -1,3 +1,5 @@
+"use client";
+
 /**
  * "Story" widget — multi-date stories for a ticker
  * ("Konteks emiten yang lagi berkembang"). Renders one large featured

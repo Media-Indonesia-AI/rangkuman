@@ -10,6 +10,7 @@ import {
 import { StoryHero } from "@/components/StoryHero";
 import { StoryEditorial } from "@/components/StoryEditorial";
 import { GradientDivider } from "@/components/GradientDivider";
+import { EmitenStories } from "@/components/saham";
 import { Shimmer } from "@/components/Shimmer";
 import { getRelativeTime } from "@/lib/util/formatDate";
 
@@ -305,6 +306,19 @@ export function HomeHeadlines() {
           <StoryHero highlight={leadStory} />
         </section>
       )}
+
+      {/* 📰 Story — multi-date, ticker-agnostic context threads.
+          Sits between LAYER 1 (today's lead) and LAYER 2 (sedang
+          terjadi) so the visitor first reads the lead headline,
+          then encounters the longer-running story threads the
+          headline is part of, before moving on to the next
+          cluster of recent stories. Uses the default `feed`
+          variant — borderless, flows with the home-page chrome
+          (no card wrapper needed because this widget already
+          owns its own section + header styling). */}
+      <div className="mt-8">
+        <EmitenStories storyLimit={3}/>
+      </div>
 
       {/* 📋 LAYER 2: SEDANG TERJADI — 4 berita, 2-col grid (desktop) / 1-col (mobile), with summary */}
       {sedangTerjadi.length > 0 && (

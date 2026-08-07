@@ -6,6 +6,7 @@ import { Inbox, ArrowUpRight, Flame, BookOpen } from "lucide-react";
 import type { StoryFilter } from "@/lib/api";
 import { useTopicsContext } from "@/components/topics-provider";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
+import { EmitenStories } from "@/components/saham";
 import { CryptoSectionHeader } from "./CryptoSectionHeader";
 import { CryptoFeaturedCard } from "./CryptoFeaturedCard";
 import { CryptoStoryCard } from "./CryptoStoryCard";
@@ -108,6 +109,18 @@ export function CryptoRecapTab() {
           <CryptoFeaturedCard story={lead} />
         </section>
       )}
+
+      {/* 📰 Story — multi-date, ticker-agnostic context
+          threads. Sits between LAYER 1 (today's lead) and
+          LAYER 2 (sedang terjadi) so the visitor first reads
+          the lead headline, then encounters the longer-running
+          story threads the headline is part of, before moving
+          on to the next cluster of recent stories. Uses the
+          default `feed` variant — borderless, flows with the
+          tab chrome. */}
+      <div className="mt-8">
+        <EmitenStories storyLimit={3}/>
+      </div>
 
       {/* 📋 LAYER 2: SEDANG TERJADI — 4 cards in 2-col */}
       {sedangTerjadi.length > 0 && (
