@@ -42,7 +42,7 @@ export function StoryEditorial({
         className,
       )}
     >
-      <Link href={`/crypto/detail/${highlight.id}`} className="flex h-full flex-col">
+      <Link href={`/sorotan/detail/${highlight.id}`} className="flex h-full flex-col">
         {/* Gradient header strip with icon */}
         <div
           className={cn(

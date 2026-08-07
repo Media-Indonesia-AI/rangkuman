@@ -1382,7 +1382,7 @@ export function getTopHighlights(n: number = 5): Highlight[] {
   return [...TODAY_HIGHLIGHTS].sort((a, b) => a.rank - b.rank).slice(0, n);
 }
 
-/** Get a single highlight by id (for /crypto/detail/[id]).
+/** Get a single highlight by id (for /sorotan/detail/[id]).
  *
  *  Searches the FULL story catalog (today's top stories + per-category
  *  archives) so it stays consistent with `generateStaticParams` —

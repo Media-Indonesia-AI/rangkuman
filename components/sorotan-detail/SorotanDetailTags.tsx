@@ -1,4 +1,4 @@
-interface CryptoDetailTagsProps {
+interface SorotanDetailTagsProps {
   /** Short tag strings (without the `#` prefix). */
   tags: string[];
 }
@@ -8,7 +8,7 @@ interface CryptoDetailTagsProps {
  * leading `#`. Renders nothing when the tag list is empty so callers
  * don't need a separate guard.
  */
-export function CryptoDetailTags({ tags }: CryptoDetailTagsProps) {
+export function SorotanDetailTags({ tags }: SorotanDetailTagsProps) {
   if (tags.length === 0) return null;
 
   return (

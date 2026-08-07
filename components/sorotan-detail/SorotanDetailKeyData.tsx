@@ -1,7 +1,7 @@
 import { KeyDataBlock } from "@/components/KeyDataBlock";
 import { KeywordItem } from "@/lib/api/types/story";
 
-interface CryptoDetailKeyDataProps {
+interface SorotanDetailKeyDataProps {
   keywords: KeywordItem[];
 }
 
@@ -10,7 +10,7 @@ interface CryptoDetailKeyDataProps {
  * caller passes an empty array (KeyDataBlock itself doesn't render
  * a guard — this keeps the JSX at the call site clean).
  */
-export function CryptoDetailKeyData({ keywords }: CryptoDetailKeyDataProps) {
+export function SorotanDetailKeyData({ keywords }: SorotanDetailKeyDataProps) {
   if (keywords.length === 0) return null;
   return (
     <div className="mt-4">

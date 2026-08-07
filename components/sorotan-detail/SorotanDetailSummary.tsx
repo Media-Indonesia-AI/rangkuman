@@ -2,7 +2,7 @@
 
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
-interface CryptoDetailSummaryProps {
+interface SorotanDetailSummaryProps {
   /** 1-2 sentence summary, rendered as the lead paragraph. */
   summary: string;
 }
@@ -17,7 +17,7 @@ interface CryptoDetailSummaryProps {
  * bounding box so the blur + card sit nicely above the lead
  * paragraph instead of collapsing to a 1px strip.
  */
-export function CryptoDetailSummary({ summary }: CryptoDetailSummaryProps) {
+export function SorotanDetailSummary({ summary }: SorotanDetailSummaryProps) {
   return (
     <section
       aria-label="Apa yang terjadi"

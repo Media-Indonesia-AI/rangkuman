@@ -20,19 +20,19 @@ interface CoinTickerCardProps {
  * The whole card is a single `<Link>` so the click hit area
  * covers the entire pill, mirroring the `CoinPillBar` /
  * `TickerRow` conventions. The link target is the per-coin recap
- * detail at `/crypto/detail/{recapId}`; the ID is looked up from
+ * detail at `/sorotan/detail/{recapId}`; the ID is looked up from
  * `COIN_KODE_TO_STORY_ID`. For tickers the Pasar tab surfaces
  * that aren't in the lookup, the card renders as unclickable
  * (empty `href`).
  */
 export function CoinTickerCard({ coin }: CoinTickerCardProps) {
   const isUp = coin.changePercent >= 0;
-  const href = `/crypto/detail/${COIN_KODE_TO_STORY_ID[coin.kode] ?? ""}`;
+  const href = `/sorotan/detail/${COIN_KODE_TO_STORY_ID[coin.kode] ?? ""}`;
   return (
     <Link
       href={href}
-      aria-disabled={href === "/crypto/detail/" ? "true" : undefined}
-      tabIndex={href === "/crypto/detail/" ? -1 : undefined}
+      aria-disabled={href === "/sorotan/detail/" ? "true" : undefined}
+      tabIndex={href === "/sorotan/detail/" ? -1 : undefined}
       className="group flex items-center justify-between gap-2 rounded-lg border border-border bg-bg-secondary px-3 py-2.5 transition-colors hover:border-border-strong"
     >
       <div className="flex items-center gap-2 min-w-0">

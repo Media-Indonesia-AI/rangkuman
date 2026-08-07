@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { CryptoDetailPage } from "@/components/crypto-detail";
+import { SorotanDetailPage } from "@/components/sorotan-detail";
 import { loadHeadlineById } from "@/lib/api/cache";
 
 interface PageProps {
@@ -8,7 +8,7 @@ interface PageProps {
 
 /**
  * Thin route entry — defers ALL data fetching to the client-side
- * `<CryptoDetailPage storyId={...} />` orchestrator. The orchestrator
+ * `<SorotanDetailPage storyId={...} />` orchestrator. The orchestrator
  * owns `useHeadlineId()` (parent headline) + `useListStory(headline_id)`
  * (related stories) and composes them into a `Highlight` shape that
  * the page widgets consume.
@@ -23,6 +23,6 @@ interface PageProps {
  * orchestrator surfaces that as "no content" and the global
  * `<ErrorBoundary />` can catch it).
  */
-export default function CryptoDetailRoutePage({ params }: PageProps) {
-  return <CryptoDetailPage storyId={params.id} />;
+export default function SorotanDetailRoutePage({ params }: PageProps) {
+  return <SorotanDetailPage storyId={params.id} />;
 }

@@ -4,7 +4,7 @@ import type { PolicyStatus } from "./policy-tracker";
  * Mock related stories for each policy topic.
  * These power the "Lihat cerita" view on the detail page.
  * They are story-shaped (title, summary, timeAgo, sources) but DO NOT
- * need to match the /crypto/detail/[id]/ route — the detail page renders them inline.
+ * need to match the /sorotan/detail/[id]/ route — the detail page renders them inline.
  */
 
 export interface PolicyStory {

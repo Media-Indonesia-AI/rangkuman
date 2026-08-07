@@ -5,7 +5,7 @@ import { initialsOf } from "@/lib/util/formatMedia";
 import { Shimmer } from "@/components/Shimmer";
 import type { EmbeddedStory, StoryArticle } from "@/lib/api";
 
-interface CryptoDetailSourcesProps {
+interface SorotanDetailSourcesProps {
   /** Stories fetched via `useListStory(headline_id)`. The widget
    *  flattens each story's `articles[]` and groups by
    *  `source_name` to build the media-grouped view. The same
@@ -27,7 +27,7 @@ const SHIMMER_ARTICLES_PER_GROUP = 2;
 
 /** Skeleton shown while stories are in flight. Mirrors the real
  *  group + article-row structure so the layout doesn't shift. */
-function CryptoDetailSourcesShimmer() {
+function SorotanDetailSourcesShimmer() {
   return (
     <div className="space-y-3">
       {Array.from({ length: SHIMMER_GROUP_COUNT }).map((_, i) => (
@@ -54,7 +54,7 @@ function CryptoDetailSourcesShimmer() {
 }
 
 /**
- * "Daftar sumber" — articles grouped by media for the crypto detail
+ * "Daftar sumber" — articles grouped by media for the sorotan detail
  * page. Mirrors the structure of `ArticlesByMediaWidget` on the
  * stock side:
  *
@@ -71,10 +71,10 @@ function CryptoDetailSourcesShimmer() {
  * orchestrator already has on its hands (it feeds the timeline
  * section as well), so no extra fetch is issued here.
  */
-export function CryptoDetailSources({
+export function SorotanDetailSources({
   stories,
   isLoading = false,
-}: CryptoDetailSourcesProps) {
+}: SorotanDetailSourcesProps) {
   // Flatten stories → articles, group by source_name.
   const groups = new Map<string, StoryArticle[]>();
   for (const story of stories) {
@@ -101,7 +101,7 @@ export function CryptoDetailSources({
       </header>
 
       {isLoading ? (
-        <CryptoDetailSourcesShimmer />
+        <SorotanDetailSourcesShimmer />
       ) : grouped.length > 0 ? (
         <div className="space-y-3">
           {grouped.map(({ media, items }) => (

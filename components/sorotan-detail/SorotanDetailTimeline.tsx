@@ -1,9 +1,9 @@
 import type { StoryEvent } from "@/lib/mock/highlights";
 import { StoryTimeline } from "@/components/StoryTimeline";
 
-interface CryptoDetailTimelineProps {
+interface SorotanDetailTimelineProps {
   /** Pre-computed events for this headline. The orchestrator
-   *  (`CryptoDetailPage`) fetches them via `useListStory(headline_id)`
+   *  (`SorotanDetailPage`) fetches them via `useListStory(headline_id)`
    *  and projects each `EmbeddedStory` into a `StoryEvent` — this
    *  widget just renders the list as-is. */
   events: StoryEvent[];
@@ -19,10 +19,10 @@ interface CryptoDetailTimelineProps {
  * meta label + the `<StoryTimeline />` widget itself. Renders only
  * when there's at least one event to show.
  */
-export function CryptoDetailTimeline({
+export function SorotanDetailTimeline({
   events,
   sourceCount = 0,
-}: CryptoDetailTimelineProps) {
+}: SorotanDetailTimelineProps) {
   if (events.length === 0) return null;
 
   return (

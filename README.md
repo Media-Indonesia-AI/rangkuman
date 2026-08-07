@@ -301,7 +301,7 @@ Object.keys(localStorage)
 ### 6. Routing & static export
 
 - **121 routes total**, all pre-rendered as static HTML
-- Dynamic routes: `/stock/[kode]` (34), `/sektor/[slug]` (12), `/crypto/detail/[id]` (50), `/kebijakan/[slug]` (8)
+- Dynamic routes: `/stock/[kode]` (34), `/sektor/[slug]` (12), `/sorotan/detail/[id]` (50), `/kebijakan/[slug]` (8)
 - Trailing slash enabled di `next.config.js`
 - Custom 404 page di `app/not-found.tsx`
 
@@ -333,7 +333,7 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 
 ### Public
 - `/` — Home (Sorotan + Sedang Terjadi + Cerita Lain)
-- `/crypto/detail/[id]/` — 50 story detail pages
+- `/sorotan/detail/[id]/` — 50 story detail pages
 - `/saham/` — Stocks (sub-tab: Recap | Sektor)
 - `/bisnis/`, `/ekonomi/`, `/kebijakan/`, `/komoditas/` — Category pages
 - `/kebijakan/[slug]/` — 8 policy detail pages
@@ -418,7 +418,7 @@ npm run build      # generates ./out/
 | `/` (homepage) | 118 kB |
 | `/kebijakan/`, `/bisnis/`, dll | 118 kB |
 | `/kebijakan/[slug]/` | 118 kB (8 pages) |
-| `/crypto/detail/[id]/` | 120 kB (50 pages) |
+| `/sorotan/detail/[id]/` | 120 kB (50 pages) |
 | `/stock/[kode]/` | 118 kB (34 pages) |
 | `/sektor/[slug]/` | 118 kB (12 pages) |
 | `/saham/` | 157 kB |

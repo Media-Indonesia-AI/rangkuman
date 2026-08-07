@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
-interface CryptoDetailBreadcrumbProps {
+interface SorotanDetailBreadcrumbProps {
   /** Story rank label, shown as the last crumb. */
   rank: number;
 }
@@ -11,7 +11,7 @@ interface CryptoDetailBreadcrumbProps {
  * Renders as a small mono-caps nav with chevron separators. Last
  * crumb is plain text (current page); previous two are `<Link>`.
  */
-export function CryptoDetailBreadcrumb({ rank }: CryptoDetailBreadcrumbProps) {
+export function SorotanDetailBreadcrumb({ rank }: SorotanDetailBreadcrumbProps) {
   return (
     <nav
       aria-label="Breadcrumb"

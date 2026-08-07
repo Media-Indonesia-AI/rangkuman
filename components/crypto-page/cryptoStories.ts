@@ -3,7 +3,7 @@
  * widgets (not in `lib/mock/crypto.ts`) because the page-level
  * stories carry page-specific display fields (`timeAgo`, `readTime`,
  * `flag`, the per-story title/summary) that are unrelated to the
- * structured `CoinRecap` archive consumed by `/crypto/detail/[id]` and
+ * structured `CoinRecap` archive consumed by `/sorotan/detail/[id]` and
  * `/crypto/{date}` views.
  */
 

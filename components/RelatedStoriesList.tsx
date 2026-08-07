@@ -57,7 +57,7 @@ const HERO_GRADIENT: Record<string, string> = {
  *     (one story ≈ one article count baseline; the crypto adapter
  *     uses the same default),
  *   - a category slug         → `category: "crypto"`. The list
- *     is only rendered from the crypto-detail sidebar today, and
+ *     is only rendered from the sorotan-detail sidebar today, and
  *     the `Category` type is a closed union, so anything that
  *     isn't one of the seven known slugs would break
  *     `CATEGORY_CONFIG[category]` downstream. If a future caller
@@ -106,7 +106,7 @@ export function RelatedStoriesList({
   // When the caller hands us a `topicId`, fire a 4-row
   // `useHeadlines(topic_id=…)` fetch and let the live result
   // shadow the `stories` prop. The prop stays in place as a
-  // fallback so existing callers (the crypto-detail sidebar
+  // fallback so existing callers (the sorotan-detail sidebar
   // passes a pre-filtered `related[]` from its orchestrator) keep
   // rendering until — or instead of — the live response lands.
   //
@@ -133,7 +133,7 @@ export function RelatedStoriesList({
   //   - live: hook returned ≥1 row for the topic — use those
   //     (already adapted to the `Highlight` shape below).
   //   - mock: hook not active or returned empty — fall back to the
-  //     prop. This is the path the existing `CryptoDetailSidebar`
+  //     prop. This is the path the existing `SorotanDetailSidebar`
   //     call site takes today.
   //
   // Either branch drops the current headline id BEFORE mapping, so
@@ -188,7 +188,7 @@ export function RelatedStoriesList({
                 className={i < filtered.length - 1 ? "border-b border-border/50" : ""}
               >
                 <Link
-                  href={`/crypto/detail/${s.id}`}
+                  href={`/sorotan/detail/${s.id}`}
                   className="group block px-3 py-3 transition-colors hover:bg-bg-tertiary/40"
                 >
                   {/* Top accent strip (mini hero) */}
@@ -234,7 +234,7 @@ export function RelatedStoriesList({
               className={i < filtered.length - 1 ? "border-b border-border/50" : ""}
             >
               <Link
-                href={`/crypto/detail/${s.id}`}
+                href={`/sorotan/detail/${s.id}`}
                 className="group block px-3 py-2.5 transition-colors hover:bg-bg-tertiary/40"
               >
                 <div className="mb-1 flex items-center justify-between gap-1.5">

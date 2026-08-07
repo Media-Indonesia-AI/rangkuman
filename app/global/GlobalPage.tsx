@@ -204,7 +204,7 @@ function FeaturedGlobalCard({ story }: { story: ReturnType<typeof getStoriesByCa
   return (
     <article className="group relative overflow-hidden rounded-lg border border-border-strong bg-bg-secondary">
       <Link
-        href={`/crypto/detail/${story.id}`}
+        href={`/sorotan/detail/${story.id}`}
         className="block"
       >
         {/* Gradient header */}
@@ -283,7 +283,7 @@ function GlobalStoryCard({
 }) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong">
-      <Link href={`/crypto/detail/${story.id}`} className="flex h-full flex-col">
+      <Link href={`/sorotan/detail/${story.id}`} className="flex h-full flex-col">
         <div
           className="relative flex h-1.5 w-full bg-hero-global"
           aria-hidden

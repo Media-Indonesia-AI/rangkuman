@@ -50,7 +50,7 @@ Buka di browser. Test:
 - [ ] Homepage load
 - [ ] Navbar: klik semua tab (Saham, Bisnis, Ekonomi, Kebijakan, Global, Crypto)
 - [ ] Theme toggle: switch light/dark
-- [ ] Story page: buka `/crypto/detail/[id]/`
+- [ ] Story page: buka `/sorotan/detail/[id]/`
 - [ ] Detail page: `/kebijakan/kenaikan-bbm-subsidi/`
 - [ ] localStorage: login (mock), watchlist, saved
 

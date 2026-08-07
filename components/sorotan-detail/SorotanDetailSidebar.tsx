@@ -1,7 +1,7 @@
 import { MarketSnapshotCompact } from "@/components/MarketSnapshotCompact";
 import { RelatedStoriesList } from "@/components/RelatedStoriesList";
 
-interface CryptoDetailSidebarProps {
+interface SorotanDetailSidebarProps {
   /** Story id to exclude from related list (passed through). */
   storyId: string;
 }
@@ -18,7 +18,7 @@ interface CryptoDetailSidebarProps {
  * the page renders, so the grid stays symmetric regardless of
  * which card is hydrated.
  */
-export function CryptoDetailSidebar({ storyId }: CryptoDetailSidebarProps) {
+export function SorotanDetailSidebar({ storyId }: SorotanDetailSidebarProps) {
   return (
     <aside className="min-w-0 space-y-4 lg:col-span-4">
       <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">

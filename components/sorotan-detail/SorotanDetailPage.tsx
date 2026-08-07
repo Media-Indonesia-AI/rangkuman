@@ -13,14 +13,14 @@ import { getRelativeTime } from "@/lib/util/formatDate";
 import type { Highlight, StoryEvent } from "@/lib/mock/highlights";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { CryptoDetailBreadcrumb } from "./CryptoDetailBreadcrumb";
-import { CryptoDetailHeader } from "./CryptoDetailHeader";
-import { CryptoDetailSummary } from "./CryptoDetailSummary";
-import { CryptoDetailTags } from "./CryptoDetailTags";
-import { CryptoDetailKeyData } from "./CryptoDetailKeyData";
-import { CryptoDetailTimeline } from "./CryptoDetailTimeline";
-import { CryptoDetailSources } from "./CryptoDetailSources";
-import { CryptoDetailSidebar } from "./CryptoDetailSidebar";
+import { SorotanDetailBreadcrumb } from "./SorotanDetailBreadcrumb";
+import { SorotanDetailHeader } from "./SorotanDetailHeader";
+import { SorotanDetailSummary } from "./SorotanDetailSummary";
+import { SorotanDetailTags } from "./SorotanDetailTags";
+import { SorotanDetailKeyData } from "./SorotanDetailKeyData";
+import { SorotanDetailTimeline } from "./SorotanDetailTimeline";
+import { SorotanDetailSources } from "./SorotanDetailSources";
+import { SorotanDetailSidebar } from "./SorotanDetailSidebar";
 
 interface CategoryConfig {
   label: string;
@@ -39,7 +39,7 @@ const DEFAULT_CATEGORY: CategoryConfig = {
   colorClass: "text-cat-crypto",
 };
 
-export interface CryptoDetailPageProps {
+export interface SorotanDetailPageProps {
   /** Headline ID — same as the route's `[id]` segment. Drives both
    *  the `useHeadlineId` (parent headline) and `useListStory`
    *  (related stories) fetches. */
@@ -64,7 +64,7 @@ function formatTime(iso: string): string {
 
 /** Empty-state placeholder returned while `useHeadlineId` is still
  *  loading. Widgets naturally render nothing for fields they don't
- *  have (`CryptoDetailKeyData` returns `null` for empty arrays, etc.)
+ *  have (`SorotanDetailKeyData` returns `null` for empty arrays, etc.)
  *  so the loading window is brief and unflashy. */
 function emptyDisplayStory(storyId: string): Highlight {
   return {
@@ -97,7 +97,7 @@ function emptyDisplayStory(storyId: string): Highlight {
  * Fields the API doesn't expose yet (`keyData`, `rank`, `flag`,
  * `readTime`) get sensible defaults so the corresponding widgets
  * either render with what they have or naturally fall back to
- * empty (e.g. `CryptoDetailKeyData` already renders `null` when
+ * empty (e.g. `SorotanDetailKeyData` already renders `null` when
  * `points.length === 0`).
  *
  * `events[]` is built from the `stories` array (each story →
@@ -143,7 +143,7 @@ function buildDisplayStory(
     // `StoryItem.keywords: string[]` contract) or the richer
     // `HeadlineKeyword[]` object form used by the `last-7-days`
     // endpoint (`{id, label, value, description, sentiment}`).
-    // `CryptoDetailTags` (and the rest of the consumer chain) treats
+    // `SorotanDetailTags` (and the rest of the consumer chain) treats
     // this field as a flat `string[]`, so we normalize here at the
     // orchestrator boundary — picking `.label` when an entry is an
     // object, falling back to the raw string otherwise. Without
@@ -170,7 +170,7 @@ function buildDisplayStory(
 }
 
 /**
- * `/crypto/detail/[id]` detail page — thin client-side orchestrator
+ * `/sorotan/detail/[id]` detail page — thin client-side orchestrator
  * that owns ALL data fetching for the route.
  *
  * Two fetches fire on mount:
@@ -187,14 +187,14 @@ function buildDisplayStory(
  * `story`-driven API — none of them need to know whether a field
  * is live or not.
  *
- * The route entry (`app/crypto/detail/[id]/page.tsx`) is a thin
+ * The route entry (`app/sorotan/detail/[id]/page.tsx`) is a thin
  * wrapper that just passes `params.id` here + handles
  * `generateMetadata` (a server-only API call).
  *
  * Layout: sticky right rail (`lg:col-span-4`) + main column
  * (`lg:col-span-8`). On smaller breakpoints the sidebar stacks below.
  */
-export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
+export function SorotanDetailPage({ storyId }: SorotanDetailPageProps) {
   const { detail: liveDetail } = useHeadlineId();
 
   // Server-side `generateMetadata` runs against the same API host
@@ -256,31 +256,31 @@ export function CryptoDetailPage({ storyId }: CryptoDetailPageProps) {
           Rangkuman &mdash; Cerita: {displayStory.title}
         </h1>
 
-        <CryptoDetailBreadcrumb rank={displayStory.rank} />
+        <SorotanDetailBreadcrumb rank={displayStory.rank} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* MAIN COLUMN */}
           <article className="min-w-0 lg:col-span-8">
-            <CryptoDetailHeader
+            <SorotanDetailHeader
               story={displayStory}
               primary={primary}
               affected={affected}
             />
 
-            <CryptoDetailSummary summary={displayStory.summary} />
-            <CryptoDetailKeyData keywords={liveDetail?.keywords ?? []} />
-            <CryptoDetailTags tags={displayStory.tags} />
+            <SorotanDetailSummary summary={displayStory.summary} />
+            <SorotanDetailKeyData keywords={liveDetail?.keywords ?? []} />
+            <SorotanDetailTags tags={displayStory.tags} />
 
-            <CryptoDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
+            <SorotanDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
 
-            <CryptoDetailSources
+            <SorotanDetailSources
               stories={stories}
               isLoading={isLoadingStories}
             />
           </article>
 
           {/* SIDEBAR (sticky on lg+) — fetches its own data */}
-          <CryptoDetailSidebar storyId={displayStory.id} />
+          <SorotanDetailSidebar storyId={displayStory.id} />
         </div>
       </main>
       <Footer />

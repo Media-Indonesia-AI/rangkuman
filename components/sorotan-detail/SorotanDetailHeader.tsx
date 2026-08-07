@@ -12,7 +12,7 @@ interface CategoryConfig {
   colorClass: string;
 }
 
-interface CryptoDetailHeaderProps {
+interface SorotanDetailHeaderProps {
   story: Highlight;
   primary: CategoryConfig;
   /** De-duplicated list of affected category configs (excluding `primary`). */
@@ -36,11 +36,11 @@ const HERO_GRADIENT: Record<string, string> = {
  * Server component: the underlying `<ShareButton>` / `<SavedButton>`
  * are the only client islands and they handle their own state.
  */
-export function CryptoDetailHeader({
+export function SorotanDetailHeader({
   story,
   primary,
   affected,
-}: CryptoDetailHeaderProps) {
+}: SorotanDetailHeaderProps) {
   return (
     <header className="glass-card relative overflow-hidden rounded-xl border border-border-strong bg-bg-secondary p-5 sm:p-7">
       {/* Top hero gradient strip */}
@@ -108,7 +108,7 @@ export function CryptoDetailHeader({
         <div className="mt-4 flex items-center gap-2 border-t border-border pt-3">
           <ShareButton
             title={story.title}
-            url={`https://rangkuman.news/crypto/detail/${story.id}`}
+            url={`https://rangkuman.news/sorotan/detail/${story.id}`}
           />
           <SavedButton
             id={story.id}
