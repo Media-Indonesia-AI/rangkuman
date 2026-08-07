@@ -14,9 +14,10 @@ interface BackLink {
 
 /**
  * Map the inbound `Referer` header to a (label, href) pair for the
- * detail page's breadcrumb. Two known entry points today:
+ * detail page's breadcrumb. Three known entry points today:
  *
  *   - `/crypto`        — recap tab on `/components/crypto-page/CryptoRecapTab.tsx`
+ *   - `/saham`         — recap tab on `/app/saham/page.tsx`
  *   - `/`              — homepage (`/app/HomePage.tsx`) headlines
  *
  * Anything else (direct visit, external link, share URL) falls back
@@ -32,6 +33,9 @@ function backLinkFromReferer(referer: string | null): BackLink {
     const path = new URL(referer).pathname;
     if (path === "/crypto" || path.startsWith("/crypto/")) {
       return { label: "Kembali ke Crypto", href: "/crypto" };
+    }
+    if (path === "/saham" || path.startsWith("/saham/")) {
+      return { label: "Kembali ke Saham", href: "/saham" };
     }
     if (path === "/" || path === "") {
       return { label: "Kembali ke Beranda", href: "/" };
@@ -71,7 +75,6 @@ export default function SorotanDetailRoutePage({ params }: PageProps) {
     <SorotanDetailPage
       storyId={params.id}
       backLabel={backLink.label}
-      backHref={backLink.href}
     />
   );
 }
