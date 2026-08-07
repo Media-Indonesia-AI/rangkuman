@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
@@ -200,29 +201,41 @@ export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
                     {dayStories.map((s) => (
                       <li
                         key={s.id}
-                        className="rounded-md border border-border bg-bg-tertiary/40 p-2.5"
+                        className="rounded-md border border-border bg-bg-tertiary/40 p-2.5 transition-colors hover:border-border-strong hover:bg-bg-tertiary"
                       >
-                        <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className={cn(
-                              "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
-                              sentimentPillClass(s.sentiment),
-                            )}
-                          >
-                            {s.sentiment}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-muted">
-                            {format(parseISO(s.created_at), "HH:mm", {
-                              locale: idLocale,
-                            })}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-muted">
-                            {s.keywords.length} kata kunci
-                          </span>
-                        </div>
-                        <p className="text-[11.5px] leading-snug text-text-primary">
-                          {s.title}
-                        </p>
+                        {/* Whole-row link to the Sorotan detail page
+                            for this headline. The `<Link>` wraps
+                            the chips + title so a click anywhere on
+                            the row navigates; `aria-label` gives
+                            screen readers the headline text since
+                            the link has no visible link copy. */}
+                        <Link
+                          href={`/sorotan/detail/${s.id}`}
+                          aria-label={s.title}
+                          className="block"
+                        >
+                          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={cn(
+                                "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
+                                sentimentPillClass(s.sentiment),
+                              )}
+                            >
+                              {s.sentiment}
+                            </span>
+                            <span className="font-mono text-[10px] text-text-muted">
+                              {format(parseISO(s.created_at), "HH:mm", {
+                                locale: idLocale,
+                              })}
+                            </span>
+                            <span className="font-mono text-[10px] text-text-muted">
+                              {s.keywords.length} kata kunci
+                            </span>
+                          </div>
+                          <p className="text-[11.5px] leading-snug text-text-primary">
+                            {s.title}
+                          </p>
+                        </Link>
                       </li>
                     ))}
                   </ul>
