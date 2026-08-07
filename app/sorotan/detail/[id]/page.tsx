@@ -1,9 +1,45 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { SorotanDetailPage } from "@/components/sorotan-detail";
 import { loadHeadlineById } from "@/lib/api/cache";
 
 interface PageProps {
   params: { id: string };
+}
+
+interface BackLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Map the inbound `Referer` header to a (label, href) pair for the
+ * detail page's breadcrumb. Two known entry points today:
+ *
+ *   - `/crypto`        — recap tab on `/components/crypto-page/CryptoRecapTab.tsx`
+ *   - `/`              — homepage (`/app/HomePage.tsx`) headlines
+ *
+ * Anything else (direct visit, external link, share URL) falls back
+ * to "Kembali ke Beranda" so the breadcrumb never lands on a link
+ * that doesn't exist. The referer is sent by the browser on hard
+ * loads AND by Next.js on RSC payload requests for soft
+ * navigations, so this works for both.
+ */
+function backLinkFromReferer(referer: string | null): BackLink {
+  const FALLBACK: BackLink = { label: "Kembali ke Beranda", href: "/" };
+  if (!referer) return FALLBACK;
+  try {
+    const path = new URL(referer).pathname;
+    if (path === "/crypto" || path.startsWith("/crypto/")) {
+      return { label: "Kembali ke Crypto", href: "/crypto" };
+    }
+    if (path === "/" || path === "") {
+      return { label: "Kembali ke Beranda", href: "/" };
+    }
+    return FALLBACK;
+  } catch {
+    return FALLBACK;
+  }
 }
 
 /**
@@ -22,7 +58,20 @@ interface PageProps {
  * reserved for the rare case where the API itself fails (the
  * orchestrator surfaces that as "no content" and the global
  * `<ErrorBoundary />` can catch it).
+ *
+ * Also reads the inbound `Referer` header (server-side, via
+ * `headers()`) to compute the breadcrumb's back-link label + href
+ * so it follows where the visitor came from instead of being
+ * hardcoded.
  */
 export default function SorotanDetailRoutePage({ params }: PageProps) {
-  return <SorotanDetailPage storyId={params.id} />;
+  const referer = headers().get("referer");
+  const backLink = backLinkFromReferer(referer);
+  return (
+    <SorotanDetailPage
+      storyId={params.id}
+      backLabel={backLink.label}
+      backHref={backLink.href}
+    />
+  );
 }

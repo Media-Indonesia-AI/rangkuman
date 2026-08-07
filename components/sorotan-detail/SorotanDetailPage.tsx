@@ -44,6 +44,13 @@ export interface SorotanDetailPageProps {
    *  the `useHeadlineId` (parent headline) and `useListStory`
    *  (related stories) fetches. */
   storyId: string;
+  /** Breadcrumb "back" label, derived by the route entry from the
+   *  inbound `Referer` header so the copy follows where the
+   *  visitor came from (e.g. "Kembali ke Crypto" when the
+   *  previous page was `/crypto`, "Kembali ke Beranda" for `/`). */
+  backLabel: string;
+  /** Breadcrumb "back" href, paired with `backLabel`. */
+  backHref: string;
 }
 
 /** Format an ISO timestamp as `HH:MM` (id-ID locale, 24h). Used
@@ -207,7 +214,7 @@ function buildDisplayStory(
  * Layout: sticky right rail (`lg:col-span-4`) + main column
  * (`lg:col-span-8`). On smaller breakpoints the sidebar stacks below.
  */
-export function SorotanDetailPage({ storyId }: SorotanDetailPageProps) {
+export function SorotanDetailPage({ storyId, backLabel, backHref }: SorotanDetailPageProps) {
   const { detail: liveDetail } = useHeadlineId();
 
   // Server-side `generateMetadata` runs against the same API host
@@ -269,7 +276,11 @@ export function SorotanDetailPage({ storyId }: SorotanDetailPageProps) {
           Rangkuman &mdash; Cerita: {displayStory.title}
         </h1>
 
-        <SorotanDetailBreadcrumb rank={displayStory.rank} />
+        <SorotanDetailBreadcrumb
+          rank={displayStory.rank}
+          backLabel={backLabel}
+          backHref={backHref}
+        />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* MAIN COLUMN */}
