@@ -43,6 +43,16 @@ interface LatestHeadlinesRowProps {
  * would warn, so the overlay split is the cleaner structural
  * choice.
  *
+ * `pointer-events-none` on the content wrapper is the critical
+ * piece — without it the z-10 wrapper covers the z-0 link and
+ * intercepts every click on the chips/headline, breaking
+ * navigation. With `pointer-events-none`, clicks pass through
+ * the chips/headline straight to the link behind them. The
+ * ShareButton opts back in with `pointer-events-auto` so it
+ * stays interactive. Hover styles (`group-hover:*`) keep
+ * working because CSS `:hover` propagates to ancestors when the
+ * link underneath receives the hover.
+ *
  * `group` lives on the `<li>` so the title's `group-hover:text-brand`
  * still fires when the visitor hovers anywhere on the row (the
  * overlay link's hover area covers the full `<li>`).
@@ -58,11 +68,12 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
   return (
     <li className={cn("group relative", !isLast && "border-b border-border")}>
       {/* Whole-row link overlay — covers the `<li>` so the
-          full row is clickable, but renders behind the visual
-          content (rail/dot/chips/share sit at z-10). The link
-          has no padding/background of its own — the visible
-          hover state comes from the row's own hover styles
-          driven by `group-hover` on the title below. */}
+          full row is clickable. Sits at z-0 so the visual
+          content (chips, headline, share) can paint above it
+          via z-10, but with `pointer-events-none` on the
+          content wrapper below, clicks fall through to this
+          link. The visible hover state comes from `group-hover`
+          styles driven by the `<li>`'s group class. */}
       <Link
         href={`/sorotan/detail/${story.id}`}
         aria-label={story.title}
@@ -70,8 +81,11 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
       />
 
       {/* Visual content row — relative so its descendants can
-          stack above the link overlay. */}
-      <div className="relative z-10 flex items-start gap-2 pl-8 pr-3 py-2.5 transition-colors group-hover:bg-bg-tertiary">
+          stack above the link overlay. `pointer-events-none`
+          passes clicks through to the overlay link; the
+          ShareButton opts back in via `pointer-events-auto`
+          on its wrapper below. */}
+      <div className="pointer-events-none relative z-10 flex items-start gap-2 pl-8 pr-3 py-2.5 transition-colors group-hover:bg-bg-tertiary">
         {/* Vertical rail */}
         <span
           aria-hidden
@@ -110,20 +124,22 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
           </p>
         </div>
 
-        {/* Per-row share button. Sits at z-10 so it stays
-            clickable above the row's overlay link; ShareButton's
-            own `onClick` calls `preventDefault` + `stopPropagation`
-            as a belt-and-braces guard against the overlay still
-            receiving the click. `tone` is omitted so the button
-            follows the current theme — same as the parent
-            card's `bg-bg-secondary` background. URL points at the
-            sorotan detail page for this story so receivers land
-            on the same headline. */}
-        <ShareButton
-          variant="xs"
-          title={story.title}
-          url={`${SITE_URL}/sorotan/detail/${story.id}`}
-        />
+        {/* Per-row share button. `pointer-events-auto`
+            re-enables pointer events on this wrapper (the
+            surrounding content wrapper is `pointer-events-none`
+            so clicks fall through to the overlay link). URL
+            points at the sorotan detail page for this story
+            so receivers land on the same headline. `tone` is
+            omitted so the button follows the current theme —
+            same as the parent card's `bg-bg-secondary`
+            background. */}
+        <div className="pointer-events-auto">
+          <ShareButton
+            variant="xs"
+            title={story.title}
+            url={`${SITE_URL}/sorotan/detail/${story.id}`}
+          />
+        </div>
       </div>
     </li>
   );

@@ -112,6 +112,7 @@ export function StockCardList({
             <StockCardActions
               tone="dark"
               href={href}
+              variant="xs"
               title={`Rangkuman — ${recap.ringkasan}`}
             />
           </div>
@@ -139,6 +140,7 @@ export function StockCardList({
           <StockCardActions
             tone="dark"
             href={href}
+            variant="xs"
             title={`Rangkuman — ${recap.ringkasan}`}
           />
         </div>

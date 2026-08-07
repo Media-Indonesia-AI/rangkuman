@@ -16,6 +16,11 @@ interface StockCardActionsProps {
    *  to `<ShareButton />` so the action button matches the
    *  card's surface. */
   tone: "light" | "dark";
+  /** Share button size — `compact` (default) for normal cards,
+   *  `xs` for dense list rows where a smaller footprint fits
+   *  the row layout better. See `<ShareButton />` for the full
+   *  size grid. */
+  variant?: "xs" | "compact";
 }
 
 /**
@@ -26,7 +31,12 @@ interface StockCardActionsProps {
  * to cancel the overlay link's navigation, so sharing never
  * accidentally opens the detail page.
  */
-export function StockCardActions({ href, title, tone }: StockCardActionsProps) {
+export function StockCardActions({
+  href,
+  title,
+  tone,
+  variant = "compact",
+}: StockCardActionsProps) {
   return (
     <div className="relative z-10 flex shrink-0 items-center gap-1">
       {/*
@@ -47,7 +57,12 @@ export function StockCardActions({ href, title, tone }: StockCardActionsProps) {
         const today = new Date().toISOString().slice(0, 10); // yyyy-MM-dd
         const url = `${SITE_URL}${href}/${today}`;
         return (
-          <ShareButton url={url} title={title} tone={tone} />
+          <ShareButton
+            url={url}
+            title={title}
+            tone={tone}
+            variant={variant}
+          />
         );
       })()}
     </div>
