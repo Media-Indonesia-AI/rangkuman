@@ -14,11 +14,19 @@ interface BackLink {
 
 /**
  * Map the inbound `Referer` header to a (label, href) pair for the
- * detail page's breadcrumb. Three known entry points today:
+ * detail page's breadcrumb. Mirrors the entry-point list from
+ * `app/story/[id]/page.tsx`. Known entry points today:
  *
- *   - `/crypto`        — recap tab on `/components/crypto-page/CryptoRecapTab.tsx`
- *   - `/saham`         — recap tab on `/app/saham/page.tsx`
- *   - `/`              — homepage (`/app/HomePage.tsx`) headlines
+ *   - `/crypto`               — recap tab on `/components/crypto-page/CryptoRecapTab.tsx`
+ *   - `/saham`                — recap tab on `/app/saham/page.tsx`
+ *   - `/stock/[kode]`         — `<NewsTimeline />` on the stock page
+ *                               (`app/stock/[kode]/StockDetailPage.tsx`)
+ *   - `/sorotan`, `/sorotan/detail/[id]` — inter-detail hops and
+ *                               a future `/sorotan` listing (none
+ *                               exists yet, but the path is used
+ *                               by `StoryHero` / `RelatedStoriesList`
+ *                               sidebar links between detail pages)
+ *   - `/`                     — homepage (`/app/HomePage.tsx`) headlines
  *
  * Anything else (direct visit, external link, share URL) falls back
  * to "Kembali ke Beranda" so the breadcrumb never lands on a link
@@ -36,6 +44,21 @@ function backLinkFromReferer(referer: string | null): BackLink {
     }
     if (path === "/saham" || path.startsWith("/saham/")) {
       return { label: "Kembali ke Saham", href: "/saham" };
+    }
+    if (path.startsWith("/stock/")) {
+      // `/stock/BBCA` → back to BBCA. Guard against a trailing
+      // slash or a nested segment producing an empty/odd label.
+      const kode = path.split("/")[2]?.trim();
+      if (kode) {
+        return {
+          label: `Kembali ke ${decodeURIComponent(kode).toUpperCase()}`,
+          href: `/stock/${kode}`,
+        };
+      }
+      return FALLBACK;
+    }
+    if (path === "/sorotan" || path.startsWith("/sorotan/")) {
+      return { label: "Kembali ke Sorotan", href: "/" };
     }
     if (path === "/" || path === "") {
       return { label: "Kembali ke Beranda", href: "/" };
