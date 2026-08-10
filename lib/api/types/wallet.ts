@@ -57,3 +57,63 @@ export interface TopupBundle {
 export interface TopupBundlesResponse {
   data: TopupBundle[];
 }
+
+// ─── WALLET BALANCE ─────────────────────────────────────────────
+
+/**
+ * One unspent lot credited to the user's wallet. A wallet holds a
+ * stack of lots — every top-up appends a new lot, every
+ * consumption decrements `remaining_balance` from the oldest lot
+ * first (FIFO). Consumers typically aggregate the lot list into a
+ * single `balance` for display and walk the lot array only when
+ * they need per-lot expiry semantics (e.g. "X koin hangus bulan
+ * depan").
+ *
+ *   - `id`                  — opaque lot id from the backend.
+ *   - `original_balance`    — koin credited when this lot was
+ *                             purchased (whole-number count, same
+ *                             unit as `Wallet.balance`).
+ *   - `remaining_balance`   — koin still unspent on this lot.
+ *                             `remaining_balance <= original_balance`
+ *                             always; `0` means fully consumed.
+ *   - `expire_at`           — ISO timestamp when this lot expires
+ *                             and any `remaining_balance` is
+ *                             forfeited. The backend enforces this
+ *                             server-side; the front-end renders it
+ *                             as a "hangus" countdown.
+ */
+export interface WalletLot {
+  id: string;
+  original_balance: number;
+  remaining_balance: number;
+  expire_at: string;
+}
+
+/**
+ * The active user's wallet — current aggregate balance plus the
+ * FIFO lot stack. Returned by `GET wallet` (no path segment — the
+ * wallet endpoint resolves the active user from the auth header).
+ *
+ *   - `id`        — wallet id; stable across the user's lifetime
+ *                   and forwarded when binding a top-up purchase
+ *                   to this wallet.
+ *   - `balance`   — current koin balance (sum of every lot's
+ *                   `remaining_balance`). Already aggregated by
+ *                   the backend — front-end never sums the lot
+ *                   array itself.
+ *   - `lots`      — FIFO lot stack, oldest first. May be empty
+ *                   for a freshly-registered user who hasn't
+ *                   topped up yet.
+ */
+export interface Wallet {
+  id: string;
+  balance: number;
+  lots: WalletLot[];
+}
+
+/** Wire format for `GET wallet` — the wallet endpoint wraps the
+ *  payload in a single-object `data` envelope (not an array) since
+ *  the response is one wallet per active user. */
+export interface WalletResponse {
+  data: Wallet;
+}
