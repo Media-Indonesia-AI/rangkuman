@@ -12,10 +12,15 @@ import { cn } from "@/lib/utils";
  * keyed on `tx.status` (only "success" gets a brand-coloured
  * pill today; everything else falls through to a neutral pill
  * with the raw status text).
+ *
+ * When `onSelect` is provided, the row becomes interactive
+ * (button role + keyboard activation) — used for pending rows
+ * so the user can re-open the QR card for an old invoice.
  */
 export function TransactionRow({
   tx,
   highlighted = false,
+  onSelect,
 }: {
   tx: WalletTransaction;
   /** True when this row's invoice is the one currently shown in
@@ -24,6 +29,11 @@ export function TransactionRow({
    *  scanning" → "the row this invoice will become once the
    *  gateway confirms". Defaults to `false`. */
   highlighted?: boolean;
+  /** Click handler — when provided the row becomes a button
+   *  (cursor + Enter/Space activation). Consumers usually only
+   *  pass this for `tx.status === "pending"` so the user can
+   *  re-open the QR for an unfinished invoice. */
+  onSelect?: () => void;
 }) {
   const koin = Math.round(tx.coin_amount);
   // `metadata` can be `null` on pending / failed invoices (see
@@ -34,11 +44,28 @@ export function TransactionRow({
   const isSuccess = tx.status === "success";
   return (
     <li
+      onClick={onSelect}
+      onKeyDown={
+        onSelect
+          ? (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect();
+              }
+            }
+          : undefined
+      }
+      tabIndex={onSelect ? 0 : undefined}
+      role={onSelect ? "button" : undefined}
+      aria-label={
+        onSelect ? `Buka QR untuk invoice ${tx.payment_ref}` : undefined
+      }
       className={cn(
         "flex items-center gap-3 rounded-md border p-3 transition-colors",
         highlighted
           ? "border-brand bg-brand-soft"
           : "border-border bg-bg-card",
+        onSelect && "cursor-pointer hover:bg-bg-tertiary",
       )}
     >
       <span

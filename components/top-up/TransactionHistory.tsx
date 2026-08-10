@@ -17,6 +17,12 @@ interface TransactionHistoryProps {
    *   when the QR card isn't rendered (e.g. on first paint, or
    *   after the invoice resolves into a "success" row). */
   highlightedId?: string;
+  /** Click handler for pending rows. When provided, every row
+   *  with `tx.status === "pending"` becomes interactive (button
+   *  role + keyboard activation). Clicking surfaces that
+   *  invoice in the QR card. Optional — leave undefined to
+   *  render the list as plain (non-clickable) rows. */
+  onSelectPending?: (tx: WalletTransaction) => void;
 }
 
 /**
@@ -38,6 +44,7 @@ export function TransactionHistory({
   transactions,
   isLoading,
   highlightedId,
+  onSelectPending,
 }: TransactionHistoryProps) {
   return (
     <section className="rounded-lg border border-border bg-bg-secondary p-4">
@@ -74,6 +81,11 @@ export function TransactionHistory({
               key={tx.id}
               tx={tx}
               highlighted={tx.id === highlightedId}
+              onSelect={
+                onSelectPending && tx.status === "pending"
+                  ? () => onSelectPending(tx)
+                  : undefined
+              }
             />
           ))}
         </ul>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { TopupBundle, TopupRequest } from "@/lib/api";
+import type { TopupBundle, TopupRequest, WalletTransaction } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
@@ -96,6 +96,16 @@ export default function TopUpPage() {
     }
   }, [lastTransaction?.id, refreshTransactions]);
 
+  // Pending invoice the user picked from the history list.
+  // Clicking a pending row in `<TransactionHistory />` sets
+  // this so the QR card surfaces that invoice. A fresh mutation
+  // result (`lastTransaction`) wins when both exist so the QR
+  // always shows the latest active invoice.
+  const [selectedPending, setSelectedPending] = useState<WalletTransaction | null>(
+    null,
+  );
+  const displayedTransaction = lastTransaction ?? selectedPending;
+
   const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
@@ -161,14 +171,23 @@ export default function TopUpPage() {
         onSubmit={handleSubmit}
       />
 
-      {lastTransaction && (
-        <PaymentQrCard transaction={lastTransaction} />
+      {displayedTransaction && (
+        <PaymentQrCard transaction={displayedTransaction} />
       )}
 
       <TransactionHistory
         transactions={sortedTransactions}
         isLoading={transactionsLoading}
-        highlightedId={lastTransaction?.id}
+        highlightedId={displayedTransaction?.id}
+        // Toggle off when the user re-clicks the same pending
+        // row — covers the "I'm done with this invoice, hide
+        // the QR" gesture without needing a separate dismiss
+        // button on the card.
+        onSelectPending={(tx) =>
+          setSelectedPending((prev) =>
+            prev?.id === tx.id ? null : tx,
+          )
+        }
       />
     </div>
   );
