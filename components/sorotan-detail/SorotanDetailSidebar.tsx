@@ -1,9 +1,16 @@
+import type { HeadlineDetail } from "@/lib/api";
 import { MarketSnapshotCompact } from "@/components/MarketSnapshotCompact";
 import { RelatedStoriesList } from "@/components/RelatedStoriesList";
 
 interface SorotanDetailSidebarProps {
   /** Story id to exclude from related list (passed through). */
   storyId: string;
+  /** Full live headline detail — forwarded to `<RelatedStoriesList />`
+   *  so it can pick the right topic id (crypto vs saham) for the
+   *  related-stories fetch instead of being hardcoded to crypto.
+   *  Optional for back-compat; when omitted, the rail keeps its
+   *  pre-existing crypto-only behavior. */
+  currentHeadline?: HeadlineDetail | null;
 }
 
 /**
@@ -18,7 +25,10 @@ interface SorotanDetailSidebarProps {
  * the page renders, so the grid stays symmetric regardless of
  * which card is hydrated.
  */
-export function SorotanDetailSidebar({ storyId }: SorotanDetailSidebarProps) {
+export function SorotanDetailSidebar({
+  storyId,
+  currentHeadline,
+}: SorotanDetailSidebarProps) {
   return (
     <aside className="min-w-0 space-y-4 lg:col-span-4">
       <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">
@@ -32,6 +42,7 @@ export function SorotanDetailSidebar({ storyId }: SorotanDetailSidebarProps) {
         <div className="mt-4">
           <RelatedStoriesList
             currentHeadlineId={storyId}
+            currentHeadline={currentHeadline}
             variant="featured"
           />
         </div>

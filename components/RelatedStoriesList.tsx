@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { ArrowRight, TrendingUp } from "lucide-react";
 import * as Icons from "lucide-react";
-import type { StoryFilter, StoryItem } from "@/lib/api";
+import type { HeadlineDetail, StoryFilter, StoryItem } from "@/lib/api";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import {
   CATEGORY_CONFIG,
@@ -11,7 +11,54 @@ import {
 import { cn } from "@/lib/utils";
 import { getRelativeTime } from "@/lib/util/formatDate";
 import { useTopicsContext } from "./topics-provider";
-import { findCryptoTopicId } from "./crypto-page/cryptoStories";
+import {
+  findCryptoTopicId,
+  findSahamTopicId,
+} from "@/lib/util/topicId";
+
+/** Crypto ticker codes we explicitly support on the `/crypto` page
+ *  and that show up in `lib/mock/crypto.ts`. Membership in this set
+ *  is how we decide whether the current headline belongs to the
+ *  "crypto" topic (and therefore which `topic_id` to scope the rail
+ *  to). Everything else falls through to the "saham" topic — the
+ *  Indonesian-emiten convention is uppercase 4-letter codes (BBCA,
+ *  TLKM, ASII, …) which never collide with the crypto set, so the
+ *  two partitions don't overlap in practice. */
+const CRYPTO_TICKER_CODES = new Set<string>([
+  "BTC",
+  "ETH",
+  "SOL",
+  "DOGE",
+  "LINK",
+  "FET",
+]);
+
+/** Decide which topic the current headline belongs to. Crypto wins
+ *  if EITHER signal says "crypto":
+ *
+ *   1. `primary_ticker_code` is one of the crypto codes we render on
+ *      `/crypto` (BTC / ETH / SOL / DOGE / LINK / FET) — matches
+ *      `CoinTickerCard` / `COIN_KODE_TO_STORY_ID`.
+ *   2. Any entry in `topics[]` has `slug === "crypto"` — the API's
+ *      authoritative topic tag, which catches headlines whose
+ *      primary ticker isn't crypto but the article itself is (e.g.
+ *      a regulation piece that doesn't name a coin).
+ *
+ *  Otherwise — Indonesian emiten headline, no crypto topic — return
+ *  `"saham"`. Never returns `undefined`: the caller always wants a
+ *  concrete topic to scope the rail to. */
+function topicHintForHeadline(
+  detail: HeadlineDetail | null | undefined,
+): "crypto" | "saham" {
+  const ticker = detail?.primary_ticker_code?.trim().toUpperCase();
+  if (ticker && CRYPTO_TICKER_CODES.has(ticker)) return "crypto";
+  const topics = detail?.topics ?? [];
+  for (const t of topics) {
+    if (t.slug === "crypto") return "crypto";
+  }
+  return "saham";
+}
+
 interface RelatedStoriesListProps {
   className?: string;
   /** Header label. */
@@ -32,6 +79,16 @@ interface RelatedStoriesListProps {
    * defeat the purpose, so the parent must always pass it.
    */
   currentHeadlineId: string;
+  /**
+   * The full `HeadlineDetail` for the story currently being viewed.
+   * Drives the topic-id pick (`crypto` vs `saham`) via
+   * {@link topicHintForHeadline} so the live rail fetches the
+   * right topic's stories instead of being hardcoded to "crypto"
+   * (the pre-existing behavior, kept for callers that don't pass
+   * the prop). Optional — when omitted, the rail stays on its
+   * historical crypto-only path.
+   */
+  currentHeadline?: HeadlineDetail | null;
 }
 
 const HERO_GRADIENT: Record<string, string> = {
@@ -101,6 +158,7 @@ export function RelatedStoriesList({
   meta,
   variant = "compact",
   currentHeadlineId,
+  currentHeadline,
 }: RelatedStoriesListProps) {
   // ── Live topic-scoped headlines ────────────────────────────────
   // When the caller hands us a `topicId`, fire a 4-row
@@ -113,8 +171,22 @@ export function RelatedStoriesList({
   // The filter array is memoized to keep the request-level cache
   // slot stable across renders (same array-identity gotcha
   // documented in `useHeadlines` and `useListStory`).
+  //
+  // Topic id is derived from `currentHeadline` — see
+  // `topicHintForHeadline`. Crypto wins if either the primary
+  // ticker is a known crypto code OR any of the headline's
+  // `topics[].slug === "crypto"`. Everything else scopes to
+  // "saham". When `currentHeadline` isn't passed at all, the
+  // helper falls through to "saham" (the previous behavior was
+  // crypto-only — older callers that don't pass the prop now
+  // land on saham instead, which is the safer default since
+  // most editorial stories are saham, not crypto).
   const { topics } = useTopicsContext();
-  const topicId = findCryptoTopicId(topics);
+  const topicHint = topicHintForHeadline(currentHeadline);
+  const topicId =
+    topicHint === "crypto"
+      ? findCryptoTopicId(topics)
+      : findSahamTopicId(topics);
   const topicFilters = useMemo<StoryFilter[]>(
     () =>
       topicId

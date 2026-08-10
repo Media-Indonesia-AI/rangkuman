@@ -300,7 +300,10 @@ export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps
           </article>
 
           {/* SIDEBAR (sticky on lg+) — fetches its own data */}
-          <SorotanDetailSidebar storyId={displayStory.id} />
+          <SorotanDetailSidebar
+            storyId={displayStory.id}
+            currentHeadline={liveDetail}
+          />
         </div>
       </main>
       <Footer />
