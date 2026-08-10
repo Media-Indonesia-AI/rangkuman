@@ -19,9 +19,9 @@ import {
 } from "@/components/saham";
 import { useTopicsContext } from "@/components/topics-provider";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
-import type { StoryTopic } from "@/lib/api";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { findSahamTopicId } from "@/lib/util/topicId";
 
 /** localStorage key for the persisted sub-tab selection on /saham.
  *  Matches the `beritainvestor:*` namespace convention used by
@@ -36,44 +36,12 @@ function isSahamTab(value: unknown): value is SahamTab {
 }
 
 /**
- * Resolve the `topic_id` that drives the `/saham` page's Story
- * feed. Prefers the canonical **slug** match (URL-safe identifier,
- * stable across renames), then a case-insensitive **name** match.
- * If neither lands on a topic, the first entry in the list wins
- * as a resilience fallback so the page still renders even before
- * a "saham" topic is registered. Mirror of
- * `findCryptoTopicId` (in `components/crypto-page/cryptoStories.ts`)
- * — keep the two helpers in lockstep so the page-level contracts
- * stay symmetric.
- *
- * Return shape mirrors `findCryptoTopicId`: `null` only when the
- * topics list is empty (still loading or backend returned nothing).
- * Every other path returns a string id.
+ * Page entry — composes the `/saham` recap tab (default landing)
+ * and the `/saham` sektor tab from the layout-level
+ * `<TopicsProvider />` topic catalog. The saham topic id is
+ * resolved via the shared `findSahamTopicId()` helper in
+ * `lib/util/topicId.ts` (mirror of `findCryptoTopicId`).
  */
-function findSahamTopicId(
-  topics: readonly StoryTopic[],
-): string | null {
-  // 1. Canonical slug match — preferred since slugs are stable,
-  //    URL-friendly identifiers the backend exposes as the
-  //    authoritative foreign key reference.
-  const slugHit = topics.find((t) => t.slug === "saham");
-  if (slugHit) return slugHit.id;
-
-  // 2. Case-insensitive name match — covers backends that ship
-  //    `name: "Saham"` / `"SAHAM"` while the slug is something
-  //    else (e.g. `"saham-indonesia"`).
-  const nameHit = topics.find(
-    (t) => t.name.trim().toLowerCase() === "saham",
-  );
-  if (nameHit) return nameHit.id;
-
-  // 3. First-topic fallback — keeps the page rendering even if
-  //    no "saham"-tagged topic exists in the dataset yet. The
-  //    caller treats any non-null id as "fetch with this filter";
-  //    we'd rather show *something* than wait forever.
-  return topics[0]?.id ?? null;
-}
-
 export default function SahamPage() {
   /** Sub-tab active: "recap" (default) | "sektor". The user's
    *  last selection is persisted to localStorage so navigating

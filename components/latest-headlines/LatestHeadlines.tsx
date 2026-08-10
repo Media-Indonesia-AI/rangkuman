@@ -9,7 +9,7 @@ import {
 } from "react";
 import type { StoryFilter, StoryItem } from "@/lib/api";
 import { loadHeadlines, loadTopic } from "@/lib/api/cache";
-import { findCryptoTopicId } from "../crypto-page/cryptoStories";
+import { findCryptoTopicId } from "@/lib/util/topicId";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
 import { LatestHeadlinesSkeleton } from "./LatestHeadlinesSkeleton";

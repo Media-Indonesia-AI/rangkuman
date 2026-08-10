@@ -6,6 +6,12 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useHeadlineId } from "@/lib/hooks/useHeadlineId";
 import { useMultiStories } from "@/lib/hooks/useMultiStories";
+import { useTopicsContext } from "@/components/topics-provider";
+import {
+  findCryptoTopicId,
+  findSahamTopicId,
+} from "@/lib/util/topicId";
+import type { StoryTopicHint } from "./page";
 import {
   Hero as StoryHero,
   StoriesList as StoryStoriesList,
@@ -23,6 +29,18 @@ interface StoryDetailPageProps {
    *  (rather than `router.back()`) so the affordance stays a
    *  crawlable, middle-clickable anchor. */
   backHref?: string;
+  /** Optional topic hint — also derived from the inbound `Referer`
+   *  by the route entry. When set, the sidebar's "Story Lainnya"
+   *  rail is scoped to the matching topic (e.g. "saham"-tagged
+   *  stories when the visitor came from `/saham`) so the feed
+   *  continues what the visitor was reading on the previous page.
+   *  Undefined keeps the sidebar on the cross-topic default — this
+   *  is what Beranda gets, since the homepage feed doesn't carry
+   *  a topic scope. Resolved into a real id on the client via
+   *  `useTopicsContext()` + the `find*TopicId` helpers, because
+   *  the topics catalog is auth-gated and not available server-
+   *  side. */
+  topicHint?: StoryTopicHint;
 }
 
 /**
@@ -39,24 +57,49 @@ interface StoryDetailPageProps {
  *   - `useHeadlineId()` → `HeadlineDetail` (drives the hero and
  *     the related-stories list). `stories[]` is the older
  *     `EmbeddedStory` shape used by `StoriesList`.
- *   - `useMultiStories("", 3)` → `HeadlineLast7DaysItem[]` capped
- *     at 3, fed to the sidebar's "Story Lainnya" rail. Empty
- *     ticker pulls the cross-ticker feed so the sidebar previews
- *     the latest headlines regardless of the current story's
- *     ticker.
+ *   - `useMultiStories("", 3, 1, true, topicId)` →
+ *     `HeadlineLast7DaysItem[]` capped at 3, fed to the sidebar's
+ *     "Story Lainnya" rail. Empty ticker pulls the cross-ticker
+ *     feed so the sidebar previews the latest headlines
+ *     regardless of the current story's ticker; the `topicId`
+ *     argument (resolved from `topicHint` via `useTopicsContext`)
+ *     scopes the feed to the topic the visitor was reading on
+ *     the previous page (e.g. `"saham"` from `/saham`,
+ *     `"crypto"` from `/crypto`). When `topicHint` is undefined
+ *     the call passes `""` and stays on the cross-topic default
+ *     — the behavior for Beranda-originated visits.
  */
 export default function StoryDetailPage({
   backLabel = "Kembali ke Saham",
   backHref = "/saham",
+  topicHint,
 }: StoryDetailPageProps) {
   const { headlineId, detail, isLoading } = useHeadlineId();
-  // Sidebar feed — cross-ticker, 3 items. Empty ticker routes
-  // through the cross-ticker endpoint (no suppression).
+
+  // Resolve `topicHint` to a real topic id on the client. The
+  // topics catalog is fetched by the layout-level
+  // `<TopicsProvider />` and gated on auth, so this only runs
+  // after that fetch settles. `null` (still loading or empty
+  // list) flows through to the hook as `""`, which routes the
+  // request through the cross-topic slot — same convention used
+  // by `<EmitenStories />` on `/saham` and `/crypto`.
+  const { topics } = useTopicsContext();
+  const resolvedTopicId =
+    topicHint === "saham"
+      ? findSahamTopicId(topics)
+      : topicHint === "crypto"
+        ? findCryptoTopicId(topics)
+        : null;
+
+  // Sidebar feed — cross-ticker, 3 items, optionally topic-scoped.
+  // Empty ticker routes through the cross-ticker endpoint (no
+  // suppression); empty/undefined topic id routes through the
+  // cross-topic slot.
   const {
     data: otherStories,
     total: otherTotal,
     isLoading: isLoadingOther,
-  } = useMultiStories("", 3);
+  } = useMultiStories("", 3, 1, true, resolvedTopicId ?? "");
 
   // Reverse on a fresh copy — `detail.stories` is owned by the
   // hook payload, so mutating it in place would corrupt the
