@@ -6,6 +6,7 @@ import type { HeadlineDetail, StoryFilter, StoryItem } from "@/lib/api";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import {
   CATEGORY_CONFIG,
+  type Category,
   type Highlight,
 } from "@/lib/mock/highlights";
 import { cn } from "@/lib/utils";
@@ -109,17 +110,21 @@ const HERO_GRADIENT: Record<string, string> = {
  * leave the rest at safe defaults so the `Highlight` contract
  * stays satisfied.
  *
+ * `category` + `affectedCategories` are sourced from the live
+ * story's `topics[]`, intersected with the closed `Category`
+ * union. The rail's chrome (`CATEGORY_CONFIG[category]`,
+ * `HERO_GRADIENT[category]`, the per-row chip color/icon) only
+ * knows the seven whitelisted slugs, so anything outside that
+ * set gets dropped. When a story has no usable topic tag the
+ * caller passes `fallbackCategory` (the topic hint derived from
+ * `currentHeadline`) so the rail still renders with a sensible
+ * color/icon pair instead of falling back to undefined and
+ * breaking the lookup downstream.
+ *
  * The live wire doesn't ship:
  *   - a per-source breakdown  → `sources: []`, `sourceCount: 1`
  *     (one story ≈ one article count baseline; the crypto adapter
  *     uses the same default),
- *   - a category slug         → `category: "crypto"`. The list
- *     is only rendered from the sorotan-detail sidebar today, and
- *     the `Category` type is a closed union, so anything that
- *     isn't one of the seven known slugs would break
- *     `CATEGORY_CONFIG[category]` downstream. If a future caller
- *     reuses this from a non-crypto route, swap in the real
- *     topic-derived slug here.
  *   - events / keyData / etc. → `[]` / `undefined` (the rail
  *     doesn't render them).
  *
@@ -129,13 +134,45 @@ const HERO_GRADIENT: Record<string, string> = {
  * `getRelativeTime()` helper so the rail text matches the rest
  * of the page.
  */
-function storyItemToHighlight(item: StoryItem, rank: number): Highlight {
+const ALLOWED_CATEGORIES = new Set<Category>([
+  "saham",
+  "bisnis",
+  "ekonomi",
+  "kebijakan",
+  "global",
+  "komoditas",
+  "crypto",
+]);
+
+function storyItemToHighlight(
+  item: StoryItem,
+  rank: number,
+  fallbackCategory: Category,
+): Highlight {
+  // Pull every topic slug the API ships, drop anything that
+  // isn't on the `Category` whitelist, and dedupe. The cast is
+  // safe because we filter on the whitelist above — without it
+  // `affectedCategories: Category[]` would fail for any slug
+  // outside the closed union (e.g. a future "politik" tag).
+  const affected = Array.from(
+    new Set(
+      (item.topics ?? [])
+        .map((t) => t.slug)
+        .filter((s): s is Category => ALLOWED_CATEGORIES.has(s as Category)),
+    ),
+  );
+  // Primary category is the first surviving topic; if the story
+  // shipped no usable topics, fall back to the caller-supplied
+  // hint so the chip color/icon still matches the rail's scope.
+  const primary = affected[0] ?? fallbackCategory;
+  const affectedCategories = affected.length > 0 ? affected : [fallbackCategory];
+
   return {
     id: item.id,
     title: item.title,
     summary: item.summary,
-    category: "crypto",
-    affectedCategories: ["crypto"],
+    category: primary,
+    affectedCategories,
     sources: [],
     sourceCount: 1,
     readTime: "2 mnt",
@@ -218,7 +255,7 @@ export function RelatedStoriesList({
     topicId && liveRows.length > 0
       ? liveRows
           .filter((item) => item.id !== currentHeadlineId)
-          .map((item, i) => storyItemToHighlight(item, i + 1))
+          .map((item, i) => storyItemToHighlight(item, i + 1, topicHint))
       : [];
 
   if (filtered.length === 0) return null;
@@ -244,14 +281,19 @@ export function RelatedStoriesList({
       </div>
       <ul>
         {filtered.map((s, i) => {
-          const cfg = CATEGORY_CONFIG[s.category];
-          const IconComponent =
-            (Icons as unknown as Record<string, Icons.LucideIcon>)[
-              cfg.icon
-                .split("-")
-                .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-                .join("")
-            ] ?? TrendingUp;
+          // Map each affected category through `CATEGORY_CONFIG` so
+          // the chip color matches the category even when the
+          // primary `s.category` differs (e.g. a `saham`-primary
+          // row that also affects `ekonomi` shows two colored
+          // chips). Categories outside the closed union never
+          // reach the rail because `storyItemToHighlight` filters
+          // them out at the adapter boundary.
+          const affectedChips = s.affectedCategories
+            .map((c) => ({ slug: c, cfg: CATEGORY_CONFIG[c] }))
+            .filter(
+              (entry): entry is { slug: Category; cfg: (typeof CATEGORY_CONFIG)[Category] } =>
+                Boolean(entry.cfg),
+            );
 
           if (variant === "featured") {
             return (
@@ -271,16 +313,36 @@ export function RelatedStoriesList({
                     )}
                     aria-hidden
                   />
-                  <div className="mb-1.5 flex items-center gap-1.5">
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
-                        cfg.colorClass,
-                      )}
-                    >
-                      <IconComponent className="h-2.5 w-2.5" aria-hidden />
-                      {cfg.label}
-                    </span>
+                  <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
+                    {affectedChips.map(({ slug, cfg }, j) => {
+                      const IconComponent =
+                        (Icons as unknown as Record<string, Icons.LucideIcon>)[
+                          cfg.icon
+                            .split("-")
+                            .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+                            .join("")
+                        ] ?? TrendingUp;
+                      return (
+                        <span
+                          key={slug}
+                          className={cn(
+                            "inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
+                            cfg.colorClass,
+                          )}
+                        >
+                          <IconComponent className="h-2.5 w-2.5" aria-hidden />
+                          {cfg.label}
+                          {j < affectedChips.length - 1 && (
+                            <span
+                              aria-hidden
+                              className="ml-1 text-text-faint"
+                            >
+                              ·
+                            </span>
+                          )}
+                        </span>
+                      );
+                    })}
                     <span className="font-mono text-[8.5px] text-text-faint">
                       · #{s.rank}
                     </span>
@@ -312,18 +374,35 @@ export function RelatedStoriesList({
                 <div className="mb-1 flex items-center justify-between gap-1.5">
                   <span
                     className={cn(
-                      "inline-flex items-center gap-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
-                      cfg.colorClass,
+                      "inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
+                      // When only one category is affected, color
+                      // the whole row by that category; with
+                      // multiple chips, fall back to the muted
+                      // text so each chip's own color reads
+                      // clearly without one dominating the row.
+                      affectedChips.length === 1
+                        ? affectedChips[0].cfg.colorClass
+                        : "text-text-muted",
                     )}
                   >
-                    <span
-                      className={cn(
-                        "h-1.5 w-1.5 rounded-full",
-                        HERO_GRADIENT[s.category] ?? "bg-hero-saham",
-                      )}
-                      aria-hidden
-                    />
-                    {cfg.label}
+                    {affectedChips.map(({ slug, cfg }, j) => (
+                      <span
+                        key={slug}
+                        className="inline-flex items-center gap-0.5"
+                      >
+                        <span
+                          className={cn(
+                            "h-1.5 w-1.5 rounded-full",
+                            HERO_GRADIENT[slug] ?? "bg-hero-saham",
+                          )}
+                          aria-hidden
+                        />
+                        <span className={cfg.colorClass}>{cfg.label}</span>
+                        {j < affectedChips.length - 1 && (
+                          <span aria-hidden className="text-text-faint">·</span>
+                        )}
+                      </span>
+                    ))}
                   </span>
                   <span className="font-mono text-[8.5px] text-text-faint">
                     #{s.rank}
