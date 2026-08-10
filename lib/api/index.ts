@@ -106,11 +106,13 @@ export {
 export type {
   TopupBundle,
   TopupBundlesResponse,
+  TopupRequest,
   Wallet,
   WalletLot,
   WalletResponse,
   WalletTransaction,
   WalletTransactionHistoryResponse,
+  WalletTransactionResponse,
   WalletTransactionMetadata,
   WalletTransactionPaymentDetails,
   WalletTransactionQrCode,

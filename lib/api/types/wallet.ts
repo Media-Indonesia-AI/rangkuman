@@ -185,24 +185,30 @@ export interface WalletTransactionMetadata {
 }
 
 /**
- * One top-up transaction returned by `GET wallet/transaction`.
- * Captures the invoice the wallet API created (`topup_amount` is
- * IDR the user paid, `coin_amount` is the koin credited before
- * rounding — a `111000` IDR top-up lands `33.333…` koin at the
- * 3.000 Rp / koin rate), the payment-gateway handoff
- * (`payment_ref` / `payment_url` — the latter is a base64 PNG QR
- * the front-end can show inline), and the lifecycle timestamps
- * (`expire_at` / `paid_at` / `created_at`).
+ * One top-up transaction returned by `GET wallet/transaction`
+ * and `POST wallet/topup`. Captures the invoice the wallet API
+ * created (`topup_amount` is IDR the user paid, `coin_amount` is
+ * the koin credited before rounding — a `111000` IDR top-up lands
+ * `33.333…` koin at the 3.000 Rp / koin rate), the payment-gateway
+ * handoff (`payment_ref` / `payment_url` — the latter is a base64
+ * PNG QR the front-end can show inline), and the lifecycle
+ * timestamps (`expire_at` / `paid_at` / `created_at`).
  *
  * `status` is the wallet API's own status, not the gateway's —
- * it's `"success"` when the koin was credited, other values for
- * pending / expired / failed invoices. `payment_url` is included
- * so a re-open of an unpaid invoice can re-display the same QR
- * without a separate API call.
+ * it's `"success"` when the koin was credited, `"pending"` while
+ * the gateway invoice is open, other values for expired / failed
+ * invoices. `payment_url` is included so a re-open of an unpaid
+ * invoice can re-display the same QR without a separate API call.
  *
- * `metadata` is `null`-able (not just optional) — the backend
- * may not have populated the gateway passthrough yet for pending
- * or failed invoices, so consumers must guard before reading.
+ * Optional fields:
+ *   - `paid_at`     — only set on completed (`status === "success"`)
+ *                     transactions; pending / failed invoices have
+ *                     no payment timestamp yet.
+ *   - `metadata`    — `null`-able (not just optional) — the backend
+ *                     doesn't populate the gateway passthrough for
+ *                     freshly-created invoices (`POST wallet/topup`
+ *                     returns a leaner row without it), so consumers
+ *                     must guard before reading.
  */
 export interface WalletTransaction {
   id: string;
@@ -214,7 +220,7 @@ export interface WalletTransaction {
   payment_url: string;
   metadata?: WalletTransactionMetadata | null;
   expire_at: string;
-  paid_at: string;
+  paid_at?: string;
   created_at: string;
 }
 
@@ -223,3 +229,35 @@ export interface WalletTransaction {
 export interface WalletTransactionHistoryResponse {
   data: WalletTransaction[];
 }
+
+/** Wire format for `POST wallet/topup` — a single freshly-created
+ *  invoice. Same `WalletTransaction` shape as the history list,
+ *  wrapped in a single-object `data` envelope (the endpoint
+ *  creates one invoice per request, not a batch). */
+export interface WalletTransactionResponse {
+  data: WalletTransaction;
+}
+
+/**
+ * Request body for `POST wallet/topup`. XOR union — exactly one
+ * of `amount` or `bundle_code` must be supplied:
+ *
+ *   - `amount`      — when the user is topping up a custom koin
+ *                     count outside the catalogue. Value is IDR
+ *                     (e.g. `150000` for a 50-koin custom top-up
+ *                     at the 3.000 Rp / koin rate), integer IDR
+ *                     with no decimal subunits.
+ *   - `bundle_code` — when the user picked a curated bundle
+ *                     chip. Value is the bundle's `code`
+ *                     (e.g. `"BUNDLE_A"`), resolved from
+ *                     `GET wallet/topup/bundle`. The backend
+ *                     applies the bundle's own price / coin
+ *                     math — don't send `amount` alongside.
+ *
+ * `never` on the absent side makes the XOR compiler-enforced:
+ * you can't accidentally send both, and TypeScript narrows the
+ * shape correctly inside each branch of the dispatch.
+ */
+export type TopupRequest =
+  | { amount: number; bundle_code?: never }
+  | { bundle_code: string; amount?: never };

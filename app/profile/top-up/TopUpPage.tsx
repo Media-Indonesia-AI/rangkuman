@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { TopupBundle } from "@/lib/api";
+import { api, type TopupBundle, type TopupRequest } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
@@ -49,6 +49,12 @@ export default function TopUpPage() {
   // falls back to the custom-input value when no bundle is picked.
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
+  // Submit-flight guard. True between the user's click on
+  // "Lanjut ke Pembayaran" and the request settling — disables
+  // the button (via the `disabled` prop on `<TopUpTotals />`)
+  // so a second click can't fire the request twice and create
+  // duplicate invoices.
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Curated top-up catalogue — small fixed list owned by the
   // wallet API. Sorted by `sort` ascending inside the hook so
@@ -120,13 +126,48 @@ export default function TopUpPage() {
     grandTotal,
   );
 
-  const handleNotImplemented = () => {
+  const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
-      new CustomEvent("berita-investor:toast", {
-        detail: "Coming soon — lagi digarap.",
-      }),
+      new CustomEvent("berita-investor:toast", { detail }),
     );
+  };
+
+  /**
+   * Submit handler — dispatches `POST wallet/topup` with an XOR
+   * body. Bundle wins when a chip is selected (the bundle's
+   * `code` is forwarded; the backend applies the bundle's own
+   * price / coin math). Otherwise the custom-amount path sends
+   * `amount` as the base IDR value (matches the wire's
+   * `topup_amount` derivation in the response — see
+   * `WalletTransactionQrCodeMetadata.basic_fee`).
+   *
+   * The XOR union (`TopupRequest`) means TypeScript narrows
+   * correctly per branch — we can't accidentally send both.
+   */
+
+  const handleSubmit = async () => {
+    if (isSubmitting) return;
+    if (!effectiveAmount) return;
+
+    const body: TopupRequest = selectedBundle
+      ? { bundle_code: selectedBundle.code }
+      : { amount: effectiveAmount };
+
+    setIsSubmitting(true);
+    try {
+      const res = await api.doReqTopup(body);
+      dispatchToast(
+        `Invoice dibuat · ref ${res.data.payment_ref}`,
+      );
+    } catch (err) {
+      const message =
+        (err as { message?: string }).message ??
+        "Top-up gagal — coba lagi.";
+      dispatchToast(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -160,8 +201,21 @@ export default function TopUpPage() {
         formattedPpn={formattedPpn}
         formattedGrandTotal={formattedGrandTotal}
         koinAmount={koinAmount}
-        disabled={!effectiveAmount || customValidation.error !== null}
-        onSubmit={handleNotImplemented}
+        // Button activates the moment the user has a total value
+        // (a chip is picked or a valid custom amount is entered).
+        // The custom-amount validation error keeps the button
+        // disabled when the input is over-range, and `isSubmitting`
+        // locks it during the in-flight request so a second click
+        // can't create a duplicate invoice. The `!method` gate is
+        // intentionally dropped today because the "Metode
+        // Pembayaran" section isn't rendered yet — once that UI
+        // lands, restore `|| !method` here.
+        disabled={
+          !effectiveAmount ||
+          customValidation.error !== null ||
+          isSubmitting
+        }
+        onSubmit={handleSubmit}
       />
 
       <TransactionHistory
