@@ -9,6 +9,14 @@ interface TransactionHistoryProps {
    *  the section renders 3 skeleton rows so it doesn't flash from
    *  "empty" → "data" once the data lands. */
   isLoading: boolean;
+  /** ID of the invoice currently shown in `<PaymentQrCard />`,
+   *   when one is on screen. The matching row gets the
+   *   brand-tinted highlight so the user can see the QR they're
+   *   scanning is the same row that will eventually land at the
+   *   top of the history list. Optional — no row is highlighted
+   *   when the QR card isn't rendered (e.g. on first paint, or
+   *   after the invoice resolves into a "success" row). */
+  highlightedId?: string;
 }
 
 /**
@@ -29,6 +37,7 @@ interface TransactionHistoryProps {
 export function TransactionHistory({
   transactions,
   isLoading,
+  highlightedId,
 }: TransactionHistoryProps) {
   return (
     <section className="rounded-lg border border-border bg-bg-secondary p-4">
@@ -61,7 +70,11 @@ export function TransactionHistory({
       ) : (
         <ul className="mt-2.5 flex flex-col gap-2">
           {transactions.map((tx) => (
-            <TransactionRow key={tx.id} tx={tx} />
+            <TransactionRow
+              key={tx.id}
+              tx={tx}
+              highlighted={tx.id === highlightedId}
+            />
           ))}
         </ul>
       )}

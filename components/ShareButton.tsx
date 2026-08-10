@@ -173,7 +173,7 @@ export function ShareButton({
   const handleWhatsApp = useCallback(() => {
     const text = clampTitle(title);
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
+      `https://wa.me/?text=${encodeURIComponent(url)}`,
       "_blank",
       "noopener,noreferrer",
     );
@@ -183,7 +183,7 @@ export function ShareButton({
   const handleTelegram = useCallback(() => {
     const text = clampTitle(title);
     window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+      `https://t.me/share/url?url=${encodeURIComponent(url)}`,
       "_blank",
       "noopener,noreferrer",
     );

@@ -13,7 +13,18 @@ import { cn } from "@/lib/utils";
  * pill today; everything else falls through to a neutral pill
  * with the raw status text).
  */
-export function TransactionRow({ tx }: { tx: WalletTransaction }) {
+export function TransactionRow({
+  tx,
+  highlighted = false,
+}: {
+  tx: WalletTransaction;
+  /** True when this row's invoice is the one currently shown in
+   *  `<PaymentQrCard />`. Tints the row with a faint brand
+   *  background so the user can visually tie "the QR I'm
+   *  scanning" → "the row this invoice will become once the
+   *  gateway confirms". Defaults to `false`. */
+  highlighted?: boolean;
+}) {
   const koin = Math.round(tx.coin_amount);
   // `metadata` can be `null` on pending / failed invoices (see
   // `WalletTransaction.metadata`'s nullable union), so guard the
@@ -22,13 +33,20 @@ export function TransactionRow({ tx }: { tx: WalletTransaction }) {
   const dateLabel = formatTanggalIndonesia(tx.created_at);
   const isSuccess = tx.status === "success";
   return (
-    <li className="flex items-center gap-3 rounded-md border border-border bg-bg-card p-3">
+    <li
+      className={cn(
+        "flex items-center gap-3 rounded-md border p-3 transition-colors",
+        highlighted
+          ? "border-brand bg-brand-soft"
+          : "border-border bg-bg-card",
+      )}
+    >
       <span
         aria-hidden
         className={cn(
           "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
           isSuccess
-            ? "bg-brand-soft text-brand"
+            ? "bg-brand text-bg-primary"
             : "bg-bg-tertiary text-text-muted",
         )}
       >
@@ -50,7 +68,7 @@ export function TransactionRow({ tx }: { tx: WalletTransaction }) {
         className={cn(
           "inline-flex shrink-0 items-center rounded-full px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider",
           isSuccess
-            ? "bg-brand-soft text-brand"
+            ? "bg-brand text-bg-primary"
             : "bg-bg-tertiary text-text-muted",
         )}
       >
