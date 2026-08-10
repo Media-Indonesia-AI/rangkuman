@@ -1,14 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { api, type TopupBundle, type TopupRequest } from "@/lib/api";
+import type { TopupBundle, TopupRequest } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
+import { useRequestTopup } from "@/lib/hooks/useRequestTopup";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 import {
   BundleSelector,
   CoinBalanceCard,
+  PaymentQrCard,
   PPN_RATE,
   RUPIAH_PER_KOIN,
   TopUpHeader,
@@ -22,25 +24,32 @@ import {
  * `/profile/top-up/` — Top Up section orchestrator.
  *
  * Thin orchestrator that owns:
- *   - local UI state (`selectedBundleId`, `customAmount`,
- *     `method`),
- *   - the three wallet-side fetches
+ *   - local UI state (`selectedBundleId`, `customAmount`),
+ *   - the three wallet-side read fetches
  *     (`useGetTopupBundle`, `useGetWallet`,
  *     `useGetTransactionHistory`),
+ *   - the topup mutation (`useRequestTopup`) — wires the
+ *     submit button to `POST wallet/topup` and renders the
+ *     resulting QR card on success,
  *   - derived totals (effective amount, PPN, grand total, koin
- *     credited),
- *   - the "Coming soon" stub toast on submit.
+ *     credited).
  *
  * Each card is its own widget under `@/components/top-up`:
  *
- *   - `<TopUpHeader />`             — page title
- *   - `<CoinBalanceCard />`         — live balance + earliest expiry
- *   - `<BundleSelector />`          — chips + custom amount input
- *   - `<TopUpTotals />`             — sticky tax/coin/total + CTA
- *   - `<TransactionHistory />`      — Riwayat list (rows + empty state)
+ *   - `<TopUpHeader />`         — page title
+ *   - `<CoinBalanceCard />`     — live balance + earliest expiry
+ *   - `<BundleSelector />`      — chips + custom amount input
+ *   - `<TopUpTotals />`         — sticky tax/coin/total + CTA
+ *   - `<PaymentQrCard />`       — gateway QR + invoice meta
+ *                                 (rendered between totals and
+ *                                 history once the mutation
+ *                                 resolves with a fresh invoice)
+ *   - `<TransactionHistory />`  — Riwayat list (rows + empty state)
  *
- * Submitting fires a "Coming soon" toast (same stub pattern as
- * the Akun section) so the affordance exists for the user.
+ * On submit failure the orchestrator surfaces the API error
+ * message via the existing `berita-investor:toast` event so the
+ * existing toast widget picks it up — same channel as the other
+ * stub toasts.
  */
 export default function TopUpPage() {
   // ID of the currently-selected bundle chip, or `null` when
@@ -49,12 +58,6 @@ export default function TopUpPage() {
   // falls back to the custom-input value when no bundle is picked.
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
-  // Submit-flight guard. True between the user's click on
-  // "Lanjut ke Pembayaran" and the request settling — disables
-  // the button (via the `disabled` prop on `<TopUpTotals />`)
-  // so a second click can't fire the request twice and create
-  // duplicate invoices.
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Curated top-up catalogue — small fixed list owned by the
   // wallet API. Sorted by `sort` ascending inside the hook so
@@ -126,6 +129,17 @@ export default function TopUpPage() {
     grandTotal,
   );
 
+  // Mutation hook — `request(body)` fires `POST wallet/topup`,
+  // surfaces `data` (the fresh invoice) for the QR card, and
+  // tracks `isLoading` / `error` for the submit button. See
+  // `lib/hooks/useRequestTopup.ts` for the full shape.
+  const {
+    data: lastTransaction,
+    isLoading: isSubmitting,
+    error: submitError,
+    request: requestTopup,
+  } = useRequestTopup();
+
   const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;
     window.dispatchEvent(
@@ -135,17 +149,21 @@ export default function TopUpPage() {
 
   /**
    * Submit handler — dispatches `POST wallet/topup` with an XOR
-   * body. Bundle wins when a chip is selected (the bundle's
-   * `code` is forwarded; the backend applies the bundle's own
-   * price / coin math). Otherwise the custom-amount path sends
-   * `amount` as the base IDR value (matches the wire's
-   * `topup_amount` derivation in the response — see
-   * `WalletTransactionQrCodeMetadata.basic_fee`).
+   * body.
+   *
+   *   - Bundle selected → `{ bundle_code: bundle.code }`. The
+   *     backend applies the bundle's own price / coin math.
+   *   - Custom-amount field → `{ amount: effectiveAmount }`,
+   *     where `effectiveAmount` is the BASE IDR (pre-PPN). The
+   *     request intentionally omits the PPN / grand total — the
+   *     backend adds the VAT itself when it builds the invoice,
+   *     and the response's `topup_amount` reflects that
+   *     (basic_fee + vat). Sending the grand total would
+   *     double-count the VAT.
    *
    * The XOR union (`TopupRequest`) means TypeScript narrows
    * correctly per branch — we can't accidentally send both.
    */
-
   const handleSubmit = async () => {
     if (isSubmitting) return;
     if (!effectiveAmount) return;
@@ -154,19 +172,11 @@ export default function TopUpPage() {
       ? { bundle_code: selectedBundle.code }
       : { amount: effectiveAmount };
 
-    setIsSubmitting(true);
-    try {
-      const res = await api.doReqTopup(body);
-      dispatchToast(
-        `Invoice dibuat · ref ${res.data.payment_ref}`,
-      );
-    } catch (err) {
-      const message =
-        (err as { message?: string }).message ??
-        "Top-up gagal — coba lagi.";
-      dispatchToast(message);
-    } finally {
-      setIsSubmitting(false);
+    const result = await requestTopup(body);
+    if (result) {
+      dispatchToast(`Invoice dibuat · ref ${result.payment_ref}`);
+    } else if (submitError) {
+      dispatchToast(submitError);
     }
   };
 
@@ -217,6 +227,10 @@ export default function TopUpPage() {
         }
         onSubmit={handleSubmit}
       />
+
+      {lastTransaction && (
+        <PaymentQrCard transaction={lastTransaction} />
+      )}
 
       <TransactionHistory
         transactions={sortedTransactions}

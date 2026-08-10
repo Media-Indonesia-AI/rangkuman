@@ -14,6 +14,7 @@ export {
 export { TopUpTotals, formatTotals } from "./TopUpTotals";
 export { TransactionRow } from "./TransactionRow";
 export { TransactionHistory } from "./TransactionHistory";
+export { PaymentQrCard } from "./PaymentQrCard";
 
 export {
   RUPIAH_PER_KOIN,
