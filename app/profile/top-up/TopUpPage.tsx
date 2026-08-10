@@ -129,6 +129,11 @@ export default function TopUpPage() {
 
     const result = await requestTopup(body);
     if (result) {
+      // Reset the form so the next top-up starts blank. The
+      // QR card stays on screen via `lastTransaction` until the
+      // user dismisses or pays it.
+      setSelectedBundleId(null);
+      setCustomAmount("");
       dispatchToast(`Invoice dibuat · ref ${result.payment_ref}`);
     } else if (submitError) {
       dispatchToast(submitError);
