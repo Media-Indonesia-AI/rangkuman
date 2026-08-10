@@ -153,7 +153,7 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
             berjalan
           </span>
         </div>
-        <div className="flex items-center gap-1.5">
+        {/* <div className="flex items-center gap-1.5">
           <Newspaper className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
             <span className="font-bold text-text-primary">
@@ -161,7 +161,7 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
             </span>{" "}
             liputan
           </span>
-        </div>
+        </div> */}
         <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">

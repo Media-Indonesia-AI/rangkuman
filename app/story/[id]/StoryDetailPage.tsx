@@ -12,6 +12,19 @@ import {
   StorySidebar,
 } from "@/components/story-detail";
 
+interface StoryDetailPageProps {
+  /** Back-link copy — derived by the route entry (`./page.tsx`) from
+   *  the inbound `Referer` header so it follows where the visitor
+   *  came from (e.g. "Kembali ke Story" when the previous page was
+   *  the listing, "Kembali ke BBCA" from a stock page). Defaults to
+   *  the pre-referer hardcoded copy for any other caller. */
+  backLabel?: string;
+  /** Href paired with `backLabel` — kept as a real `<Link>` target
+   *  (rather than `router.back()`) so the affordance stays a
+   *  crawlable, middle-clickable anchor. */
+  backHref?: string;
+}
+
 /**
  * Page for `/story/[id]` — composes the four
  * `@/components/story-detail` widgets from the headline detail
@@ -32,7 +45,10 @@ import {
  *     the latest headlines regardless of the current story's
  *     ticker.
  */
-export default function StoryDetailPage() {
+export default function StoryDetailPage({
+  backLabel = "Kembali ke Saham",
+  backHref = "/saham",
+}: StoryDetailPageProps) {
   const { headlineId, detail, isLoading } = useHeadlineId();
   // Sidebar feed — cross-ticker, 3 items. Empty ticker routes
   // through the cross-ticker endpoint (no suppression).
@@ -60,11 +76,11 @@ export default function StoryDetailPage() {
         {/* Back link */}
         <div className="mb-3">
           <Link
-            href="/saham"
+            href={backHref}
             className="inline-flex items-center gap-1 font-mono text-[10.5px] tracking-widest text-text-muted transition-colors hover:text-text-primary"
           >
             <ChevronLeft className="h-3 w-3" aria-hidden />
-            Kembali ke Saham
+            {backLabel}
           </Link>
         </div>
 
