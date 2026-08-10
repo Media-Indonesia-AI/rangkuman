@@ -66,6 +66,14 @@ export interface Highlight {
   flag?: string;
   /** Optional: which stock tickers are most affected (for cross-linking). */
   tickers?: string[];
+  /** Primary ticker code the live wire shipped with this story
+   *  (e.g. `"BBCA"`, `"BTC"`). Drives the `<RelatedStoriesList />`
+   *  chip text so readers see the concrete asset rather than the
+   *  generic topic label ("Crypto" → "BTC"). Optional — the live
+   *  `StoryItem.primary_ticker_code` is the canonical source, but
+   *  mock-shaped `Highlight`s without a primary ticker leave it
+   *  `undefined` and the rail falls back to the category label. */
+  primary_ticker_code?: string;
   /** Importance rank 1-5 (1 = most important). Used to sort Sorotan. */
   rank: number;
   /** Chronological timeline of events in this story. */

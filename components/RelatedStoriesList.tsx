@@ -179,6 +179,12 @@ function storyItemToHighlight(
     timeAgo: getRelativeTime(item.created_at),
     keywords: item.keywords ?? [],
     tags: [],
+    // Primary ticker code from the live wire — drives the
+    // `<RelatedStoriesList />` chip text. Optional because some
+    // stories (policy, market-mood narratives) ship without a
+    // concrete ticker; the rail then falls back to the category
+    // label in the render branch.
+    primary_ticker_code: item.primary_ticker_code?.trim().toUpperCase() || undefined,
     rank,
     events: [],
   };
@@ -281,19 +287,26 @@ export function RelatedStoriesList({
       </div>
       <ul>
         {filtered.map((s, i) => {
-          // Map each affected category through `CATEGORY_CONFIG` so
-          // the chip color matches the category even when the
-          // primary `s.category` differs (e.g. a `saham`-primary
-          // row that also affects `ekonomi` shows two colored
-          // chips). Categories outside the closed union never
-          // reach the rail because `storyItemToHighlight` filters
-          // them out at the adapter boundary.
-          const affectedChips = s.affectedCategories
-            .map((c) => ({ slug: c, cfg: CATEGORY_CONFIG[c] }))
-            .filter(
-              (entry): entry is { slug: Category; cfg: (typeof CATEGORY_CONFIG)[Category] } =>
-                Boolean(entry.cfg),
-            );
+          // The chip displays the story's primary ticker code from
+          // the live row — `primary_ticker_code` on `StoryItem` is
+          // the canonical "what is this story about" field, which
+          // is more concrete for readers than a topic label
+          // ("crypto" → "BTC"). When the adapter couldn't read a
+          // ticker (e.g. an empty primary code) we fall back to
+          // the category label so the chip still says something.
+          const cfg = CATEGORY_CONFIG[s.category];
+          const tickerChip = s.primary_ticker_code?.trim().toUpperCase();
+          const chipText = tickerChip || cfg.label;
+          // Color/icon still come from the row's primary category
+          // so the chip stays visually consistent with the row's
+          // accent strip / dot.
+          const IconComponent =
+            (Icons as unknown as Record<string, Icons.LucideIcon>)[
+              cfg.icon
+                .split("-")
+                .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
+                .join("")
+            ] ?? TrendingUp;
 
           if (variant === "featured") {
             return (
@@ -314,35 +327,15 @@ export function RelatedStoriesList({
                     aria-hidden
                   />
                   <div className="mb-1.5 flex flex-wrap items-center gap-1.5">
-                    {affectedChips.map(({ slug, cfg }, j) => {
-                      const IconComponent =
-                        (Icons as unknown as Record<string, Icons.LucideIcon>)[
-                          cfg.icon
-                            .split("-")
-                            .map((p) => p.charAt(0).toUpperCase() + p.slice(1))
-                            .join("")
-                        ] ?? TrendingUp;
-                      return (
-                        <span
-                          key={slug}
-                          className={cn(
-                            "inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
-                            cfg.colorClass,
-                          )}
-                        >
-                          <IconComponent className="h-2.5 w-2.5" aria-hidden />
-                          {cfg.label}
-                          {j < affectedChips.length - 1 && (
-                            <span
-                              aria-hidden
-                              className="ml-1 text-text-faint"
-                            >
-                              ·
-                            </span>
-                          )}
-                        </span>
-                      );
-                    })}
+                    <span
+                      className={cn(
+                        "inline-flex items-center gap-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
+                        cfg.colorClass,
+                      )}
+                    >
+                      <IconComponent className="h-2.5 w-2.5" aria-hidden />
+                      {chipText}
+                    </span>
                     <span className="font-mono text-[8.5px] text-text-faint">
                       · #{s.rank}
                     </span>
@@ -374,35 +367,18 @@ export function RelatedStoriesList({
                 <div className="mb-1 flex items-center justify-between gap-1.5">
                   <span
                     className={cn(
-                      "inline-flex flex-wrap items-center gap-x-1 gap-y-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
-                      // When only one category is affected, color
-                      // the whole row by that category; with
-                      // multiple chips, fall back to the muted
-                      // text so each chip's own color reads
-                      // clearly without one dominating the row.
-                      affectedChips.length === 1
-                        ? affectedChips[0].cfg.colorClass
-                        : "text-text-muted",
+                      "inline-flex items-center gap-0.5 font-mono text-[9px] font-semibold uppercase tracking-wider",
+                      cfg.colorClass,
                     )}
                   >
-                    {affectedChips.map(({ slug, cfg }, j) => (
-                      <span
-                        key={slug}
-                        className="inline-flex items-center gap-0.5"
-                      >
-                        <span
-                          className={cn(
-                            "h-1.5 w-1.5 rounded-full",
-                            HERO_GRADIENT[slug] ?? "bg-hero-saham",
-                          )}
-                          aria-hidden
-                        />
-                        <span className={cfg.colorClass}>{cfg.label}</span>
-                        {j < affectedChips.length - 1 && (
-                          <span aria-hidden className="text-text-faint">·</span>
-                        )}
-                      </span>
-                    ))}
+                    <span
+                      className={cn(
+                        "h-1.5 w-1.5 rounded-full",
+                        HERO_GRADIENT[s.category] ?? "bg-hero-saham",
+                      )}
+                      aria-hidden
+                    />
+                    {chipText}
                   </span>
                   <span className="font-mono text-[8.5px] text-text-faint">
                     #{s.rank}
