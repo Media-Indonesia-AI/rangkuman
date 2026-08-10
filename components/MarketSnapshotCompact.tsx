@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
 import { formatCurrency, formatNumber } from "@/lib/utils";
+import { Shimmer } from "@/components/Shimmer";
 
 export interface MarketSnapshotItem {
   id: string;
@@ -9,6 +10,11 @@ export interface MarketSnapshotItem {
   value: string;
   change: number;
   changeUnit?: "%" | "bps" | "";
+  /** Per-row shimmer flag — true while the matching fetch is still
+   *  in flight. Drives the row to render pulsing placeholders
+   *  instead of `n/a` so the loading window reads as "data on its
+   *  way" rather than "data missing". */
+  isLoading?: boolean;
 }
 
 interface MarketSnapshotCompactProps {
@@ -19,11 +25,31 @@ interface MarketSnapshotCompactProps {
   meta?: string;
 }
 
-/** Placeholder rendered for any field whose live source is still
- *  `null` (fetch in flight or returned nothing). Using `n/a`
+/** Placeholder rendered for any field whose live source settled
+ *  (success or error) but still returned nothing. Using `n/a`
  *  rather than `—` so the missing-value rows scan as "data not
- *  available" rather than decorative dash separators. */
+ *  available" rather than decorative dash separators. The
+ *  loading window is covered by {@link Shimmer} rows above this
+ *  constant — see the `isLoading` flag on `MarketSnapshotItem`. */
 const NA = "n/a";
+
+/** Skeleton row mirroring the real row's two-column layout (label
+ *  + value stacked on the left, change indicator on the right) so
+ *  the card height stays stable while the data resolves and the
+ *  swap to the real row doesn't cause a layout shift. Reused for
+ *  every row regardless of which source is still in flight — the
+ *  shape is identical so a single component covers all five. */
+function MarketSnapshotRowSkeleton() {
+  return (
+    <div className="flex items-center justify-between px-3 py-2">
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <Shimmer className="h-2 w-12" />
+        <Shimmer className="h-3.5 w-20" />
+      </div>
+      <Shimmer className="h-3 w-14" />
+    </div>
+  );
+}
 
 function DirectionText({ value, unit }: { value: number; unit?: string }) {
   const u = unit ?? "%";
@@ -80,14 +106,16 @@ export function MarketSnapshotCompact({
   label = "Markets Snapshot",
   meta = "real-time",
 }: MarketSnapshotCompactProps) {
-  const { biRate, exchangeRate, foreignFlow, compositeChart, mood } =
+  const { biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading } =
     useMarketMoodData();
 
   const items = useMemo<MarketSnapshotItem[]>(() => {
     // IHSG — composite chart's last point is the freshest closing
     // value. The mood snapshot's `ihsg_pct_change` is the matching
     // day-change percent, so we pair them: value = price, change
-    // = pct move.
+    // = pct move. `isLoading.compositeChart || isLoading.mood`
+    // because both sources drive this row — keep the shimmer up
+    // until the last one settles.
     const ihsgClose = compositeChart?.[compositeChart.length - 1]?.price;
     const ihsgRow: MarketSnapshotItem = {
       id: "ihsg",
@@ -95,6 +123,7 @@ export function MarketSnapshotCompact({
       value: ihsgClose != null ? formatNumber(ihsgClose, 2) : NA,
       change: mood?.ihsg_pct_change ?? 0,
       changeUnit: "%",
+      isLoading: isLoading.compositeChart || isLoading.mood,
     };
 
     // USD/IDR — exchange rate series' last point. Pair with the
@@ -106,6 +135,7 @@ export function MarketSnapshotCompact({
       value: usdIdr != null ? formatNumber(usdIdr, 0) : NA,
       change: mood?.usd_idr_pct_change ?? 0,
       changeUnit: "%",
+      isLoading: isLoading.exchangeRate || isLoading.mood,
     };
 
     // BI Rate — dedicated `biRate` snapshot. The `rate` field is
@@ -117,6 +147,7 @@ export function MarketSnapshotCompact({
       value: biRate ? `${formatNumber(biRate.rate, 2).replace(",", ".")}%` : NA,
       change: biRate?.bps ?? 0,
       changeUnit: "bps",
+      isLoading: isLoading.biRate,
     };
 
     // Foreign Net — `summary.net_value` is the cross-market flow
@@ -129,6 +160,7 @@ export function MarketSnapshotCompact({
       value: netValue != null ? formatCurrency(netValue, { compact: true }) : NA,
       change: netValue != null ? Math.sign(netValue) : 0,
       changeUnit: "%",
+      isLoading: isLoading.foreignFlow,
     };
 
     // Market Mood — composite label band + score. No change
@@ -140,10 +172,11 @@ export function MarketSnapshotCompact({
       value: mood ? `${mood.label} · ${mood.score}` : NA,
       change: 0,
       changeUnit: "",
+      isLoading: isLoading.mood,
     };
 
     return [ihsgRow, usdRow, biRow, foreignRow, moodRow];
-  }, [biRate, exchangeRate, foreignFlow, compositeChart, mood]);
+  }, [biRate, exchangeRate, foreignFlow, compositeChart, mood, isLoading]);
 
   return (
     <section
@@ -162,24 +195,43 @@ export function MarketSnapshotCompact({
         </span>
       </div>
       <ul>
-        {items.map((it, i) => (
-          <li
-            key={it.id}
-            className={`flex items-center justify-between px-3 py-2 ${
-              i < items.length - 1 ? "border-b border-border/50" : ""
-            }`}
-          >
-            <div className="min-w-0 flex-1">
-              <p className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-text-muted">
-                {it.label}
-              </p>
-              <p className="font-mono text-[14px] font-bold leading-none tracking-tight text-text-primary">
-                {it.value}
-              </p>
-            </div>
-            <DirectionText value={it.change} unit={it.changeUnit} />
-          </li>
-        ))}
+        {items.map((it, i) =>
+          // Per-row shimmer: when this row's source fetch is still
+          // in flight we render the matching skeleton in place of
+          // the real row — same outer `<li>` shell so the dividers
+          // between rows stay aligned, and `aria-busy` so assistive
+          // tech knows the section is mid-load. Once the fetch
+          // settles (success or error) we fall back to the real
+          // row, which uses `NA` for any field that arrived empty.
+          it.isLoading ? (
+            <li
+              key={it.id}
+              aria-busy="true"
+              className={
+                i < items.length - 1 ? "border-b border-border/50" : ""
+              }
+            >
+              <MarketSnapshotRowSkeleton />
+            </li>
+          ) : (
+            <li
+              key={it.id}
+              className={`flex items-center justify-between px-3 py-2 ${
+                i < items.length - 1 ? "border-b border-border/50" : ""
+              }`}
+            >
+              <div className="min-w-0 flex-1">
+                <p className="font-mono text-[9.5px] font-semibold uppercase tracking-wider text-text-muted">
+                  {it.label}
+                </p>
+                <p className="font-mono text-[14px] font-bold leading-none tracking-tight text-text-primary">
+                  {it.value}
+                </p>
+              </div>
+              <DirectionText value={it.change} unit={it.changeUnit} />
+            </li>
+          ),
+        )}
       </ul>
     </section>
   );
