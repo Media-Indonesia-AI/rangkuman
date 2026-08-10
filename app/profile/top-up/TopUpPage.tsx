@@ -49,11 +49,6 @@ export default function TopUpPage() {
   // falls back to the custom-input value when no bundle is picked.
   const [selectedBundleId, setSelectedBundleId] = useState<string | null>(null);
   const [customAmount, setCustomAmount] = useState<string>("");
-  // Payment-method selection. Today no Metode Pembayaran UI is
-  // rendered (the section is gated by "Coming soon"), but the
-  // submit button still requires `method` to be non-null so the
-  // stub stays consistent with the eventual flow.
-  const [method, setMethod] = useState<string | null>(null);
 
   // Curated top-up catalogue — small fixed list owned by the
   // wallet API. Sorted by `sort` ascending inside the hook so
@@ -165,9 +160,7 @@ export default function TopUpPage() {
         formattedPpn={formattedPpn}
         formattedGrandTotal={formattedGrandTotal}
         koinAmount={koinAmount}
-        disabled={
-          !effectiveAmount || !method || customValidation.error !== null
-        }
+        disabled={!effectiveAmount || customValidation.error !== null}
         onSubmit={handleNotImplemented}
       />
 
