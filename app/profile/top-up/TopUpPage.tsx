@@ -4,6 +4,9 @@ import { useState } from "react";
 import { Banknote, CreditCard, Smartphone, Sparkles, Wallet, type LucideIcon } from "lucide-react";
 import type { TopupBundle } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
+import { useGetWallet } from "@/lib/hooks/useGetWallet";
+import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { Shimmer } from "@/components/Shimmer";
 import { cn } from "@/lib/utils";
 
 /** Coin-to-IDR rate. 1 koin costs Rp 3.000 — surfaced in the
@@ -58,8 +61,11 @@ const PPN_RATE = 0.11;
  *
  * Renders four sub-blocks, each in its own card:
  *
- *   1. **Koin** — current wallet balance (placeholder zero with
- *      a "Coming soon" note until the wallet backend lands).
+ *   1. **Koin** — current wallet balance sourced from
+ *      `GET wallet` via `useGetWallet()`. Shows the aggregate
+ *      `balance` and, when the oldest lot still has unspent
+ *      coins, the formatted `expire_at` so the user can see
+ *      when the next lot hangus.
  *   2. **Pilih paket bundling** — bundle chips sourced from
  *      `GET wallet/topup/bundle` via `useGetTopupBundle()`, plus
  *      a custom-amount input that lets the user enter a coin
@@ -92,6 +98,21 @@ export default function TopUpPage() {
   const selectedBundle: TopupBundle | undefined = selectedBundleId
     ? bundles.find((b) => b.id === selectedBundleId)
     : undefined;
+
+  // Active wallet — server-aggregated `balance` plus the FIFO lot
+  // stack. The earliest expiry lives in `lots[0]` because the
+  // backend returns lots oldest-first; `remaining_balance` may
+  // have dropped to 0 on consumed lots, but the expiry is still
+  // the next hangus event the user needs to know about. We only
+  // surface the expiry line when there's a positive `remaining`
+  // balance on the oldest lot — otherwise the date refers to
+  // coins that are already gone and the copy would mislead.
+  const { data: wallet, isLoading: walletLoading } = useGetWallet();
+  const earliestLot = wallet?.lots?.[0];
+  const earliestExpire =
+    earliestLot && earliestLot.remaining_balance > 0
+      ? formatTanggalIndonesia(earliestLot.expire_at)
+      : null;
 
   const handleNotImplemented = () => {
     if (typeof window === "undefined") return;
@@ -171,10 +192,14 @@ export default function TopUpPage() {
         </div>
       </header>
 
-      {/* Koin card — current balance placeholder. The "Coming
-          soon" badge keeps the field honest about its stub
-          status. Conversion rate sits right below the balance
-          so the value of one koin is always in context. */}
+      {/* Koin card — live balance sourced from `useGetWallet()`.
+          While loading, the number renders a Shimmer block at the
+          same height as the resolved value so the layout doesn't
+          shift when the data lands. The earliest lot's expiry is
+          shown beneath the balance so the user can see when the
+          oldest unspent coins hangus — the copy is hidden when
+          the oldest lot has no remaining balance or the wallet
+          has no lots yet (freshly-registered user). */}
       <section className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-4">
         <span
           aria-hidden
@@ -186,9 +211,27 @@ export default function TopUpPage() {
           <p className="text-[10.5px] font-semibold uppercase tracking-widest text-text-muted">
             Koin saat ini
           </p>
-          <p className="mt-0.5 font-mono text-[20px] font-bold tabular-nums text-text-primary">
-            0
-          </p>
+          {walletLoading ? (
+            <Shimmer
+              aria-busy="true"
+              className="mt-1 h-6 w-24"
+            />
+          ) : (
+            <p
+              className="mt-0.5 font-mono text-[28px] font-bold tabular-nums text-text-primary"
+              aria-label={`${wallet?.balance ?? 0} koin`}
+            >
+              {(wallet?.balance ?? 0).toLocaleString("id-ID")}
+              <span className="ml-1 font-mono text-[12px] font-medium text-text-muted">
+                koin
+              </span>
+            </p>
+          )}
+          {earliestExpire && !walletLoading && (
+            <p className="mt-0.5 font-mono text-[10.5px] text-text-faint">
+              Hangus - {earliestExpire}
+            </p>
+          )}
         </div>
       </section>
 

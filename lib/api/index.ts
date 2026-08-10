@@ -106,4 +106,7 @@ export {
 export type {
   TopupBundle,
   TopupBundlesResponse,
+  Wallet,
+  WalletLot,
+  WalletResponse,
 } from "./types/wallet";
