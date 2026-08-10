@@ -1,7 +1,7 @@
 "use client";
 
 import { Newspaper, Tag } from "lucide-react";
-import type { Highlight } from "@/lib/mock/highlights";
+import { CATEGORY_CONFIG, type Highlight } from "@/lib/mock/highlights";
 import { ShareButton } from "@/components/ShareButton";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { cn } from "@/lib/utils";
@@ -15,8 +15,6 @@ interface CategoryConfig {
 interface SorotanDetailHeaderProps {
   story: Highlight;
   primary: CategoryConfig;
-  /** De-duplicated list of affected category configs (excluding `primary`). */
-  affected: CategoryConfig[];
 }
 
 const HERO_GRADIENT: Record<string, string> = {
@@ -39,8 +37,24 @@ const HERO_GRADIENT: Record<string, string> = {
 export function SorotanDetailHeader({
   story,
   primary,
-  affected,
 }: SorotanDetailHeaderProps) {
+  // Affected categories are derived directly from
+  // `story.affectedCategories` (the closed `Category[]` union on
+  // `Highlight`) and looked up against `CATEGORY_CONFIG` for label
+  // + color. The list is deduped against `primary` so the primary
+  // badge doesn't appear twice when a headline's primary category
+  // also appears in its affected list. Slugs outside the
+  // whitelist (shouldn't happen — `buildDisplayStory` filters
+  // them out at the orchestrator boundary, but defensive)
+  // fall through with `undefined` and get skipped.
+  const affected = story.affectedCategories
+    .filter((slug) => slug !== story.category)
+    .map((slug) => ({ slug, cfg: CATEGORY_CONFIG[slug] }))
+    .filter(
+      (entry): entry is { slug: typeof entry.slug; cfg: (typeof CATEGORY_CONFIG)[typeof entry.slug] } =>
+        Boolean(entry.cfg),
+    );
+
   return (
     <header className="glass-card relative overflow-hidden rounded-xl border border-border-strong bg-bg-secondary p-5 sm:p-7">
       {/* Top hero gradient strip */}
@@ -67,18 +81,17 @@ export function SorotanDetailHeader({
             <Tag className="h-2.5 w-2.5" aria-hidden />
             {story.tickers ?? primary.label}
           </span>
-          {affected
-            .map((c) => (
-              <span
-                key={c.label}
-                className={cn(
-                  "inline-flex items-center gap-1 rounded border border-current/20 bg-bg-tertiary/60 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
-                  c.colorClass,
-                )}
-              >
-                {c.label}
-              </span>
-            ))}
+          {affected.map(({ slug, cfg }) => (
+            <span
+              key={slug}
+              className={cn(
+                "inline-flex items-center gap-1 rounded border border-current/20 bg-bg-tertiary/60 px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-wider",
+                cfg.colorClass,
+              )}
+            >
+              {cfg.label}
+            </span>
+          ))}
           <span className="ml-auto font-mono text-[10.5px] text-text-faint">
             {story.timeAgo}
           </span>

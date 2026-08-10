@@ -79,7 +79,7 @@ function emptyDisplayStory(storyId: string): Highlight {
     title: "",
     summary: "",
     category: "crypto",
-    affectedCategories: ["crypto"],
+    affectedCategories: [],
     sources: [],
     sourceCount: 0,
     readTime: "",
@@ -140,20 +140,7 @@ function buildDisplayStory(
     // Gated to "crypto" by convention; if a future category reuses
     // this route we can derive `category` from `liveDetail.topics[0].slug`.
     category: "crypto",
-    // Derive from `liveDetail.topics` so multi-category headlines
-    // surface their secondary categories in the badge row. The
-    // `|| ["crypto"]` fallback can't sit on the right of `.map()`
-    // — `Array.prototype.map` always returns an array (even when
-    // the source is empty), so `[] || [...]` still yields `[]`. Use
-    // an explicit length check, falling back to a single-element
-    // `["crypto"]` so the affected row never renders empty. Cast
-    // to `Category[]` because the live API doesn't narrow
-    // `StoryTopic.slug` to the closed union.
-    affectedCategories: (
-      liveDetail.topics.length > 0
-        ? liveDetail.topics.map((t) => t.slug)
-        : []
-    ) as Category[],
+    affectedCategories: liveDetail.topics.map((t) => t.slug) as Category[],
     sources: Array.from(sourcesSet),
     sourceCount: sourcesSet.size,
     // Placeholders for fields the API doesn't expose yet.
@@ -254,17 +241,14 @@ export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps
 
   const displayStory = buildDisplayStory(storyId, liveDetail, stories);
 
-  // Category configs (label + color) for the badge row. The crypto
-  // detail route is gated to the `crypto` category, so both `primary`
-  // and `affected` use the same lookup. Once the API exposes a richer
-  // category list, this can iterate `displayStory.affectedCategories`.
+  // Primary category config (label + color) for the badge row.
+  // The crypto detail route is gated to the `crypto` category,
+  // so the lookup only needs to know about that one. Affected
+  // categories are derived inside the header from
+  // `story.affectedCategories` directly — no need to thread them
+  // through here.
   const primary =
     CATEGORY_PALETTE[displayStory.category] ?? DEFAULT_CATEGORY;
-  const affected = displayStory.affectedCategories
-    .map((c) => CATEGORY_PALETTE[c] ?? DEFAULT_CATEGORY)
-    .filter(
-      (cfg, i, self) => self.findIndex((x) => x.label === cfg.label) === i,
-    );
 
   return (
     <>
@@ -284,7 +268,6 @@ export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps
             <SorotanDetailHeader
               story={displayStory}
               primary={primary}
-              affected={affected}
             />
 
             <SorotanDetailSummary summary={displayStory.summary} />
