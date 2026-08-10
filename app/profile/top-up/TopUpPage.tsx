@@ -98,13 +98,14 @@ export default function TopUpPage() {
 
   // Pending invoice the user picked from the history list.
   // Clicking a pending row in `<TransactionHistory />` sets
-  // this so the QR card surfaces that invoice. A fresh mutation
-  // result (`lastTransaction`) wins when both exist so the QR
-  // always shows the latest active invoice.
+  // this so the QR card surfaces that invoice — the user's
+  // pick wins over `lastTransaction` so they can re-open the
+  // QR for an older unfinished invoice even right after a
+  // fresh submit.
   const [selectedPending, setSelectedPending] = useState<WalletTransaction | null>(
     null,
   );
-  const displayedTransaction = lastTransaction ?? selectedPending;
+  const displayedTransaction = selectedPending ?? lastTransaction;
 
   const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;
@@ -129,11 +130,13 @@ export default function TopUpPage() {
 
     const result = await requestTopup(body);
     if (result) {
-      // Reset the form so the next top-up starts blank. The
-      // QR card stays on screen via `lastTransaction` until the
-      // user dismisses or pays it.
+      // Reset the form so the next top-up starts blank, and
+      // clear any pending-row pick so the QR card shows the
+      // freshly-generated invoice (`lastTransaction` now wins
+      // via the `?? ` precedence).
       setSelectedBundleId(null);
       setCustomAmount("");
+      setSelectedPending(null);
       dispatchToast(`Invoice dibuat · ref ${result.payment_ref}`);
     } else if (submitError) {
       dispatchToast(submitError);
