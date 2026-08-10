@@ -1,4 +1,4 @@
-import { CreditCard } from "lucide-react";
+import { CreditCard, Loader2 } from "lucide-react";
 import { formatIdr } from "./constants";
 import { cn } from "@/lib/utils";
 
@@ -12,9 +12,14 @@ interface TopUpTotalsProps {
    *  is typed. Hidden when `null` / `0`. */
   koinAmount: number | null;
   /** Whether the submit button should be disabled. The orchestrator
-   *  composes this from `!effectiveAmount || !method ||
-   *  customValidation.error !== null`. */
+   *  composes this from `!effectiveAmount ||
+   *  customValidation.error !== null || isSubmitting`. */
   disabled: boolean;
+  /** True while the topup request is in flight. Swaps the
+   *  button label + icon to a spinner ("Memproses…") and
+   *  forces the disabled styling so the click can't be
+   *  re-fired. Defaults to `false`. */
+  isSubmitting?: boolean;
   onSubmit: () => void;
 }
 
@@ -23,14 +28,16 @@ interface TopUpTotalsProps {
  * tax breakdown, the coin-equivalent line (above the grand total
  * so the eye reads "tax → coins → amount you pay"), and the
  * "Lanjut ke Pembayaran" button. Disabled when the orchestrator
- * says so — the click still fires the stub toast so the user
- * gets feedback.
+ * says so; while the payment request is in flight the button
+ * shows a spinner + "Memproses…" label so the user gets
+ * visible feedback that the request is processing.
  */
 export function TopUpTotals({
   formattedPpn,
   formattedGrandTotal,
   koinAmount,
   disabled,
+  isSubmitting = false,
   onSubmit,
 }: TopUpTotalsProps) {
   return (
@@ -59,16 +66,33 @@ export function TopUpTotals({
         <button
           type="button"
           onClick={onSubmit}
-          disabled={disabled}
+          // Submitting forces `disabled` regardless of the
+          // orchestrator's value — the in-flight request already
+          // holds a single-flight guard in the hook, but locking
+          // the button at the UI layer too keeps the visual
+          // feedback consistent (spinner + label) even if the
+          // orchestrator forgets to fold `isSubmitting` into
+          // `disabled`.
+          disabled={disabled || isSubmitting}
+          aria-busy={isSubmitting || undefined}
           className={cn(
             "inline-flex h-10 items-center gap-1.5 rounded-md px-4 text-[13px] font-semibold transition-colors",
-            disabled
+            disabled || isSubmitting
               ? "cursor-not-allowed bg-bg-tertiary text-text-faint"
               : "bg-brand text-bg-primary hover:bg-brand-hover",
           )}
         >
-          <CreditCard className="h-3.5 w-3.5" aria-hidden />
-          Lanjut ke Pembayaran
+          {isSubmitting ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              Memproses…
+            </>
+          ) : (
+            <>
+              <CreditCard className="h-3.5 w-3.5" aria-hidden />
+              Lanjut ke Pembayaran
+            </>
+          )}
         </button>
       </div>
     </div>

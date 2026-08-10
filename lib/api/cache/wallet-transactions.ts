@@ -47,3 +47,19 @@ export function loadTransactionHistory(
   inflight.set(k, promise);
   return promise;
 }
+
+/**
+ * Drop the cache slot for a (limit, skip) page so the next
+ * `loadTransactionHistory(limit, skip)` call hits the wire.
+ *
+ * Used after a mutation that should make the history list
+ * stale — most commonly after `POST wallet/topup` lands a fresh
+ * invoice. Any concurrent in-flight request for the same slot
+ * is also dropped so it doesn't repopulate the cache with
+ * pre-mutation data when it settles.
+ */
+export function invalidateTransactionHistory(limit: number, skip: number): void {
+  const k = key(limit, skip);
+  cached.delete(k);
+  inflight.delete(k);
+}

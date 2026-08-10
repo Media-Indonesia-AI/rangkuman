@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TopupBundle, TopupRequest } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
@@ -84,8 +84,13 @@ export default function TopUpPage() {
   // doesn't guarantee order, so we sort by `created_at`
   // descending at the consumer layer to get a stable newest-first
   // list. Spread first so we don't mutate the cached payload.
-  const { data: transactions, isLoading: transactionsLoading } =
-    useGetTransactionHistory(10, 0);
+  // `refresh()` is wired below to reload the list right after a
+  // fresh invoice lands (see the `lastTransaction` effect).
+  const {
+    data: transactions,
+    isLoading: transactionsLoading,
+    refresh: refreshTransactions,
+  } = useGetTransactionHistory(10, 0);
   const sortedTransactions = [...transactions].sort(
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
@@ -139,6 +144,19 @@ export default function TopUpPage() {
     error: submitError,
     request: requestTopup,
   } = useRequestTopup();
+
+  // Refresh the Riwayat list whenever a fresh invoice lands.
+  // Watching `lastTransaction?.id` (instead of the whole object)
+  // avoids re-triggering on unrelated re-renders — the id only
+  // changes when a new submit resolves. The hook clears the
+  // (10, 0) cache slot before re-fetching, so the new invoice
+  // shows up at the top of the sorted list without waiting for
+  // the page to remount or the cache TTL to expire.
+  useEffect(() => {
+    if (lastTransaction?.id) {
+      refreshTransactions();
+    }
+  }, [lastTransaction?.id, refreshTransactions]);
 
   const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;
@@ -211,19 +229,20 @@ export default function TopUpPage() {
         formattedPpn={formattedPpn}
         formattedGrandTotal={formattedGrandTotal}
         koinAmount={koinAmount}
+        isSubmitting={isSubmitting}
         // Button activates the moment the user has a total value
         // (a chip is picked or a valid custom amount is entered).
         // The custom-amount validation error keeps the button
-        // disabled when the input is over-range, and `isSubmitting`
-        // locks it during the in-flight request so a second click
-        // can't create a duplicate invoice. The `!method` gate is
-        // intentionally dropped today because the "Metode
-        // Pembayaran" section isn't rendered yet — once that UI
-        // lands, restore `|| !method` here.
+        // disabled when the input is over-range. The `isSubmitting`
+        // flag also locks the button while the request is in
+        // flight (the totals component ORs it into its own
+        // disabled state too, so the visual feedback is
+        // consistent even if `disabled` is forgotten here).
+        // The `!method` gate is intentionally dropped today
+        // because the "Metode Pembayaran" section isn't rendered
+        // yet — once that UI lands, restore `|| !method` here.
         disabled={
-          !effectiveAmount ||
-          customValidation.error !== null ||
-          isSubmitting
+          !effectiveAmount || customValidation.error !== null
         }
         onSubmit={handleSubmit}
       />

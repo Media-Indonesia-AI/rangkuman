@@ -43,4 +43,4 @@ export { loadListStory } from "./stories";
 export { loadHeadlineById } from "./headline-detail";
 export { loadTopupBundle } from "./topup-bundle";
 export { loadWallet } from "./wallet";
-export { loadTransactionHistory } from "./wallet-transactions";
+export { loadTransactionHistory, invalidateTransactionHistory } from "./wallet-transactions";
