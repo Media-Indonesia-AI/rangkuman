@@ -43,7 +43,7 @@ import {
 } from "./stocks";
 import { getListStory } from "./story";
 import { getTopic } from "./topic";
-import { getTopupBundle, getWallet } from "./wallet";
+import { getTopupBundle, getTransactionHistory, getWallet } from "./wallet";
 import type { ApiError } from "./types/error";
 
 export const API_BASE_URL =
@@ -172,4 +172,5 @@ export const api = {
   // Wallet
   getTopupBundle,
   getWallet,
+  getTransactionHistory,
 };

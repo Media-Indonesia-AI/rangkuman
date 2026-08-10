@@ -117,3 +117,109 @@ export interface Wallet {
 export interface WalletResponse {
   data: Wallet;
 }
+
+// ─── TRANSACTION HISTORY ────────────────────────────────────────
+
+/**
+ * Sub-object on a `WalletTransaction.metadata.qr_code.metadata`
+ * field — the per-QR breakdown the backend stores when the user
+ * pays the top-up invoice. Includes the VAT line (11% of the base
+ * amount, same rate as the front-end's `PPN_RATE`) and the
+ * pre-VAT "basic_fee" so consumers can show the tax split without
+ * recomputing it.
+ */
+export interface WalletTransactionQrCodeMetadata {
+  vat: number;
+  user_id: string;
+  basic_fee: number;
+}
+
+/**
+ * `qr_code` block on a `WalletTransaction.metadata` — the QR
+ * payload the payment gateway issued for this top-up. The
+ * `external_id` matches the parent transaction's `payment_ref`,
+ * so consumers can cross-reference if needed.
+ */
+export interface WalletTransactionQrCode {
+  id: string;
+  type: string;
+  external_id: string;
+  qr_string: string;
+  metadata: WalletTransactionQrCodeMetadata;
+}
+
+/**
+ * `payment_details` block — present on `COMPLETED` transactions
+ * once the gateway has acknowledged the payment. `source` is the
+ * payment method the user actually paid with (e.g. `"DANA"`),
+ * `receipt_id` is the gateway-issued receipt id for support /
+ * dispute flows. May be missing for still-pending or expired
+ * transactions.
+ */
+export interface WalletTransactionPaymentDetails {
+  source: string;
+  receipt_id: string;
+}
+
+/**
+ * `metadata` block on a `WalletTransaction` — passthrough from
+ * the payment gateway. Includes the QR the user scanned, the
+ * gateway event name (`"qr.payment"`), the gateway's authoritative
+ * amount / status / created timestamp, and (on completion) the
+ * `payment_details`. Treat as opaque on the front-end — fields
+ * outside `qr_code` / `payment_details` are surfaced for
+ * debugging only and may change without notice.
+ *
+ * Nullable on `WalletTransaction` (see below) — the gateway
+ * may not have populated the block yet for pending / failed
+ * invoices, so consumers must guard before reading.
+ */
+export interface WalletTransactionMetadata {
+  id: string;
+  event: string;
+  amount: number;
+  status: string;
+  created: string;
+  qr_code: WalletTransactionQrCode;
+  payment_details?: WalletTransactionPaymentDetails;
+}
+
+/**
+ * One top-up transaction returned by `GET wallet/transaction`.
+ * Captures the invoice the wallet API created (`topup_amount` is
+ * IDR the user paid, `coin_amount` is the koin credited before
+ * rounding — a `111000` IDR top-up lands `33.333…` koin at the
+ * 3.000 Rp / koin rate), the payment-gateway handoff
+ * (`payment_ref` / `payment_url` — the latter is a base64 PNG QR
+ * the front-end can show inline), and the lifecycle timestamps
+ * (`expire_at` / `paid_at` / `created_at`).
+ *
+ * `status` is the wallet API's own status, not the gateway's —
+ * it's `"success"` when the koin was credited, other values for
+ * pending / expired / failed invoices. `payment_url` is included
+ * so a re-open of an unpaid invoice can re-display the same QR
+ * without a separate API call.
+ *
+ * `metadata` is `null`-able (not just optional) — the backend
+ * may not have populated the gateway passthrough yet for pending
+ * or failed invoices, so consumers must guard before reading.
+ */
+export interface WalletTransaction {
+  id: string;
+  wallet_id: string;
+  topup_amount: number;
+  coin_amount: number;
+  status: string;
+  payment_ref: string;
+  payment_url: string;
+  metadata?: WalletTransactionMetadata | null;
+  expire_at: string;
+  paid_at: string;
+  created_at: string;
+}
+
+/** Wire format for `GET wallet/transaction` — paginated list of
+ *  the active user's top-up invoices. */
+export interface WalletTransactionHistoryResponse {
+  data: WalletTransaction[];
+}

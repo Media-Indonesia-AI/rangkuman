@@ -109,4 +109,10 @@ export type {
   Wallet,
   WalletLot,
   WalletResponse,
+  WalletTransaction,
+  WalletTransactionHistoryResponse,
+  WalletTransactionMetadata,
+  WalletTransactionPaymentDetails,
+  WalletTransactionQrCode,
+  WalletTransactionQrCodeMetadata,
 } from "./types/wallet";
