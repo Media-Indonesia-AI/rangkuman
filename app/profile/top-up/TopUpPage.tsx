@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { TopupBundle, TopupRequest, WalletTransaction } from "@/lib/api";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
 import { useRequestTopup } from "@/lib/hooks/useRequestTopup";
+import { useWalletTransactionStream } from "@/lib/hooks/useWalletTransactionStream";
 import {
   BundleSelector,
   CoinBalanceCard,
@@ -41,7 +42,11 @@ export default function TopUpPage() {
     ? bundles.find((b) => b.id === selectedBundleId)
     : undefined;
 
-  const { data: wallet, isLoading: walletLoading } = useGetWallet();
+  const {
+    data: wallet,
+    isLoading: walletLoading,
+    refresh: refreshWallet,
+  } = useGetWallet();
   // Strip fully-consumed lots (`remaining_balance === 0`) so the
   // hangus notice surfaces the *next* upcoming expiry instead of
   // an already-spent one. FIFO order is preserved since the API
@@ -90,6 +95,7 @@ export default function TopUpPage() {
     isLoading: isSubmitting,
     error: submitError,
     request: requestTopup,
+    reset: resetLastTransaction,
   } = useRequestTopup();
 
   // Re-fetch history when a fresh invoice lands so it appears
@@ -110,6 +116,29 @@ export default function TopUpPage() {
     null,
   );
   const displayedTransaction = selectedPending ?? lastTransaction;
+
+  // While a pending invoice is on screen, subscribe to the
+  // upstream wallet-top-up SSE stream so close-out (paid,
+  // expired, failed) lands without needing a remount. The
+  // hook is a no-op when `displayedRef` is null — i.e. no
+  // card on screen, or it just transitioned to null as the
+  // `success` row replaced the pending one in Riayat.
+  //
+  // `onCloseOut` is the parent's side of the same handshake:
+  // the hook fires it on a terminal-status event and we use
+  // it to drop the active payment (so the QR card unmounts)
+  // and re-fetch wallet + history so the new koin and the
+  // `success` row both land. The hook also closes its
+  // EventSource on the same event so the browser stops
+  // trying to reconnect after a terminal status.
+  const displayedRef = displayedTransaction?.payment_ref ?? null;
+  const handleStreamCloseOut = useCallback(() => {
+    setSelectedPending(null);
+    resetLastTransaction();
+    refreshWallet();
+    refreshTransactions();
+  }, [resetLastTransaction, refreshWallet, refreshTransactions]);
+  useWalletTransactionStream(displayedRef, handleStreamCloseOut);
 
   const dispatchToast = (detail: string) => {
     if (typeof window === "undefined") return;

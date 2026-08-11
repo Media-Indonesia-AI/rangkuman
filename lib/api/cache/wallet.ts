@@ -41,3 +41,15 @@ export function loadWallet(): Promise<WalletResponse> {
     });
   return inflight;
 }
+
+/**
+ * Drop the wallet cache and any in-flight request so the next
+ * `loadWallet()` call hits the wire. Mirrors
+ * `invalidateTransactionHistory` — used after mutations or
+ * external events (e.g. an SSE-driven payment-status change)
+ * that should make the wallet stale.
+ */
+export function invalidateWallet(): void {
+  cached = null;
+  inflight = null;
+}

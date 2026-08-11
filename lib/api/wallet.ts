@@ -63,3 +63,27 @@ export function doReqTopup(body: TopupRequest): Promise<WalletTransactionRespons
     body: JSON.stringify(body),
   });
 }
+
+/**
+ * Build the relative URL path for the wallet-top-up SSE stream.
+ *
+ * Path: `wallet/topup/stream/{payment_ref}` — `payment_ref` is a
+ * path segment matching the REST-style route the upstream
+ * exposes. No query params and no auth header; the upstream
+ * identifies the invoice from the path alone. Prepend
+ * `API_BASE_URL` from `@/lib/api/client` and hand the result to
+ * `new EventSource(...)`. Returns the path only (no
+ * `API_BASE_URL` prefix) so the caller stays in control of where
+ * the SSE socket lives — same convention as
+ * `doReqTopup("wallet/topup", ...)`, which `request<T>()` then
+ * prefixes.
+ *
+ * @param paymentRef  The invoice's `payment_ref` from the active
+ *                    `WalletTransaction` (the same string
+ *                    `doReqTopup` returns). Path-encoded via
+ *                    `encodeURIComponent` so non-UUID
+ *                    `payment_ref`s still travel safely.
+ */
+export function getWalletTopupStreamPath(paymentRef: string): string {
+  return `wallet/topup/stream/${encodeURIComponent(paymentRef)}`;
+}

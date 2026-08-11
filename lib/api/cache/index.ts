@@ -42,5 +42,5 @@ export { loadTopic } from "./topics";
 export { loadListStory } from "./stories";
 export { loadHeadlineById } from "./headline-detail";
 export { loadTopupBundle } from "./topup-bundle";
-export { loadWallet } from "./wallet";
+export { loadWallet, invalidateWallet } from "./wallet";
 export { loadTransactionHistory, invalidateTransactionHistory } from "./wallet-transactions";

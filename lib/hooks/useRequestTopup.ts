@@ -26,6 +26,14 @@ import { api, type TopupRequest, type WalletTransaction } from "@/lib/api";
  *                     Resolves with the invoice on success or
  *                     `null` on failure (so callers can `await`
  *                     and branch without a try/catch).
+ *   - `reset`       — `() => void`. Drops `data` and `error`
+ *                     back to `null`. Callers wire this to SSE
+ *                     close-out so the freshly-created invoice
+ *                     clears once the payment lands, letting
+ *                     the now-`success` row take its place in
+ *                     Riayat (or letting the QR card unmount
+ *                     when the row never made it into Riayat
+ *                     yet).
  *
  * Body shape is the XOR union `TopupRequest` — exactly one of
  * `amount` (custom IDR-valued top-up outside the catalogue,
@@ -44,6 +52,7 @@ export function useRequestTopup(): {
   isLoading: boolean;
   error: string | null;
   request: (body: TopupRequest) => Promise<WalletTransaction | null>;
+  reset: () => void;
 } {
   const [data, setData] = useState<WalletTransaction | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -69,5 +78,10 @@ export function useRequestTopup(): {
     [],
   );
 
-  return { data, isLoading, error, request };
+  const reset = useCallback(() => {
+    setData(null);
+    setError(null);
+  }, []);
+
+  return { data, isLoading, error, request, reset };
 }
