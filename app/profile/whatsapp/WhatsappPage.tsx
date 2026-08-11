@@ -156,10 +156,10 @@ export default function WhatsappPage() {
       <section className="flex items-center justify-between gap-3 rounded-lg border border-border bg-bg-secondary p-4">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-text-primary">
-            Aktifkan notifikasi WhatsApp
+            Aktifkan Pengiriman Berita Ke Whatsapp
           </p>
           <p className="mt-0.5 text-[11.5px] text-text-muted">
-            Kirim ringkasan cerita langsung ke WhatsApp lo.
+            Kirim ringkasan cerita langsung ke WhatsApp.
           </p>
         </div>
         <button
