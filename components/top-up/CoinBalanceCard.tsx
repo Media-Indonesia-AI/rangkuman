@@ -1,5 +1,8 @@
-import { Wallet } from "lucide-react";
-import type { Wallet as WalletType } from "@/lib/api";
+import { useId, useState } from "react";
+import { ChevronDown, Wallet } from "lucide-react";
+import type { Wallet as WalletType, WalletLot } from "@/lib/api";
+import { formatSingkat, formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { cn } from "@/lib/utils";
 import { Shimmer } from "@/components/Shimmer";
 
 interface CoinBalanceCardProps {
@@ -10,26 +13,38 @@ interface CoinBalanceCardProps {
   /** Whether the wallet fetch is still in flight. Drives the
    *  Shimmer placeholder so the value slot doesn't flash. */
   isLoading: boolean;
-  /** Earliest lot expiry, formatted via `formatTanggalIndonesia`.
-   *  Hidden when `null` (no lots yet, or the oldest lot has no
-   *  remaining balance — the latter is filtered at the
-   *  orchestrator so this widget stays presentational). */
-  earliestExpire: string | null;
+  /** Lots that still hold koin, FIFO (oldest first). May be empty
+   *  for users who haven't topped up yet. The first entry drives
+   *  the headline "X koin hangus - <date>" notice; when more
+   *  than one entry is present, a small toggle reveals the rest
+   *  so the user can see every upcoming expiry in one place. */
+  expiringLots: WalletLot[];
 }
 
 /**
  * "Koin saat ini" card — live balance sourced from `useGetWallet()`
  * and surfaced to the page. While loading, the number renders a
  * Shimmer block at the same height as the resolved value so the
- * layout doesn't shift when the data lands. The earliest lot's
- * expiry is shown beneath the balance so the user can see when
- * the oldest unspent coins hangus.
+ * layout doesn't shift when the data lands.
+ *
+ * When the wallet has at least one unspent lot, the soonest-to-
+ * expire one surfaces beneath the balance as a "X koin hangus -
+ * <date>" headline. Users with several active lots see a small
+ * "Lihat N lagi / Sembunyikan" toggle that expands to the full
+ * FIFO list without leaving the card — kept inline rather than
+ * behind a modal so the expiry timeline stays scannable in one
+ * glance.
  */
 export function CoinBalanceCard({
   wallet,
   isLoading,
-  earliestExpire,
+  expiringLots,
 }: CoinBalanceCardProps) {
+  const [expanded, setExpanded] = useState(false);
+  const listId = useId();
+  const headline = expiringLots[0];
+  const hasMany = expiringLots.length > 1;
+
   return (
     <section className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-4">
       <span
@@ -55,10 +70,54 @@ export function CoinBalanceCard({
             </span>
           </p>
         )}
-        {earliestExpire && !isLoading && (
-          <p className="mt-0.5 font-mono text-[10.5px] text-text-faint">
-            Hangus - {earliestExpire}
-          </p>
+        {headline && !isLoading && (
+          <div className="mt-0.5">
+            <p className="font-mono text-[10.5px] text-text-faint">
+              {headline.remaining_balance.toLocaleString("id-ID")} koin hangus
+              {" - "}
+              {formatSingkat(headline.expire_at, "d MMM y, HH:mm") + ' WIB'}
+            </p>
+            {hasMany && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => setExpanded((v) => !v)}
+                  aria-expanded={expanded}
+                  aria-controls={listId}
+                  className="mt-1 inline-flex items-center gap-1 font-mono text-[10.5px] font-medium text-text-muted transition-colors hover:text-text-primary"
+                >
+                  {expanded
+                    ? "Sembunyikan"
+                    : `Lihat ${expiringLots.length - 1} lagi`}
+                  <ChevronDown
+                    className={cn(
+                      "h-3 w-3 transition-transform",
+                      expanded && "rotate-180",
+                    )}
+                    aria-hidden
+                  />
+                </button>
+                {expanded && (
+                  <ul
+                    id={listId}
+                    className="mt-1 flex flex-col gap-0.5 border-l border-border pl-2"
+                  >
+                    {expiringLots.slice(1).map((lot) => (
+                      <li
+                        key={lot.id}
+                        className="font-mono text-[10.5px] text-text-faint"
+                      >
+                        {lot.remaining_balance.toLocaleString("id-ID")} koin
+                        hangus
+                        {" - "}
+                        {formatTanggalIndonesia(lot.expire_at)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
         )}
       </div>
     </section>

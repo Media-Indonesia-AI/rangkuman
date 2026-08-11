@@ -6,7 +6,6 @@ import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
 import { useRequestTopup } from "@/lib/hooks/useRequestTopup";
-import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 import {
   BundleSelector,
   CoinBalanceCard,
@@ -43,11 +42,16 @@ export default function TopUpPage() {
     : undefined;
 
   const { data: wallet, isLoading: walletLoading } = useGetWallet();
-  const earliestLot = wallet?.lots?.[0];
-  const earliestExpire =
-    earliestLot && earliestLot.remaining_balance > 0
-      ? formatTanggalIndonesia(earliestLot.expire_at)
-      : null;
+  // Strip fully-consumed lots (`remaining_balance === 0`) so the
+  // hangus notice surfaces the *next* upcoming expiry instead of
+  // an already-spent one. FIFO order is preserved since the API
+  // sorts the array oldest-first; the consumer's `.filter` keeps
+  // that stable. The full filtered list is forwarded so the
+  // card can offer a "show all" disclosure for users with many
+  // active lots.
+  const expiringLots = (wallet?.lots ?? []).filter(
+    (l) => l.remaining_balance > 0,
+  );
 
   const {
     data: transactions,
@@ -150,7 +154,7 @@ export default function TopUpPage() {
       <CoinBalanceCard
         wallet={wallet}
         isLoading={walletLoading}
-        earliestExpire={earliestExpire}
+        expiringLots={expiringLots}
       />
 
       <BundleSelector
