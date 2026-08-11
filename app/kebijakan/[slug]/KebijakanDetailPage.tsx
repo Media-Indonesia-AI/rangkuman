@@ -32,7 +32,14 @@ const STATUS_ICON: Record<PolicyStatus, React.ComponentType<{ className?: string
   rejected: XCircle,
 };
 
+/** Flip to `true` to bring this route back online. While `false`,
+ *  every visit returns 404 but the rest of the file is preserved
+ *  so re-enabling is a one-line change. `grep -r "ENABLED = false" app/`
+ *  shows every currently-off page in one shot. */
+const ENABLED = false;
+
 export default function KebijakanDetailPage({ params }: { params: { slug: string } }) {
+  if (!ENABLED) notFound();
   const topic = POLICY_TOPICS.find((t) => t.slug === params.slug);
   if (!topic) notFound();
 

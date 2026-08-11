@@ -6,6 +6,7 @@ import { GradientDivider } from "@/components/GradientDivider";
 import { MarketSnapshot, type MetricCard } from "@/components/MarketSnapshot";
 import { getStoriesByCategory } from "@/lib/mock/highlights";
 import { GLOBAL_INDICES } from "@/lib/mock/category-widgets";
+import { notFound } from "next/navigation";
 
 // Pick the 3 most "iconic" indices + USD/IDR for the snapshot widget
 const INDEX_BY_ID = Object.fromEntries(GLOBAL_INDICES.map((i) => [i.id, i]));
@@ -41,6 +42,7 @@ const GLOBAL_METRICS: MetricCard[] = [
 ];
 
 export default function GlobalPage() {
+  notFound();
   const stories = getStoriesByCategory("global");
   const lead = stories[0];
   const sedangTerjadi = stories.slice(1, 5); // 4 cards
