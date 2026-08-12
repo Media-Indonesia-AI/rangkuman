@@ -2,9 +2,6 @@ import { ImageResponse } from "next/og";
 import { loadHeadlineById } from "@/lib/api/cache";
 
 export const runtime = "nodejs";
-export const contentType = "image/png";
-export const size = { width: 1200, height: 630 };
-export const alt = "Rangkuman story preview";
 
 // Brand palette pulled from app/globals.css so the rendered card
 // matches the rest of the app's dark theme.
@@ -192,6 +189,6 @@ export async function GET(
         </div>
       </div>
     ),
-    { ...size },
+    { width: 1200, height: 630 },
   );
 }
