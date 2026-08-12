@@ -27,6 +27,7 @@ import Link from "next/link";
 import { ArrowRight, Newspaper } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useMultiStories } from "@/lib/hooks/useMultiStories";
+import { useTopicsContext } from "@/components/topics-provider";
 import { EmptyStory } from "./EmptyStory";
 import { FeaturedStory } from "./FeaturedStory";
 import { FeaturedSkeleton, StoriesSkeleton } from "./Skeletons";
@@ -75,9 +76,25 @@ export function EmitenStories({
   );
   const [featured, ...rest] = stories;
 
+  // Resolve the `topicId` back to a slug so the "Lihat semua" link
+  // carries the same topic scope the listing already uses
+  // (`/story?topic=<slug>` — see `app/story/StoryPage.tsx`). The
+  // topics catalog is fetched on the client; if it hasn't landed
+  // yet (or the id doesn't match any registered topic), the link
+  // falls back to the unparameterized `/story` so the listing
+  // shows the cross-topic default. The data fetch above is
+  // unaffected — it uses the resolved `topicId` directly, so
+  // the feed stays topic-scoped even when the link briefly
+  // points at the cross-topic default.
+  const { topics } = useTopicsContext();
+  const topicSlug = topicId
+    ? topics.find((t) => t.id === topicId)?.slug
+    : undefined;
+  const seeAllHref = topicSlug ? `/story?topic=${topicSlug}` : "/story";
+
   const seeAll = (
     <Link
-      href="/story"
+      href={seeAllHref}
       className="group inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold uppercase tracking-widest text-brand transition-colors hover:text-brand-hover"
     >
       {variant === "highlight"
