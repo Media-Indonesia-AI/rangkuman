@@ -54,8 +54,7 @@ export function StockCardActions({
           href: /stock/BBCA?id=ABC    → /<origin>/stock/BBCA/2026-07-30?id=ABC
       */}
       {(() => {
-        const today = new Date().toISOString().slice(0, 10); // yyyy-MM-dd
-        const url = `${SITE_URL}${href}/${today}`;
+        const url = `${SITE_URL}${href}`;
         return (
           <ShareButton
             url={url}
