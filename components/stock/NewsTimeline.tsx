@@ -71,7 +71,6 @@ export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
   // window end; otherwise the hook defaults to today.
   const { data: headlines, isLoading } = useHeadlinesLast7Days(
     kode,
-    todayIso || undefined,
   );
 
   const isFetchingStories = isLoading;

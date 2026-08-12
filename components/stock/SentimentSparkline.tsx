@@ -61,7 +61,6 @@ export function SentimentSparkline({ kode, todayIso, className }: SentimentSpark
   // Last-7-days headlines for this ticker, via the shared request cache.
   const { data: headlines, isLoading: storiesLoading } = useHeadlinesLast7Days(
     kode,
-    todayIso || undefined,
   );
 
   // Bucket headlines by local-time date (matching <NewsTimeline>), then
