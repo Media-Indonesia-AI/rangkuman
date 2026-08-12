@@ -10,6 +10,7 @@ import {
   WATCHLIST_LIMIT,
   subscribe,
 } from "@/lib/auth";
+import { STORAGE_EVENT, STORAGE_KEYS } from "@/lib/storageKeys";
 
 /** Hook that gives reactive access to the watchlist. */
 export function useWatchlist() {
@@ -20,14 +21,14 @@ export function useWatchlist() {
     const refresh = () => setSnapshot(getWatchlist());
     const off = subscribe(refresh);
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "beritainvestor:watchlist" || e.key === null) refresh();
+      if (e.key === STORAGE_KEYS.watchlist || e.key === null) refresh();
     };
     window.addEventListener("storage", onStorage);
-    window.addEventListener("beritainvestor:storage", refresh as EventListener);
+    window.addEventListener(STORAGE_EVENT, refresh as EventListener);
     return () => {
       off();
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("beritainvestor:storage", refresh as EventListener);
+      window.removeEventListener(STORAGE_EVENT, refresh as EventListener);
     };
   }, []);
 
@@ -53,14 +54,14 @@ export function useIsInWatchlist(kode: string): boolean {
     const refresh = () => setInList(isInWatchlistRaw(kode));
     const off = subscribe(refresh);
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "beritainvestor:watchlist" || e.key === null) refresh();
+      if (e.key === STORAGE_KEYS.watchlist || e.key === null) refresh();
     };
     window.addEventListener("storage", onStorage);
-    window.addEventListener("beritainvestor:storage", refresh as EventListener);
+    window.addEventListener(STORAGE_EVENT, refresh as EventListener);
     return () => {
       off();
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("beritainvestor:storage", refresh as EventListener);
+      window.removeEventListener(STORAGE_EVENT, refresh as EventListener);
     };
   }, [kode]);
   return inList;

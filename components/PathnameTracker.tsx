@@ -2,13 +2,19 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
+import { SESSION_STORAGE_KEYS } from "@/lib/storageKeys";
 
 /** sessionStorage key that holds the most recent non-auth pathname.
  *  Read by `getAuthRedirectTarget()` after a successful login or
  *  registration so the user lands back on the page they came
  *  from (e.g. /saham, /crypto) instead of jumping to the home
- *  page. */
-export const AUTH_PREV_PATH_KEY = "rangkuman:auth-prev-path";
+ *  page.
+ *
+ *  Re-exported from `lib/storageKeys.ts` so existing imports
+ *  (`import { AUTH_PREV_PATH_KEY } from "@/components/PathnameTracker"`)
+ *  keep working — the canonical value lives in the shared module
+ *  alongside every other storage concern. */
+export const AUTH_PREV_PATH_KEY = SESSION_STORAGE_KEYS.authPrevPath;
 
 /** Pathnames we never want to save as a "previous page" — they're
  *  the auth pages themselves (would bounce the user straight back to

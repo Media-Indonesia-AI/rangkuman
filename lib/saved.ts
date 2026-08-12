@@ -7,7 +7,12 @@
  * the ISO date it was saved, so we can show newest first on /saved.
  */
 
-const STORAGE_KEY = "berita-investor-saved";
+import { SAVED_EVENT, STORAGE_KEYS } from "./storageKeys";
+
+// Local alias — the canonical key lives in `lib/storageKeys.ts`
+// alongside every other storage concern. Kept as a `const` here
+// purely so the read/write helpers below stay short.
+const STORAGE_KEY = STORAGE_KEYS.saved;
 
 export type SavedItemKind = "stock" | "story" | "coin";
 
@@ -46,7 +51,7 @@ function writeAll(items: SavedItem[]): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent("berita-investor:saved-changed"));
+    window.dispatchEvent(new CustomEvent(SAVED_EVENT));
   } catch {
     // Quota exceeded or private mode — silent fail.
   }

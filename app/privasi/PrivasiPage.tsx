@@ -71,12 +71,12 @@ export default function PrivasiPage() {
         untuk menyimpan:
       </p>
       <ul>
-        <li><code>beritainvestor:theme</code> — preferensi dark/light mode.</li>
-        <li><code>beritainvestor:user</code> — sesi login mock (email + nama).</li>
-        <li><code>beritainvestor:watchlist</code> — daftar saham di watchlist lo.</li>
-        <li><code>berita-investor-saved</code> — daftar berita & saham yang lo bookmark.</li>
-        <li><code>beritainvestor:newsletter-email</code> & <code>beritainvestor:newsletter-count</code> — status subscribe newsletter.</li>
-        <li><code>beritainvestor:pill-dismissed</code> — kapan pill newsletter terakhir di-dismiss.</li>
+        <li><code>rangkuman-news:theme</code> — preferensi dark/light mode.</li>
+        <li><code>rangkuman-news:user</code> — sesi login mock (email + nama).</li>
+        <li><code>rangkuman-news:watchlist</code> — daftar saham di watchlist lo.</li>
+        <li><code>rangkuman-news:saved</code> — daftar berita & saham yang lo bookmark.</li>
+        <li><code>rangkuman-news:newsletter</code> — daftar email yang subscribe newsletter.</li>
+        <li><code>rangkuman-news:newsletter_dismissed</code> — kapan pill newsletter terakhir di-dismiss (cooldown 24 jam).</li>
       </ul>
       <p>
         Semua data ini tersimpan di browser lo. Lo bisa hapus kapan saja lewat DevTools →

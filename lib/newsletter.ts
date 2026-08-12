@@ -4,8 +4,14 @@
  * "X investors sudah subscribe" that ticks up every signup.
  */
 
-const STORAGE_KEY = "beritainvestor:newsletter";
-const DISMISS_KEY = "beritainvestor:newsletter_dismissed";
+import { STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
+
+// Local aliases — kept short because the rest of the file uses
+// them ~15 times. The canonical key strings live in
+// `lib/storageKeys.ts` so this file stays a single-source-of-truth
+// consumer rather than a co-equal definer.
+const STORAGE_KEY = STORAGE_KEYS.newsletter;
+const DISMISS_KEY = STORAGE_KEYS.newsletterDismissed;
 /** Re-show the floating pill after this many hours have passed. */
 const DISMISS_HOURS = 24;
 
@@ -29,7 +35,7 @@ function writeJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
   try {
     window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent("beritainvestor:storage", { detail: { key } }));
+    window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: { key } }));
   } catch {
     /* noop */
   }

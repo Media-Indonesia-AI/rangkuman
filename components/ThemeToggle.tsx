@@ -3,8 +3,11 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 
-const STORAGE_KEY = "beritainvestor:theme";
+// Local alias — the canonical key lives in `lib/storageKeys.ts`
+// alongside every other storage concern.
+const STORAGE_KEY = STORAGE_KEYS.theme;
 
 type Theme = "light" | "dark";
 

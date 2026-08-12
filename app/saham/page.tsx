@@ -22,17 +22,27 @@ import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { todayIsoDate } from "@/lib/api/client";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 import { findSahamTopicId } from "@/lib/util/topicId";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 
-/** localStorage key for the persisted sub-tab selection on /saham.
- *  Matches the `beritainvestor:*` namespace convention used by
- *  auth, watchlist, theme, newsletter, etc. */
-const SAHAM_TAB_KEY = "beritainvestor:saham-tab";
+// Canonical localStorage key names live in `lib/storageKeys.ts`
+// alongside every other storage concern in the app. We reference
+// them directly here — both are used only a handful of times
+// below, so a local alias would just be noise.
 
 /** Type guard for the persisted value — ignores anything other
  *  than the two known tabs (defensive against manual localStorage
  *  edits and version skew across deploys). */
 function isSahamTab(value: unknown): value is SahamTab {
   return value === "recap" || value === "sektor";
+}
+
+/** Type guard for the persisted date — accepts only ISO-shaped
+ *  `YYYY-MM-DD` strings (anything else falls through to today).
+ *  Defensive against manual localStorage edits, against a stale
+ *  entry written by a build that used a different format, and
+ *  against a future build that picks a different default. */
+function isIsoDate(value: unknown): value is string {
+  return typeof value === "string" && /^\d{4}-\d{2}-\d{2}$/.test(value);
 }
 
 /**
@@ -50,11 +60,15 @@ export default function SahamPage() {
    *  as `null` and is hydrated on mount to avoid an SSR/CSR
    *  markup mismatch — same pattern as `<ThemeToggle />`. */
   const [subTab, setSubTab] = useState<SahamTab | null>(null);
-  // Selected date — defaults to actual local-tz today via lazy
-  // initialization (so the user always lands on the current day on
-  // first visit, not the hardcoded mock "2026-06-07"). The user can
-  // still navigate back via the DatePicker.
-  const [isoDate, setIsoDate] = useState<string>(() => todayIsoDate());
+  // Selected date — starts as `null` so the write effect can tell
+  // the pre-hydration render apart from a real "today" selection
+  // (same `null`-sentinel trick used for `subTab` above). Consumers
+  // fall back to `todayIsoDate()` until the persisted value lands.
+  // The persisted value (if any) is hydrated from localStorage on
+  // first mount, so navigating away and back to `/saham` (or a
+  // page reload) restores the user's last view.
+  const [isoDate, setIsoDate] = useState<string | null>(null);
+  const effectiveDate = isoDate ?? todayIsoDate();
 
   // Topics catalog — resolves the "saham" topic id so the
   // `<EmitenStories />` Story feed below is scoped to saham-scoped
@@ -74,12 +88,12 @@ export default function SahamPage() {
     data: trending,
     isLoading: trendingLoading,
     refresh: refreshTrending,
-  } = useGetStocksTrending(isoDate);
+  } = useGetStocksTrending(effectiveDate);
 
   // Hydrate the persisted sub-tab on first mount.
   useEffect(() => {
     try {
-      const raw = window.localStorage.getItem(SAHAM_TAB_KEY);
+      const raw = window.localStorage.getItem(STORAGE_KEYS.sahamTab);
       if (isSahamTab(raw)) setSubTab(raw);
       else setSubTab("recap"); // fall back to default on absent / invalid
     } catch {
@@ -95,11 +109,41 @@ export default function SahamPage() {
   useEffect(() => {
     if (subTab === null) return; // pre-hydration; let the read effect own the first write
     try {
-      window.localStorage.setItem(SAHAM_TAB_KEY, subTab);
+      window.localStorage.setItem(STORAGE_KEYS.sahamTab, subTab);
     } catch {
       /* noop — storage may be full or disabled */
     }
   }, [subTab]);
+
+  // Hydrate the persisted DatePicker selection on first mount —
+  // mirrors the `subTab` pattern above. Default to today when no
+  // value is persisted (or the persisted value fails the ISO
+  // shape check), so the picker always opens on a valid day.
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(STORAGE_KEYS.sahamRecapDate);
+      setIsoDate(isIsoDate(raw) ? raw : todayIsoDate());
+    } catch {
+      // localStorage may be disabled (private mode, blocked by
+      // browser policy, etc.) — silently land on today.
+      setIsoDate(todayIsoDate());
+    }
+  }, []);
+
+  // Persist on every subsequent change. Same `null`-sentinel skip
+  // as the `subTab` write effect above: the read effect owns the
+  // first write, so this only fires once the user actually picks
+  // a day. Writing `todayIsoDate()` on the pre-hydration render
+  // would otherwise clobber whatever the user had previously
+  // selected with the picker.
+  useEffect(() => {
+    if (isoDate === null) return;
+    try {
+      window.localStorage.setItem(STORAGE_KEYS.sahamRecapDate, isoDate);
+    } catch {
+      /* noop — storage may be full or disabled */
+    }
+  }, [isoDate]);
 
   // Pre-hydration guard: render only the static chrome (navbar +
   // sr-only H1) until the persisted tab is known. This prevents a
@@ -162,7 +206,7 @@ export default function SahamPage() {
                 {/* Date picker + recap summary */}
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <DatePicker
-                    value={isoDate}
+                    value={effectiveDate}
                     onChange={setIsoDate}
                     todayIso={todayIsoDate()}
                     maxLookbackDays={30}
@@ -173,7 +217,7 @@ export default function SahamPage() {
                   trending={trending}
                   trendingLoading={trendingLoading}
                   onRefresh={refreshTrending}
-                  recapDate={isoDate}
+                  recapDate={effectiveDate}
                 />
               </div>
 

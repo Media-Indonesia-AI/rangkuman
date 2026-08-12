@@ -45,6 +45,7 @@ import { getListStory } from "./story";
 import { getTopic } from "./topic";
 import { doReqTopup, getTopupBundle, getTransactionHistory, getWallet } from "./wallet";
 import type { ApiError } from "./types/error";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
@@ -60,7 +61,7 @@ export const API_BASE_URL =
 function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
   try {
-    const raw = window.localStorage.getItem("beritainvestor:user");
+    const raw = window.localStorage.getItem(STORAGE_KEYS.user);
     if (!raw) return {};
     const session = JSON.parse(raw) as {
       email?: string;

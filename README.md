@@ -220,7 +220,7 @@ Component usage:
 
 - CSS variables di `app/globals.css` untuk light & dark mode
 - Tailwind config reference variables: `bg-bg-primary`, `text-text-primary`, dll
-- Mode disimpan di localStorage (`beritainvestor:theme`)
+- Mode disimpan di localStorage (`rangkuman-news:theme`)
 - Inline script di `<head>` di root layout untuk prevent flash of wrong theme
 - Toggle component: `components/ThemeToggle.tsx`
 
@@ -278,23 +278,40 @@ Lihat `lib/mock/highlights.ts` untuk schema lengkap.
 
 ### 5. localStorage schema
 
+All keys live under the `rangkuman-news:*` prefix. The previous
+`beritainvestor:*` namespace was retired in a hard cutover with
+no migration shim — existing user data was left under the old
+keys and the app silently re-onboarded those users as fresh
+visitors on first paint.
+
 | Key | Type | Purpose |
 |-----|------|---------|
-| `beritainvestor:theme` | `"dark"` \| `"light"` | Theme preference |
-| `beritainvestor:user` | `{ email, name }` (JSON) | Mock auth session |
-| `beritainvestor:watchlist` | `string[]` (ticker list, max 10) | User's watchlist |
-| `beritainvestor:saved` | `SavedItem[]` (JSON) | Bookmarks (stocks + stories) |
-| `beritainvestor:newsletter-email` | `string` | Subscribed email |
-| `beritainvestor:newsletter-count` | `number` | Animated subscriber counter |
-| `beritainvestor:pill-dismissed` | `number` (ms timestamp) | Pill dismiss cooldown (24h) |
+| `rangkuman-news:user` | `{ email, username, name, password, … }` (JSON) | Mock auth session |
+| `rangkuman-news:setupToken` | `string` | One-time token from `POST /auth/register` |
+| `rangkuman-news:watchlist` | `{ codes: string[], updatedAt: string }` | User's watchlist snapshot (max 10 tickers) |
+| `rangkuman-news:theme` | `"dark"` \| `"light"` | Theme preference |
+| `rangkuman-news:saved` | `SavedItem[]` (JSON) | Bookmarks (stocks + stories + coins) |
+| `rangkuman-news:newsletter` | `SubscriberEntry[]` (JSON) | List of subscribed emails |
+| `rangkuman-news:newsletter_dismissed` | `{ until: ISO string }` | Pill-dismiss cooldown (24h) |
+| `rangkuman-news:saham-tab` | `"recap"` \| `"sektor"` | Active sub-tab on `/saham` |
+| `rangkuman-news:saham-recap-date` | `YYYY-MM-DD` | Active DatePicker value on `/saham` |
 
-**Cross-tab sync:** pakai `storage` event + custom event `beritainvestor:saved-changed`. Lihat `lib/saved.ts`.
+**Cross-tab sync:** pakai `storage` event + custom event
+`rangkuman-news:storage` (and `rangkuman-news:saved-changed` for
+the bookmarks key, which predates the shared helper). Lihat
+`lib/auth.ts`, `lib/newsletter.ts`, `lib/saved.ts`.
+
+**sessionStorage** (separate namespace, cleared per tab):
+
+| Key | Purpose |
+|-----|---------|
+| `rangkuman:auth-prev-path` | Last non-auth pathname, captured by `<PathnameTracker />` and read by `getAuthRedirectTarget()` after login/register |
 
 **Clear all local data (untuk testing):**
 ```js
 // Browser DevTools console
 Object.keys(localStorage)
-  .filter(k => k.startsWith('beritainvestor:'))
+  .filter(k => k.startsWith('rangkuman-news:'))
   .forEach(k => localStorage.removeItem(k));
 ```
 
