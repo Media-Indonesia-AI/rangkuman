@@ -143,7 +143,7 @@ function StoryPageContent() {
                 <span aria-hidden>📈</span>
                 <span>{headerTopic} Story{headerTopic ? ` · ${headerTopic}` : ""}</span>
                 <span className="ml-1 inline-flex items-center gap-1 rounded border border-brand/40 bg-brand/15 px-1.5 py-0.5 font-mono text-[9px] tracking-widest text-brand">
-                  {isLoading ? "memuat…" : `${stories.length} CERITA`}
+                  {isLoading ? "memuat…" : `Top ${stories.length} CERITA`}
                 </span>
               </h2>
               <p className="mt-1 text-[14px] leading-snug text-text-secondary sm:text-[15px]">
