@@ -13,6 +13,12 @@ export interface StockCardProps {
   variant?: "feed" | "featured" | "compact" | "list";
   className?: string;
   rank?: number;
+  /** Optional recap day as an ISO date (`YYYY-MM-DD`). When provided,
+   *  the deep-link `href` is built as `/stock/{kode}/{recapDate}` so
+   *  the detail page opens the matching snapshot via the
+   *  `/stock/[kode]/[recapDate]` route. Omit for the bare
+   *  `/stock/{kode}` (defaults to today on the detail page). */
+  recapDate?: string;
 }
 
 /**
@@ -44,8 +50,16 @@ export function StockCard({
   variant = "feed",
   className,
   rank,
+  recapDate,
 }: StockCardProps) {
-  const href = `/stock/${recap.sahamKode}`;
+  // When the caller knows which recap day this card represents,
+  // append it as a path segment so the detail page opens the
+  // matching snapshot (the `recapDate` URL slot on
+  // `/stock/[kode]/[recapDate]` already exists and is what
+  // `<AggregateSummary />` reads to scope the AI summary).
+  const href = recapDate
+    ? `/stock/${recap.sahamKode}/${recapDate}`
+    : `/stock/${recap.sahamKode}`;
 
   // `stock` is accepted for API parity with the original monolith
   // but the variants render the recap directly; the unused lookup
