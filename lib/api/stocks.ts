@@ -224,13 +224,12 @@ export function getStockHistorical(
  * @param limit    Page size (default 20).
  */
 export function getStocksTrending(
-  dateTime: string = new Date().toISOString(),
+  dateTime: string = todayIsoDate(),
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
-  const normalizedDateTime = toIsoWithTimezone(dateTime, "+07:00");
   const params = new URLSearchParams({
-    date: normalizedDateTime,
+    date: dateTime,
     page: String(page),
     limit: String(limit),
   });
