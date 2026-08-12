@@ -30,6 +30,7 @@ import { loadHeadlinesLast7Days } from "@/lib/api/cache";
  */
 export function useHeadlinesLast7Days(
   ticker: string,
+  date?: string,
   enabled = true,
 ): { data: HeadlineLast7DaysItem[]; isLoading: boolean } {
   const active = enabled && ticker.trim().length > 0;
@@ -49,7 +50,7 @@ export function useHeadlinesLast7Days(
     let cancelled = false;
     setIsLoading(true);
 
-    void loadHeadlinesLast7Days(ticker)
+    void loadHeadlinesLast7Days(ticker, date)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })
@@ -63,7 +64,7 @@ export function useHeadlinesLast7Days(
     return () => {
       cancelled = true;
     };
-  }, [active, ticker]);
+  }, [active, ticker, date]);
 
   return { data, isLoading };
 }

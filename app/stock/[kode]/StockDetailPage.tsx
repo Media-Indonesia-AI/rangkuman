@@ -15,6 +15,7 @@ import { SentimentSparkline } from "@/components/stock/SentimentSparkline";
 import { PriceChart30d } from "@/components/stock/PriceChart30d";
 import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
+import { Last7DaysHeadlinesProvider } from "@/components/stock/Last7DaysHeadlinesProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
 import { StockLoginDialog } from "@/components/stock/StockLoginDialog";
 import { EmitenStories } from "@/components/saham";
@@ -131,11 +132,16 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
               <KeyMetrics kode={kode} />
 
-              {/* News timeline */}
-              <NewsTimeline kode={kode} todayIso={''} />
-
-              {/* Sentiment trail — last-7-days headlines for this ticker. */}
-              <SentimentSparkline kode={kode} todayIso={''} />
+              {/* News timeline + sentiment trail — both read from the
+                  shared <Last7DaysHeadlinesProvider>, so the underlying
+                  `headlines/last-7-days` request fires exactly once
+                  even though two widgets render it. The provider owns
+                  the ticker and the "today" marker — children are
+                  prop-less. */}
+              <Last7DaysHeadlinesProvider kode={kode}>
+                <NewsTimeline />
+                <SentimentSparkline />
+              </Last7DaysHeadlinesProvider>
 
               {/* Articles grouped by media — data-driven via the
                   shared headline-scoped stories fetched once by

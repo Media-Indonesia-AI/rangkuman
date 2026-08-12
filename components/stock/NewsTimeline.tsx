@@ -5,15 +5,12 @@ import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { useHeadlinesLast7Days } from "@/lib/hooks/useHeadlinesLast7Days";
+import { useLast7DaysHeadlines } from "./Last7DaysHeadlinesProvider";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
 import type { HeadlineLast7DaysItem, StorySentiment } from "@/lib/api";
 
 interface NewsTimelineProps {
-  /** Ticker code the timeline is scoped to (e.g. `"ANTM"`). */
-  kode: string;
-  todayIso: string;
   className?: string;
 }
 
@@ -65,13 +62,15 @@ function StoriesShimmerList() {
  *  desc so the latest leads the cell. When no headlines are available
  *  for the ticker's last-7-days window, shows an empty-widget branch
  *  instead of fabricating a 7-day placeholder grid. */
-export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
+export function NewsTimeline({ className }: NewsTimelineProps) {
   // Last-7-days headlines for this ticker, fetched via the shared
-  // (ticker, date) request cache. `todayIso` (when set) anchors the
-  // window end; otherwise the hook defaults to today.
-  const { data: headlines, isLoading } = useHeadlinesLast7Days(
-    kode,
-  );
+  // (ticker, date) request cache. The fetch is owned by
+  // `<Last7DaysHeadlinesProvider>` so a sibling
+  // `<SentimentSparkline />` shares the same network round-trip
+  // instead of issuing its own. `todayIso` is also read from
+  // context — the provider resolves it once so we don't have to
+  // recompute or accept it as a prop.
+  const { headlines, isLoading, todayIso } = useLast7DaysHeadlines();
 
   const isFetchingStories = isLoading;
 

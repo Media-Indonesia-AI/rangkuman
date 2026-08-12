@@ -28,15 +28,16 @@ function key(ticker: string, date: string): string {
  */
 export function loadHeadlinesLast7Days(
   ticker: string,
-  date: string = todayIsoDate(),
+  date?: string,
 ): Promise<HeadlinesLast7DaysResponse> {
-  const k = key(ticker, date);
+  const effectiveDate = date ?? todayIsoDate();
+  const k = key(ticker, effectiveDate);
   const hit = cached.get(k);
   if (hit) return Promise.resolve(hit);
   const pending = inflight.get(k);
   if (pending) return pending;
   const promise = api
-    .getHeadlinesLast7Days(ticker, date)
+    .getHeadlinesLast7Days(ticker, effectiveDate)
     .then((res) => {
       cached.set(k, res);
       return res;
