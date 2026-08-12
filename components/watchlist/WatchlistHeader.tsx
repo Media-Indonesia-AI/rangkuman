@@ -4,7 +4,6 @@ import { Plus, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface WatchlistHeaderProps {
-  userName: string;
   isFull: boolean;
   onAddClick: () => void;
 }
@@ -14,7 +13,6 @@ interface WatchlistHeaderProps {
  * and the two action buttons (Keluar + Tambah).
  */
 export function WatchlistHeader({
-  userName,
   isFull,
   onAddClick,
 }: WatchlistHeaderProps) {
@@ -28,10 +26,6 @@ export function WatchlistHeader({
               Saham yang kamu pantau
             </h1>
           </div>
-          
-          <p className="mt-1 max-w-2xl text-[12.5px] leading-[1.55] text-text-secondary">
-            Hai <span className="font-mono font-semibold text-text-primary">{userName}</span> 👋 — ini saham yang kamu simpan. Disimpan lokal di browser, gak perlu login server.
-          </p>
         </div>
 
         <div className="flex items-center gap-2">

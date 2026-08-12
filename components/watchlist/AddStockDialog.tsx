@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Eye, EyeOff, Plus, Search, X } from "lucide-react";
+import { useState } from "react";
+import { Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
 import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { useWatchlist } from "@/lib/hooks/useWatchlist";
-import { stocks } from "@/lib/mock/stocks";
+import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
 import { cn } from "@/lib/utils";
 
 interface AddStockDialogProps {
@@ -18,19 +18,7 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
   const { add, remove, isIn } = useWatchlist();
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
-
-  const results = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return stocks.slice(0, 8);
-    return stocks
-      .filter(
-        (s) =>
-          s.kode.toLowerCase().includes(q) ||
-          s.nama.toLowerCase().includes(q) ||
-          s.sektor.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [query]);
+  const { data: results, isLoading, error } = useStocksSearch(query);
 
   const handleToggle = (kode: string) => {
     if (isIn(kode)) {
@@ -46,6 +34,13 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
     }
     setTimeout(() => setToast(null), 2200);
   };
+
+  const trimmed = query.trim();
+  const showEmptyHint = trimmed.length === 0;
+  const showLoading = isLoading && trimmed.length > 0;
+  const showError = !!error && trimmed.length > 0;
+  const showNoResults =
+    trimmed.length > 0 && !isLoading && !error && results.length === 0;
 
   return (
     <div
@@ -98,18 +93,31 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
         </div>
 
         <ul className="max-h-[360px] overflow-y-auto p-1.5">
-          {results.length === 0 ? (
+          {showEmptyHint ? (
             <li className="px-3 py-6 text-center text-[12px] text-text-muted">
-              Gak ada hasil untuk &ldquo;{query}&rdquo;
+              Ketik kode atau nama perusahaan buat mulai cari.
+            </li>
+          ) : showLoading ? (
+            <li className="flex items-center justify-center gap-2 px-3 py-6 text-[12px] text-text-muted">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              <span>Nyari &ldquo;{trimmed}&rdquo;&hellip;</span>
+            </li>
+          ) : showError ? (
+            <li className="px-3 py-6 text-center text-[12px] text-bearish">
+              Gagal nyari saham. Coba lagi.
+            </li>
+          ) : showNoResults ? (
+            <li className="px-3 py-6 text-center text-[12px] text-text-muted">
+              Gak ada hasil untuk &ldquo;{trimmed}&rdquo;
             </li>
           ) : (
             results.map((s) => {
-              const inList = isIn(s.kode);
+              const inList = isIn(s.ticker);
               return (
-                <li key={s.kode}>
+                <li key={s.ticker}>
                   <button
                     type="button"
-                    onClick={() => handleToggle(s.kode)}
+                    onClick={() => handleToggle(s.ticker)}
                     className={cn(
                       "flex w-full items-center gap-3 rounded px-2 py-2 text-left transition-colors",
                       "hover:bg-bg-tertiary",
@@ -117,14 +125,11 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
                     )}
                   >
                     <span className="inline-flex h-8 w-12 shrink-0 items-center justify-center rounded border border-border bg-bg-card font-mono text-[10.5px] font-bold tracking-tight text-text-primary">
-                      {s.kode}
+                      {s.ticker}
                     </span>
                     <span className="min-w-0 flex-1">
                       <p className="truncate text-[12.5px] font-semibold text-text-primary">
-                        {s.nama}
-                      </p>
-                      <p className="truncate font-mono text-[10px] text-text-muted">
-                        {s.sektor} · {s.price.toLocaleString("id-ID")}
+                        {s.company_name}
                       </p>
                     </span>
                     <span

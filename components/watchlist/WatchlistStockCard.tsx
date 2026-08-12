@@ -2,26 +2,47 @@
 
 import Link from "next/link";
 import { FileText, X } from "lucide-react";
-import { SentimentBadge } from "@/components/SentimentBadge";
+import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 import { useWatchlist } from "@/lib/hooks/useWatchlist";
-import { getStockByKode } from "@/lib/mock/stocks";
-import { getRecapForStock, TODAY_ISO } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
 
 interface WatchlistStockCardProps {
   kode: string;
 }
 
-/** Single watchlist tile — ticker, price, day change, sentiment + remove button. */
+/** Single watchlist tile — ticker, price, day change, article count + remove button.
+ *
+ *  Every visible field is gated on the API actually returning it: the
+ *  `/stocks/ticker-information/{ticker}` endpoint may omit `price`,
+ *  `pct_change`, `company_name`, `sector_name`, or `articles` for
+ *  sparsely-covered tickers, so each section renders only when its
+ *  source data is present. */
 export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
   const { remove } = useWatchlist();
-  const stock = getStockByKode(kode);
+  const { data, isLoading } = useTickerInformation(kode);
 
-  if (!stock) {
+  // Loading — keep the card shell so the watchlist grid doesn't
+  // reflow when the response lands. Only the ticker is safe to show
+  // since everything else is still in flight.
+  if (isLoading && !data) {
+    return (
+      <article className="rounded-lg border border-border bg-bg-secondary p-3.5">
+        <p className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary">
+          {kode}
+        </p>
+        <p className="mt-2 font-mono text-[10.5px] text-text-faint">Memuat…</p>
+      </article>
+    );
+  }
+
+  // Error / ticker not in the API — used to be silently masked by
+  // the mock lookup. Offer a remove action so the user can clean up
+  // stale entries (e.g. a ticker that was delisted).
+  if (!data) {
     return (
       <article className="rounded-lg border border-border bg-bg-secondary p-3.5">
         <p className="font-mono text-[12px] text-bearish">
-          ⚠ {kode} gak ditemukan di database.
+          ⚠ {kode} gak ditemukan.
         </p>
         <button
           type="button"
@@ -34,19 +55,27 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
     );
   }
 
-  const recap = getRecapForStock(kode, TODAY_ISO);
-  const positive = stock.changePercent >= 0;
-  const href = `/stock/${kode}`;
+  const positive = data.pct_change >= 0;
+  const articleCount = data.articles.length;
+  const mediaCount = new Set(
+    data.articles.map((a) => a.source_name).filter(Boolean),
+  ).size;
+  const hasArticles = articleCount > 0;
+  const showPrice = data.price != null;
+  const showChange = data.pct_change != null;
 
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong hover:shadow-card-hover">
-      {/* Top: ticker + remove */}
       <header className="flex items-start justify-between border-b border-border bg-bg-tertiary px-3 py-2">
-        <Link href={href} className="min-w-0">
+        <Link href={`/stock/${kode}`} className="min-w-0">
           <p className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
             {kode}
           </p>
-          <p className="mt-0.5 truncate text-[10.5px] text-text-muted">{stock.nama}</p>
+          {data.company_name && (
+            <p className="mt-0.5 truncate text-[10.5px] text-text-muted">
+              {data.company_name}
+            </p>
+          )}
         </Link>
         <button
           type="button"
@@ -59,41 +88,49 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
       </header>
 
       <div className="flex flex-1 flex-col gap-2 p-3">
-        {/* Price + change */}
+        {/* Price + change — each side rendered only when its data is present. */}
         <div className="flex items-baseline justify-between">
           <div>
-            <p className="font-mono text-[18px] font-bold leading-none tracking-tight text-text-primary num-tabular">
-              {stock.price.toLocaleString("id-ID")}
-            </p>
-            <p className="mt-0.5 font-mono text-[10px] text-text-faint">{stock.sektor}</p>
-          </div>
-          <p
-            className={cn(
-              "font-mono text-[12.5px] font-semibold num-tabular",
-              positive ? "text-bullish" : "text-bearish",
+            {showPrice && (
+              <p className="font-mono text-[18px] font-bold leading-none tracking-tight text-text-primary num-tabular">
+                {data.price.toLocaleString("id-ID")}
+              </p>
             )}
-          >
-            {positive ? "▲ +" : "▼ "}
-            {Math.abs(stock.changePercent).toFixed(2)}%
-          </p>
+            {data.sector_name && (
+              <p className="mt-0.5 font-mono text-[10px] text-text-faint">
+                {data.sector_name}
+              </p>
+            )}
+          </div>
+          {showChange && (
+            <p
+              className={cn(
+                "font-mono text-[12.5px] font-semibold num-tabular",
+                positive ? "text-bullish" : "text-bearish",
+              )}
+            >
+              {positive ? "▲ +" : "▼ "}
+              {Math.abs(data.pct_change).toFixed(2)}%
+            </p>
+          )}
         </div>
 
-        {/* Sentiment + article count */}
-        {recap ? (
+        {/* Article count + media count — derived from `articles[]`. The
+            "N media" sub-text only shows when there are actual distinct
+            sources attached, otherwise we'd render "0 media" alongside
+            "5 artikel" which is contradictory. */}
+        {hasArticles && (
           <div className="flex flex-wrap items-center gap-1.5">
-            <SentimentBadge sentiment={recap.sentimen} size="sm" showLabel={false} />
             <span className="inline-flex items-center gap-1 rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[10px] text-text-secondary">
               <FileText className="h-2.5 w-2.5" aria-hidden />
-              {recap.jumlahBerita} artikel
+              {articleCount} artikel
             </span>
-            <span className="font-mono text-[10px] text-text-muted">
-              {recap.sumber.length} media
-            </span>
+            {mediaCount > 0 && (
+              <span className="font-mono text-[10px] text-text-muted">
+                {mediaCount} media
+              </span>
+            )}
           </div>
-        ) : (
-          <p className="font-mono text-[10.5px] text-text-faint">
-            Belum ada recap hari ini
-          </p>
         )}
       </div>
     </article>

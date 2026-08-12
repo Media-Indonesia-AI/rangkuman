@@ -38,9 +38,8 @@ export default function WatchlistPage() {
 
   return (
     <>
-      <main className="flex flex-col gap-4">
+      <main className="flex flex-col">
         <WatchlistHeader
-          userName={user.name}
           isFull={isFull}
           onAddClick={() => setShowAdd(true)}
         />
