@@ -48,18 +48,12 @@ export function FeaturedCard({ story }: FeaturedCardProps) {
             <Clock className="h-3 w-3" aria-hidden />
             Update {relativeUpdated(story.created_at)}
           </span>
-          {topic ? (
+          {topic && (
             <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[9.5px] text-text-secondary">
               {topic}
             </span>
-          ) : (
-            <NotAvailable />
           )}
         </div>
-        {/* Price move "sejak story" isn't on the endpoint yet. */}
-        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-faint">
-          <NotAvailable /> sejak story
-        </span>
       </div>
     </Link>
   );

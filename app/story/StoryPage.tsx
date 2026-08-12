@@ -68,13 +68,9 @@ export default function StoryPage() {
                 </span>
               </h2>
               <p className="mt-1 text-[14px] leading-snug text-text-secondary sm:text-[15px]">
-                Narasi perkembangan emiten dalam jangka panjang — bukan
-                berita harian, tapi konteks yang bikin saham bergerak.
+                Narasi perkembangan emiten dalam jangka panjang
               </p>
             </div>
-            <span className="hidden font-mono text-[10px] text-text-faint sm:inline">
-              Update tiap minggu
-            </span>
           </div>
         </section>
 
@@ -107,20 +103,6 @@ export default function StoryPage() {
             )}
           </>
         )}
-
-        {/* Back to /saham/ */}
-        <div className="mt-8 flex justify-center">
-          <Link
-            href="/saham"
-            className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand"
-          >
-            Kembali ke Recap /saham/
-            <ArrowRight
-              className="h-3 w-3 transition-transform group-hover:translate-x-0.5"
-              aria-hidden
-            />
-          </Link>
-        </div>
       </main>
 
       <Footer />

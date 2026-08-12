@@ -4,6 +4,7 @@ import {
   TickerBadge,
   SentimentPill,
   NotAvailable,
+  PctChangeChip,
   relativeUpdated,
 } from "./shared";
 
@@ -26,8 +27,14 @@ export function StoryListRow({ story }: StoryListRowProps) {
     >
       <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
         <TickerBadge kode={story.primary_ticker_code} />
-        {/* Price change isn't on the endpoint yet. */}
-        <NotAvailable />
+        {/* Price move since the headline was created. Older
+            responses may omit the field, so fall back to `n/a`
+            instead of rendering `+0.0%`. */}
+        {story.pct_change_since_story !== undefined ? (
+          <PctChangeChip pct={story.pct_change_since_story} />
+        ) : (
+          <NotAvailable />
+        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="mb-1 flex flex-wrap items-center gap-1.5">

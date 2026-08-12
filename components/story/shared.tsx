@@ -41,6 +41,32 @@ export function NotAvailable() {
   );
 }
 
+/** "Since story" price-move chip — turns `HeadlineLast7DaysItem[
+ *  'pct_change_since_story']` into a sign + arrow + percentage.
+ *  Sign convention matches the price APIs: positive = up (bullish,
+ *  `TrendingUp`), negative = down (bearish, `TrendingDown`). Zero
+ *  renders as positive with no arrow flip. Returns `null` when the
+ *  field is absent so the caller can fall back to its own `n/a`
+ *  placeholder. Mirrors the chip in
+ *  `components/saham/EmitenStories/shared.tsx` so a story row
+ *  looks the same wherever it renders. */
+export function PctChangeChip({ pct }: { pct: number | undefined }) {
+  if (pct === undefined || pct === null) return null;
+  const isPositive = pct >= 0;
+  const color = isPositive ? "text-bullish" : "text-bearish";
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 font-mono text-[10.5px] font-semibold tabular-nums",
+        color,
+      )}
+    >
+      {isPositive ? "+" : ""}
+      {pct.toFixed(1)}%
+    </span>
+  );
+}
+
 /** Human "X waktu lalu" label from an ISO timestamp. Returns "n/a"
  *  if the string can't be parsed. */
 export function relativeUpdated(iso: string): string {
