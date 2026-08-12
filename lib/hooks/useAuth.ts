@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { getCurrentUser, subscribe, type MockUser } from "@/lib/auth";
+import { STORAGE_EVENT, STORAGE_KEYS } from "@/lib/storageKeys";
 
 /** React hook for the current mock user. Returns null while loading. */
 export function useCurrentUser(): MockUser | null | undefined {
@@ -14,15 +15,15 @@ export function useCurrentUser(): MockUser | null | undefined {
 
     const off = subscribe(refresh);
     const onStorage = (e: StorageEvent) => {
-      if (e.key === "beritainvestor:user" || e.key === null) refresh();
+      if (e.key === STORAGE_KEYS.user || e.key === null) refresh();
     };
     window.addEventListener("storage", onStorage);
-    window.addEventListener("beritainvestor:storage", refresh as EventListener);
+    window.addEventListener(STORAGE_EVENT, refresh as EventListener);
 
     return () => {
       off();
       window.removeEventListener("storage", onStorage);
-      window.removeEventListener("beritainvestor:storage", refresh as EventListener);
+      window.removeEventListener(STORAGE_EVENT, refresh as EventListener);
     };
   }, []);
 

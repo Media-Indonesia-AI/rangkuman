@@ -2,7 +2,32 @@
 
 All notable changes to Rangkuman.news. Newest first.
 
-## v1.7.0 — June 2026 (current)
+## Unreleased
+
+### ⚠️ Breaking change — localStorage namespace rename
+
+- **All localStorage keys renamed** from the `beritainvestor:*` prefix
+  to the `rangkuman-news:*` prefix. The bookmarks key
+  (`berita-investor-saved`) and its change-event
+  (`berita-investor:saved-changed`) are folded into the new prefix at
+  the same time (`rangkuman-news:saved` /
+  `rangkuman-news:saved-changed`).
+- **No migration shim.** Existing user data (theme, watchlist,
+  bookmarks, newsletter subscription, auth session, `/saham`
+  preferences) is left under the old keys and is silently abandoned.
+  Returning users will appear as fresh visitors on first paint —
+  theme resets to dark, watchlist empties, bookmarks empty,
+  newsletter subscription drops, etc.
+- **Single source of truth.** Every key (and the related
+  `rangkuman-news:storage` / `rangkuman-news:saved-changed`
+  custom events) now lives in [`lib/storageKeys.ts`](lib/storageKeys.ts).
+  Consumers import from that module; no hardcoded key strings
+  remain in `.ts`/`.tsx` files outside of it.
+- **Docs updated**: README localStorage schema, privacy disclosure
+  at `/privasi`, and the migration notes below all reflect the
+  new namespace.
+
+## v1.7.0 — June 2026
 
 **Live demo:** https://1w32ur3b725c.space.minimax.io
 
@@ -79,7 +104,8 @@ No new dependencies. Same stack as v1.0.0.
 
 ## Migration notes
 
-- v1.7.0 is fully backward compatible with v1.0.0
-- localStorage keys preserved: `beritainvestor:*`
-- No breaking API changes
+- **Unreleased** introduces a breaking localStorage namespace change
+  (see above) — the `beritainvestor:*` keys from v1.0.0 through
+  v1.7.0 are no longer read by the app.
+- v1.7.0 was fully backward compatible with v1.0.0
 - All routes accessible at same paths

@@ -5,11 +5,16 @@
  */
 
 import { api, type ApiError, type RegisterResponse } from "./api";
-import { AUTH_PREV_PATH_KEY } from "@/components/PathnameTracker";
+import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
 
-const USER_KEY = "beritainvestor:user";
-const SETUP_TOKEN_KEY = "beritainvestor:setupToken";
-const WATCHLIST_KEY = "beritainvestor:watchlist";
+// Local aliases — kept short because the rest of the file uses
+// them ~30 times. The canonical key strings live in
+// `lib/storageKeys.ts` so this file stays a single-source-of-truth
+// consumer rather than a co-equal definer.
+const USER_KEY = STORAGE_KEYS.user;
+const SETUP_TOKEN_KEY = STORAGE_KEYS.setupToken;
+const WATCHLIST_KEY = STORAGE_KEYS.watchlist;
+const AUTH_PREV_PATH_KEY = SESSION_STORAGE_KEYS.authPrevPath;
 const MAX_WATCHLIST = 10;
 
 /**
@@ -130,7 +135,7 @@ function writeJson(key: string, value: unknown): void {
     window.localStorage.setItem(key, JSON.stringify(value));
     // Tell other tabs / hook subscribers that storage changed.
     window.dispatchEvent(
-      new CustomEvent("beritainvestor:storage", { detail: { key } }),
+      new CustomEvent(STORAGE_EVENT, { detail: { key } }),
     );
     // Wake in-process subscribers (useCurrentUser, useWatchlist) so they
     // re-read storage synchronously instead of waiting for a window event
@@ -146,7 +151,7 @@ function removeKey(key: string): void {
   try {
     window.localStorage.removeItem(key);
     window.dispatchEvent(
-      new CustomEvent("beritainvestor:storage", { detail: { key } }),
+      new CustomEvent(STORAGE_EVENT, { detail: { key } }),
     );
     listeners.forEach((fn) => fn());
   } catch {

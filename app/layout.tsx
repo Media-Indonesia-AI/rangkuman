@@ -7,6 +7,7 @@ import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
 import { BfcacheRecovery } from "@/components/BfcacheRecovery";
 import { TopicsProvider } from "@/components/topics-provider";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 import "./globals.css";
 
 const inter = Inter({
@@ -84,7 +85,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var t = localStorage.getItem('beritainvestor:theme');
+                var t = localStorage.getItem(${JSON.stringify(STORAGE_KEYS.theme)});
                 if (t === 'light') {
                   document.documentElement.classList.remove('dark');
                 } else {
