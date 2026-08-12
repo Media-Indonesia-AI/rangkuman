@@ -11,7 +11,7 @@
  */
 
 import { request, todayIsoDate } from "./client";
-import { toIsoDateTime, toIsoWithTimezone } from "@/lib/util/formatDate";
+import { toIsoDateTime } from "@/lib/util/formatDate";
 import type { StoryFilter } from "./types/story";
 import type {
   CompositeChartResponse,
@@ -79,8 +79,8 @@ export function getForeignStocks(
   endDate?: string,
 ): Promise<ForeignStocksResponse> {
   const params = new URLSearchParams({
-    start_date: toIsoDateTime(startDate ?? todayIsoDate()),
-    end_date: toIsoDateTime(endDate ?? todayIsoDate()),
+    start_date: startDate ?? todayIsoDate(),
+    end_date: endDate ?? todayIsoDate(),
   });
   return request<ForeignStocksResponse>(
     `stocks/foreign-stocks?${params.toString()}`,
