@@ -40,6 +40,13 @@ interface PalingBanyakDiberitakanProps {
   trending: StockTrendingItem[];
   trendingLoading: boolean;
   onRefresh: () => void;
+  /** ISO date (`YYYY-MM-DD`) of the trending snapshot — the same
+   *  value the parent passed to `useGetStocksTrending()`. Forwarded
+   *  to each `<StockCard />` as `recapDate` so the deep-link lands
+   *  on `/stock/{kode}/{recapDate}` (the snapshot the user is
+   *  currently looking at), not on whatever the detail page
+   *  considers "today". */
+  recapDate?: string;
 }
 
 /**
@@ -115,6 +122,7 @@ export function PalingBanyakDiberitakan({
   trending,
   trendingLoading,
   onRefresh,
+  recapDate,
 }: PalingBanyakDiberitakanProps) {
   return (
     <section aria-label="Paling banyak diberitakan">
@@ -138,6 +146,7 @@ export function PalingBanyakDiberitakan({
               recap={mapStockTrendingItemToRecap(item)}
               variant="list"
               rank={i + 1}
+              recapDate={recapDate}
             />
           ))}
         </div>

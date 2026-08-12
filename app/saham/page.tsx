@@ -173,6 +173,7 @@ export default function SahamPage() {
                   trending={trending}
                   trendingLoading={trendingLoading}
                   onRefresh={refreshTrending}
+                  recapDate={isoDate}
                 />
               </div>
 
