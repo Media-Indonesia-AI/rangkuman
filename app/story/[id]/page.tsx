@@ -1,5 +1,80 @@
+import type { Metadata } from "next";
 import { headers } from "next/headers";
 import StoryDetailPage from "./StoryDetailPage";
+import { loadHeadlineById } from "@/lib/api/cache";
+
+interface PageProps {
+  params: { id: string };
+}
+
+/**
+ * Build the `<meta name="og:*">` and Twitter Card tags for this
+ * route. Telegram, WhatsApp, X, LinkedIn, and Slack all fetch a
+ * shared URL and read these tags to render the link preview —
+ * without them the shared link shows only the bare URL.
+ *
+ * The relative `og:image` URL resolves to an absolute URL via
+ * `metadataBase: new URL("https://rangkuman.news")` in
+ * `app/layout.tsx`, which is required for every social scraper
+ * (they reject relative `og:image` URLs). The image itself is
+ * generated dynamically by `app/og/[id]/route.tsx` — the API
+ * payload doesn't ship a thumbnail, so we render one per-story
+ * on demand with title + summary + brand chrome.
+ *
+ * `loadHeadlineById` is called in a try/catch because if the API
+ * is unreachable we still want to emit valid `<meta>` tags
+ * (Telegram in particular drops the whole preview when one tag
+ * is broken). Falls back to the generic copy on error.
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  let headline = "Story · Rangkuman";
+  let description = "Story pasar modal Indonesia yang sedang tren, dikurasi dari 64 sumber media.";
+  let topics: string[] = [];
+  try {
+    const detail = await loadHeadlineById(params.id);
+    if (detail.title) headline = detail.title;
+    if (detail.summary) description = detail.summary;
+    topics = (detail.topics ?? [])
+      .map((t) => t.name)
+      .filter((name): name is string => Boolean(name));
+  } catch {
+    // API unreachable — emit generic tags so the share preview
+    // still renders (a missing og:image makes some scrapers drop
+    // the whole preview, including the title).
+  }
+  // Relative paths resolve against metadataBase. `trailingSlash: true`
+  // in next.config.js means the OG route is served at `/og/[id]/`.
+  const ogImage = `/og/${params.id}/`;
+  const canonical = `/story/${params.id}/`;
+  return {
+    title: `${headline} · Rangkuman`,
+    description,
+    keywords: topics,
+    alternates: { canonical },
+    openGraph: {
+      type: "article",
+      title: headline,
+      description,
+      siteName: "Rangkuman",
+      locale: "id_ID",
+      url: canonical,
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: headline,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: headline,
+      description,
+      images: [ogImage],
+    },
+  };
+}
 
 interface BackLink {
   label: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -76,6 +77,20 @@ export default function StoryDetailPage({
 }: StoryDetailPageProps) {
   const { headlineId, detail, isLoading } = useHeadlineId();
 
+  // Absolute URL of this detail page, threaded down to the hero's
+  // share button. `window.location.origin` is read inside a
+  // `useEffect` (not at render time) because this is a client
+  // component that Next.js still renders once on the server for
+  // SSR — touching `window` during that pass would throw.
+  // `trailingSlash: true` in next.config.js means the canonical
+  // URL is served with a trailing slash, matching what
+  // `generateMetadata` emits in `app/story/[id]/page.tsx`.
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!headlineId) return;
+    setShareUrl(`${window.location.origin}/story/${headlineId}/`);
+  }, [headlineId]);
+
   // Resolve `topicHint` to a real topic id on the client. The
   // topics catalog is fetched by the layout-level
   // `<TopicsProvider />` and gated on auth, so this only runs
@@ -127,7 +142,7 @@ export default function StoryDetailPage({
           </Link>
         </div>
 
-        <StoryHero detail={detail} isLoading={isLoading} />
+        <StoryHero detail={detail} isLoading={isLoading} shareUrl={shareUrl ?? undefined} />
 
         {/* 2-COL: Stories list + sidebar */}
         <div className="grid gap-6 lg:grid-cols-3">

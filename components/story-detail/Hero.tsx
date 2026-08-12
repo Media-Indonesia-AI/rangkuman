@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Shimmer } from "@/components/Shimmer";
+import { ShareButton } from "@/components/ShareButton";
 import { cn } from "@/lib/utils";
 import { getRelativeTime } from "@/lib/util/formatDate";
 import type { HeadlineDetail } from "@/lib/api";
@@ -23,19 +24,27 @@ interface StoryHeroProps {
    *  date) aren't on the endpoint and stay `n/a`. */
   detail: HeadlineDetail | null;
   isLoading: boolean;
+  /** Absolute URL of this story-detail page, used by the share
+   *  button so WhatsApp/Telegram/clipboard receive a fully-qualified
+   *  link (those targets reject relative URLs). Required to render
+   *  the share affordance; the share button is hidden when the URL
+   *  hasn't resolved yet (SSR pass + first hydration). The parent
+   *  (`app/story/[id]/StoryDetailPage`) reads `window.location.origin`
+   *  inside a `useEffect` and threads it down here. */
+  shareUrl?: string;
 }
 
 /** Hero block — title, brief, stats row, and price-impact strip.
  *  Renders one of three states based on `isLoading` / `detail`:
  *  skeleton while fetching, the headline when present, or a
  *  centered empty state when the id didn't resolve. */
-export function Hero({ detail, isLoading }: StoryHeroProps) {
+export function Hero({ detail, isLoading, shareUrl }: StoryHeroProps) {
   return (
     <section className="mb-6 rounded-lg border border-border-strong bg-bg-secondary/40 p-4 sm:p-5">
       {isLoading ? (
         <HeroSkeleton />
       ) : detail ? (
-        <HeroFeatured detail={detail} />
+        <HeroFeatured detail={detail} shareUrl={shareUrl} />
       ) : (
         <HeroEmpty />
       )}
@@ -43,7 +52,13 @@ export function Hero({ detail, isLoading }: StoryHeroProps) {
   );
 }
 
-function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
+function HeroFeatured({
+  detail,
+  shareUrl,
+}: {
+  detail: HeadlineDetail;
+  shareUrl?: string;
+}) {
   const meta = sentimentMeta[detail.sentiment];
   const StatusIcon = STATUS_ICON[detail.sentiment];
 
@@ -104,7 +119,11 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
     <>
       {/* Status + ticker + sector badges — `ticker` and `sektor`
           come straight off `HeadlineDetail`. Sector still falls
-          back to `n/a` since the endpoint doesn't carry it yet. */}
+          back to `n/a` since the endpoint doesn't carry it yet.
+          Share button sits at the right edge of this row (via
+          `ml-auto`) — only rendered once the parent has resolved
+          the absolute URL (SSR + first hydration pass receive
+          `shareUrl` undefined). */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
         <span
           className={cn(
@@ -124,6 +143,15 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         <span className="rounded border border-border bg-bg-tertiary/60 px-2 py-0.5 font-mono text-[10px] text-text-faint">
           sektor <span className="text-text-muted">n/a</span>
         </span>
+        {shareUrl && (
+          <div className="ml-auto">
+            <ShareButton
+              url={shareUrl}
+              title={detail.title}
+              variant="compact"
+            />
+          </div>
+        )}
       </div>
 
       {/* Title + brief */}
