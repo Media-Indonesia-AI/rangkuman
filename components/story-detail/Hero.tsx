@@ -140,9 +140,6 @@ function HeroFeatured({
         >
           {detail.primary_ticker_code}
         </Link>
-        <span className="rounded border border-border bg-bg-tertiary/60 px-2 py-0.5 font-mono text-[10px] text-text-faint">
-          sektor <span className="text-text-muted">n/a</span>
-        </span>
         {shareUrl && (
           <div className="ml-auto">
             <ShareButton

@@ -49,12 +49,10 @@ export function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
             <Clock className="h-3 w-3" aria-hidden />
             Update {relativeUpdated(story.created_at)}
           </span>
-          {topic ? (
+          {topic && (
             <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[9.5px] text-text-secondary">
               {topic}
             </span>
-          ) : (
-            <NotAvailable />
           )}
         </div>
         {/* Price move "sejak story" — driven by
