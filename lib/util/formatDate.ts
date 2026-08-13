@@ -110,16 +110,25 @@ export function getRelativeTime(
  * Normalize a date value to a UTC ISO 8601 string for query
  * parameters.
  *
- * - Date-only (`YYYY-MM-DD`): emitted as `YYYY-MM-DDT00:00:00.000Z`
- *   (UTC midnight). Used when the caller wants a calendar day, not
- *   an instant.
- * - Date-time (any string the `Date` constructor can parse, e.g.
- *   `"2026-07-30T07:00:00+07:00"`): re-emitted via `toISOString()`
- *   so the wire form is canonical UTC regardless of the caller's
- *   local timezone.
- * - Anything that doesn't parse: returned verbatim, so the request
- *   fails at the backend with a clear date error rather than
- *   silently emitting `Invalid Date`.
+ * - Date-only (`YYYY-MM-DD`) that matches today's calendar day
+ *   (in UTC, matching the rest of the function's UTC output):
+ *   emitted as the current instant via `todayIsoDate()`. A
+ *   "today" query keeps streaming fresh data as the day
+ *   progresses, the same way the bare-mount `effectiveDate`
+ *   fallback does on `/saham`.
+ * - Date-only (`YYYY-MM-DD`) for any other day: emitted as
+ *   `YYYY-MM-DDT23:59:59.999Z` — the last moment of that day
+ *   in UTC, "the last time before day change". Anchors the
+ *   request to the full day's editorial window rather than
+ *   just midnight, so a query about a past day returns the
+ *   complete day's data instead of a midnight snapshot.
+ * - Date-time (any string the `Date` constructor can parse,
+ *   e.g. `"2026-07-30T07:00:00+07:00"`): re-emitted via
+ *   `toISOString()` so the wire form is canonical UTC
+ *   regardless of the caller's local timezone.
+ * - Anything that doesn't parse: returned verbatim, so the
+ *   request fails at the backend with a clear date error
+ *   rather than silently emitting `Invalid Date`.
  *
  * Lives here (rather than next to the API endpoint that uses it)
  * because it's a pure date-formatting helper — same family as
@@ -129,7 +138,15 @@ export function getRelativeTime(
  */
 export function toIsoDateTime(value: string): string {
   if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return `${value}T00:00:00.000Z`;
+    // "Today" branch — return the current instant so the wire
+    // form mirrors `todayIsoDate()` exactly. Without this, a
+    // caller that picked today via the date picker would hit
+    // the endpoint with `T23:59:59.999Z` (end-of-day) and miss
+    // any editorial updates still landing before midnight UTC.
+    if (value === todayIsoDate().slice(0, 10)) {
+      return todayIsoDate();
+    }
+    return `${value}T23:59:59.999Z`;
   }
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? value : parsed.toISOString();

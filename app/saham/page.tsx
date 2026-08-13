@@ -21,6 +21,7 @@ import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { todayIsoDate } from "@/lib/api/client";
 import { findSahamTopicId } from "@/lib/util/topicId";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
+import { hariIniIso, toIsoDateTime } from "@/lib/util/formatDate";
 
 // Canonical localStorage key names live in `lib/storageKeys.ts`
 // alongside every other storage concern in the app. We reference
@@ -61,12 +62,12 @@ export default function SahamPage() {
   // Selected date — starts as `null` so the write effect can tell
   // the pre-hydration render apart from a real "today" selection
   // (same `null`-sentinel trick used for `subTab` above). Consumers
-  // fall back to `todayIsoDate()` until the persisted value lands.
+  // fall back to `hariIniIso()` until the persisted value lands.
   // The persisted value (if any) is hydrated from localStorage on
   // first mount, so navigating away and back to `/saham` (or a
   // page reload) restores the user's last view.
   const [isoDate, setIsoDate] = useState<string | null>(null);
-  const effectiveDate = isoDate ?? todayIsoDate();
+  const effectiveDate = isoDate ?? hariIniIso();
 
   // Topics catalog — resolves the "saham" topic id so the
   // `<EmitenStories />` Story feed below is scoped to saham-scoped
@@ -120,18 +121,18 @@ export default function SahamPage() {
   useEffect(() => {
     try {
       const raw = window.localStorage.getItem(STORAGE_KEYS.sahamRecapDate);
-      setIsoDate(isIsoDate(raw) ? raw : todayIsoDate());
+      setIsoDate(isIsoDate(raw) ? raw : hariIniIso());
     } catch {
       // localStorage may be disabled (private mode, blocked by
       // browser policy, etc.) — silently land on today.
-      setIsoDate(todayIsoDate());
+      setIsoDate(hariIniIso());
     }
   }, []);
 
   // Persist on every subsequent change. Same `null`-sentinel skip
   // as the `subTab` write effect above: the read effect owns the
   // first write, so this only fires once the user actually picks
-  // a day. Writing `todayIsoDate()` on the pre-hydration render
+  // a day. Writing `hariIniIso()` on the pre-hydration render
   // would otherwise clobber whatever the user had previously
   // selected with the picker.
   useEffect(() => {
@@ -206,7 +207,7 @@ export default function SahamPage() {
                   <DatePicker
                     value={effectiveDate}
                     onChange={setIsoDate}
-                    todayIso={todayIsoDate()}
+                    todayIso={hariIniIso()}
                     maxLookbackDays={30}
                   />
                 </div>

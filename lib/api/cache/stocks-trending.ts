@@ -7,6 +7,7 @@
  * slot so the next mount can retry.
  */
 
+import { toIsoDateTime } from "@/lib/util/formatDate";
 import { api, todayIsoDate } from "../client";
 import type { StocksTrendingResponse } from "../types/stocks";
 
@@ -32,13 +33,14 @@ export function loadStocksTrending(
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
-  const k = key(date, page, limit);
+  const parsedDate = toIsoDateTime(date);
+  const k = key(parsedDate, page, limit);
   const hit = cached.get(k);
   if (hit) return Promise.resolve(hit);
   const pending = inflight.get(k);
   if (pending) return pending;
   const promise = api
-    .getStocksTrending(date, page, limit)
+    .getStocksTrending(parsedDate, page, limit)
     .then((res) => {
       cached.set(k, res);
       return res;
