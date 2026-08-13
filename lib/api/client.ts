@@ -123,10 +123,14 @@ export async function request<T>(
   return (await res.json()) as T;
 }
 
-/** Local-tz today in `YYYY-MM-DD` — used as the default date param. */
-export function todayIsoDate(): string {
-  return new Date().toISOString();
-}
+/**
+ * Re-exported from `@/lib/util/formatDate` so existing call sites
+ * (default date params in endpoint modules, hook defaults, etc.) keep
+ * importing it from here without churn. The implementation lives with
+ * the other date helpers now; behaviour is unchanged from the previous
+ * in-place definition here.
+ */
+export { todayIsoDate } from "@/lib/util/formatDate";
 
 /**
  * Composite API namespace. Auth + stocks + market endpoints, all

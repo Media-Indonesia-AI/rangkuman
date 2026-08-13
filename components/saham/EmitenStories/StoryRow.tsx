@@ -31,10 +31,8 @@ export function StoryRow({
         <TickerBadge kode={story.primary_ticker_code} />
         {/* Price change "sejak story" — falls back to `n/a` when
             the endpoint doesn't ship `pct_change_since_story`. */}
-        {story.pct_change_since_story !== undefined ? (
+        {story.pct_change_since_story !== undefined && (
           <PctChangeChip pct={story.pct_change_since_story} />
-        ) : (
-          <NotAvailable />
         )}
       </div>
       <div className="min-w-0 flex-1">

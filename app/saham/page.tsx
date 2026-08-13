@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { DatePicker } from "@/components/DatePicker";
@@ -20,7 +19,6 @@ import {
 import { useTopicsContext } from "@/components/topics-provider";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { todayIsoDate } from "@/lib/api/client";
-import { formatTanggalIndonesia, hariIniIso } from "@/lib/util/formatDate";
 import { findSahamTopicId } from "@/lib/util/topicId";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 
@@ -68,7 +66,8 @@ export default function SahamPage() {
   // first mount, so navigating away and back to `/saham` (or a
   // page reload) restores the user's last view.
   const [isoDate, setIsoDate] = useState<string | null>(null);
-  const effectiveDate = isoDate ?? hariIniIso();
+  const effectiveDate = isoDate ?? todayIsoDate();
+  console.log("effectiveDate", effectiveDate);
 
   // Topics catalog — resolves the "saham" topic id so the
   // `<EmitenStories />` Story feed below is scoped to saham-scoped

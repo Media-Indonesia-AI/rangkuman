@@ -25,7 +25,18 @@ interface PageProps {
 
 export default function StockDetailPage({ params }: PageProps) {
   const kode = params.kode.toUpperCase();
-  const recapDate = params.recapDate;
+  // Normalize recapDate — the URL segment may carry a full ISO
+  // timestamp (e.g. "2026-08-13T09:15:33.426Z") when visitors
+  // reach the page through a ShareButton URL or any other
+  // caller that pipes `todayIsoDate()` through. Downstream
+  // consumers (DatePicker, the `loadTickerInformation` cache
+  // key, share URLs) expect the calendar-day form `YYYY-MM-DD`,
+  // so trim any time portion here. The regex drops a fully-
+  // malformed value (empty string, garbled segment) back to
+  // `undefined`, and `useTickerInformation` /
+  // `<AggregateSummary recapDate={undefined}>` fall through to
+  // today via their existing `?? todayIsoDate()` guards.
+  const recapDate = params.recapDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
 
   // Live ticker info — drives the hero chip / price / change and the
   // StockAboutPanel info rows. Hook resets state on `kode` change so

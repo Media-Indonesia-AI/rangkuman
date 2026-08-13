@@ -4,7 +4,7 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { DatePicker } from "@/components/DatePicker";
 import { Shimmer } from "@/components/Shimmer";
-import { hariIniIso } from "@/lib/util/formatDate";
+import { todayIsoDate } from "@/lib/util/formatDate";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import type { TickerArticles } from "@/lib/api/types/stocks";
 import { EmptyState } from "@/components/EmptyState";
@@ -107,7 +107,7 @@ export function AggregateSummary({
   // lands in `tickerInfo`. Navigation is fully declarative — Next.js
   // `<Link>` prefetches the destination so the recap day loads
   // instantly and we don't need a `useRouter` hook here at all.
-  const isoDate = recapDate ?? hariIniIso();
+  const isoDate = recapDate ?? todayIsoDate();
   const summaryText = stripSumberSuffix(description ?? "");
   const jumlahBerita = articles.length;
   const Icon = SentimenIcon[sentimen];
@@ -130,7 +130,7 @@ export function AggregateSummary({
           <DatePicker
             value={isoDate}
             hrefFor={(iso) => `/stock/${kode}/${iso}`}
-            todayIso={hariIniIso()}
+            todayIso={todayIsoDate()}
             maxLookbackDays={30}
           />
         </div>

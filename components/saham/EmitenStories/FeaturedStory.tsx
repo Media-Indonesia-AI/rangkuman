@@ -59,10 +59,8 @@ export function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
             `pct_change_since_story` on the headline. Falls back to
             `n/a` when the field is absent (older responses). */}
         <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-faint">
-          {story.pct_change_since_story !== undefined ? (
+          {story.pct_change_since_story !== undefined && (
             <PctChangeChip pct={story.pct_change_since_story} />
-          ) : (
-            <NotAvailable />
           )}
         </span>
       </div>

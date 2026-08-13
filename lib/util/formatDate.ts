@@ -57,6 +57,11 @@ export function hariIniIso(): string {
   return format(new Date(), DATE_FORMAT_ISO);
 }
 
+/** Today as an ISO 8601 string — used as the default date param. */
+export function todayIsoDate(): string {
+  return new Date().toISOString();
+}
+
 /** Return yesterday as an ISO date string (YYYY-MM-DD). */
 export function kemarinIso(): string {
   return format(subDays(new Date(), 1), DATE_FORMAT_ISO);
