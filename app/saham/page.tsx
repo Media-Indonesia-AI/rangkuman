@@ -67,7 +67,6 @@ export default function SahamPage() {
   // page reload) restores the user's last view.
   const [isoDate, setIsoDate] = useState<string | null>(null);
   const effectiveDate = isoDate ?? todayIsoDate();
-  console.log("effectiveDate", effectiveDate);
 
   // Topics catalog — resolves the "saham" topic id so the
   // `<EmitenStories />` Story feed below is scoped to saham-scoped

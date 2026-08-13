@@ -60,7 +60,6 @@ export function DatePicker({
   todayIso,
   className,
 }: DatePickerProps) {
-  console.log("DatePicker value", value, "todayIso", todayIso, "maxLookbackDays", maxLookbackDays);
   const [open, setOpen] = useState(false);
   const [viewMonth, setViewMonth] = useState<Date>(parseISO(value));
   const containerRef = useRef<HTMLDivElement>(null);
