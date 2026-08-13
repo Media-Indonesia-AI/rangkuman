@@ -175,7 +175,7 @@ rangkuman-news/
 │   ├── stock/[kode]/                 # 34 stock pages
 │   ├── sektor/  sektor/[slug]/       # 12 sector pages
 │   ├── trending/  search/  watchlist/  login/
-│   └── tentang/  disclaimer/  privasi/  ...  (8 static info pages)
+│   └── kerjasama/  disclaimer/  privasi/  ...  (7 static info pages)
 │
 ├── components/                       # ~58 React components
 ├── lib/mock/                         # All mock data

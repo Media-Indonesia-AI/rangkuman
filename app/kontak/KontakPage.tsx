@@ -31,9 +31,7 @@ export default function KontakPage() {
       description="Punya pertanyaan, masukan, atau mau kerja sama? Hubungi kami lewat channel di bawah. Kami balas dalam 1-2 hari kerja."
       lastUpdated="2026-06-09"
       related={[
-        { label: "Tentang", href: "/tentang", description: "Apa itu Rangkuman" },
-        { label: "Tim Redaksi", href: "/tim-redaksi", description: "Siapa di balik Rangkuman" },
-        { label: "Karir", href: "/karir", description: "Peluang kontribusi" },
+        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
         { label: "Pedoman Media Siber", href: "/pedoman-media-siber", description: "Standar editorial" },
       ]}
     >

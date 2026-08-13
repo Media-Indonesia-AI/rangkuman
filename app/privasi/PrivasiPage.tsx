@@ -13,7 +13,7 @@ export default function PrivasiPage() {
         { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab kami" },
         { label: "Syarat & Ketentuan", href: "/syarat-ketentuan", description: "Ketentuan penggunaan" },
         { label: "Kontak", href: "/kontak", description: "Hubungi tim privasi kami" },
-        { label: "Tentang", href: "/tentang", description: "Tentang Rangkuman" },
+        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
       ]}
     >
       <h2>Ringkasan singkat</h2>

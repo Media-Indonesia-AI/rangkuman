@@ -13,7 +13,7 @@ export default function DisclaimerPage() {
         { label: "Privasi", href: "/privasi", description: "Bagaimana kami mengelola data lo" },
         { label: "Syarat & Ketentuan", href: "/syarat-ketentuan", description: "Ketentuan penggunaan layanan" },
         { label: "Pedoman Media Siber", href: "/pedoman-media-siber", description: "Standar editorial kami" },
-        { label: "Tentang", href: "/tentang", description: "Apa itu Rangkuman" },
+        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
       ]}
     >
       <h2>1. Bukan rekomendasi investasi</h2>

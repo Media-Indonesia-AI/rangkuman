@@ -11,8 +11,7 @@ export default function PedomanMediaSiberPage() {
       lastUpdated="2026-06-09"
       related={[
         { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab" },
-        { label: "Tim Redaksi", href: "/tim-redaksi", description: "Tim redaksi kami" },
-        { label: "Tentang", href: "/tentang", description: "Apa itu Rangkuman" },
+        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
         { label: "Kontak", href: "/kontak", description: "Lapor koreksi" },
       ]}
     >
@@ -73,10 +72,6 @@ export default function PedomanMediaSiberPage() {
 
       <h3>4. Transparansi</h3>
       <ul>
-        <li>
-          Nama dan peran tim redaksi tercantum di halaman{" "}
-          <a href="/tim-redaksi">Tim Redaksi</a>.
-        </li>
         <li>
           Sumber dana, partner, dan conflict of interest akan diumumkan di halaman ini
           (jika material).

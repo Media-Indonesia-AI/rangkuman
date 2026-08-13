@@ -1,17 +1,16 @@
 import { InfoPage } from "@/components/InfoPage";
 import { TrendingUp } from "lucide-react";
 
-export default function TentangPage() {
+export default function KerjasamaPage() {
   return (
     <InfoPage
-      eyebrow="Tentang Kami"
+      eyebrow="Kerjasama"
       icon={<TrendingUp className="h-3.5 w-3.5 text-brand" aria-hidden />}
-      title="Tentang Rangkuman"
+      title="Kerjasama Rangkuman"
       description="Recap saham harian untuk investor ritel Indonesia — dikurasi dari 64 sumber media, dirangkum jadi satu cerita per saham."
       lastUpdated="2026-06-09"
       related={[
         { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab & risiko investasi" },
-        { label: "Tim Redaksi", href: "/tim-redaksi", description: "Siapa di balik Rangkuman" },
         { label: "Kontak", href: "/kontak", description: "Hubungi kami untuk pertanyaan & masukan" },
         { label: "Pedoman Media Siber", href: "/pedoman-media-siber", description: "Standar editorial & etika peliputan" },
       ]}

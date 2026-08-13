@@ -12,7 +12,7 @@ export default function SyaratKetentuanPage() {
       related={[
         { label: "Privasi", href: "/privasi", description: "Kebijakan privasi kami" },
         { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab" },
-        { label: "Tentang", href: "/tentang", description: "Apa itu Rangkuman" },
+        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
         { label: "Kontak", href: "/kontak", description: "Hubungi tim kami" },
       ]}
     >

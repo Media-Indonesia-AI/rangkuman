@@ -26,10 +26,8 @@ export function Footer() {
           <div>
             <p className="label mb-2.5">Perusahaan</p>
             <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
-              <li><Link href="/tentang" className="hover:text-brand">Tentang</Link></li>
-              <li><Link href="/tim-redaksi" className="hover:text-brand">Tim Redaksi</Link></li>
-              <li><Link href="/karir" className="hover:text-brand">Karir</Link></li>
               <li><Link href="/kontak" className="hover:text-brand">Kontak</Link></li>
+              <li><Link href="/kerjasama" className="hover:text-brand">Kerjasama</Link></li>
             </ul>
           </div>
           <div>
