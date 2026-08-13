@@ -4,6 +4,8 @@ import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
 import { Shimmer } from "@/components/Shimmer";
 import type { EmbeddedStory, StoryArticle } from "@/lib/api";
+import { LoginPromptOverlay } from "../LoginPromptOverlay";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 
 interface SorotanDetailSourcesProps {
   /** Stories fetched via `useListStory(headline_id)`. The widget
@@ -75,6 +77,9 @@ export function SorotanDetailSources({
   stories,
   isLoading = false,
 }: SorotanDetailSourcesProps) {
+  const user = useCurrentUser();
+  if (!user) return null;
+
   // Flatten stories → articles, group by source_name.
   const groups = new Map<string, StoryArticle[]>();
   for (const story of stories) {

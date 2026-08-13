@@ -3,6 +3,7 @@ import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 
 export interface MarketSnapshotItem {
   id: string;
@@ -181,7 +182,7 @@ export function MarketSnapshotCompact({
   return (
     <section
       aria-label="Pasar hari ini"
-      className={`rounded-lg border border-border-strong bg-bg-secondary/50 ${className ?? ""}`}
+      className={`relative overflow-hidden rounded-lg border border-border-strong bg-bg-secondary/50 ${className ?? ""}`}
     >
       <div className="flex items-center justify-between border-b border-border-strong px-3 py-2">
         <div className="flex items-center gap-1.5">
@@ -233,6 +234,7 @@ export function MarketSnapshotCompact({
           ),
         )}
       </ul>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat snapshot pasar" />
     </section>
   );
 }

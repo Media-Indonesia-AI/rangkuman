@@ -137,7 +137,7 @@ export function SorotanDetailHeader({
         the user is signed in (`LoginPromptOverlay` early-returns
         on truthy user).
       */}
-      <LoginPromptOverlay title="Masuk dulu untuk lihat headline crypto ini" />
+      {/* <LoginPromptOverlay title="Masuk dulu untuk lihat headline crypto ini" /> */}
     </header>
   );
 }

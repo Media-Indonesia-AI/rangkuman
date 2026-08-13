@@ -37,7 +37,7 @@ export function LoginPromptOverlay({
     >
       <div className="w-full max-w-xs rounded-lg border border-border bg-bg-secondary p-3 shadow-2xl">
         <div className="mb-3">
-          <h3 className="text-[13px] font-bold leading-snug text-text-primary">
+          <h3 className="text-center text-[13px] font-bold leading-snug text-text-primary">
             {title}
           </h3>
         </div>

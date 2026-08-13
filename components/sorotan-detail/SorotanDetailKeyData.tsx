@@ -1,5 +1,6 @@
 import { KeyDataBlock } from "@/components/KeyDataBlock";
 import { KeywordItem } from "@/lib/api/types/story";
+import { LoginPromptOverlay } from "../LoginPromptOverlay";
 
 interface SorotanDetailKeyDataProps {
   keywords: KeywordItem[];
@@ -13,8 +14,9 @@ interface SorotanDetailKeyDataProps {
 export function SorotanDetailKeyData({ keywords }: SorotanDetailKeyDataProps) {
   if (keywords.length === 0) return null;
   return (
-    <div className="mt-4">
+    <section className="glass-card relative overflow-hidden rounded-xl border border-border-strong bg-bg-secondary mt-4">
       <KeyDataBlock keywords={keywords} />
-    </div>
+      <LoginPromptOverlay title="Masuk dulu untuk baca Data Kunci" />
+    </section>
   );
 }

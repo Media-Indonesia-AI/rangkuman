@@ -27,7 +27,7 @@ export function SorotanDetailSummary({ summary }: SorotanDetailSummaryProps) {
       <p className="text-[14.5px] leading-relaxed text-text-primary sm:text-[15px]">
         {summary}
       </p>
-      <LoginPromptOverlay title="Masuk dulu untuk baca ringkasan cerita" />
+      {/* <LoginPromptOverlay title="Masuk dulu untuk baca ringkasan cerita" /> */}
     </section>
   );
 }

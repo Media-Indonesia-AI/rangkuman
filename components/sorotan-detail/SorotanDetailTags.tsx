@@ -1,3 +1,5 @@
+import { useCurrentUser } from "@/lib/hooks/useAuth";
+
 interface SorotanDetailTagsProps {
   /** Short tag strings (without the `#` prefix). */
   tags: string[];
@@ -9,6 +11,9 @@ interface SorotanDetailTagsProps {
  * don't need a separate guard.
  */
 export function SorotanDetailTags({ tags }: SorotanDetailTagsProps) {
+  const user = useCurrentUser();
+  if (!user) return null;
+
   if (tags.length === 0) return null;
 
   return (
