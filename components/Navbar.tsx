@@ -22,10 +22,6 @@ import { LogoutButton } from "@/components/profile/LogoutButton";
 
 const NAV_LINKS = [
   { href: "/saham", label: "Saham", Icon: TrendingUp },
-  // { href: "/bisnis", label: "Bisnis", Icon: Building2 },
-  // { href: "/ekonomi", label: "Ekonomi", Icon: Landmark },
-  // { href: "/kebijakan", label: "Kebijakan", Icon: Scale },
-  // { href: "/global", label: "Global", Icon: Globe },
   { href: "/crypto", label: "Crypto", Icon: Bitcoin },
 ];
 

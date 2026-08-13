@@ -3,12 +3,11 @@
 import { useEffect, useState } from "react";
 import { stocks as mockStocks } from "@/lib/mock/stocks";
 import { COINS } from "@/lib/mock/crypto";
-import { GLOBAL_INDICES } from "@/lib/mock/category-widgets";
 import { loadTickers, peekTickers } from "@/lib/api/cache";
 import type { TickerItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
-export type TopTickerVariant = "stocks" | "crypto" | "global";
+export type TopTickerVariant = "stocks" | "crypto";
 
 interface TopTickerProps {
   /** Which dataset to scroll. */
@@ -33,11 +32,6 @@ function formatCoinPrice(price: number): string {
     return price.toFixed(3);
   }
   return price.toFixed(4);
-}
-
-function formatIndexValue(value: string): string {
-  // Indices have comma-decimal like "5.842,15" — keep as is
-  return value;
 }
 
 /**
@@ -67,7 +61,6 @@ function tickerToEntry(t: TickerItem): StockEntry {
  *     /stocks/ticker, with the mock catalog as fallback during the
  *     initial load and on error
  *   - "crypto": crypto prices (BTC, ETH, SOL, etc.)
- *   - "global": world indices (S&P 500, HSI, Nikkei, etc.)
  *
  * Pure CSS marquee (no JS animation) with duplicated content for seamless loop.
  */
@@ -75,9 +68,7 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
   const label =
     variant === "crypto"
       ? "Harga crypto real-time"
-      : variant === "global"
-        ? "Indeks global real-time"
-        : "Harga saham real-time";
+      : "Harga saham real-time";
 
   // Live ticker data for the "stocks" variant. Initialized lazily from
   // the shared cache so a remount that happens after another instance
@@ -150,58 +141,33 @@ export function TopTicker({ variant = "stocks" }: TopTickerProps) {
                   <span className="text-text-faint">·</span>
                 </a>
               ))
-            : variant === "global"
-              ? GLOBAL_INDICES.map((idx, i) => (
+            : stockSource.map((s, idx) => {
+                const positive = s.changePercent >= 0;
+                const href = `/stock/${s.kode}`;
+                return (
                   <a
-                    key={`idx-d${dupIdx}-${idx.id}-${i}`}
-                    href="#"
+                    key={`stk-d${dupIdx}-${s.kode}-${idx}`}
+                    href={href}
                     className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
                   >
                     <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">
-                      {idx.name}
+                      {s.kode}
                     </span>
                     <span className="num-tabular text-text-secondary">
-                      {formatIndexValue(idx.value)}
+                      {formatStockPrice(s.price)}
                     </span>
                     <span
                       className={cn(
                         "num-tabular",
-                        idx.change >= 0 ? "text-bullish" : "text-bearish",
+                        positive ? "text-bullish" : "text-bearish",
                       )}
                     >
-                      {idx.change >= 0 ? "▲" : "▼"}{" "}
-                      {Math.abs(idx.change).toFixed(2)}%
+                      {positive ? "▲" : "▼"} {Math.abs(s.changePercent).toFixed(2)}%
                     </span>
                     <span className="text-text-faint">·</span>
                   </a>
-                ))
-              : stockSource.map((s, idx) => {
-                  const positive = s.changePercent >= 0;
-                  const href = `/stock/${s.kode}`;
-                  return (
-                    <a
-                      key={`stk-d${dupIdx}-${s.kode}-${idx}`}
-                      href={href}
-                      className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
-                    >
-                      <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">
-                        {s.kode}
-                      </span>
-                      <span className="num-tabular text-text-secondary">
-                        {formatStockPrice(s.price)}
-                      </span>
-                      <span
-                        className={cn(
-                          "num-tabular",
-                          positive ? "text-bullish" : "text-bearish",
-                        )}
-                      >
-                        {positive ? "▲" : "▼"} {Math.abs(s.changePercent).toFixed(2)}%
-                      </span>
-                      <span className="text-text-faint">·</span>
-                    </a>
-                  );
-                }),
+                );
+              }),
         )}
       </div>
     </div>

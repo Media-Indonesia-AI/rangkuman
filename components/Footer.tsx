@@ -20,10 +20,6 @@ export function Footer() {
             <p className="label mb-2.5">Topik</p>
             <ul aria-label="Topik" className="space-y-1.5 text-[12.5px] text-text-secondary">
               <li><Link href="/saham" className="hover:text-brand">Saham</Link></li>
-              <li><Link href="/bisnis" className="hover:text-brand">Bisnis</Link></li>
-              <li><Link href="/ekonomi" className="hover:text-brand">Ekonomi</Link></li>
-              <li><Link href="/kebijakan" className="hover:text-brand">Kebijakan</Link></li>
-              <li><Link href="/global" className="hover:text-brand">Global</Link></li>
               <li><Link href="/crypto" className="hover:text-brand">Crypto</Link></li>
             </ul>
           </div>
