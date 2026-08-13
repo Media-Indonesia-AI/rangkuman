@@ -20,7 +20,7 @@ import {
 import { useTopicsContext } from "@/components/topics-provider";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { todayIsoDate } from "@/lib/api/client";
-import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { formatTanggalIndonesia, hariIniIso } from "@/lib/util/formatDate";
 import { findSahamTopicId } from "@/lib/util/topicId";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 
@@ -68,7 +68,7 @@ export default function SahamPage() {
   // first mount, so navigating away and back to `/saham` (or a
   // page reload) restores the user's last view.
   const [isoDate, setIsoDate] = useState<string | null>(null);
-  const effectiveDate = isoDate ?? todayIsoDate();
+  const effectiveDate = isoDate ?? hariIniIso();
 
   // Topics catalog — resolves the "saham" topic id so the
   // `<EmitenStories />` Story feed below is scoped to saham-scoped
