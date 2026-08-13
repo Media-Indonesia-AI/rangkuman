@@ -85,8 +85,7 @@ rangkuman-news/
 │   ├── sektor/[slug]/                # 12 sector detail pages
 │   │
 │   ├── trending/  search/  watchlist/  login/
-│   ├── kerjasama/  disclaimer/  privasi/  syarat-ketentuan/
-│   ├── pedoman-media-siber/  kontak/
+│   ├── kerjasama/  syarat-ketentuan/  kontak/
 │   │
 │   └── not-found.tsx                 # Custom 404
 │
@@ -358,8 +357,8 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 - `/sektor/`, `/sektor/[slug]/` — 12 sector pages
 - `/stock/[kode]/` — 34 stock pages
 - `/trending/`, `/search/`, `/watchlist/`, `/login/`
-- `/kerjasama/`, `/disclaimer/`, `/privasi/`, `/syarat-ketentuan/`
-- `/pedoman-media-siber/`, `/kontak/`
+- `/kerjasama/`, `/syarat-ketentuan/`
+- `/kontak/`
 
 ### Internal
 - `/not-found` — custom 404

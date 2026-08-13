@@ -10,8 +10,6 @@ export default function SyaratKetentuanPage() {
       description="Dengan mengakses dan menggunakan Rangkuman, lo setuju dengan syarat & ketentuan berikut. Mohon dibaca dengan seksama."
       lastUpdated="2026-06-09"
       related={[
-        { label: "Privasi", href: "/privasi", description: "Kebijakan privasi kami" },
-        { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab" },
         { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
         { label: "Kontak", href: "/kontak", description: "Hubungi tim kami" },
       ]}
@@ -83,8 +81,7 @@ export default function SyaratKetentuanPage() {
 
       <h2>6. Batasan tanggung jawab</h2>
       <p>
-        Lihat halaman <a href="/disclaimer">Disclaimer</a> untuk detail lengkap. Poin
-        utamanya: kami <strong>tidak</strong> bertanggung jawab atas kerugian finansial
+        Poin utamanya: kami <strong>tidak</strong> bertanggung jawab atas kerugian finansial
         yang timbul dari keputusan investasi yang diambil berdasarkan informasi di
         Rangkuman.
       </p>

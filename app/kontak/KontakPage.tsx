@@ -32,7 +32,6 @@ export default function KontakPage() {
       lastUpdated="2026-06-09"
       related={[
         { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
-        { label: "Pedoman Media Siber", href: "/pedoman-media-siber", description: "Standar editorial" },
       ]}
     >
       <h2>Channel komunikasi</h2>

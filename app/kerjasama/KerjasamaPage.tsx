@@ -10,9 +10,7 @@ export default function KerjasamaPage() {
       description="Recap saham harian untuk investor ritel Indonesia — dikurasi dari 64 sumber media, dirangkum jadi satu cerita per saham."
       lastUpdated="2026-06-09"
       related={[
-        { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab & risiko investasi" },
         { label: "Kontak", href: "/kontak", description: "Hubungi kami untuk pertanyaan & masukan" },
-        { label: "Pedoman Media Siber", href: "/pedoman-media-siber", description: "Standar editorial & etika peliputan" },
       ]}
     >
       <h2>Apa itu Rangkuman?</h2>

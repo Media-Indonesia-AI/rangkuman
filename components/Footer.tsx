@@ -33,10 +33,7 @@ export function Footer() {
           <div>
             <p className="label mb-2.5">Legal</p>
             <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
-              <li><Link href="/disclaimer" className="hover:text-brand">Disclaimer</Link></li>
-              <li><Link href="/privasi" className="hover:text-brand">Privasi</Link></li>
               <li><Link href="/syarat-ketentuan" className="hover:text-brand">Syarat &amp; Ketentuan</Link></li>
-              <li><Link href="/pedoman-media-siber" className="hover:text-brand">Pedoman Media Siber</Link></li>
             </ul>
           </div>
         </div>
