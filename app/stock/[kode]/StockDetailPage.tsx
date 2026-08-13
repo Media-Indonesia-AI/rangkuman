@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -17,9 +16,7 @@ import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { Last7DaysHeadlinesProvider } from "@/components/stock/Last7DaysHeadlinesProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
-import { StockLoginDialog } from "@/components/stock/StockLoginDialog";
 import { EmitenStories } from "@/components/saham";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 
 interface PageProps {
@@ -27,22 +24,8 @@ interface PageProps {
 }
 
 export default function StockDetailPage({ params }: PageProps) {
-  const router = useRouter();
   const kode = params.kode.toUpperCase();
   const recapDate = params.recapDate;
-
-  // Auth gate — show the login prompt dialog on first paint when the
-  // visitor is anonymous. `useCurrentUser()` is `undefined` during
-  // localStorage hydration, `null` when logged out, and a `MockUser`
-  // when authenticated. During the `undefined` window we don't render
-  // the dialog (avoids a flash for already-logged-in users). Closing
-  // the dialog (X / Escape / backdrop / "Lanjut tanpa login") sends
-  // the user to /saham — there is no "stay on this page anonymously"
-  // path because the page's data fetches are auth-gated and would
-  // just keep returning empty.
-  const user = useCurrentUser();
-  const showLoginDialog = user === null;
-  const handleDialogClose = () => router.push("/saham");
 
   // Live ticker info — drives the hero chip / price / change and the
   // StockAboutPanel info rows. Hook resets state on `kode` change so
@@ -187,8 +170,6 @@ export default function StockDetailPage({ params }: PageProps) {
         </HeadlineStoriesProvider>
       </main>
       <Footer />
-
-      {showLoginDialog && <StockLoginDialog onClose={handleDialogClose} />}
     </>
   );
 }

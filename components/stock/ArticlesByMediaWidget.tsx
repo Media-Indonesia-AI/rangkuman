@@ -2,6 +2,8 @@
 
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
+import { cn } from "@/lib/utils";
 import type { TickerArticles } from "@/lib/api/types/stocks";
 
 function articleHref(sourceUrl: string): string {
@@ -30,7 +32,7 @@ export function ArticlesByMediaWidget({
   }));
 
   return (
-    <section className={className} aria-label="Berita per media">
+    <section className={cn("relative", className)} aria-label="Berita per media">
       <header className="mb-4 flex items-end justify-between border-b border-border-strong pb-2">
         <h2 className="text-[18px] font-bold tracking-tight text-text-primary">
           Diliput media
@@ -117,6 +119,7 @@ export function ArticlesByMediaWidget({
           </p>
         </div>
       )}
+      <LoginPromptOverlay title="Masuk dulu untuk lihat daftar media" />
     </section>
   );
 }

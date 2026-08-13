@@ -3,6 +3,7 @@
 import { cn } from "@/lib/utils";
 import { useStockHistorical } from "@/lib/hooks/useStockHistorical";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { Activity, TrendingUp, TrendingDown } from "lucide-react";
 
 interface PriceChart30dProps {
@@ -54,7 +55,7 @@ function PriceChart30dShimmer() {
 function PriceChart30dEmpty({ kode }: { kode: string }) {
   return (
     <section
-      className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
+      className="relative overflow-hidden rounded-lg border border-border bg-bg-secondary"
       aria-label="Pergerakan harga 30 hari"
     >
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -71,6 +72,7 @@ function PriceChart30dEmpty({ kode }: { kode: string }) {
           Belum ada data historis untuk {kode}.
         </p>
       </div>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat chart harga" />
     </section>
   );
 }
@@ -175,7 +177,7 @@ export function PriceChart30d({ kode, className }: PriceChart30dProps) {
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-border bg-bg-secondary",
+        "relative overflow-hidden rounded-lg border border-border bg-bg-secondary",
         className,
       )}
       aria-label="Pergerakan harga 30 hari"
@@ -331,6 +333,7 @@ export function PriceChart30d({ kode, className }: PriceChart30dProps) {
           })()}
         </svg>
       </div>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat chart harga" />
     </section>
   );
 }

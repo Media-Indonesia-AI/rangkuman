@@ -8,6 +8,7 @@ import type { HeadlineLast7DaysItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { useLast7DaysHeadlines } from "./Last7DaysHeadlinesProvider";
 
 /** One day's worth of chart data — the calendar date (yyyy-mm-dd)
@@ -133,7 +134,7 @@ export function SentimentSparkline({ className }: SentimentSparklineProps) {
 
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn("relative overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
       aria-label="Sentimen trail"
     >
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -258,6 +259,7 @@ export function SentimentSparkline({ className }: SentimentSparklineProps) {
           </div>
         </div>
       </div>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat sentimen trail" />
     </section>
   );
 }

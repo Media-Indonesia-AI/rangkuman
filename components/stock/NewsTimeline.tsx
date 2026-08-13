@@ -8,6 +8,7 @@ import { id as idLocale } from "date-fns/locale";
 import { useLast7DaysHeadlines } from "./Last7DaysHeadlinesProvider";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import type { HeadlineLast7DaysItem, StorySentiment } from "@/lib/api";
 
 interface NewsTimelineProps {
@@ -116,7 +117,7 @@ export function NewsTimeline({ className }: NewsTimelineProps) {
 
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn("relative overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
       aria-label="Timeline berita 7 hari"
     >
       <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -250,6 +251,7 @@ export function NewsTimeline({ className }: NewsTimelineProps) {
         })}
       </ol>
       )}
+      <LoginPromptOverlay title="Masuk dulu untuk lihat timeline berita" />
     </section>
   );
 }
