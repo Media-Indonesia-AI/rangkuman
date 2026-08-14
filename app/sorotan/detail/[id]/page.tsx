@@ -27,58 +27,54 @@ interface BackLink {
  * on demand with title + summary + brand chrome.
  *
  * `loadHeadlineById` is called in a try/catch because if the API
- * is unreachable we still want to emit valid `<meta>` tags
- * (Telegram in particular drops the whole preview when one tag
- * is broken). Falls back to the generic copy on error.
+ * is unreachable we return an empty `Metadata` object — better to
+ * emit nothing than to ship generic/incorrect tags for a story
+ * we couldn't load. Next.js falls back to the parent layout's
+ * metadata in that case.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  let headline = "Cerita · Rangkuman";
-  let description = "Rangkuman cerita harian dari 64 sumber media.";
-  let topics: string[] = [];
   try {
     const detail = await loadHeadlineById(params.id);
-    if (detail.title) headline = detail.title;
-    if (detail.summary) description = detail.summary;
-    topics = (detail.topics ?? [])
+    const headline = detail.title ?? "Cerita · Rangkuman";
+    const description = detail.summary ?? "Rangkuman cerita harian dari 64 sumber media.";
+    const topics = (detail.topics ?? [])
       .map((t) => t.name)
       .filter((name): name is string => Boolean(name));
+    // Relative paths resolve against metadataBase. `trailingSlash: true`
+    // in next.config.js means the OG route is served at `/og/[id]/`.
+    const ogImage = `/og/${params.id}/`;
+    const canonical = `/sorotan/detail/${params.id}/`;
+    return {
+      title: `${headline} · Rangkuman`,
+      description,
+      keywords: topics,
+      alternates: { canonical },
+      openGraph: {
+        type: "article",
+        title: headline,
+        description,
+        siteName: "Rangkuman",
+        locale: "id_ID",
+        url: canonical,
+        images: [
+          {
+            url: ogImage,
+            width: 1200,
+            height: 630,
+            alt: headline,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: headline,
+        description,
+        images: [ogImage],
+      },
+    };
   } catch {
-    // API unreachable — emit generic tags so the share preview
-    // still renders (a missing og:image makes some scrapers drop
-    // the whole preview, including the title).
+    return {};
   }
-  // Relative paths resolve against metadataBase. `trailingSlash: true`
-  // in next.config.js means the OG route is served at `/og/[id]/`.
-  const ogImage = `/og/${params.id}/`;
-  const canonical = `/sorotan/detail/${params.id}/`;
-  return {
-    title: `${headline} · Rangkuman`,
-    description,
-    keywords: topics,
-    alternates: { canonical },
-    openGraph: {
-      type: "article",
-      title: headline,
-      description,
-      siteName: "Rangkuman",
-      locale: "id_ID",
-      url: canonical,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: headline,
-        },
-      ],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: headline,
-      description,
-      images: [ogImage],
-    },
-  };
 }
 
 /**
