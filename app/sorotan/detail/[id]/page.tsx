@@ -30,8 +30,12 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   let headline = "Cerita · Rangkuman";
   let description = "Rangkuman cerita harian dari 11 sumber media.";
   let topics: string[] = [];
+  
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  
   try {
-    const detail = await loadHeadlineById(params.id);
+    const detail = await loadHeadlineById(id);
     if (detail.title) headline = detail.title;
     if (detail.summary) description = detail.summary;
     topics = (detail.topics ?? [])
@@ -44,7 +48,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   // Relative paths resolve against metadataBase. `trailingSlash: true`
   // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
-  const canonical = `/sorotan/detail/${params.id}/`;
+  const canonical = `/sorotan/detail/${id}/`;
   return {
     title: `${headline} · Rangkuman`,
     description,
