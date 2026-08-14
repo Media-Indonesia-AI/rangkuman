@@ -59,7 +59,7 @@ export async function GET(
 ) {
   let title = "Cerita dari Rangkuman";
   let summary =
-    "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi tiap hari.";
+    "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi tiap hari.";
   let category: string | null = null;
   try {
     const detail = await loadHeadlineById(params.id);

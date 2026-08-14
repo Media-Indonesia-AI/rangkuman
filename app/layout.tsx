@@ -29,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description:
-    "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI. Saham, bisnis, ekonomi, kebijakan — intinya aja.",
+    "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI. Saham, bisnis, ekonomi, kebijakan — intinya aja.",
   keywords: [
     "recap saham",
     "berita saham",
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
-      "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI.",
+      "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
     images: [
       {
         url: "/og-default.png",
@@ -59,7 +59,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
-      "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI.",
+      "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
     images: ["/og-default.png"],
   },
   icons: {

@@ -33,7 +33,6 @@ export function Footer() {
             </ul>
           </div>
           <div>
-            <p className="label mb-2.5">Legal</p>
             <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
               <li><Link href="/syarat-ketentuan" className="hover:text-brand">Syarat &amp; Ketentuan</Link></li>
             </ul>

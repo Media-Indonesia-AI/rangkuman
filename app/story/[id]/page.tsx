@@ -28,7 +28,7 @@ interface PageProps {
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   let headline = "Story · Rangkuman";
-  let description = "Story pasar modal Indonesia yang sedang tren, dikurasi dari 64 sumber media.";
+  let description = "Story pasar modal Indonesia yang sedang tren, dikurasi dari 11 sumber media.";
   let topics: string[] = [];
   try {
     const detail = await loadHeadlineById(params.id);

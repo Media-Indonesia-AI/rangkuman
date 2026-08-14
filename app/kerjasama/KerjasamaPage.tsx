@@ -7,7 +7,7 @@ export default function KerjasamaPage() {
       eyebrow="Kerjasama"
       icon={<TrendingUp className="h-3.5 w-3.5 text-brand" aria-hidden />}
       title="Kerjasama Rangkuman"
-      description="Recap saham harian untuk investor ritel Indonesia — dikurasi dari 64 sumber media, dirangkum jadi satu cerita per saham."
+      description="Recap saham harian untuk investor ritel Indonesia — dikurasi dari 11 sumber media, dirangkum jadi satu cerita per saham."
       lastUpdated="2026-06-09"
       related={[
         { label: "Kontak", href: "/kontak", description: "Hubungi kami untuk pertanyaan & masukan" },
@@ -17,7 +17,7 @@ export default function KerjasamaPage() {
       <p>
         Rangkuman adalah portal rangkuman bisnis & ekonomi Indonesia yang dirancang
         untuk <strong>investor ritel, profesional, dan pengamat pasar</strong>. Tiap
-        hari, kami memantau 64 media — CNBC, Bisnis, Kontan, Bloomberg, Reuters, Tempo,
+        hari, kami memantau 11 media — Bloomberg Technoz, Emitennews, CNBC Indonesia, Investor Daily, Katadata, Bisnis.com, Kontan, CryptoNews, The Block, Cointelegraph, dan Decrypt —
         Katadata, Stockbit, dan lain-lain — lalu merangkum ceritanya jadi satu narasi
         per topik.
       </p>
@@ -75,7 +75,7 @@ export default function KerjasamaPage() {
 
       <h2>Bagaimana cara kami bekerja</h2>
       <p>
-        Redaksi memantau 64 media Indonesia dan mancanegara setiap hari kerja. Sistem kami
+        Redaksi memantau 11 media Indonesia dan mancanegara setiap hari kerja. Sistem kami
         mengelompokkan berita per topik (saham, emiten, regulasi, dll), lalu merangkumnya
         menjadi satu cerita agregat. Tim editor memverifikasi rangkuman, mengecek sumber,
         dan menambahkan sentimen (Positif/Netral/Negatif) berdasarkan tone pemberitaan.
