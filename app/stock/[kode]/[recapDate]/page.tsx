@@ -31,13 +31,12 @@ function clampText(text: string, maxChars: number): string {
  * key in `lib/api/cache/ticker-information.ts` ensures concurrent
  * scrapers hitting the same URL share one upstream round-trip.
  *
- * Note on `og:image`: this route uses the root-level
- * `/og-default.png` fallback rather than the dynamic
- * `/og/[id]/` route. The dynamic OG route is wired to
- * `loadHeadlineById` (story/headline data model), not to
- * `loadTickerInformation` (saham data model). Shipping a stock-
- * specific dynamic OG route is a separate task; the default image
- * still produces a working share preview.
+ * Note on `og:image`: this route intentionally ships no OG image.
+ * The dynamic `/og/[id]/` route is wired to `loadHeadlineById`
+ * (story/headline data model), not to `loadTickerInformation`
+ * (saham data model), so it can't be reused here. Shipping a
+ * stock-specific dynamic OG route is a separate task; for now the
+ * share preview renders title + description without a thumbnail.
  *
  * `loadTickerInformation` is wrapped in try/catch because if the
  * API is unreachable we still want to emit valid `<meta>` tags
@@ -73,7 +72,6 @@ export async function generateMetadata({
   // which is https://rangkuman.news. `trailingSlash: true` means
   // the URL is served with a trailing slash.
   const canonical = `/stock/${kode}/${recapDate}/`;
-  const ogImage = "/og-default.png";
   return {
     title,
     description: descriptionText,
@@ -85,20 +83,11 @@ export async function generateMetadata({
       siteName: "Rangkuman",
       locale: "id_ID",
       url: canonical,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: title,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description: descriptionText,
-      images: [ogImage],
     },
   };
 }

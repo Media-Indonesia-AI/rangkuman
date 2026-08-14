@@ -12,15 +12,11 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     locale: "id_ID",
     type: "website",
-    images: [
-      { url: "/og-default.png", width: 1200, height: 630, alt: "Crypto Rangkuman" },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Crypto · Rangkuman",
     description: "Recap crypto harian — Bitcoin, Ethereum, Solana, dan koin top lainnya.",
-    images: ["/og-default.png"],
   },
 };
 

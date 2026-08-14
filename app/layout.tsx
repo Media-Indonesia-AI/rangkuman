@@ -46,21 +46,12 @@ export const metadata: Metadata = {
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
       "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
-    images: [
-      {
-        url: "/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Rangkuman",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
       "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
-    images: ["/og-default.png"],
   },
   icons: {
     icon: [

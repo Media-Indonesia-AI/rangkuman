@@ -12,13 +12,11 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     locale: "id_ID",
     type: "website",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Pencarian" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Pencarian · Rangkuman",
     description: "Cari emiten dan topik pasar modal Indonesia.",
-    images: ["/og-default.png"],
   },
 };
 

@@ -12,13 +12,11 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     locale: "id_ID",
     type: "website",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Kerjasama Rangkuman" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Kerjasama · Rangkuman",
     description: "Recap saham harian untuk investor ritel Indonesia.",
-    images: ["/og-default.png"],
   },
 };
 
