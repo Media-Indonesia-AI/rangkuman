@@ -29,11 +29,6 @@ export function StoryRow({
     >
       <div className="flex w-[52px] shrink-0 flex-col items-start gap-1">
         <TickerBadge kode={story.primary_ticker_code} />
-        {/* Price change "sejak story" — falls back to `n/a` when
-            the endpoint doesn't ship `pct_change_since_story`. */}
-        {story.pct_change_since_story !== undefined && (
-          <PctChangeChip pct={story.pct_change_since_story} />
-        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
