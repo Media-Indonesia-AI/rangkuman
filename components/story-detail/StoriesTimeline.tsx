@@ -1,3 +1,4 @@
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { Shimmer } from "@/components/Shimmer";
 import { cn } from "@/lib/utils";
 import { DATE_FORMAT_ISO, formatSingkat, getRelativeTime } from "@/lib/util/formatDate";
@@ -26,7 +27,7 @@ export function StoriesList({
   totalCount,
 }: StoryStoriesListProps) {
   return (
-    <section aria-label="Timeline story">
+    <section aria-label="Timeline story" className="relative">
       <SectionHeader
         title="Timeline"
         subtitle={
@@ -44,6 +45,7 @@ export function StoriesList({
           Tidak ada peristiwa tambahan untuk headline ini.
         </div>
       )}
+      <LoginPromptOverlay />
     </section>
   );
 }
