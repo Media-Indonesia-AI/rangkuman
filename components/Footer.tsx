@@ -13,7 +13,9 @@ export function Footer() {
             <Brand logoSize={36} full />
             <p className="mt-4 max-w-sm text-[12.5px] leading-relaxed text-text-secondary">
               Recap saham harian untuk investor ritel Indonesia. Dikurasi dari
-              CNBC, Emitennews, Kontan, Katadata, Bloomberg Technoz, dan 20+ media lainnya.
+              Bloomberg Technoz, Emitennews, CNBC Indonesia, Investor Daily,
+              Katadata, Bisnis.com, Kontan, CryptoNews, The Block, Cointelegraph,
+              dan Decrypt.
             </p>
           </div>
           <div>
