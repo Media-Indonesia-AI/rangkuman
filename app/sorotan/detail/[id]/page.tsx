@@ -18,14 +18,6 @@ interface BackLink {
  * shared URL and read these tags to render the link preview —
  * without them the shared link shows only the bare URL.
  *
- * The relative `og:image` URL resolves to an absolute URL via
- * `metadataBase: new URL("https://rangkuman.news")` in
- * `app/layout.tsx`, which is required for every social scraper
- * (they reject relative `og:image` URLs). The image itself is
- * generated dynamically by `app/og/[id]/route.tsx` — the API
- * payload doesn't ship a thumbnail, so we render one per-story
- * on demand with title + summary + brand chrome.
- *
  * `loadHeadlineById` is called in a try/catch because if the API
  * is unreachable we return an empty `Metadata` object — better to
  * emit nothing than to ship generic/incorrect tags for a story
@@ -41,8 +33,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       .map((t) => t.name)
       .filter((name): name is string => Boolean(name));
     // Relative paths resolve against metadataBase. `trailingSlash: true`
-    // in next.config.js means the OG route is served at `/og/[id]/`.
-    const ogImage = `/og/${params.id}/`;
+    // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
     const canonical = `/sorotan/detail/${params.id}/`;
     return {
       title: `${headline} · Rangkuman`,
@@ -56,20 +47,11 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
         siteName: "Rangkuman",
         locale: "id_ID",
         url: canonical,
-        images: [
-          {
-            url: ogImage,
-            width: 1200,
-            height: 630,
-            alt: headline,
-          },
-        ],
       },
       twitter: {
         card: "summary_large_image",
         title: headline,
         description,
-        images: [ogImage],
       },
     };
   } catch {
