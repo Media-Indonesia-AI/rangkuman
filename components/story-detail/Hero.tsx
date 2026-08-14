@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Shimmer } from "@/components/Shimmer";
 import { ShareButton } from "@/components/ShareButton";
 import { cn } from "@/lib/utils";
-import { getRelativeTime } from "@/lib/util/formatDate";
+import { getRelativeTime, todayIsoDate } from "@/lib/util/formatDate";
 import type { HeadlineDetail } from "@/lib/api";
 import { NotAvailable, STATUS_ICON, sentimentMeta } from "./shared";
 
@@ -108,7 +108,7 @@ function HeroFeatured({
       ? Math.max(
           0,
           Math.floor(
-            (new Date(updateDate).getTime() -
+            (new Date(todayIsoDate()).getTime() -
               new Date(earliestStoryDate).getTime()) /
               86_400_000,
           ),
