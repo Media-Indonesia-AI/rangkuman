@@ -51,6 +51,47 @@ export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
 
 /**
+ * Pick the API base URL for an outbound request based on the runtime
+ * environment.
+ *
+ * - **Client** → uses the public `NEXT_PUBLIC_API_BASE_URL` (or the
+ *   `/api/v1/` fallback), resolved against the page origin by the
+ *   browser. The Next.js middleware (`middleware.ts`) catches the
+ *   `/api/*` prefix and forwards to `API_BACKEND_URL`, injecting the
+ *   shared `X-Token` secret. This avoids exposing the backend host /
+ *   token to the browser and skips CORS preflight.
+ *
+ * - **Server** → bypasses the middleware entirely and calls
+ *   `API_BACKEND_URL` directly with the shared token. The server-side
+ *   path matters for `generateMetadata()` (which runs in a Node
+ *   fetch context, not a browser) — the relative `/api/v1/` URL
+ *   would otherwise hit nginx in production, and nginx has no proxy
+ *   for `/api/` (it only serves the static `.next/standalone/`
+ *   output), so the fetch would 404. Calling the backend directly
+ *   also avoids the double-hop (Next.js → middleware → backend).
+ */
+function getApiBaseUrl(): string {
+  if (typeof window === "undefined") {
+    const backend = process.env.API_BACKEND_URL;
+    if (backend) return `${backend.replace(/\/+$/, "")}/v1/`;
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
+}
+
+/**
+ * Server-only header that authenticates the server-to-backend hop.
+ * The browser never sees this — client requests go through the
+ * middleware, which adds the same header. Returns `{}` on the
+ * client (where `process.env.API_INTERNAL_TOKEN` is also undefined
+ * since it's not `NEXT_PUBLIC_*`).
+ */
+function getInternalTokenHeader(): Record<string, string> {
+  if (typeof window !== "undefined") return {};
+  const token = process.env.API_INTERNAL_TOKEN;
+  return token ? { "X-Token": token } : {};
+}
+
+/**
  * Build the HTTP Basic auth header from the active session stored in
  * localStorage. The session object is written by `lib/auth.ts` on
  * register/login and includes the plaintext password — required because
@@ -88,7 +129,7 @@ export async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getApiBaseUrl()}${path}`;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -96,6 +137,7 @@ export async function request<T>(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...getInternalTokenHeader(),
         ...getAuthHeader(),
         ...(init.headers ?? {}),
       },
