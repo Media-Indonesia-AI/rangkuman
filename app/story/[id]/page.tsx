@@ -13,65 +13,63 @@ interface PageProps {
  * shared URL and read these tags to render the link preview —
  * without them the shared link shows only the bare URL.
  *
- * The relative `og:image` URL resolves to an absolute URL via
- * `metadataBase: new URL("https://rangkuman.news")` in
- * `app/layout.tsx`, which is required for every social scraper
- * (they reject relative `og:image` URLs). The image itself is
- * generated dynamically by `app/og/[id]/route.tsx` — the API
- * payload doesn't ship a thumbnail, so we render one per-story
- * on demand with title + summary + brand chrome.
- *
  * `loadHeadlineById` is called in a try/catch because if the API
  * is unreachable we still want to emit valid `<meta>` tags
  * (Telegram in particular drops the whole preview when one tag
- * is broken). Falls back to the generic copy on error.
+ * is broken). On error we emit route-specific fallback copy —
+ * "Story · Rangkuman" / "Story pasar modal Indonesia yang sedang
+ * tren, dikurasi dari 11 sumber media." — which is more accurate
+ * than letting Next.js fall back to the root layout's generic
+ * brand metadata.
+ *
+ * Mirrors the structure of `app/sorotan/detail/[id]/page.tsx`,
+ * including the `await params` (Next.js 15) and the 160-char
+ * description clamp.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   let headline = "Story · Rangkuman";
   let description = "Story pasar modal Indonesia yang sedang tren, dikurasi dari 11 sumber media.";
   let topics: string[] = [];
+
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+
   try {
-    const detail = await loadHeadlineById(params.id);
+    const detail = await loadHeadlineById(id);
     if (detail.title) headline = detail.title;
     if (detail.summary) description = detail.summary;
     topics = (detail.topics ?? [])
       .map((t) => t.name)
       .filter((name): name is string => Boolean(name));
   } catch {
-    // API unreachable — emit generic tags so the share preview
-    // still renders (a missing og:image makes some scrapers drop
-    // the whole preview, including the title).
+    // API unreachable — emit route-specific fallback so the share
+    // preview still reflects this is a story page, not the generic
+    // brand default from the root layout.
   }
+  // Telegram / WhatsApp / X / LinkedIn / Slack each clip the preview
+  // description to ~160 chars. Clamping here keeps the rendered
+  // preview on a clean sentence boundary instead of mid-word.
+  const clippedDescription = clampDescription(description);
   // Relative paths resolve against metadataBase. `trailingSlash: true`
-  // in next.config.js means the OG route is served at `/og/[id]/`.
-  const ogImage = `/og/${params.id}/`;
-  const canonical = `/story/${params.id}/`;
+  // in next.config.js means the canonical URL is served at `/story/[id]/`.
+  const canonical = `/story/${id}/`;
   return {
     title: `${headline} · Rangkuman`,
-    description,
+    description: clippedDescription,
     keywords: topics,
     alternates: { canonical },
     openGraph: {
       type: "article",
       title: headline,
-      description,
+      description: clippedDescription,
       siteName: "Rangkuman",
       locale: "id_ID",
       url: canonical,
-      images: [
-        {
-          url: ogImage,
-          width: 1200,
-          height: 630,
-          alt: headline,
-        },
-      ],
     },
     twitter: {
       card: "summary_large_image",
       title: headline,
-      description,
-      images: [ogImage],
+      description: clippedDescription,
     },
   };
 }
@@ -79,6 +77,21 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 interface BackLink {
   label: string;
   href: string;
+}
+
+/**
+ * Cap `text` at `maxChars` characters, breaking at the last word
+ * boundary and appending "…" if truncated. Keeps the
+ * `og:description` / Twitter `description` under Telegram /
+ * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
+ * sweet spot — otherwise the social scraper clips mid-word and
+ * the preview reads as broken.
+ */
+function clampDescription(text: string, maxChars = 160): string {
+  if (text.length <= maxChars) return text;
+  const slice = text.slice(0, maxChars);
+  const lastSpace = slice.lastIndexOf(" ");
+  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
 }
 
 /** Hints passed from the route entry to the client orchestrator

@@ -7,11 +7,19 @@ interface PageProps {
 
 /**
  * Cap `text` at `maxChars` characters, breaking at the last word
- * boundary and appending "…" if truncated. Keeps the OG/Twitter
- * description under the rough 200-character sweet spot that
- * Telegram, WhatsApp, X, LinkedIn, and Slack all render cleanly.
+ * boundary and appending "…" if truncated. Keeps the
+ * `og:description` / Twitter `description` under Telegram /
+ * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
+ * sweet spot — otherwise the social scraper clips mid-word and
+ * the preview reads as broken.
+ *
+ * Same helper as `app/sorotan/detail/[id]/page.tsx` and
+ * `app/story/[id]/page.tsx` — duplicated rather than extracted
+ * to a shared lib because each route is allowed to tweak the
+ * default. Here the default stays 160 to match the other two
+ * detail pages.
  */
-function clampText(text: string, maxChars: number): string {
+function clampDescription(text: string, maxChars = 160): string {
   if (text.length <= maxChars) return text;
   const slice = text.slice(0, maxChars);
   const lastSpace = slice.lastIndexOf(" ");
@@ -40,13 +48,21 @@ function clampText(text: string, maxChars: number): string {
  *
  * `loadTickerInformation` is wrapped in try/catch because if the
  * API is unreachable we still want to emit valid `<meta>` tags
- * (Telegram drops the whole preview when any tag is broken).
+ * (Telegram drops the whole preview when any tag is broken). On
+ * error we fall through to a route-specific fallback that names
+ * the ticker + (if known) its sector — better than letting
+ * Next.js fall back to the root layout's generic brand metadata.
+ *
+ * Mirrors the structure of `app/sorotan/detail/[id]/page.tsx`,
+ * including the `await params` (Next.js 15) and the 160-char
+ * description clamp.
  */
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
-  const kode = params.kode.toUpperCase();
-  const { recapDate } = params;
+  const resolvedParams = await params;
+  const kode = resolvedParams.kode.toUpperCase();
+  const { recapDate } = resolvedParams;
 
   let companyName: string | null = null;
   let description: string | null = null;
@@ -66,7 +82,7 @@ export async function generateMetadata({
   const fallbackDescription = sector
     ? `Ringkasan saham ${displayName} (${kode}) di sektor ${sector}.`
     : `Ringkasan saham ${displayName} (${kode}).`;
-  const descriptionText = clampText(description ?? fallbackDescription, 200);
+  const clippedDescription = clampDescription(description ?? fallbackDescription);
 
   // Relative path resolves against metadataBase in app/layout.tsx,
   // which is https://rangkuman.news. `trailingSlash: true` means
@@ -74,12 +90,12 @@ export async function generateMetadata({
   const canonical = `/stock/${kode}/${recapDate}/`;
   return {
     title,
-    description: descriptionText,
+    description: clippedDescription,
     alternates: { canonical },
     openGraph: {
       type: "article",
       title,
-      description: descriptionText,
+      description: clippedDescription,
       siteName: "Rangkuman",
       locale: "id_ID",
       url: canonical,
@@ -87,7 +103,7 @@ export async function generateMetadata({
     twitter: {
       card: "summary_large_image",
       title,
-      description: descriptionText,
+      description: clippedDescription,
     },
   };
 }

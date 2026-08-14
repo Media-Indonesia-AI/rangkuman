@@ -13,6 +13,21 @@ interface BackLink {
 }
 
 /**
+ * Cap `text` at `maxChars` characters, breaking at the last word
+ * boundary and appending "…" if truncated. Keeps the
+ * `og:description` / Twitter `description` under Telegram /
+ * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
+ * sweet spot — otherwise the social scraper clips mid-word (e.g.
+ * "...3,50-3,75 per…") and the preview reads as broken.
+ */
+function clampDescription(text: string, maxChars = 160): string {
+  if (text.length <= maxChars) return text;
+  const slice = text.slice(0, maxChars);
+  const lastSpace = slice.lastIndexOf(" ");
+  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
+}
+
+/**
  * Build the `<meta name="og:*">` and Twitter Card tags for this
  * route. Telegram, WhatsApp, X, LinkedIn, and Slack all fetch a
  * shared URL and read these tags to render the link preview —
@@ -46,18 +61,22 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     // preview still reflects this is a story page, not the generic
     // brand default from the root layout.
   }
+  // Telegram / WhatsApp / X / LinkedIn / Slack each clip the preview
+  // description to ~160 chars. Clamping here keeps the rendered
+  // preview on a clean sentence boundary instead of mid-word.
+  const clippedDescription = clampDescription(description);
   // Relative paths resolve against metadataBase. `trailingSlash: true`
   // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
   const canonical = `/sorotan/detail/${id}/`;
   return {
     title: `${headline} · Rangkuman`,
-    description,
+    description: clippedDescription,
     keywords: topics,
     alternates: { canonical },
     openGraph: {
       type: "article",
       title: headline,
-      description,
+      description: clippedDescription,
       siteName: "Rangkuman",
       locale: "id_ID",
       url: canonical,
@@ -65,7 +84,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     twitter: {
       card: "summary_large_image",
       title: headline,
-      description,
+      description: clippedDescription,
     },
   };
 }
