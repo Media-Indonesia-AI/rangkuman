@@ -60,7 +60,7 @@ export async function generateMetadata({
   }
 
   const displayName = companyName ?? kode;
-  const title = `${kode} — ${displayName} · Rangkuman`;
+  const title = `${kode} — ${displayName}`;
   const fallbackDescription = sector
     ? `Ringkasan saham ${displayName} (${kode}) di sektor ${sector}.`
     : `Ringkasan saham ${displayName} (${kode}).`;

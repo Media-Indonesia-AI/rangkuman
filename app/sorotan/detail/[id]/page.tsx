@@ -55,7 +55,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
   const canonical = `/sorotan/detail/${id}/`;
   return {
-    title: `${headline} · Rangkuman`,
+    title: `${headline}`,
     description: clippedDescription,
     keywords: topics,
     alternates: { canonical },
