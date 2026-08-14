@@ -1,28 +1,8 @@
 import { getSektorBySlug, sektorList } from "@/lib/mock/sectors";
+import { clampDescription } from "@/lib/util/clampDescription";
 
 interface PageProps {
   params: { slug: string };
-}
-
-/**
- * Cap `text` at `maxChars` characters, breaking at the last word
- * boundary and appending "…" if truncated. Keeps the
- * `og:description` / Twitter `description` under Telegram /
- * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
- * sweet spot — otherwise the social scraper clips mid-word and
- * the preview reads as broken.
- *
- * Same helper as `app/sorotan/detail/[id]/page.tsx`,
- * `app/story/[id]/page.tsx`, and
- * `app/stock/[kode]/[recapDate]/page.tsx` — duplicated rather than
- * extracted to a shared lib because each route is allowed to
- * tweak the default. Here the default stays 160 to match.
- */
-function clampDescription(text: string, maxChars = 160): string {
-  if (text.length <= maxChars) return text;
-  const slice = text.slice(0, maxChars);
-  const lastSpace = slice.lastIndexOf(" ");
-  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
 }
 
 export function generateStaticParams() {

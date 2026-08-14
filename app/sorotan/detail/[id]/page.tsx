@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import { SorotanDetailPage } from "@/components/sorotan-detail";
 import { loadHeadlineById } from "@/lib/api/cache";
+import { clampDescription } from "@/lib/util/clampDescription";
 
 interface PageProps {
   params: { id: string };
@@ -10,21 +11,6 @@ interface PageProps {
 interface BackLink {
   label: string;
   href: string;
-}
-
-/**
- * Cap `text` at `maxChars` characters, breaking at the last word
- * boundary and appending "…" if truncated. Keeps the
- * `og:description` / Twitter `description` under Telegram /
- * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
- * sweet spot — otherwise the social scraper clips mid-word (e.g.
- * "...3,50-3,75 per…") and the preview reads as broken.
- */
-function clampDescription(text: string, maxChars = 160): string {
-  if (text.length <= maxChars) return text;
-  const slice = text.slice(0, maxChars);
-  const lastSpace = slice.lastIndexOf(" ");
-  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
 }
 
 /**

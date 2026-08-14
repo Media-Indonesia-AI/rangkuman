@@ -1,29 +1,9 @@
 import type { Metadata } from "next";
 import { loadTickerInformation } from "@/lib/api/cache";
+import { clampDescription } from "@/lib/util/clampDescription";
 
 interface PageProps {
   params: { kode: string; recapDate: string };
-}
-
-/**
- * Cap `text` at `maxChars` characters, breaking at the last word
- * boundary and appending "…" if truncated. Keeps the
- * `og:description` / Twitter `description` under Telegram /
- * WhatsApp / X / LinkedIn / Slack's rough 160-character preview
- * sweet spot — otherwise the social scraper clips mid-word and
- * the preview reads as broken.
- *
- * Same helper as `app/sorotan/detail/[id]/page.tsx` and
- * `app/story/[id]/page.tsx` — duplicated rather than extracted
- * to a shared lib because each route is allowed to tweak the
- * default. Here the default stays 160 to match the other two
- * detail pages.
- */
-function clampDescription(text: string, maxChars = 160): string {
-  if (text.length <= maxChars) return text;
-  const slice = text.slice(0, maxChars);
-  const lastSpace = slice.lastIndexOf(" ");
-  return (lastSpace > 0 ? slice.slice(0, lastSpace) : slice).trimEnd() + "…";
 }
 
 /**
@@ -63,12 +43,14 @@ export async function generateMetadata({
   const resolvedParams = await params;
   const kode = resolvedParams.kode.toUpperCase();
   const { recapDate } = resolvedParams;
+  const validatedRecapDate = recapDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
 
   let companyName: string | null = null;
   let description: string | null = null;
   let sector: string | null = null;
+
   try {
-    const info = await loadTickerInformation(kode, recapDate);
+    const info = await loadTickerInformation(kode, validatedRecapDate);
     companyName = info.company_name || null;
     description = info.description || null;
     sector = info.sector_name || null;
@@ -87,7 +69,7 @@ export async function generateMetadata({
   // Relative path resolves against metadataBase in app/layout.tsx,
   // which is https://rangkuman.news. `trailingSlash: true` means
   // the URL is served with a trailing slash.
-  const canonical = `/stock/${kode}/${recapDate}/`;
+  const canonical = `/stock/${kode}/${validatedRecapDate}/`;
   return {
     title,
     description: clippedDescription,
