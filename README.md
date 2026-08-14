@@ -357,8 +357,7 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 - `/sektor/`, `/sektor/[slug]/` — 12 sector pages
 - `/stock/[kode]/` — 34 stock pages
 - `/trending/`, `/search/`, `/watchlist/`, `/login/`
-- `/kerjasama/`, `/syarat-ketentuan/`
-- `/kontak/`
+- `/kontak-kerjasama/`, `/syarat-ketentuan/`
 
 ### Internal
 - `/not-found` — custom 404

@@ -10,8 +10,7 @@ export default function SyaratKetentuanPage() {
       description="Dengan mengakses dan menggunakan Rangkuman, lo setuju dengan syarat & ketentuan berikut. Mohon dibaca dengan seksama."
       lastUpdated="2026-06-09"
       related={[
-        { label: "Kerjasama", href: "/kerjasama", description: "Tentang Rangkuman" },
-        { label: "Kontak", href: "/kontak", description: "Hubungi tim kami" },
+        { label: "Kontak & Kerjasama", href: "/kontak-kerjasama", description: "Hubungi tim kami" },
       ]}
     >
       <h2>1. Penerimaan syarat</h2>
@@ -112,7 +111,7 @@ export default function SyaratKetentuanPage() {
 
       <h2>10. Hubungi kami</h2>
       <p>
-        Pertanyaan soal Syarat & Ketentuan? Hubungi <a href="/kontak">halaman Kontak</a>{" "}
+        Pertanyaan soal Syarat & Ketentuan? Hubungi <a href="/kontak-kerjasama">halaman Kontak &amp; Kerjasama</a>{" "}
         atau email <strong>legal@rangkuman.news</strong>.
       </p>
     </InfoPage>

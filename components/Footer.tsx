@@ -28,12 +28,7 @@ export function Footer() {
           <div>
             <p className="label mb-2.5">Perusahaan</p>
             <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
-              <li><Link href="/kontak" className="hover:text-brand">Kontak</Link></li>
-              <li><Link href="/kerjasama" className="hover:text-brand">Kerjasama</Link></li>
-            </ul>
-          </div>
-          <div>
-            <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
+              <li><Link href="/kontak-kerjasama" className="hover:text-brand">Kontak &amp; Kerjasama</Link></li>
               <li><Link href="/syarat-ketentuan" className="hover:text-brand">Syarat &amp; Ketentuan</Link></li>
             </ul>
           </div>
