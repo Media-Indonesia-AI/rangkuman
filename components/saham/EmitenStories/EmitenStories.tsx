@@ -32,6 +32,7 @@ import { EmptyStory } from "./EmptyStory";
 import { FeaturedStory } from "./FeaturedStory";
 import { FeaturedSkeleton, StoriesSkeleton } from "./Skeletons";
 import { StoryRow } from "./StoryRow";
+import { useCurrentUser } from "@/lib/hooks/useAuth";
 
 /** Fallback ticker when the host page doesn't pass one. */
 const DEFAULT_TICKER = "";
@@ -92,6 +93,11 @@ export function EmitenStories({
     : undefined;
   const seeAllHref = topicSlug ? `/story?topic=${topicSlug}` : "/story";
 
+  const user = useCurrentUser();
+  if (!user) {
+    return null;
+  }
+  
   const seeAll = (
     <Link
       href={seeAllHref}
