@@ -89,18 +89,6 @@ export interface AddToWatchlistRequest {
 }
 
 /**
- * Request body for `PUT watchlist` (update). Same shape as
- * `AddToWatchlistRequest` — kept as a separate type so the two
- * operations can diverge later (e.g. partial-update fields) without
- * breaking the add flow. Today they're identical, but the named
- * types document intent at the call site.
- */
-export interface UpdateWatchlistRequest {
-  ticker_code: string;
-  order: number;
-}
-
-/**
  * Request body for `DELETE watchlist`. Ticker-only — the
  * active user is resolved from the auth header, so the
  * `user_id` field on the row doesn't need to be echoed back.

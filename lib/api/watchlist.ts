@@ -2,7 +2,6 @@ import { request } from "./client";
 import type {
   AddToWatchlistRequest,
   DeleteWatchlistRequest,
-  UpdateWatchlistRequest,
   WatchlistItem,
   WatchlistResponse,
 } from "./types/watchlist";
@@ -58,9 +57,12 @@ export function addToWatchlist(
  * Returns the updated `WatchlistItem` (raw). Same caller-side
  * cache-invalidation contract as `addToWatchlist`:
  * `invalidateWatchlist()` after a successful update.
+ *
+ * Shares `AddToWatchlistRequest` with `addToWatchlist` —
+ * the body shape is identical, only the HTTP method differs.
  */
 export function updateWatchlist(
-  body: UpdateWatchlistRequest,
+  body: AddToWatchlistRequest,
 ): Promise<WatchlistItem> {
   return request<WatchlistItem>("watchlist", {
     method: "PUT",

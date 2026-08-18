@@ -123,7 +123,6 @@ export type {
 export type {
   AddToWatchlistRequest,
   DeleteWatchlistRequest,
-  UpdateWatchlistRequest,
   WatchlistItem,
   WatchlistResponse,
 } from "./types/watchlist";
