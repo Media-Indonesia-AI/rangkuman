@@ -118,3 +118,12 @@ export type {
   WalletTransactionQrCode,
   WalletTransactionQrCodeMetadata,
 } from "./types/wallet";
+
+// Watchlist
+export type {
+  AddToWatchlistRequest,
+  DeleteWatchlistRequest,
+  UpdateWatchlistRequest,
+  WatchlistItem,
+  WatchlistResponse,
+} from "./types/watchlist";

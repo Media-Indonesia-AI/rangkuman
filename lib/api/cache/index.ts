@@ -44,3 +44,4 @@ export { loadHeadlineById } from "./headline-detail";
 export { loadTopupBundle } from "./topup-bundle";
 export { loadWallet, invalidateWallet } from "./wallet";
 export { loadTransactionHistory, invalidateTransactionHistory } from "./wallet-transactions";
+export { loadWatchlist, invalidateWatchlist } from "./watchlist";
