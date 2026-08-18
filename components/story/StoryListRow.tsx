@@ -29,6 +29,16 @@ export function StoryListRow({ story, topicHint }: StoryListRowProps) {
   const href = topicHint
     ? `/story/${story.id}?topic=${topicHint}`
     : `/story/${story.id}`;
+
+  const latestRecapDate =
+    story.stories && story.stories.length > 0
+      ? story.stories.reduce(
+          (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+          "",
+        )
+      : "";
+  const updateTimestamp = latestRecapDate || story.created_at;
+
   return (
     <Link
       href={href}
@@ -42,7 +52,7 @@ export function StoryListRow({ story, topicHint }: StoryListRowProps) {
           <SentimentPill sentiment={story.sentiment} />
           <span className="font-mono text-[10px] text-text-faint">
             · {story.keywords.length} kata kunci ·{" "}
-            {relativeUpdated(story.created_at)}
+            {relativeUpdated(updateTimestamp)}
           </span>
         </div>
         <h4 className="text-[14px] font-semibold leading-snug text-text-primary transition-colors group-hover:text-brand sm:text-[14.5px]">

@@ -36,6 +36,26 @@ export function FeaturedCard({ story, topicHint }: FeaturedCardProps) {
     ? `/story/${story.id}?topic=${topicHint}`
     : `/story/${story.id}`;
 
+  // The "Update" label below is the timestamp of the *latest*
+  // sub-story the headline is updating about — not the
+  // headline's own `created_at`. The optional `stories[]`
+  // payload (newer responses) carries one `EmbeddedStory` per
+  // related story, each with its own `recap_date` (the older
+  // field name; `StoryItem` calls this `created_at`). The
+  // array isn't sorted on the wire, so we reduce to find the
+  // max. ISO 8601 strings sort lexicographically the same as
+  // chronologically, so a plain `>` compare works. Falls back
+  // to `story.created_at` when the payload is absent or empty
+  // (older responses) so the card never blanks out.
+  const latestRecapDate =
+    story.stories && story.stories.length > 0
+      ? story.stories.reduce(
+          (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+          "",
+        )
+      : "";
+  const updateTimestamp = latestRecapDate || story.created_at;
+
   return (
     <Link
       href={href}
@@ -60,7 +80,7 @@ export function FeaturedCard({ story, topicHint }: FeaturedCardProps) {
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 font-mono text-[10.5px] text-text-muted">
             <Clock className="h-3 w-3" aria-hidden />
-            Update {relativeUpdated(story.created_at)}
+            Update {relativeUpdated(updateTimestamp)}
           </span>
           {topic && (
             <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[9.5px] text-text-secondary">
