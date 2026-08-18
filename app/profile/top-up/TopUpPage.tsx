@@ -126,12 +126,6 @@ export default function TopUpPage() {
     }
   }, [accumulated.length]);
 
-  // Backend doesn't guarantee order — sort newest-first here.
-  const sortedTransactions = [...accumulated].sort(
-    (a, b) =>
-      new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
-  );
-
   const customValidation = validateCustomAmount(customAmount);
 
   const effectiveAmount = selectedBundle?.price ?? customValidation.value;
@@ -181,24 +175,28 @@ export default function TopUpPage() {
   const displayedTransaction = selectedPending ?? lastTransaction;
 
   // Standalone `<PaymentQrCard />` gate — only renders for the
-  // *newest* row, i.e. the one sitting at index 0 of the sorted
-  // history. This keeps the top of the page free of duplicate
-  // QRs when the user clicks an older pending row from the list:
-  // the standalone card hides and the inline `<PaymentQrCard />`
-  // inside that row's Fragment takes over.
+  // row at index 0 of the history. This keeps the top of the
+  // page free of duplicate QRs when the user clicks an older
+  // pending row from the list: the standalone card hides and
+  // the inline `<PaymentQrCard />` inside that row's Fragment
+  // takes over.
   //
   // The first OR-clause (`displayedTransaction === lastTransaction`)
   // covers the brief window between POST resolution and the
-  // history refresh landing — without it, the pure index-0 check
-  // below would hide the QR just after submit because
-  // `lastTransaction` isn't yet at index 0 of `sortedTransactions`
+  // history refresh landing — without it, the pure index-0
+  // check below would hide the QR just after submit because
+  // `lastTransaction` isn't yet at index 0 of `accumulated`
   // (the `refreshTransactions()` call is async, so the new row
   // takes a tick to land). After refresh, both clauses collapse
   // to the same row.
+  //
+  // We trust the backend's list order — `accumulated` is fed
+  // straight to `<TransactionHistory />` without re-sorting,
+  // so "index 0" here is whatever the backend returns first.
   const showStandaloneQr =
     displayedTransaction === lastTransaction ||
     (displayedTransaction != null &&
-      displayedTransaction.id === sortedTransactions[0]?.id);
+      displayedTransaction.id === accumulated[0]?.id);
 
   // While a pending invoice is on screen, subscribe to the
   // upstream wallet-top-up SSE stream so close-out (paid,
@@ -300,7 +298,7 @@ export default function TopUpPage() {
       )}
 
       <TransactionHistory
-        transactions={sortedTransactions}
+        transactions={accumulated}
         isLoading={transactionsLoading}
         hasMore={hasMore}
         isLoadingMore={isLoadingMore}
