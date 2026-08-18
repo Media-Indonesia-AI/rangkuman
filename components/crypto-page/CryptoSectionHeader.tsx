@@ -7,15 +7,15 @@ interface CryptoSectionHeaderProps {
   /** Section title shown in the brand-color mono caps row. */
   title: string;
   /** Single-line description / subtitle under the title. */
-  subtitle: string;
+  subtitle?: string;
   /** Right-aligned count meta in mono gray (e.g. "1 cerita"). */
   count: string;
 }
 
 /**
  * Section header shared by every layer of the `/crypto` page —
- * Sorotan, Sedang Terjadi, Cerita Lain, and the Pasar tab's
- * "Top Movers". Lays out as a left-aligned title+subtitle pair
+ * Sorotan, Berita Terkini, and the Pasar tab's "Top Movers".
+ * Lays out as a left-aligned title+subtitle pair
  * (`border-b border-border-strong`) with a right-aligned count.
  *
  * Pure presentational — no state, no fetch, no icon-defaulting
@@ -35,7 +35,7 @@ export function CryptoSectionHeader({
           {icon}
           {title}
         </h2>
-        <p className="mt-0.5 text-[11px] text-text-muted">{subtitle}</p>
+        {subtitle && <p className="mt-0.5 text-[11px] text-text-muted">{subtitle}</p>}
       </div>
       <span className="font-mono text-[10px] text-text-faint">{count}</span>
     </div>
