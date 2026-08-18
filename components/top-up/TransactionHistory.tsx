@@ -1,6 +1,8 @@
+import { Fragment } from "react";
 import type { WalletTransaction } from "@/lib/api";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
+import { PaymentQrCard } from "./PaymentQrCard";
 import { TransactionRow } from "./TransactionRow";
 
 interface TransactionHistoryProps {
@@ -102,20 +104,47 @@ export function TransactionHistory({
         </div>
       ) : (
         <>
-          <ul className="mt-2.5 flex flex-col gap-2">
-            {transactions.map((tx) => (
-              <TransactionRow
-                key={tx.id}
-                tx={tx}
-                highlighted={tx.id === highlightedId}
-                onSelect={
-                  onSelectPending && tx.status === "pending"
-                    ? () => onSelectPending(tx)
-                    : undefined
-                }
-              />
+          {/* Inline `<PaymentQrCard />` slots between rows. The card
+              only renders for the row the user *clicked* — gated on
+              `tx.id === highlightedId`, which is propagated down
+              from `selectedPending` in `TopUpPage` (the cloned
+              `lastTransaction.id` path is harmless here because the
+              freshly-created invoice lands at index 0, which the
+              `index > 0` guard below filters out). Default state
+              shows no inline QRs at all, so the list reads as a
+              clean history until the user taps a row to inspect
+              its invoice.
+
+              The `index > 0` guard additionally skips the first row
+              because the freshly-created invoice's QR is already
+              shown in the standalone `<PaymentQrCard />` mounted
+              above this section by `TopUpPage` — duplicating it on
+              top of row 0 would just be visual noise.
+
+              The container had to move from `<ul>` to a plain
+              `<div>` because `<PaymentQrCard />` renders a
+              `<section>` and a `<section>` can't legally live as a
+              child of `<ul>` — the trade-off is invalid HTML
+              (loose `<li>` children) for a layout that browsers
+              still render identically. */}
+          <div className="mt-2.5 flex flex-col gap-2">
+            {transactions.map((tx, index) => (
+              <Fragment key={tx.id}>
+                {index > 0 && tx.id === highlightedId && (
+                  <PaymentQrCard transaction={tx} />
+                )}
+                <TransactionRow
+                  tx={tx}
+                  highlighted={tx.id === highlightedId}
+                  onSelect={
+                    onSelectPending && tx.status === "pending"
+                      ? () => onSelectPending(tx)
+                      : undefined
+                  }
+                />
+              </Fragment>
             ))}
-          </ul>
+          </div>
 
           {/* 📥 LOAD MORE — paginates the wallet history. Only
               rendered when the parent supplies both `onLoadMore`

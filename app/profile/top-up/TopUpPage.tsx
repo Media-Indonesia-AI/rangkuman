@@ -27,8 +27,8 @@ import {
  * Owns local UI state, the wallet read fetches, the `POST
  * wallet/topup` mutation, and derived totals. Renders each
  * card from `@/components/top-up` in order: header → balance
- * → bundle selector → totals → QR card (when an invoice
- * exists) → history.
+ * → bundle selector → totals → QR card (when the displayed
+ * transaction is the newest, i.e. index 0 of the history) → history.
  *
  * On submit failure the API error is forwarded via the
  * `berita-investor:toast` event so the existing toast widget
@@ -180,6 +180,26 @@ export default function TopUpPage() {
   );
   const displayedTransaction = selectedPending ?? lastTransaction;
 
+  // Standalone `<PaymentQrCard />` gate — only renders for the
+  // *newest* row, i.e. the one sitting at index 0 of the sorted
+  // history. This keeps the top of the page free of duplicate
+  // QRs when the user clicks an older pending row from the list:
+  // the standalone card hides and the inline `<PaymentQrCard />`
+  // inside that row's Fragment takes over.
+  //
+  // The first OR-clause (`displayedTransaction === lastTransaction`)
+  // covers the brief window between POST resolution and the
+  // history refresh landing — without it, the pure index-0 check
+  // below would hide the QR just after submit because
+  // `lastTransaction` isn't yet at index 0 of `sortedTransactions`
+  // (the `refreshTransactions()` call is async, so the new row
+  // takes a tick to land). After refresh, both clauses collapse
+  // to the same row.
+  const showStandaloneQr =
+    displayedTransaction === lastTransaction ||
+    (displayedTransaction != null &&
+      displayedTransaction.id === sortedTransactions[0]?.id);
+
   // While a pending invoice is on screen, subscribe to the
   // upstream wallet-top-up SSE stream so close-out (paid,
   // expired, failed) lands without needing a remount. The
@@ -275,7 +295,7 @@ export default function TopUpPage() {
         onSubmit={handleSubmit}
       />
 
-      {displayedTransaction && (
+      {showStandaloneQr && displayedTransaction && (
         <PaymentQrCard transaction={displayedTransaction} />
       )}
 
