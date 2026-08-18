@@ -37,7 +37,7 @@ export function StoryListRow({ story, topicHint }: StoryListRowProps) {
           "",
         )
       : "";
-  const updateTimestamp = latestRecapDate || story.created_at;
+  const updateTimestamp = latestRecapDate || story.updated_at || story.created_at;
 
   return (
     <Link

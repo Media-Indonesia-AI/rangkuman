@@ -54,7 +54,7 @@ export function FeaturedCard({ story, topicHint }: FeaturedCardProps) {
           "",
         )
       : "";
-  const updateTimestamp = latestRecapDate || story.created_at;
+  const updateTimestamp = latestRecapDate || story.updated_at || story.created_at;
 
   return (
     <Link

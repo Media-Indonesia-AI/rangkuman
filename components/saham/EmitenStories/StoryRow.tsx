@@ -19,6 +19,15 @@ export function StoryRow({
   story: HeadlineLast7DaysItem;
   first?: boolean;
 }) {
+  const latestRecapDate =
+    story.stories && story.stories.length > 0
+      ? story.stories.reduce(
+          (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+          "",
+        )
+      : "";
+  const updateTimestamp = latestRecapDate || story.updated_at || story.created_at;
+
   return (
     <Link
       href={`/story/${story.id}`}
@@ -34,7 +43,7 @@ export function StoryRow({
         <div className="flex flex-wrap items-center gap-1.5">
           <SentimentPill sentiment={story.sentiment} />
           <span className="font-mono text-[10px] text-text-faint">
-            · {story.keywords.length} kata kunci · {relativeUpdated(story.created_at)}
+            · {story.keywords.length} kata kunci · {relativeUpdated(updateTimestamp)}
           </span>
         </div>
         <h4 className="mt-1 text-[15px] font-semibold leading-tight text-text-primary">
