@@ -108,9 +108,16 @@ interface RefererData {
  * hint. Mirrors the entry-point list from
  * `app/sorotan/detail/[id]/page.tsx`. Known entry points today:
  *
- *   - `/story`, `/story/[id]` — the listing (`app/story/StoryPage.tsx`)
- *     and the sidebar's "Story Lainnya" rail, which hops between
- *     detail pages
+ *   - `/story`, `/story/[id]` — the listing
+ *     (`app/story/StoryPage.tsx`) and the sidebar's
+ *     "Story Lainnya" rail, which hops between detail pages.
+ *     The back label and href follow the referer's
+ *     `?topic=` so the visitor returns to the *same* scoped
+ *     feed: "Kembali ke Story Saham" / `/story?topic=saham`,
+ *     "Kembali ke Story Crypto" / `/story?topic=crypto`, or
+ *     "Kembali ke Story Beranda" / `/story` (cross-topic
+ *     case, marked "Beranda" to distinguish from the scoped
+ *     variants).
  *   - `/stock/[kode]`         — `<EmitenStories variant="highlight" />`
  *     on the stock page; goes back to that emiten, not the index
  *   - `/saham`                — `<EmitenStories />` on `app/saham/page.tsx`
@@ -133,10 +140,39 @@ function dataFromReferer(referer: string | null): RefererData {
   };
   if (!referer) return FALLBACK;
   try {
-    const path = new URL(referer).pathname;
+    const url = new URL(referer);
+    const path = url.pathname;
+    // The referer's `?topic=` drives the `/story` branch's
+    // back label and href — see the branch below. We pull it
+    // out once at the top of the try-block so the same parsed
+    // value is shared across the path checks instead of
+    // re-parsing the URL inside each branch.
+    const topic = url.searchParams.get("topic");
     if (path === "/story" || path.startsWith("/story/")) {
+      // The story listing and the sidebar's "Story Lainnya"
+      // rail both hop to detail pages. The back link's label
+      // and href follow the referer's `?topic=` so the
+      // visitor returns to the *same* scoped feed instead of
+      // silently dropping the topic on the way back. Label
+      // splits per-topic: "Kembali ke Story Saham" /
+      // "Kembali ke Story Crypto" for the scoped variants;
+      // "Kembali ke Story Beranda" for the cross-topic
+      // case (the `Beranda` suffix marks the unfiltered
+      // listing, distinct from the two scoped ones so the
+      // user knows they're returning to the cross-topic
+      // feed). Href mirrors the topic back onto the
+      // listing so the reload keeps the same filter.
+      if (topic === "saham" || topic === "crypto") {
+        return {
+          back: {
+            label: `Kembali ke Story ${topic.charAt(0).toUpperCase()}${topic.slice(1)}`,
+            href: `/story?topic=${topic}`,
+          },
+          topicHint: topic,
+        };
+      }
       return {
-        back: { label: "Kembali ke Story", href: "/story" },
+        back: { label: "Kembali ke Story Beranda", href: "/story" },
       };
     }
     if (path.startsWith("/stock/")) {
