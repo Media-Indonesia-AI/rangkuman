@@ -67,7 +67,7 @@ ls -la out/*.html
 rangkuman-news/
 ├── app/                              # Next.js App Router (pages + layouts)
 │   ├── layout.tsx                    # Root layout: theme, fonts, OG image
-│   ├── page.tsx                      # Home: Sorotan + Sedang Terjadi + Cerita Lain
+│   ├── page.tsx                      # Home: Sorotan + Berita Terkini
 │   ├── globals.css                   # Tailwind + CSS variables (light/dark)
 │   │
 │   ├── saham/                        # /saham (sub-tab: Recap | Sektor)
@@ -99,9 +99,7 @@ rangkuman-news/
 │   ├── BrandSlogan.tsx               # Above-the-fold homepage tagline
 │   │
 │   ├── StoryHero.tsx                 # 1 big card (Sorotan)
-│   ├── StoryEditorial.tsx            # 6 editorial cards (Sedang Terjadi)
-│   ├── StoryCompact.tsx              # Compact list (Cerita Lain)
-│   ├── MarketsStrip.tsx              # Markets snapshot widget
+│   ├── StoryEditorial.tsx            # Editorial cards (Berita Terkini)
 │   │
 │   ├── CategoryPageView.tsx          # Shared layout for category pages
 │   ├── PolicyTracker.tsx             # Status board untuk kebijakan
@@ -348,7 +346,7 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 ## Pages overview
 
 ### Public
-- `/` — Home (Sorotan + Sedang Terjadi + Cerita Lain)
+- `/` — Home (Sorotan + Berita Terkini)
 - `/sorotan/detail/[id]/` — 50 story detail pages
 - `/saham/` — Stocks (sub-tab: Recap | Sektor)
 - `/bisnis/`, `/ekonomi/`, `/kebijakan/`, `/komoditas/` — Category pages

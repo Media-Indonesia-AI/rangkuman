@@ -1,6 +1,6 @@
 "use client";
 
-import { Flame, ClipboardList, BookOpen } from "lucide-react";
+import { Flame, ClipboardList } from "lucide-react";
 import type { StoryItem } from "@/lib/api";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import {
@@ -9,24 +9,18 @@ import {
 } from "@/lib/mock/highlights";
 import { StoryHero } from "@/components/StoryHero";
 import { StoryEditorial } from "@/components/StoryEditorial";
-import { GradientDivider } from "@/components/GradientDivider";
 import { EmitenStories } from "@/components/saham";
 import { Shimmer } from "@/components/Shimmer";
 import { getRelativeTime } from "@/lib/util/formatDate";
 
 /** Total stories to fetch for the homepage rail. Matches the sum
- *  of the three visible layers below — 1 + 4 + 10 — so the entire
- *  above-the-fold rail lands in a single network round-trip. */
+ *  of the two visible layers below — 1 (Sorotan) + 14 (Berita
+ *  Terkini) — so the entire above-the-fold rail lands in a single
+ *  network round-trip. */
 const HEADLINES_LIMIT = 15;
 
 /** Size of the lead "Sorotan" slot at the top of the homepage. */
 const LAYER_1_SIZE = 1;
-
-/** Size of the "Sedang Terjadi" 2-col grid directly below the hero. */
-const LAYER_2_SIZE = 4;
-
-/** Size of the "Cerita Lain" 3-col grid at the bottom of the rail. */
-const LAYER_3_SIZE = 10;
 
 /** Set of category slugs we recognise on `StoryItem.topics`. Used
  *  by the adapter below to derive the `Category` value the existing
@@ -126,7 +120,7 @@ function storyItemToHighlight(
 }
 
 /**
- * Shimmer skeleton matching the three-layer rail above. One pulse-
+ * Shimmer skeleton matching the two-layer rail above. One pulse-
  * per-slot pattern (gradient bar + headline + summary + meta) sized
  * to the real cards' dimensions so the transition from skeleton →
  * populated data doesn't reflow the page. Rendered while
@@ -170,21 +164,21 @@ function HomeHeadlinesSkeleton() {
         </div>
       </section>
 
-      {/* 📋 LAYER 2: SEDANG TERJADI — 4 cards in 2-col grid */}
-      <section aria-label="Sedang terjadi" aria-busy className="mt-8">
+      {/* 📋 BERITA TERKINI — 14 cards in 2-col grid (merged Sedang Terjadi + Cerita Lain) */}
+      <section aria-label="Berita terkini" aria-busy className="mt-8">
         <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
           <div>
             <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
               <ClipboardList className="h-3 w-3" aria-hidden />
-              Sedang Terjadi
+              Berita Terkini
             </h2>
             <p className="mt-0.5 text-[11px] text-text-muted">
-              Cerita penting lainnya
+              Cerita terbaru sepanjang hari
             </p>
           </div>
         </div>
         <div className="grid gap-2.5 sm:grid-cols-2">
-          {[0, 1, 2, 3].map((i) => (
+          {Array.from({ length: 14 }).map((_, i) => (
             <div
               key={i}
               className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
@@ -207,68 +201,28 @@ function HomeHeadlinesSkeleton() {
           ))}
         </div>
       </section>
-
-      <GradientDivider spacing="my-8" />
-
-      {/* 📚 LAYER 3: CERITA LAIN — 10 cards in 3-col grid, compact */}
-      <section aria-label="Cerita lain" aria-busy className="mt-2">
-        <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
-          <div>
-            <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
-              <BookOpen className="h-3 w-3" aria-hidden />
-              Cerita Lain
-            </h2>
-            <p className="mt-0.5 text-[11px] text-text-muted">
-              Berita tambahan hari ini
-            </p>
-          </div>
-          <Shimmer className="h-3 w-12" />
-        </div>
-        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 10 }).map((_, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-lg border border-border bg-bg-secondary"
-            >
-              <Shimmer className="h-1.5 w-full" />
-              <div className="space-y-2.5 p-3.5 sm:p-4">
-                <div className="flex items-center justify-between">
-                  <Shimmer className="h-3 w-14" />
-                  <Shimmer className="h-3 w-10" />
-                </div>
-                <Shimmer className="h-4 w-4/5" />
-                <Shimmer className="h-3 w-3/4" />
-                <div className="flex items-center justify-between border-t border-border pt-2">
-                  <Shimmer className="h-3 w-16" />
-                  <Shimmer className="h-3 w-3" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
     </>
   );
 }
 
 /**
- * The live homepage rail — Sorotan (1) + Sedang Terjadi (4) +
- * Cerita Lain (10) sourced from `useHeadlines(15)`. Lives in a
- * client component because the hook owns `useEffect` / `useState`
- * state; the surrounding server component (`app/HomePage.tsx`)
- * stays untouched and renders the rest of the page chrome.
+ * The live homepage rail — Sorotan (1) + Berita Terkini (14)
+ * sourced from `useHeadlines(15)`. Lives in a client component
+ * because the hook owns `useEffect` / `useState` state; the
+ * surrounding server component (`app/HomePage.tsx`) stays untouched
+ * and renders the rest of the page chrome.
  *
  * Loading state: while `useHeadlines` is in flight, render the
- * `<HomeHeadlinesSkeleton />` (same three-layer shape, sized to
- * the real cards) so the visitor sees a stable layout rather than
- * a blank wall. The skeleton is replaced wholesale — not section-
+ * `<HomeHeadlinesSkeleton />` (same two-layer shape, sized to the
+ * real cards) so the visitor sees a stable layout rather than a
+ * blank wall. The skeleton is replaced wholesale — not section-
  * by-section — so the page never mixes half-populated layers with
  * half-skeleton layers during a slow load.
  *
  * Empty state: when the fetch settles with zero rows, return
  * `null` (no mock fallback) so a backend outage renders the rest
- * of the page chrome (Navbar, BrandSlogan, MarketsStrip, Footer)
- * without a misleading empty rail.
+ * of the page chrome (Navbar, BrandSlogan, Footer) without a
+ * misleading empty rail.
  */
 export function HomeHeadlines() {
   const { data, isLoading } = useHeadlines(HEADLINES_LIMIT);
@@ -278,11 +232,7 @@ export function HomeHeadlines() {
 
   const stories = data.map(storyItemToHighlight);
   const leadStory = stories[0];
-  const sedangTerjadi = stories.slice(
-    LAYER_1_SIZE,
-    LAYER_1_SIZE + LAYER_2_SIZE,
-  );
-  const ceritaLain = stories.slice(LAYER_1_SIZE + LAYER_2_SIZE);
+  const beritaTerkini = stories.slice(LAYER_1_SIZE);
 
   return (
     <>
@@ -308,66 +258,40 @@ export function HomeHeadlines() {
       )}
 
       {/* 📰 Story — multi-date, ticker-agnostic context threads.
-          Sits between LAYER 1 (today's lead) and LAYER 2 (sedang
-          terjadi) so the visitor first reads the lead headline,
-          then encounters the longer-running story threads the
-          headline is part of, before moving on to the next
-          cluster of recent stories. Uses the default `feed`
-          variant — borderless, flows with the home-page chrome
-          (no card wrapper needed because this widget already
-          owns its own section + header styling). */}
+          Sits between LAYER 1 (today's lead) and the Berita
+          Terkini feed so the visitor first reads the lead
+          headline, then encounters the longer-running story
+          threads the headline is part of, before moving on to
+          the rolling-news cluster below. Uses the default
+          `feed` variant — borderless, flows with the home-page
+          chrome (no card wrapper needed because this widget
+          already owns its own section + header styling). */}
       <div className="mt-8">
         <EmitenStories storyLimit={3}/>
       </div>
 
-      {/* 📋 LAYER 2: SEDANG TERJADI — 4 berita, 2-col grid (desktop) / 1-col (mobile), with summary */}
-      {sedangTerjadi.length > 0 && (
-        <section aria-label="Sedang terjadi" className="mt-8">
+      {/* 📋 BERITA TERKINI — 14 berita, 2-col grid (desktop) /
+          1-col (mobile), with summary. Merged from the previous
+          "Sedang Terjadi" (4 cards) + "Cerita Lain" (10 cards)
+          sections into a single rolling-news feed below the
+          story-thread widget above. Uses the design language
+          of the old "Sedang Terjadi" section: 2-col grid on
+          >= sm, `StoryEditorial` with `showSummary` so each
+          card shows a 1–2 line desk summary alongside the
+          headline and category chip. */}
+      {beritaTerkini.length > 0 && (
+        <section aria-label="Berita terkini" className="mt-8">
           <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
             <div>
               <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
                 <ClipboardList className="h-3 w-3" aria-hidden />
-                Sedang Terjadi
+                Berita Terkini
               </h2>
-              <p className="mt-0.5 text-[11px] text-text-muted">
-                Cerita penting lainnya
-              </p>
             </div>
           </div>
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {sedangTerjadi.map((h) => (
+            {beritaTerkini.map((h) => (
               <StoryEditorial key={h.id} highlight={h} showSummary />
-            ))}
-          </div>
-        </section>
-      )}
-
-      <GradientDivider spacing="my-8" />
-
-      {/* 📚 LAYER 3: CERITA LAIN — sisanya, 3-col grid (desktop), compact (no summary) */}
-      {ceritaLain.length > 0 && (
-        <section aria-label="Cerita lain" className="mt-2">
-          <div className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
-            <div>
-              <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
-                <BookOpen className="h-3 w-3" aria-hidden />
-                Cerita Lain
-              </h2>
-              <p className="mt-0.5 text-[11px] text-text-muted">
-                Berita tambahan hari ini
-              </p>
-            </div>
-            <span className="font-mono text-[10px] text-text-faint">
-              {ceritaLain.length} cerita
-            </span>
-          </div>
-          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {ceritaLain.map((h) => (
-              <StoryEditorial
-                key={h.id}
-                highlight={h}
-                showSummary={false}
-              />
             ))}
           </div>
         </section>

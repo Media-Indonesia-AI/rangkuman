@@ -3,7 +3,6 @@ import { ArrowRight } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { BrandSlogan } from "@/components/BrandSlogan";
-import { MarketsStrip } from "@/components/MarketsStrip";
 import { GradientDivider } from "@/components/GradientDivider";
 import { HomeHeadlines } from "./HomeHeadlines";
 
@@ -21,13 +20,8 @@ export default function HomePage() {
         {/* Brand slogan — above-the-fold memo lock */}
         <BrandSlogan />
 
-        {/* Live headlines rail: 1 lead + 4 sedang terjadi + 10 cerita lain. */}
+        {/* Live headlines rail: 1 lead + 14 berita terkini. */}
         <HomeHeadlines />
-
-        {/* TICKER — markets snapshot at the bottom */}
-        <div className="mt-6">
-          <MarketsStrip />
-        </div>
       </main>
       <Footer />
     </>
