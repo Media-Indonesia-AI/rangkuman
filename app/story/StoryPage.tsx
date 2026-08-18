@@ -93,12 +93,26 @@ function StoryPageContent() {
 
   // Page chrome — back link + H2 + subtitle + sr-only H1 follow
   // the inbound `?topic=` hint so the listing's identity stays
-  // consistent with the page the visitor came from. Cross-topic
-  // (no hint / unknown hint) keeps the pre-topic default copy.
+  // consistent with the page the visitor came from. The back
+  // link specifically routes per-source: a `crypto` hint sends
+  // the visitor back to /crypto, a `saham` hint back to
+  // /saham, and a missing/unknown hint (direct visit, share
+  // URL, Beranda entry) back to "/" so the link reads
+  // "Kembali ke Beranda" instead of misleadingly pointing at
+  // /saham. Header copy below keeps the pre-topic defaults for
+  // the cross-topic case.
   const isSaham = topicHint === "saham";
   const isCrypto = topicHint === "crypto";
-  const backHref = isCrypto ? "/crypto" : "/saham";
-  const backLabel = isCrypto ? "Kembali ke Crypto" : "Kembali ke Saham";
+  const backHref = isCrypto
+    ? "/crypto"
+    : isSaham
+      ? "/saham"
+      : "/";
+  const backLabel = isCrypto
+    ? "Kembali ke Crypto"
+    : isSaham
+      ? "Kembali ke Saham"
+      : "Kembali ke Beranda";
   const headerTopic = isSaham
     ? "Saham"
     : isCrypto
