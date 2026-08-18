@@ -1,13 +1,14 @@
 "use client";
 
-import { Suspense } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { ChevronLeft, ArrowRight } from "lucide-react";
+import { ChevronLeft, ArrowRight, ChevronDown, Loader2 } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useMultiStories } from "@/lib/hooks/useMultiStories";
 import { useTopicsContext } from "@/components/topics-provider";
+import type { HeadlineLast7DaysItem } from "@/lib/api";
 import {
   findCryptoTopicId,
   findSahamTopicId,
@@ -83,13 +84,56 @@ function StoryPageContent() {
   // Cross-ticker feed, topic-scoped when the inbound hint names
   // a known topic. The 5th positional arg is the topic id — an
   // empty string routes through to the cross-topic default.
-  const { data: stories, isLoading } = useMultiStories(
+  //
+  // Pagination — `page` is local component state so the
+  // "Muat lebih banyak" button at the bottom of the list can
+  // step it forward. The hook only ever returns the current
+  // page's data, so we keep an accumulated `stories` array in
+  // component state and merge each fetched page into it via
+  // the effect below. `total` is the cross-page story count
+  // from the API — used to decide whether the load-more button
+  // should still render (when `stories.length < total`).
+  const [page, setPage] = useState(1);
+  const [stories, setStories] = useState<HeadlineLast7DaysItem[]>([]);
+  const { data: pageStories, total, isLoading } = useMultiStories(
     "",
     STORY_LIMIT,
-    1,
+    page,
     true,
     resolvedTopicId ?? "",
   );
+
+  // Merge each fetched page into the accumulated list. On
+  // page 1 we replace (covers the initial load + topic
+  // changes); on subsequent pages we dedup-by-id and append
+  // so the existing cards stay put while the new ones arrive
+  // below them. The hook already replaces its `data` ref on
+  // each page transition, so this effect fires once per fetch
+  // resolution. The empty-array fallback in `loadMultiDateStories`
+  // error path (where `pageStories` comes back empty after an
+  // error) leaves the accumulated list untouched, which is
+  // the safer of the two — losing cards on a transient error
+  // would feel worse than keeping the previous page visible.
+  useEffect(() => {
+    setStories((prev) => {
+      if (page === 1) return pageStories;
+      const seen = new Set(prev.map((s) => s.id));
+      const fresh = pageStories.filter((s) => !seen.has(s.id));
+      return fresh.length > 0 ? [...prev, ...fresh] : prev;
+    });
+  }, [pageStories, page]);
+
+  // Reset to page 1 when the topic hint changes so the
+  // listing doesn't carry stale cards from the previous
+  // topic into the new scoped feed. The merge effect above
+  // will then replace the accumulated list with page 1's
+  // topic-scoped payload on the next fetch resolution.
+  useEffect(() => {
+    setPage(1);
+  }, [resolvedTopicId]);
+
+  const hasMore = stories.length < total;
+  const loadingMore = page > 1 && isLoading;
 
   // Page chrome — back link + H2 + subtitle + sr-only H1 follow
   // the inbound `?topic=` hint so the listing's identity stays
@@ -168,7 +212,7 @@ function StoryPageContent() {
         </section>
 
         {/* Feed body */}
-        {isLoading ? (
+        {isLoading && page === 1 ? (
           <ListingSkeleton />
         ) : stories.length === 0 ? (
           <EmptyState />
@@ -193,6 +237,46 @@ function StoryPageContent() {
                   ))}
                 </ul>
               </section>
+            )}
+
+            {/* 📥 LOAD MORE — appends the next page onto the
+                accumulated list. Shown only when the API's
+                cross-page `total` says more rows exist beyond
+                what we've loaded. While a load-more is in
+                flight the button stays in place (so the user
+                sees the same affordance they just clicked)
+                but renders a spinner + "Memuat…" and is
+                disabled, preventing rapid double-clicks from
+                queuing multiple page-2 fetches. The skeleton
+                gate above (`isLoading && page === 1`) means
+                this branch never tears down the existing
+                cards during a load-more — only the button
+                flips state. */}
+            {hasMore && (
+              <div className="mt-6 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setPage((p) => p + 1)}
+                  disabled={loadingMore}
+                  aria-busy={loadingMore}
+                  className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+                      Memuat…
+                    </>
+                  ) : (
+                    <>
+                      Muat lebih banyak
+                      <ChevronDown
+                        className="h-3 w-3 transition-transform group-hover:translate-y-px"
+                        aria-hidden
+                      />
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </>
         )}
