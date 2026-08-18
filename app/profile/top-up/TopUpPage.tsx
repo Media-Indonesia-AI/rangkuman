@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { TopupBundle, TopupRequest, WalletTransaction } from "@/lib/api";
+import { loadTransactionHistory } from "@/lib/api/cache";
 import { useGetTopupBundle } from "@/lib/hooks/useGetTopupBundle";
 import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
@@ -58,13 +59,75 @@ export default function TopUpPage() {
     (l) => l.remaining_balance > 0,
   );
 
+  const PAGE_SIZE = 10;
   const {
-    data: transactions,
+    data: initialTransactions,
     isLoading: transactionsLoading,
     refresh: refreshTransactions,
-  } = useGetTransactionHistory(10, 0);
+  } = useGetTransactionHistory(PAGE_SIZE, 0);
+
+  // Accumulated list shown by `TransactionHistory`. Lives in
+  // component state (not inside the hook) so the user can
+  // paginate past the first page without losing older rows
+  // when the hook re-fetches after a new top-up — the sync
+  // effect below either replaces (initial load) or splices
+  // (refresh after a new invoice landed). `hasMore` flips
+  // to false the first time a page comes back short (no
+  // `total` field on the wire — heuristic only).
+  const [accumulated, setAccumulated] = useState<WalletTransaction[]>([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+
+  // Sync hook data into `accumulated`. Distinguishes the two
+  // paths by the length of the previous accumulated list:
+  // `prev.length <= PAGE_SIZE` → initial load (replace);
+  // `prev.length > PAGE_SIZE` → refresh (the user has
+  // already paginated past page 1, so splice in the new
+  // head and shift the older tail by 1 to account for the
+  // single row the top-up flow inserted at the top). The
+  // shift-by-1 assumes the top-up flow only inserts one row
+  // per cycle, which it does — `useRequestTopup` creates a
+  // single invoice per `POST wallet/topup` call.
+  useEffect(() => {
+    if (transactionsLoading) return;
+    setAccumulated((prev) => {
+      if (prev.length <= PAGE_SIZE) {
+        setHasMore(initialTransactions.length === PAGE_SIZE);
+        return initialTransactions;
+      }
+      const tail = prev.slice(PAGE_SIZE - 1, prev.length - 1);
+      const seen = new Set(initialTransactions.map((t) => t.id));
+      const dedupTail = tail.filter((t) => !seen.has(t.id));
+      setHasMore(initialTransactions.length === PAGE_SIZE);
+      return [...initialTransactions, ...dedupTail];
+    });
+  }, [initialTransactions, transactionsLoading]);
+
+  const handleLoadMore = useCallback(async () => {
+    setIsLoadingMore(true);
+    try {
+      const nextSkip = accumulated.length;
+      const res = await loadTransactionHistory(PAGE_SIZE, nextSkip);
+      setAccumulated((prev) => {
+        const seen = new Set(prev.map((t) => t.id));
+        const fresh = res.data.filter((t) => !seen.has(t.id));
+        return fresh.length > 0 ? [...prev, ...fresh] : prev;
+      });
+      if (res.data.length < PAGE_SIZE) {
+        setHasMore(false);
+      }
+    } catch {
+      // Swallow — `accumulated` stays at its prior length and
+      // the button re-enables on the next render. A toast
+      // would be nice but the parent doesn't surface one for
+      // background pagination failures today.
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [accumulated.length]);
+
   // Backend doesn't guarantee order — sort newest-first here.
-  const sortedTransactions = [...transactions].sort(
+  const sortedTransactions = [...accumulated].sort(
     (a, b) =>
       new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
@@ -219,6 +282,9 @@ export default function TopUpPage() {
       <TransactionHistory
         transactions={sortedTransactions}
         isLoading={transactionsLoading}
+        hasMore={hasMore}
+        isLoadingMore={isLoadingMore}
+        onLoadMore={handleLoadMore}
         highlightedId={displayedTransaction?.id}
         // Toggle off when the user re-clicks the same pending
         // row — covers the "I'm done with this invoice, hide
