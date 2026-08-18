@@ -6,6 +6,12 @@ import { clampDescription } from "@/lib/util/clampDescription";
 
 interface PageProps {
   params: { id: string };
+  /** Next.js 15 hands `searchParams` as a Promise. The route
+   *  entry only reads `?topic=` — the explicit hint forwarded
+   *  by `<FeaturedCard />` / `<StoryListRow />` from the
+   *  listing page so the detail page's sidebar-scoped feed
+   *  doesn't have to depend on the `Referer` lookup alone. */
+  searchParams: Promise<{ topic?: string }>;
 }
 
 /**
@@ -171,17 +177,49 @@ function dataFromReferer(referer: string | null): RefererData {
 }
 
 /**
- * Route entry — reads the inbound `Referer` header (server-side, via
- * `headers()`) so the back link follows where the visitor came from,
- * then hands the copy + href + topic hint to the client orchestrator
- * in `./StoryDetailPage`, which owns all the data fetching.
+ * Route entry — resolves the back link + topic hint from two
+ * sources, in priority order:
  *
- * Reading a header opts this route out of static rendering; the page
- * body was already client-rendered (`useHeadlineId()` resolves the
- * `[id]` param on the client), so nothing is lost.
+ *   1. **`?topic=` query param** — the explicit hint forwarded
+ *      by `<FeaturedCard />` / `<StoryListRow />` on the
+ *      listing page (`StoryPage.tsx`). This is the canonical
+ *      signal: the listing has already resolved the hint and
+ *      knows it should apply, so trusting it over `Referer`
+ *      means the sidebar stays scoped even when the browser
+ *      drops the referer (hard-render, cross-origin trace,
+ *      stripped by an intermediate proxy, etc.).
+ *   2. **Inbound `Referer` header** — the fallback for direct
+ *      visits, share URLs, and the sidebar's own
+ *      "Story Lainnya" rail, which already reads `topicHint`
+ *      from this same route's prop. `dataFromReferer()` maps
+ *      known entry points (`/story`, `/story/[id]`, `/stock/[kode]`,
+ *      `/saham`, `/crypto`, `/`) to the back link copy + href
+ *      and a topic hint, where applicable.
+ *
+ * Both sources are validated against the `StoryTopicHint` union
+ * — anything outside `"saham" | "crypto"` is silently dropped
+ * so the consumer's `useMultiStories(..., topicId)` cache slot
+ * stays on the cross-topic default (`topicId=""`) instead of
+ * an unresolvable id.
+ *
+ * Reading `headers()` opts this route out of static rendering;
+ * the page body was already client-rendered (`useHeadlineId()`
+ * resolves the `[id]` param on the client), so nothing is lost.
  */
-export default function StoryDetailRoutePage() {
-  const { back, topicHint } = dataFromReferer(headers().get("referer"));
+export default async function StoryDetailRoutePage({ searchParams }: PageProps) {
+  const resolvedSearchParams = await searchParams;
+  const queryTopicHint: StoryTopicHint | undefined =
+    resolvedSearchParams.topic === "saham" ||
+    resolvedSearchParams.topic === "crypto"
+      ? resolvedSearchParams.topic
+      : undefined;
+  const { back, topicHint: refererTopicHint } = dataFromReferer(
+    headers().get("referer"),
+  );
+  // Query param wins over Referer — the explicit `?topic=` link
+  // from `<StoryPage />` is the canonical signal, Referer is the
+  // fallback for direct visits / share URLs.
+  const topicHint = queryTopicHint ?? refererTopicHint;
   return (
     <StoryDetailPage
       backLabel={back.label}

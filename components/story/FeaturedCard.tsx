@@ -12,6 +12,17 @@ interface FeaturedCardProps {
   /** The first (most recent) story in the listing — rendered as a
    *  large clickable card linking to its `/story/[id]` page. */
   story: HeadlineLast7DaysItem;
+  /** Optional topic hint to thread through to the detail page
+   *  via `?topic=<hint>` on the link. Mirrors the hint that
+   *  `StoryPage` resolved from its own `?topic=` query param —
+   *  forwarding it explicitly (rather than relying on the
+   *  detail route's `Referer` lookup) keeps the sidebar's
+   *  topic-scoped feed consistent regardless of how the
+   *  visitor originally landed on the listing. The value
+   *  is forwarded as-is and re-validated by the route entry
+   *  (`app/story/[id]/page.tsx`), so anything outside
+   *  `"saham" | "crypto"` is silently dropped at the other end. */
+  topicHint?: string;
 }
 
 /** Large featured card for the listing's top story. Uses the
@@ -19,12 +30,15 @@ interface FeaturedCardProps {
  *  `STOCK_STORIES` used to expose (sector / status / price impact
  *  / timeline) aren't on it, so price-move renders as `n/a` and
  *  sector / status badges are omitted entirely. */
-export function FeaturedCard({ story }: FeaturedCardProps) {
+export function FeaturedCard({ story, topicHint }: FeaturedCardProps) {
   const topic = story.topics[0]?.name;
+  const href = topicHint
+    ? `/story/${story.id}?topic=${topicHint}`
+    : `/story/${story.id}`;
 
   return (
     <Link
-      href={`/story/${story.id}`}
+      href={href}
       className="block rounded-lg border border-border bg-bg-secondary p-4 transition-colors hover:border-border-strong"
     >
       <div className="flex flex-wrap items-center gap-2">

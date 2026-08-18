@@ -63,7 +63,14 @@ function StoryPageContent() {
   // Inbound `?topic=<hint>` — `"saham"` | `"crypto"`. Any other
   // value (or the param being absent) keeps the feed on the
   // cross-topic default, matching the Beranda / direct-visit
-  // behavior.
+  // behavior. The same value is forwarded to the link widgets
+  // below (`<FeaturedCard />`, `<StoryListRow />`) so the
+  // detail page receives it via its own `?topic=` query param
+  // — the route entry at `app/story/[id]/page.tsx` reads that
+  // param and hands it to `<StoryDetailPage>` as `topicHint`,
+  // scoping the sidebar's feed. This is more reliable than
+  // relying on the detail route's `Referer` lookup, which can
+  // drop the hint on hard navigations to the same origin.
   const searchParams = useSearchParams();
   const topicHint = searchParams.get("topic");
 
@@ -218,7 +225,9 @@ function StoryPageContent() {
           <EmptyState />
         ) : (
           <>
-            {featured && <FeaturedCard story={featured} />}
+            {featured && (
+              <FeaturedCard story={featured} topicHint={topicHint ?? undefined} />
+            )}
             {rest.length > 0 && (
               <section aria-label="Story lainnya" className="mt-6">
                 <div className="mb-2 flex items-end justify-between border-b border-border-strong pb-1">
@@ -232,7 +241,10 @@ function StoryPageContent() {
                 <ul className="rounded-b-lg border-x border-b border-border-strong bg-bg-secondary/20 px-3">
                   {rest.map((story) => (
                     <li key={story.id}>
-                      <StoryListRow story={story} />
+                      <StoryListRow
+                        story={story}
+                        topicHint={topicHint ?? undefined}
+                      />
                     </li>
                   ))}
                 </ul>

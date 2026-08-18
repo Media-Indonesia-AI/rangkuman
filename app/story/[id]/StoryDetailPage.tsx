@@ -20,27 +20,8 @@ import {
 } from "@/components/story-detail";
 
 interface StoryDetailPageProps {
-  /** Back-link copy — derived by the route entry (`./page.tsx`) from
-   *  the inbound `Referer` header so it follows where the visitor
-   *  came from (e.g. "Kembali ke Story" when the previous page was
-   *  the listing, "Kembali ke BBCA" from a stock page). Defaults to
-   *  the pre-referer hardcoded copy for any other caller. */
   backLabel?: string;
-  /** Href paired with `backLabel` — kept as a real `<Link>` target
-   *  (rather than `router.back()`) so the affordance stays a
-   *  crawlable, middle-clickable anchor. */
   backHref?: string;
-  /** Optional topic hint — also derived from the inbound `Referer`
-   *  by the route entry. When set, the sidebar's "Story Lainnya"
-   *  rail is scoped to the matching topic (e.g. "saham"-tagged
-   *  stories when the visitor came from `/saham`) so the feed
-   *  continues what the visitor was reading on the previous page.
-   *  Undefined keeps the sidebar on the cross-topic default — this
-   *  is what Beranda gets, since the homepage feed doesn't carry
-   *  a topic scope. Resolved into a real id on the client via
-   *  `useTopicsContext()` + the `find*TopicId` helpers, because
-   *  the topics catalog is auth-gated and not available server-
-   *  side. */
   topicHint?: StoryTopicHint;
 }
 

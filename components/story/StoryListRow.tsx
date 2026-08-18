@@ -13,16 +13,25 @@ interface StoryListRowProps {
    *  ticker-badge + sentiment-pill + title/summary row, linking
    *  to `/story/[id]`. */
   story: HeadlineLast7DaysItem;
+  /** Optional topic hint to thread through to the detail page
+   *  via `?topic=<hint>` on the link — see the matching prop on
+   *  `<FeaturedCard />`. The route entry re-validates the value
+   *  against `"saham" | "crypto"`, so anything outside that
+   *  union is silently dropped at the other end. */
+  topicHint?: string;
 }
 
 /** Compact row for the "Story Lainnya" list. Mirrors the visual
  *  shape of the listing's pre-mock state (badge + price-change
  *  stack on the left, content on the right). Price-change is
  *  `n/a` since the endpoint doesn't expose it yet. */
-export function StoryListRow({ story }: StoryListRowProps) {
+export function StoryListRow({ story, topicHint }: StoryListRowProps) {
+  const href = topicHint
+    ? `/story/${story.id}?topic=${topicHint}`
+    : `/story/${story.id}`;
   return (
     <Link
-      href={`/story/${story.id}`}
+      href={href}
       className="group flex items-start gap-3 border-b border-border/60 py-3.5 last:border-b-0"
     >
       <div className="flex shrink-0 flex-col items-center gap-1 pt-0.5">
