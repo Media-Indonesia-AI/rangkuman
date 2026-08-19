@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
+import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
 import { cn } from "@/lib/utils";
 
 /** Allowed time-of-day slots the user can opt into. Mirrors
@@ -61,6 +62,15 @@ const FREQUENCY: ReadonlyArray<{
  * exists for the user.
  */
 export default function WhatsappPage() {
+  // Pull the user's saved broadcast settings from the backend.
+  // We seed the local UI state from the first successful response
+  // and let the user's toggles mutate local state from there —
+  // there's no update endpoint yet, so the local mutations are
+  // view-only (mirrors the previous behaviour where the toggle
+  // and frequency were purely client state).
+  const { data: settings, isLoading: settingsLoading } =
+    useGetBroadcastSettings();
+
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
   // Set of selected time-of-day slots. The user can pick any
@@ -70,6 +80,22 @@ export default function WhatsappPage() {
   const [frequencies, setFrequencies] = useState<Set<FrequencyId>>(
     () => new Set<FrequencyId>(["pagi"]),
   );
+
+  // One-shot hydration: when the first response lands, mirror the
+  // backend's settings into the local UI state. We use a ref guard
+  // so subsequent `refresh()` calls (or strict-mode double-fires)
+  // don't clobber toggles the user has already made locally.
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (!settings || hydratedRef.current) return;
+    setEnabled(settings.is_enabled);
+    const next = new Set<FrequencyId>();
+    if (settings.notified_morning) next.add("pagi");
+    if (settings.notified_afternoon) next.add("siang");
+    if (settings.notified_evening) next.add("sore");
+    setFrequencies(next);
+    hydratedRef.current = true;
+  }, [settings]);
 
   const handleNotImplemented = () => {
     if (typeof window === "undefined") return;

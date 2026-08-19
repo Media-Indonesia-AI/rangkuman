@@ -33,3 +33,22 @@ export interface BroadcastSettings {
   /** Subscribed to the evening broadcast slot. */
   notified_evening: boolean;
 }
+
+/**
+ * Request body for `PUT broadcast-settings` — the four toggles
+ * the user is allowed to flip. Structurally identical to
+ * `BroadcastSettings` so a full PUT is always a round-trip
+ * replacement of the user's row. Extracted as a distinct type so
+ * future per-field updates can narrow the contract without
+ * breaking the read-side type.
+ */
+export interface BroadcastSettingsRequest {
+  /** Master switch — gates every `notified_*` flag below. */
+  is_enabled: boolean;
+  /** Subscribed to the morning broadcast slot. */
+  notified_morning: boolean;
+  /** Subscribed to the afternoon broadcast slot. */
+  notified_afternoon: boolean;
+  /** Subscribed to the evening broadcast slot. */
+  notified_evening: boolean;
+}

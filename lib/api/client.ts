@@ -45,7 +45,7 @@ import { getListStory } from "./story";
 import { getTopic } from "./topic";
 import { doReqTopup, getTopupBundle, getTransactionHistory, getWallet } from "./wallet";
 import { addToWatchlist, deleteWatchlist, getWatchlist, updateWatchlist } from "./watchlist";
-import { getBroadcastSettings } from "./broadcast-settings";
+import { getBroadcastSettings, updateBroadcastSettings } from "./broadcast-settings";
 import type { ApiError } from "./types/error";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 
@@ -235,4 +235,5 @@ export const api = {
   deleteWatchlist,
   // Broadcast settings
   getBroadcastSettings,
+  updateBroadcastSettings,
 };

@@ -128,4 +128,7 @@ export type {
 } from "./types/watchlist";
 
 // Broadcast settings
-export type { BroadcastSettings } from "./types/broadcast-settings";
+export type {
+  BroadcastSettings,
+  BroadcastSettingsRequest,
+} from "./types/broadcast-settings";
