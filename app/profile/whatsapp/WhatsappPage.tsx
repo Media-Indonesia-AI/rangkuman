@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MessageCircle, Send, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
 import { useUpdateBroadcastSettings } from "@/lib/hooks/useUpdateBroadcastSettings";
@@ -74,6 +74,11 @@ export default function WhatsappPage() {
   const { update: saveBroadcastSettings, isLoading: isSaving } =
     useUpdateBroadcastSettings();
 
+  // Local UI state — seeds are intentionally empty / `false`
+  // (no notifications assumed). The hydration effect below
+  // mirrors the saved row from `settings` once the GET resolves,
+  // so the user sees their actual saved frequencies (and toggle
+  // position) instead of an arbitrary default.
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
   // Set of selected time-of-day slots. The user can pick any
@@ -81,8 +86,31 @@ export default function WhatsappPage() {
   // briefs. `off` is implicit in the toggle above (the set is
   // preserved when the toggle is off, but no message is sent).
   const [frequencies, setFrequencies] = useState<Set<FrequencyId>>(
-    () => new Set<FrequencyId>(["pagi"]),
+    () => new Set<FrequencyId>(),
   );
+
+  // One-shot hydration — when the broadcast-settings GET first
+  // resolves, mirror `is_enabled` + the per-slot opt-ins into
+  // the local UI state. The ref guard ensures: (a) React strict
+  // mode's double-mount doesn't re-seed after the user has
+  // already edited, and (b) any later refreshes (e.g. after a
+  // successful save, when `useUpdateBroadcastSettings` invalidates
+  // the cache) leave the user's just-edited values alone — the
+  // mutation hook returns the new row in `data`, so the GET
+  // re-fires with the same content the user just submitted and
+  // we'd otherwise bounce the local state. The button's `isDirty`
+  // gate is the contract that makes the post-save refresh safe.
+  const hydratedRef = useRef(false);
+  useEffect(() => {
+    if (!settings || hydratedRef.current) return;
+    setEnabled(settings.is_enabled);
+    const next = new Set<FrequencyId>();
+    if (settings.notified_morning) next.add("pagi");
+    if (settings.notified_afternoon) next.add("siang");
+    if (settings.notified_evening) next.add("sore");
+    setFrequencies(next);
+    hydratedRef.current = true;
+  }, [settings]);
 
   // Saved baseline for the master toggle — derived directly from
   // the API response so there's no separate local mirror. Before
