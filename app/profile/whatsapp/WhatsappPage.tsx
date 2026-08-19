@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { MessageCircle, Send, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
 import { useUpdateBroadcastSettings } from "@/lib/hooks/useUpdateBroadcastSettings";
@@ -84,32 +84,24 @@ export default function WhatsappPage() {
     () => new Set<FrequencyId>(["pagi"]),
   );
 
-  // Saved baselines are derived directly from the API response —
-  // there's no separate local state. Before `settings` resolves
-  // (first render) the baselines fall back to "all off / empty
-  // set" so `isDirty` stays false until the response lands; the
-  // local defaults (`enabled=false`, `frequencies={"pagi"}`) are
-  // the placeholder UI until the first response arrives.
+  // Saved baseline for the master toggle — derived directly from
+  // the API response so there's no separate local mirror. Before
+  // `settings` resolves (first render) the baseline falls back to
+  // `false`, which matches the placeholder `enabled=false` local
+  // state; together with the `settings != null` guard on the
+  // button this keeps the button hidden until the GET lands.
   const savedEnabled = settings?.is_enabled ?? false;
-  const savedFrequencies = useMemo<Set<FrequencyId>>(() => {
-    const next = new Set<FrequencyId>();
-    if (settings?.notified_morning) next.add("pagi");
-    if (settings?.notified_afternoon) next.add("siang");
-    if (settings?.notified_evening) next.add("sore");
-    return next;
-  }, [settings]);
 
-  // Set equality — compares two `Set` instances by element so
-  // identity doesn't matter, only contents do.
-  const sameSet = (a: Set<FrequencyId>, b: Set<FrequencyId>): boolean => {
-    if (a.size !== b.size) return false;
-    for (const x of a) if (!b.has(x)) return false;
-    return true;
-  };
-  // Button gates on the master toggle OR any frequency checkbox
-  // having diverged from the saved baseline.
-  const isDirty =
-    enabled !== savedEnabled || !sameSet(frequencies, savedFrequencies);
+  // Button visibility is driven solely by the master toggle (the
+  // "radio" in the user's terminology) matching the saved
+  // `is_enabled` from the API response. Per the spec: hide the
+  // button whenever `settings.is_enabled === enabled`, regardless
+  // of any frequency-checkbox drift — the toggle is treated as the
+  // source-of-truth signal that something has fundamentally
+  // changed. Frequency changes still flow through `handlePerbarui`
+  // on save (the PUT body carries the full set), they just don't
+  // independently surface the button.
+  const toggleMatchesSaved = enabled === savedEnabled;
 
   // Persist the current UI state to the backend. We don't need
   // to manually advance the saved baselines — the mutation hook
@@ -299,15 +291,18 @@ export default function WhatsappPage() {
           the frequency section — *not* inside the `{enabled && ...}`
           wrapper above — so the button stays reachable when the
           user has just toggled notifications off (a valid change
-          that also needs to flush). `settings == null` means the
-          GET hasn't resolved yet; in that window `savedEnabled`
-          and `savedFrequencies` both fall back to "empty", which
-          matches the placeholder local defaults
-          (`enabled=false`, `frequencies={"pagi"}`) only when the
-          server's row also says "off + nothing". The hidden guard
-          on `settings == null` prevents the button from flashing
-          on for that false-positive edge case during first paint. */}
-      {settings != null && isDirty && (
+          that also needs to flush). Visibility is driven solely by
+          the toggle diverging from `settings.is_enabled`
+          (`!toggleMatchesSaved`): when the master radio matches
+          the saved value, the button stays hidden even if the
+          frequency checkboxes have drifted. Frequency changes
+          still ride along on save — the PUT body carries the full
+          set — they just don't surface the button on their own.
+          `settings == null` means the GET hasn't resolved yet; in
+          that window `savedEnabled` defaults to `false` which would
+          otherwise flash the button on for the placeholder
+          `enabled=false` local state, so we gate on it explicitly. */}
+      {settings != null && !toggleMatchesSaved && (
         <div className="flex justify-end">
           <button
             type="button"
