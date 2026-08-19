@@ -77,17 +77,18 @@ export function updateWatchlist(
  * be echoed back.
  *
  * Returns the updated full list (`WatchlistResponse` — the
- * `{ items: [...] }` envelope, same as `GET watchlist`) so
- * the consumer can refresh their local state in one round-
- * trip. If the backend's delete response turns out to be
- * something else, this type can be narrowed without touching
- * the call site. Same caller-side cache-invalidation contract
- * as the other mutations.
+ * `{ items: [...] }` envelope, same as `GET watchlist`) on
+ * success, or `null` when the backend answers 204 No Content
+ * (no body). The `null` branch and the failure branch are
+ * distinguishable via the mutation hook's `{ ok }` return —
+ * this function only signals wire shape, not success/failure.
+ * Same caller-side cache-invalidation contract as the other
+ * mutations.
  */
 export function deleteWatchlist(
   body: DeleteWatchlistRequest,
-): Promise<WatchlistResponse> {
-  return request<WatchlistResponse>("watchlist", {
+): Promise<WatchlistResponse | null> {
+  return request<WatchlistResponse | null>("watchlist", {
     method: "DELETE",
     body: JSON.stringify(body),
   });

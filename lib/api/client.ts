@@ -163,6 +163,15 @@ export async function request<T>(
     throw { status: res.status, message, body } satisfies ApiError;
   }
 
+  // 204 No Content — RFC 7231: no body, so don't try to parse
+  // JSON. Return `null` cast to T; callers handling endpoints that
+  // may legitimately return 204 (e.g. `DELETE watchlist`) should
+  // declare their return type as `T | null` and check the success
+  // signal the mutation hook provides (not the body's presence).
+  if (res.status === 204) {
+    return null as T;
+  }
+
   return (await res.json()) as T;
 }
 

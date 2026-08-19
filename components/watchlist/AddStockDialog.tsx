@@ -41,8 +41,8 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
 
   const handleToggle = async (kode: string) => {
     if (isIn(kode)) {
-      const res = await removeFromList(kode);
-      if (res !== null) {
+      const { ok } = await removeFromList(kode);
+      if (ok) {
         setToast(`✕ ${kode} dihapus dari watchlist`);
       } else {
         setToast(`⚠ Gagal hapus ${kode}`);
