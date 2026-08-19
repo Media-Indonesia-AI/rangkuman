@@ -7,7 +7,6 @@ import {
   WatchlistHeader,
   WatchlistEmptyState,
   WatchlistStockGrid,
-  WatchlistInfo,
   AddStockDialog,
 } from "@/components/watchlist";
 
@@ -46,8 +45,6 @@ export default function WatchlistPage() {
         ) : (
           <WatchlistStockGrid items={items} />
         )}
-
-        <WatchlistInfo />
       </main>
 
       {showAdd && (

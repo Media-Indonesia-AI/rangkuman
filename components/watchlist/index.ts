@@ -8,6 +8,5 @@ export { WatchlistHeader } from "./WatchlistHeader";
 export { WatchlistEmptyState } from "./WatchlistEmptyState";
 export { WatchlistStockCard } from "./WatchlistStockCard";
 export { WatchlistStockGrid } from "./WatchlistStockGrid";
-export { WatchlistInfo } from "./WatchlistInfo";
 export { AddStockDialog } from "./AddStockDialog";
 export { LogoutConfirmDialog } from "./LogoutConfirmDialog";
