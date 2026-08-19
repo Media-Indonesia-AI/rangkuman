@@ -126,3 +126,6 @@ export type {
   WatchlistItem,
   WatchlistResponse,
 } from "./types/watchlist";
+
+// Broadcast settings
+export type { BroadcastSettings } from "./types/broadcast-settings";
