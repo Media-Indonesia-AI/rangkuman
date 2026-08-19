@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import { MessageCircle, Send, Sparkles, ToggleLeft, ToggleRight } from "lucide-react";
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
+import { useUpdateBroadcastSettings } from "@/lib/hooks/useUpdateBroadcastSettings";
 import { cn } from "@/lib/utils";
 
 /** Allowed time-of-day slots the user can opt into. Mirrors
@@ -63,13 +64,15 @@ const FREQUENCY: ReadonlyArray<{
  */
 export default function WhatsappPage() {
   // Pull the user's saved broadcast settings from the backend.
-  // We seed the local UI state from the first successful response
-  // and let the user's toggles mutate local state from there —
-  // there's no update endpoint yet, so the local mutations are
-  // view-only (mirrors the previous behaviour where the toggle
-  // and frequency were purely client state).
-  const { data: settings, isLoading: settingsLoading } =
-    useGetBroadcastSettings();
+  // The "Perbarui" button flushes the current UI state via
+  // `useUpdateBroadcastSettings`; on success the mutation hook
+  // invalidates the broadcast-settings cache, which triggers a
+  // re-fetch in `useGetBroadcastSettings` — `settings` updates,
+  // the derived baselines below update with it, and `isDirty`
+  // collapses back to false.
+  const { data: settings } = useGetBroadcastSettings();
+  const { update: saveBroadcastSettings, isLoading: isSaving } =
+    useUpdateBroadcastSettings();
 
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
@@ -81,21 +84,60 @@ export default function WhatsappPage() {
     () => new Set<FrequencyId>(["pagi"]),
   );
 
-  // One-shot hydration: when the first response lands, mirror the
-  // backend's settings into the local UI state. We use a ref guard
-  // so subsequent `refresh()` calls (or strict-mode double-fires)
-  // don't clobber toggles the user has already made locally.
-  const hydratedRef = useRef(false);
-  useEffect(() => {
-    if (!settings || hydratedRef.current) return;
-    setEnabled(settings.is_enabled);
+  // Saved baselines are derived directly from the API response —
+  // there's no separate local state. Before `settings` resolves
+  // (first render) the baselines fall back to "all off / empty
+  // set" so `isDirty` stays false until the response lands; the
+  // local defaults (`enabled=false`, `frequencies={"pagi"}`) are
+  // the placeholder UI until the first response arrives.
+  const savedEnabled = settings?.is_enabled ?? false;
+  const savedFrequencies = useMemo<Set<FrequencyId>>(() => {
     const next = new Set<FrequencyId>();
-    if (settings.notified_morning) next.add("pagi");
-    if (settings.notified_afternoon) next.add("siang");
-    if (settings.notified_evening) next.add("sore");
-    setFrequencies(next);
-    hydratedRef.current = true;
+    if (settings?.notified_morning) next.add("pagi");
+    if (settings?.notified_afternoon) next.add("siang");
+    if (settings?.notified_evening) next.add("sore");
+    return next;
   }, [settings]);
+
+  // Set equality — compares two `Set` instances by element so
+  // identity doesn't matter, only contents do.
+  const sameSet = (a: Set<FrequencyId>, b: Set<FrequencyId>): boolean => {
+    if (a.size !== b.size) return false;
+    for (const x of a) if (!b.has(x)) return false;
+    return true;
+  };
+  // Button gates on the master toggle OR any frequency checkbox
+  // having diverged from the saved baseline.
+  const isDirty =
+    enabled !== savedEnabled || !sameSet(frequencies, savedFrequencies);
+
+  // Persist the current UI state to the backend. We don't need
+  // to manually advance the saved baselines — the mutation hook
+  // invalidates the cache, the GET re-fires, `settings` updates,
+  // and `isDirty` flips back to false on the next render. On
+  // failure the baselines are untouched (the API still says what
+  // it said), so the user can retry without re-editing.
+  const handlePerbarui = async () => {
+    const { ok } = await saveBroadcastSettings({
+      is_enabled: enabled,
+      notified_morning: frequencies.has("pagi"),
+      notified_afternoon: frequencies.has("siang"),
+      notified_evening: frequencies.has("sore"),
+    });
+    if (ok) {
+      window.dispatchEvent(
+        new CustomEvent("berita-investor:toast", {
+          detail: "✓ Setelan diperbarui.",
+        }),
+      );
+    } else {
+      window.dispatchEvent(
+        new CustomEvent("berita-investor:toast", {
+          detail: "⚠ Gagal perbarui setelan.",
+        }),
+      );
+    }
+  };
 
   const handleNotImplemented = () => {
     if (typeof window === "undefined") return;
@@ -250,6 +292,36 @@ export default function WhatsappPage() {
             })}
           </div>
         </section>
+      )}
+
+      {/* Perbarui — persists the current UI state (toggle +
+          frequency set) to the backend. Rendered as a sibling of
+          the frequency section — *not* inside the `{enabled && ...}`
+          wrapper above — so the button stays reachable when the
+          user has just toggled notifications off (a valid change
+          that also needs to flush). `settings == null` means the
+          GET hasn't resolved yet; in that window `savedEnabled`
+          and `savedFrequencies` both fall back to "empty", which
+          matches the placeholder local defaults
+          (`enabled=false`, `frequencies={"pagi"}`) only when the
+          server's row also says "off + nothing". The hidden guard
+          on `settings == null` prevents the button from flashing
+          on for that false-positive edge case during first paint. */}
+      {settings != null && isDirty && (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            onClick={handlePerbarui}
+            disabled={isSaving}
+            className={cn(
+              "inline-flex h-10 items-center justify-center rounded-md px-4 font-mono text-[12px] font-semibold transition-colors",
+              "bg-brand text-bg-primary hover:opacity-90",
+              "disabled:cursor-not-allowed disabled:opacity-60",
+            )}
+          >
+            {isSaving ? "Memperbarui…" : "Perbarui"}
+          </button>
+        </div>
       )}
 
       {/* Sample preview — visual constraint: the user has to
