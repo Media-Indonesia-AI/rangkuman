@@ -5,7 +5,6 @@ import { Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
 import type { WatchlistItem } from "@/lib/api";
 import { useAddToWatchlist } from "@/lib/hooks/useAddToWatchlist";
 import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
-import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
 import { cn } from "@/lib/utils";
 
@@ -14,12 +13,17 @@ interface AddStockDialogProps {
   existing: WatchlistItem[];
 }
 
-/** Modal for adding/removing stocks from the watchlist. */
+/** Modal for adding/removing stocks from the watchlist.
+ *
+ *  The list refresh on successful add/remove is automatic:
+ *  each mutation hook calls `invalidateWatchlist()` on success,
+ *  which notifies every mounted `useGetWatchlist` via the cache
+ *  subscriber bus — the dialog (and the page grid behind it)
+ *  re-fetches without this component wiring `refresh()` itself. */
 export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
   const { add: addToList, isLoading: isAdding } = useAddToWatchlist();
   const { remove: removeFromList, isLoading: isRemoving } =
     useDeleteFromWatchlist();
-  const { refresh } = useGetWatchlist();
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const { data: results, isLoading, error } = useStocksSearch(query);
@@ -39,7 +43,6 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
     if (isIn(kode)) {
       const res = await removeFromList(kode);
       if (res !== null) {
-        refresh();
         setToast(`✕ ${kode} dihapus dari watchlist`);
       } else {
         setToast(`⚠ Gagal hapus ${kode}`);
@@ -48,9 +51,8 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
       // New row goes to the end of the user's list — `order`
       // is just the position within the list, and the backend
       // accepts any non-negative integer.
-      const res = await addToList(kode, existing.length);
+      const res = await addToList(kode, existing.length + 1);
       if (res !== null) {
-        refresh();
         setToast(`✓ ${kode} ditambahin ke watchlist`);
       } else {
         setToast(`⚠ Gagal nambahin ${kode}`);

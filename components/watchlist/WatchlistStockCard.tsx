@@ -4,7 +4,6 @@ import Link from "next/link";
 import { FileText, X } from "lucide-react";
 import type { WatchlistItem } from "@/lib/api";
 import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
-import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 import { cn } from "@/lib/utils";
 
@@ -18,21 +17,18 @@ interface WatchlistStockCardProps {
  *  `/stocks/ticker-information/{ticker}` endpoint may omit `price`,
  *  `pct_change`, `company_name`, `sector_name`, or `articles` for
  *  sparsely-covered tickers, so each section renders only when its
- *  source data is present. */
+ *  source data is present.
+ *
+ *  The list auto-refreshes after a successful remove: the mutation
+ *  hook invalidates the watchlist cache, which notifies every
+ *  mounted `useGetWatchlist` via the cache subscriber bus. The card
+ *  unmounts when its row is dropped from the refreshed `items`. */
 export function WatchlistStockCard({ item }: WatchlistStockCardProps) {
   const { remove, isLoading: isRemoving } = useDeleteFromWatchlist();
-  const { refresh } = useGetWatchlist();
   const { data, isLoading } = useTickerInformation(item.ticker_code);
 
-  /** Delete this row, then force the list hook to re-fetch so the
-   *  card unmounts. The mutation hook has already invalidated the
-   *  cache; `refresh()` bumps `refreshKey` so `useGetWatchlist`
-   *  picks up the empty slot on its next effect run. */
   const handleRemove = async () => {
-    const res = await remove(item.ticker_code);
-    if (res !== null) {
-      refresh();
-    }
+    await remove(item.ticker_code);
   };
 
   // Loading — keep the card shell so the watchlist grid doesn't

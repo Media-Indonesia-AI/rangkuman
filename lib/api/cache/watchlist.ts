@@ -57,6 +57,11 @@ export function loadWatchlist(): Promise<WatchlistResponse> {
  * don't invalidate on their own, so the consumer is responsible
  * for clearing the cache at the right point in their flow.
  *
+ * Also notifies every subscriber registered via
+ * `subscribeWatchlistInvalidate`, so mounted `useGetWatchlist`
+ * instances auto-refresh on any mutation — the consumer doesn't
+ * need to wire `refresh()` calls at each mutation site.
+ *
  * Matches the wallet / transaction-history pattern: the mutation
  * surface stays decoupled from the cache, the orchestration layer
  * (page / hook) decides when the cached snapshot is stale.
@@ -64,4 +69,21 @@ export function loadWatchlist(): Promise<WatchlistResponse> {
 export function invalidateWatchlist(): void {
   cached = null;
   inflight = null;
+  listeners.forEach((l) => l());
+}
+
+/** Subscriber set — listeners are invoked (no args) on every
+ *  cache invalidation so mounted read-hooks can re-fetch. */
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+/** Register a listener for cache-invalidation events. Returns
+ *  the unsubscribe function — call it on unmount to avoid leaks. */
+export function subscribeWatchlistInvalidate(
+  listener: Listener,
+): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }

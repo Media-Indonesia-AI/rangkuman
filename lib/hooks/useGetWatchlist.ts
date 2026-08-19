@@ -2,7 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { WatchlistItem } from "@/lib/api";
-import { invalidateWatchlist, loadWatchlist } from "@/lib/api/cache";
+import {
+  invalidateWatchlist,
+  loadWatchlist,
+  subscribeWatchlistInvalidate,
+} from "@/lib/api/cache";
 
 /**
  * Data hook for `GET watchlist`.
@@ -70,6 +74,18 @@ export function useGetWatchlist(): {
       cancelled = true;
     };
   }, [refreshKey]);
+
+  // Auto-refresh on any cache invalidation: when a mutation hook
+  // (add / update / delete) calls `invalidateWatchlist()` on success,
+  // it notifies every subscriber and bumps `refreshKey`, which
+  // re-runs the fetch effect above. Consumers no longer need to
+  // call `refresh()` themselves at every mutation site — the
+  // trigger is centralised here.
+  useEffect(() => {
+    return subscribeWatchlistInvalidate(() => {
+      setRefreshKey((k) => k + 1);
+    });
+  }, []);
 
   return { items, isLoading, refresh };
 }
