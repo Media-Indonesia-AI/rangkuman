@@ -51,6 +51,12 @@ export function loadBroadcastSettings(): Promise<BroadcastSettings> {
  * doesn't invalidate on its own, so the consumer is responsible
  * for clearing the cache at the right point in their flow.
  *
+ * Also notifies every subscriber registered via
+ * `subscribeBroadcastSettingsInvalidate`, so mounted
+ * `useGetBroadcastSettings` instances auto-refresh on any
+ * mutation — the consumer doesn't need to wire `refresh()` calls
+ * at each mutation site.
+ *
  * Matches the wallet / transaction-history pattern: the mutation
  * surface stays decoupled from the cache, the orchestration layer
  * (page / hook) decides when the cached snapshot is stale.
@@ -58,4 +64,22 @@ export function loadBroadcastSettings(): Promise<BroadcastSettings> {
 export function invalidateBroadcastSettings(): void {
   cached = null;
   inflight = null;
+  listeners.forEach((l) => l());
+}
+
+/** Subscriber set — listeners are invoked (no args) on every
+ *  cache invalidation so mounted read-hooks can re-fetch.
+ *  Same shape as `cache/watchlist.ts`. */
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+/** Register a listener for cache-invalidation events. Returns
+ *  the unsubscribe function — call it on unmount to avoid leaks. */
+export function subscribeBroadcastSettingsInvalidate(
+  listener: Listener,
+): () => void {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
 }

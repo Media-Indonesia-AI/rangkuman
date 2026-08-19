@@ -26,7 +26,7 @@
  * other in.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
@@ -131,16 +131,41 @@ export default function WhatsappPage() {
   // button this keeps the button hidden until the GET lands.
   const savedEnabled = settings?.is_enabled ?? false;
 
-  // Button visibility is driven solely by the master toggle (the
-  // "radio" in the user's terminology) matching the saved
-  // `is_enabled` from the API response. Per the spec: hide the
-  // button whenever `settings.is_enabled === enabled`, regardless
-  // of any frequency-checkbox drift — the toggle is treated as the
-  // source-of-truth signal that something has fundamentally
-  // changed. Frequency changes still flow through `handlePerbarui`
-  // on save (the PUT body carries the full set), they just don't
-  // independently surface the button.
+  // Saved baseline for the frequency set — also derived from the
+  // API response, memoised on `settings` so we don't allocate a
+  // fresh `Set` on every render. Before `settings` resolves the
+  // baseline falls back to an empty Set, which matches the
+  // placeholder `new Set()` local seed; together with the
+  // `settings != null` guard on the button this keeps the button
+  // hidden during first paint even if the user has no toggle
+  // change but the empty-set comparison happens to drift.
+  const savedFrequencies = useMemo<Set<FrequencyId>>(() => {
+    if (!settings) return new Set<FrequencyId>();
+    return frequenciesFromSettings(settings);
+  }, [settings]);
+
+  // Set equality — compares two `Set` instances by content so
+  // identity doesn't matter, only which slots are present. The
+  // standard "size match + every element in a is in b" check.
+  const sameSet = (
+    a: Set<FrequencyId>,
+    b: Set<FrequencyId>,
+  ): boolean => {
+    if (a.size !== b.size) return false;
+    for (const x of a) if (!b.has(x)) return false;
+    return true;
+  };
+
+  // Track whether the master toggle matches the saved baseline.
+  // (Previously this was the only dirty signal — we now also
+  // consider frequency drift below.)
   const toggleMatchesSaved = enabled === savedEnabled;
+  // Frequency drift — same content check between local and saved
+  // sets. After a successful save the subscriber re-fires the
+  // GET, `settings` updates, `savedFrequencies` re-derives to
+  // match `frequencies`, this flips back to `true`, and the
+  // button hides.
+  const frequenciesMatchSaved = sameSet(frequencies, savedFrequencies);
 
   // Persist the current UI state to the backend on click. The
   // hook handles cache invalidation, error capture, and loading
@@ -209,14 +234,41 @@ export default function WhatsappPage() {
       {/* Perbarui — placed as a sibling of the frequency section
           so the button stays reachable when the user has just
           toggled notifications off (a valid change that also
-          needs to flush). Visibility is gated solely on the
+          needs to flush). Visibility is gated on EITHER the
           toggle diverging from `settings.is_enabled`
-          (`!toggleMatchesSaved`); the `settings == null` guard
-          prevents the button from flashing on during first
-          paint, when `savedEnabled` falls back to `false` and
-          would otherwise match the placeholder `enabled=false`
-          local state correctly but in the wrong direction. */}
-      {settings != null && !toggleMatchesSaved && (
+          (`!toggleMatchesSaved`) OR any frequency-checkbox drift
+          from the saved set (`!frequenciesMatchSaved`) — both
+          are valid edits that need to flush; either one alone
+          is enough to surface the button. The `settings == null`
+          guard prevents the button from flashing on during first
+          paint, when both `savedEnabled` and `savedFrequencies`
+          fall back to placeholder values that would otherwise
+          silently mask a real edit made while the GET was still
+          in flight.
+
+          Post-save lifecycle (button auto-hides on success):
+          1. User clicks Perbarui → `handlePerbarui` calls
+             `saveBroadcastSettings`, awaits the result.
+          2. On success the hook's `savedData` effect runs and
+             mirrors `savedData.is_enabled` + per-slot opt-ins
+             into local `enabled` + `frequencies` — so local
+             state matches what the server stored.
+          3. Cache invalidation triggers a GET re-fire in
+             `useGetBroadcastSettings` (via the subscriber bus)
+             → `settings` updates with the freshly-saved row →
+             `savedEnabled` and `savedFrequencies` both re-derive
+             to match local state.
+          4. `toggleMatchesSaved` and `frequenciesMatchSaved`
+             flip back to `true` → the button unmounts.
+          5. `router.refresh()` runs the route's RSC re-fetch
+             in parallel; doesn't affect this gate.
+
+          On failure the hook leaves `saveError` set so
+          `PerbaruiButton` renders the inline error, and local
+          state stays where the user left it — they can retry
+          without losing edit context. The button stays visible
+          because both diff signals are still firing. */}
+      {settings != null && (!toggleMatchesSaved || !frequenciesMatchSaved) && (
         <PerbaruiButton
           onClick={handlePerbarui}
           isSaving={isSaving}

@@ -5,6 +5,7 @@ import type { BroadcastSettings } from "@/lib/api";
 import {
   invalidateBroadcastSettings,
   loadBroadcastSettings,
+  subscribeBroadcastSettingsInvalidate,
 } from "@/lib/api/cache";
 
 /**
@@ -66,6 +67,20 @@ export function useGetBroadcastSettings(): {
     invalidateBroadcastSettings();
     setRefreshKey((k) => k + 1);
   };
+
+  // Auto-refresh on any cache invalidation: when a mutation hook
+  // (currently `useUpdateBroadcastSettings`) calls
+  // `invalidateBroadcastSettings()` on success, it notifies every
+  // subscriber and bumps `refreshKey`, which re-runs the fetch
+  // effect above. Consumers no longer need to call `refresh()`
+  // themselves at every mutation site — the trigger is centralised
+  // here. Mirrors the `useGetWatchlist` ↔ `invalidateWatchlist`
+  // subscriber pattern.
+  useEffect(() => {
+    return subscribeBroadcastSettingsInvalidate(() => {
+      setRefreshKey((k) => k + 1);
+    });
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
