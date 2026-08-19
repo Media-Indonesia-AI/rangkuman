@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import {
   WatchlistHeader,
   WatchlistEmptyState,
@@ -23,7 +23,7 @@ import {
  */
 export default function WatchlistPage() {
   const user = useCurrentUser();
-  const { codes, isFull } = useWatchlist();
+  const { items, isLoading } = useGetWatchlist();
   const [showAdd, setShowAdd] = useState(false);
 
   // Hydration state — show a neutral loader while we figure out auth.
@@ -39,15 +39,12 @@ export default function WatchlistPage() {
   return (
     <>
       <main className="flex flex-col">
-        <WatchlistHeader
-          isFull={isFull}
-          onAddClick={() => setShowAdd(true)}
-        />
+        <WatchlistHeader onAddClick={() => setShowAdd(true)} />
 
-        {codes.length === 0 ? (
+        {items.length === 0 && !isLoading ? (
           <WatchlistEmptyState onAddClick={() => setShowAdd(true)} />
         ) : (
-          <WatchlistStockGrid codes={codes} isFull={isFull} />
+          <WatchlistStockGrid items={items} />
         )}
 
         <WatchlistInfo />
@@ -56,8 +53,7 @@ export default function WatchlistPage() {
       {showAdd && (
         <AddStockDialog
           onClose={() => setShowAdd(false)}
-          isFull={isFull}
-          existing={codes}
+          existing={items}
         />
       )}
     </>

@@ -1,10 +1,8 @@
 "use client";
 
 import { Plus, Sparkles } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface WatchlistHeaderProps {
-  isFull: boolean;
   onAddClick: () => void;
 }
 
@@ -13,7 +11,6 @@ interface WatchlistHeaderProps {
  * and the two action buttons (Keluar + Tambah).
  */
 export function WatchlistHeader({
-  isFull,
   onAddClick,
 }: WatchlistHeaderProps) {
   return (
@@ -32,13 +29,7 @@ export function WatchlistHeader({
           <button
             type="button"
             onClick={onAddClick}
-            disabled={isFull}
-            className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-md px-3 text-[12.5px] font-semibold transition-colors",
-              isFull
-                ? "cursor-not-allowed bg-bg-tertiary text-text-faint"
-                : "bg-brand text-bg-primary hover:bg-brand-hover",
-            )}
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-brand px-3 text-[12.5px] font-semibold text-bg-primary transition-colors hover:bg-brand-hover"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
             Tambah saham

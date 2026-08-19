@@ -2,12 +2,14 @@
 
 import Link from "next/link";
 import { FileText, X } from "lucide-react";
+import type { WatchlistItem } from "@/lib/api";
+import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
 import { cn } from "@/lib/utils";
 
 interface WatchlistStockCardProps {
-  kode: string;
+  item: WatchlistItem;
 }
 
 /** Single watchlist tile — ticker, price, day change, article count + remove button.
@@ -17,9 +19,21 @@ interface WatchlistStockCardProps {
  *  `pct_change`, `company_name`, `sector_name`, or `articles` for
  *  sparsely-covered tickers, so each section renders only when its
  *  source data is present. */
-export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
-  const { remove } = useWatchlist();
-  const { data, isLoading } = useTickerInformation(kode);
+export function WatchlistStockCard({ item }: WatchlistStockCardProps) {
+  const { remove, isLoading: isRemoving } = useDeleteFromWatchlist();
+  const { refresh } = useGetWatchlist();
+  const { data, isLoading } = useTickerInformation(item.ticker_code);
+
+  /** Delete this row, then force the list hook to re-fetch so the
+   *  card unmounts. The mutation hook has already invalidated the
+   *  cache; `refresh()` bumps `refreshKey` so `useGetWatchlist`
+   *  picks up the empty slot on its next effect run. */
+  const handleRemove = async () => {
+    const res = await remove(item.ticker_code);
+    if (res !== null) {
+      refresh();
+    }
+  };
 
   // Loading — keep the card shell so the watchlist grid doesn't
   // reflow when the response lands. Only the ticker is safe to show
@@ -28,7 +42,7 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
     return (
       <article className="rounded-lg border border-border bg-bg-secondary p-3.5">
         <p className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary">
-          {kode}
+          {item.ticker_code}
         </p>
         <p className="mt-2 font-mono text-[10.5px] text-text-faint">Memuat…</p>
       </article>
@@ -42,12 +56,13 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
     return (
       <article className="rounded-lg border border-border bg-bg-secondary p-3.5">
         <p className="font-mono text-[12px] text-bearish">
-          ⚠ {kode} gak ditemukan.
+          ⚠ {item.ticker_code} gak ditemukan.
         </p>
         <button
           type="button"
-          onClick={() => remove(kode)}
-          className="mt-2 text-[11.5px] text-text-muted hover:text-bearish"
+          onClick={handleRemove}
+          disabled={isRemoving}
+          className="mt-2 text-[11.5px] text-text-muted hover:text-bearish disabled:opacity-50"
         >
           Hapus
         </button>
@@ -67,9 +82,9 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong hover:shadow-card-hover">
       <header className="flex items-start justify-between border-b border-border bg-bg-tertiary px-3 py-2">
-        <Link href={`/stock/${kode}`} className="min-w-0">
+        <Link href={`/stock/${item.ticker_code}`} className="min-w-0">
           <p className="font-mono text-[18px] font-bold leading-none tracking-tighter text-text-primary group-hover:text-brand">
-            {kode}
+            {item.ticker_code}
           </p>
           {data.company_name && (
             <p className="mt-0.5 truncate text-[10.5px] text-text-muted">
@@ -79,9 +94,10 @@ export function WatchlistStockCard({ kode }: WatchlistStockCardProps) {
         </Link>
         <button
           type="button"
-          onClick={() => remove(kode)}
-          aria-label={`Hapus ${kode} dari watchlist`}
-          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-faint transition-colors hover:bg-bg-secondary hover:text-bearish"
+          onClick={handleRemove}
+          disabled={isRemoving}
+          aria-label={`Hapus ${item.ticker_code} dari watchlist`}
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-faint transition-colors hover:bg-bg-secondary hover:text-bearish disabled:opacity-50"
         >
           <X className="h-3 w-3" aria-hidden />
         </button>

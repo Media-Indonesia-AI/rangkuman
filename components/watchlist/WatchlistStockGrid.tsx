@@ -1,28 +1,19 @@
 "use client";
 
-import { WATCHLIST_LIMIT } from "@/lib/auth";
+import type { WatchlistItem } from "@/lib/api";
 import { WatchlistStockCard } from "./WatchlistStockCard";
 
 interface WatchlistStockGridProps {
-  codes: string[];
-  isFull: boolean;
+  items: WatchlistItem[];
 }
 
-/** Slot-status line + responsive grid of WatchlistStockCard tiles. */
-export function WatchlistStockGrid({ codes, isFull }: WatchlistStockGridProps) {
+/** Responsive grid of WatchlistStockCard tiles. */
+export function WatchlistStockGrid({ items }: WatchlistStockGridProps) {
   return (
-    <>
-      <p className="font-mono text-[10.5px] text-text-muted">
-        {isFull
-          ? `⚠ Watchlist penuh (${WATCHLIST_LIMIT}). Hapus dulu sebelum nambah yang baru.`
-          : `Sisa slot: ${WATCHLIST_LIMIT - codes.length}`}
-      </p>
-
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {codes.map((kode) => (
-          <WatchlistStockCard key={kode} kode={kode} />
-        ))}
-      </div>
-    </>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {items.map((item) => (
+        <WatchlistStockCard key={item.id} item={item} />
+      ))}
+    </div>
   );
 }

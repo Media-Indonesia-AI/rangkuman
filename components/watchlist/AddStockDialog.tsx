@@ -1,36 +1,60 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
-import { WATCHLIST_LIMIT } from "@/lib/auth";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
+import type { WatchlistItem } from "@/lib/api";
+import { useAddToWatchlist } from "@/lib/hooks/useAddToWatchlist";
+import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
 import { cn } from "@/lib/utils";
 
 interface AddStockDialogProps {
   onClose: () => void;
-  isFull: boolean;
-  existing: string[];
+  existing: WatchlistItem[];
 }
 
 /** Modal for adding/removing stocks from the watchlist. */
-export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProps) {
-  const { add, remove, isIn } = useWatchlist();
+export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
+  const { add: addToList, isLoading: isAdding } = useAddToWatchlist();
+  const { remove: removeFromList, isLoading: isRemoving } =
+    useDeleteFromWatchlist();
+  const { refresh } = useGetWatchlist();
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const { data: results, isLoading, error } = useStocksSearch(query);
 
-  const handleToggle = (kode: string) => {
+  /** Membership is derived from the API items passed via `existing`
+   *  — no localStorage lookup. Returns true when the row is
+   *  already in the active user's watchlist (case-insensitive). */
+  const isIn = useCallback(
+    (kode: string) => {
+      const target = kode.toUpperCase();
+      return existing.some((i) => i.ticker_code === target);
+    },
+    [existing],
+  );
+
+  const handleToggle = async (kode: string) => {
     if (isIn(kode)) {
-      remove(kode);
-      setToast(`✕ ${kode} dihapus dari watchlist`);
-    } else {
-      if (isFull) {
-        setToast(`⚠ Watchlist penuh (max ${WATCHLIST_LIMIT})`);
-        return;
+      const res = await removeFromList(kode);
+      if (res !== null) {
+        refresh();
+        setToast(`✕ ${kode} dihapus dari watchlist`);
+      } else {
+        setToast(`⚠ Gagal hapus ${kode}`);
       }
-      const res = add(kode);
-      setToast(res.ok ? `✓ ${kode} ditambahin ke watchlist` : `⚠ ${res.reason}`);
+    } else {
+      // New row goes to the end of the user's list — `order`
+      // is just the position within the list, and the backend
+      // accepts any non-negative integer.
+      const res = await addToList(kode, existing.length);
+      if (res !== null) {
+        refresh();
+        setToast(`✓ ${kode} ditambahin ke watchlist`);
+      } else {
+        setToast(`⚠ Gagal nambahin ${kode}`);
+      }
     }
     setTimeout(() => setToast(null), 2200);
   };
@@ -113,15 +137,18 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
           ) : (
             results.map((s) => {
               const inList = isIn(s.ticker);
+              const disabled = isAdding || isRemoving;
               return (
                 <li key={s.ticker}>
                   <button
                     type="button"
                     onClick={() => handleToggle(s.ticker)}
+                    disabled={disabled}
                     className={cn(
                       "flex w-full items-center gap-3 rounded px-2 py-2 text-left transition-colors",
                       "hover:bg-bg-tertiary",
                       inList && "bg-bullish-soft/30",
+                      disabled && "opacity-60",
                     )}
                   >
                     <span className="inline-flex h-8 w-12 shrink-0 items-center justify-center rounded border border-border bg-bg-card font-mono text-[10.5px] font-bold tracking-tight text-text-primary">
@@ -153,10 +180,7 @@ export function AddStockDialog({ onClose, isFull, existing }: AddStockDialogProp
           )}
         </ul>
 
-        <footer className="flex items-center justify-between border-t border-border bg-bg-tertiary px-3.5 py-2.5">
-          <span className="font-mono text-[10px] text-text-muted">
-            {existing.length} / {WATCHLIST_LIMIT} watchlist
-          </span>
+        <footer className="flex items-center justify-end border-t border-border bg-bg-tertiary px-3.5 py-2.5">
           <button
             type="button"
             onClick={onClose}
