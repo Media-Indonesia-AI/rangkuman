@@ -5,6 +5,7 @@
  */
 
 import { STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
+import { safeGetItem, safeSetItem } from "./util/safeLocalStorage";
 
 // Local aliases — kept short because the rest of the file uses
 // them ~15 times. The canonical key strings live in
@@ -21,10 +22,9 @@ const DISMISS_HOURS = 24;
 const BASE_COUNT = 12_400;
 
 function readJson<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
+  const raw = safeGetItem(key);
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
     return JSON.parse(raw) as T;
   } catch {
     return null;
@@ -33,12 +33,8 @@ function readJson<T>(key: string): T | null {
 
 function writeJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-    window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: { key } }));
-  } catch {
-    /* noop */
-  }
+  safeSetItem(key, JSON.stringify(value));
+  window.dispatchEvent(new CustomEvent(STORAGE_EVENT, { detail: { key } }));
 }
 
 export interface SubscriberEntry {

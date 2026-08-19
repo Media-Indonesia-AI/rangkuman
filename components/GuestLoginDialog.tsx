@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { X, UserPlus, LogIn } from "lucide-react";
 import { STORAGE_EVENT, STORAGE_KEYS } from "@/lib/storageKeys";
+import { safeGetItem } from "@/lib/util/safeLocalStorage";
 
 /** Event name any surface can dispatch on `window` to force the dialog open. */
 export const GUEST_LOGIN_DIALOG_OPEN_EVENT = "guest-login-dialog:open";
@@ -242,10 +243,9 @@ interface MockUserLite {
 }
 
 function readUserLite(): MockUserLite | null {
-  if (typeof window === "undefined") return null;
+  const raw = safeGetItem(STORAGE_KEYS.user);
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEYS.user);
-    if (!raw) return null;
     const parsed = JSON.parse(raw) as MockUserLite;
     if (parsed?.email && parsed?.username) return parsed;
     return null;

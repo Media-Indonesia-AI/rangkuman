@@ -8,6 +8,7 @@
  */
 
 import { SAVED_EVENT, STORAGE_KEYS } from "./storageKeys";
+import { safeGetItem, safeSetItem } from "./util/safeLocalStorage";
 
 // Local alias — the canonical key lives in `lib/storageKeys.ts`
 // alongside every other storage concern. Kept as a `const` here
@@ -29,9 +30,9 @@ export interface SavedItem {
 
 function readAll(): SavedItem[] {
   if (typeof window === "undefined") return [];
+  const raw = safeGetItem(STORAGE_KEY);
+  if (!raw) return [];
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.filter(
@@ -49,12 +50,8 @@ function readAll(): SavedItem[] {
 
 function writeAll(items: SavedItem[]): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-    window.dispatchEvent(new CustomEvent(SAVED_EVENT));
-  } catch {
-    // Quota exceeded or private mode — silent fail.
-  }
+  safeSetItem(STORAGE_KEY, JSON.stringify(items));
+  window.dispatchEvent(new CustomEvent(SAVED_EVENT));
 }
 
 export function getSaved(): SavedItem[] {

@@ -48,6 +48,7 @@ import { addToWatchlist, deleteWatchlist, getWatchlist, updateWatchlist } from "
 import { getBroadcastSettings, updateBroadcastSettings } from "./broadcast-settings";
 import type { ApiError } from "./types/error";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
+import { safeGetItem } from "@/lib/util/safeLocalStorage";
 
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
@@ -103,9 +104,9 @@ function getInternalTokenHeader(): Record<string, string> {
  */
 function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
+  const raw = safeGetItem(STORAGE_KEYS.user);
+  if (!raw) return {};
   try {
-    const raw = window.localStorage.getItem(STORAGE_KEYS.user);
-    if (!raw) return {};
     const session = JSON.parse(raw) as {
       email?: string;
       password?: string;

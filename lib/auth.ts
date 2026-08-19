@@ -6,6 +6,7 @@
 
 import { api, type ApiError, type RegisterResponse } from "./api";
 import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "./util/safeLocalStorage";
 
 // Local aliases — kept short because the rest of the file uses
 // them ~30 times. The canonical key strings live in
@@ -118,10 +119,9 @@ export interface WatchlistSnapshot {
 
 /** Read JSON from localStorage safely (SSR no-op). */
 function readJson<T>(key: string): T | null {
-  if (typeof window === "undefined") return null;
+  const raw = safeGetItem(key);
+  if (!raw) return null;
   try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return null;
     return JSON.parse(raw) as T;
   } catch {
     return null;
@@ -131,32 +131,24 @@ function readJson<T>(key: string): T | null {
 /** Write JSON to localStorage safely. */
 function writeJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(key, JSON.stringify(value));
-    // Tell other tabs / hook subscribers that storage changed.
-    window.dispatchEvent(
-      new CustomEvent(STORAGE_EVENT, { detail: { key } }),
-    );
-    // Wake in-process subscribers (useCurrentUser, useWatchlist) so they
-    // re-read storage synchronously instead of waiting for a window event
-    // that may not fire in the same tab.
-    listeners.forEach((fn) => fn());
-  } catch {
-    // Quota exceeded / storage disabled — fail silently.
-  }
+  safeSetItem(key, JSON.stringify(value));
+  // Tell other tabs / hook subscribers that storage changed.
+  window.dispatchEvent(
+    new CustomEvent(STORAGE_EVENT, { detail: { key } }),
+  );
+  // Wake in-process subscribers (useCurrentUser, useWatchlist) so they
+  // re-read storage synchronously instead of waiting for a window event
+  // that may not fire in the same tab.
+  listeners.forEach((fn) => fn());
 }
 
 function removeKey(key: string): void {
   if (typeof window === "undefined") return;
-  try {
-    window.localStorage.removeItem(key);
-    window.dispatchEvent(
-      new CustomEvent(STORAGE_EVENT, { detail: { key } }),
-    );
-    listeners.forEach((fn) => fn());
-  } catch {
-    /* noop */
-  }
+  safeRemoveItem(key);
+  window.dispatchEvent(
+    new CustomEvent(STORAGE_EVENT, { detail: { key } }),
+  );
+  listeners.forEach((fn) => fn());
 }
 
 /** RFC-5322-lite: at least one char, "@", at least one char, ".", at least one char. No whitespace. */
