@@ -7,11 +7,6 @@ export default function SyaratKetentuanPage() {
       eyebrow="Legal"
       icon={<FileText className="h-3.5 w-3.5 text-brand" aria-hidden />}
       title="Syarat & Ketentuan"
-      description="Dengan mengakses dan menggunakan Rangkuman, lo setuju dengan syarat & ketentuan berikut. Mohon dibaca dengan seksama."
-      lastUpdated="2026-06-09"
-      related={[
-        { label: "Kontak & Kerjasama", href: "/kontak-kerjasama", description: "Hubungi tim kami" },
-      ]}
     >
       <h2>1. Penerimaan syarat</h2>
       <p>
