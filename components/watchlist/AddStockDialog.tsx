@@ -14,6 +14,14 @@ interface AddStockDialogProps {
   existing: WatchlistItem[];
 }
 
+/** Render `n/WATCHLIST_LIMIT` style cap counter text. Centralised
+ *  so the header counter, banner, and cap-block tooltip / toast
+ *  all read the same way — bumping the format (e.g. "10 / 10"
+ *  with a space, or "10 of 10") needs one edit, not four. */
+function capFraction(n: number): string {
+  return `${n}/${WATCHLIST_LIMIT}`;
+}
+
 /** Modal for adding/removing stocks from the watchlist.
  *
  *  The list refresh on successful add/remove is automatic:
@@ -53,50 +61,63 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
     [existing],
   );
 
+  /** One toggle, three branches. Each branch picks a toast
+   *  message and (for remove / add) awaits a mutation; the
+   *  post-action `setToast` + `setTimeout` is shared so the
+   *  branches only own what's unique to them. */
   const handleToggle = async (kode: string) => {
+    let message: string;
+
     if (isIn(kode)) {
       // Remove path — always allowed (removing lowers the count,
       // so the cap is irrelevant). Keeping this enabled at the
       // limit is what lets the user free a slot without leaving
       // the dialog.
       const { ok } = await removeFromList(kode);
-      setToast(
-        ok
-          ? `✕ ${kode} dihapus dari watchlist`
-          : `⚠ Gagal hapus ${kode}`,
-      );
+      message = ok
+        ? `✕ ${kode} dihapus dari watchlist`
+        : `⚠ Gagal hapus ${kode}`;
     } else if (isAtLimit) {
       // Add path blocked at the cap. The result-list button is
       // also disabled in this state, so this branch only fires
       // for a stale `existing` (e.g. a remove that's still
       // mid-flight). Surface the same explanation the banner
       // shows so the feedback is consistent either way.
-      setToast(
-        `⚠ Watchlist penuh (${WATCHLIST_LIMIT}/${WATCHLIST_LIMIT}). Hapus salah satu dulu.`,
-      );
+      message = `⚠ Watchlist penuh (${capFraction(WATCHLIST_LIMIT)}). Hapus salah satu dulu.`;
     } else {
       // New row goes to the end of the user's list — `order`
       // is just the position within the list, and the backend
       // accepts any non-negative integer.
       const res = await addToList(kode, existing.length + 1);
-      setToast(
-        res !== null
-          ? `✓ ${kode} ditambahin ke watchlist`
-          : `⚠ Gagal nambahin ${kode}`,
-      );
+      message = res !== null
+        ? `✓ ${kode} ditambahin ke watchlist`
+        : `⚠ Gagal nambahin ${kode}`;
     }
+
+    setToast(message);
     setTimeout(() => setToast(null), 2200);
   };
 
   const trimmed = query.trim();
-  const showEmptyHint = trimmed.length === 0;
-  const showLoading = isLoading && trimmed.length > 0;
-  const showError = !!error && trimmed.length > 0;
+  // `hasQuery` is the single source of truth for whether the
+  // search has been touched — `showEmptyHint` is its negation
+  // and the other `show*` flags all gate on it. Computing it
+  // once keeps the four flags from drifting if the trim rule
+  // ever changes.
+  const hasQuery = trimmed.length > 0;
+  const showEmptyHint = !hasQuery;
+  const showLoading = isLoading && hasQuery;
+  const showError = !!error && hasQuery;
   const showNoResults =
-    trimmed.length > 0 && !isLoading && !error && results.length === 0;
+    hasQuery && !isLoading && !error && results.length === 0;
   // Shared tooltip / aria text for cap-blocked buttons so the
   // reason is consistent across mouse-hover and screen readers.
-  const limitTooltip = `Watchlist penuh (${WATCHLIST_LIMIT}/${WATCHLIST_LIMIT})`;
+  const limitTooltip = `Watchlist penuh (${capFraction(WATCHLIST_LIMIT)})`;
+  // Warnings (`⚠ …`) flip to the project's red pair in the JSX
+  // below; computing the boolean once keeps the conditional
+  // readable and gives a single point of truth if the warning
+  // marker ever changes.
+  const isWarningToast = toast?.startsWith("⚠") ?? false;
 
   return (
     <div
@@ -127,7 +148,7 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
                 isAtLimit ? "text-bearish" : "text-text-muted",
               )}
             >
-              {existing.length}/{WATCHLIST_LIMIT}
+              {capFraction(existing.length)}
             </span>
           </div>
           <button
@@ -142,7 +163,8 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
 
         {isAtLimit && (
           <div className="border-b border-border bg-bg-tertiary px-3 py-2 text-[11.5px] leading-snug text-bearish">
-            Watchlist penuh ({existing.length}/{WATCHLIST_LIMIT}). Hapus salah satu saham buat nambah yang baru.
+            Watchlist penuh ({capFraction(existing.length)}). Hapus
+            salah satu saham buat nambah yang baru.
           </div>
         )}
 
@@ -170,7 +192,7 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
                 // the cap-block and any failed-mutation toast read
                 // as one visual group. Success / info toasts stay
                 // on the default neutral border + primary text.
-                toast.startsWith("⚠")
+                isWarningToast
                   ? "border-bearish/40 text-bearish"
                   : "border-border text-text-primary",
               )}
