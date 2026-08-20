@@ -1,10 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { Sparkles, ChevronRight, Plus, ArrowUpRight } from "lucide-react";
+import { Sparkles, ChevronRight, Plus, X } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
+import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
 import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -12,7 +13,7 @@ interface WatchlistItemCardProps {
   kode: string;
 }
 
-/** Single watchlist tile — ticker, company name, price, day change, description.
+/** Single watchlist tile — ticker, company name, price, day change, description, and remove.
  *
  *  Every visible field is gated on the API actually returning it: the
  *  `/stocks/ticker-information/{ticker}` endpoint may omit `company_name`,
@@ -20,19 +21,28 @@ interface WatchlistItemCardProps {
  *  renders only when its source data is present. The `description` line
  *  is intentionally hidden when the API returns an empty string so the
  *  card doesn't reserve a blank line for tickers with no editorial
- *  summary yet. */
+ *  summary yet.
+ *
+ *  The X (remove) button is a sibling of the Link, not a child of it,
+ *  so click events don't bubble up to the link navigation. The list
+ *  auto-refreshes after a successful remove: the mutation hook
+ *  invalidates the watchlist cache, which notifies every mounted
+ *  `useGetWatchlist` via the subscriber bus and the card unmounts when
+ *  its row is dropped from the refreshed `items`. */
 function WatchlistItemCard({ kode }: WatchlistItemCardProps) {
   const { data, isLoading } = useTickerInformation(kode);
+  const { remove, isLoading: isRemoving } = useDeleteFromWatchlist();
   const description = data?.description?.trim() ?? "";
   const showDescription = description.length > 0;
 
+  const handleRemove = async () => {
+    await remove(kode);
+  };
+
   return (
-    <Link
-      href={`/stock/${kode}`}
-      className="group flex flex-col gap-2 rounded-lg border border-border bg-bg-secondary p-3 transition-all hover:border-border-strong hover:shadow-card-hover"
-    >
+    <article className="group flex flex-col gap-2 rounded-lg border border-border bg-bg-secondary p-3 transition-all hover:border-border-strong hover:shadow-card-hover">
       <div className="flex items-center gap-3">
-        <div className="min-w-0 flex-1">
+        <Link href={`/stock/${kode}`} className="min-w-0 flex-1">
           <div className="flex items-baseline gap-1.5">
             <span className="font-mono text-[15px] font-bold tracking-tighter text-text-primary group-hover:text-brand">
               {kode}
@@ -65,18 +75,23 @@ function WatchlistItemCard({ kode }: WatchlistItemCardProps) {
               </>
             )}
           </div>
-        </div>
-        <ArrowUpRight
-          className="h-3.5 w-3.5 shrink-0 text-text-faint transition-colors group-hover:text-brand"
-          aria-hidden
-        />
+        </Link>
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={isRemoving}
+          aria-label={`Hapus ${kode} dari watchlist`}
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-faint transition-colors hover:bg-bg-secondary hover:text-bearish disabled:opacity-50"
+        >
+          <X className="h-3 w-3" aria-hidden />
+        </button>
       </div>
       {showDescription && (
         <p className="line-clamp-2 text-[11.5px] leading-snug text-text-muted">
           {description}
         </p>
       )}
-    </Link>
+    </article>
   );
 }
 
@@ -117,13 +132,6 @@ export function WatchlistSection() {
             Recap saham yang kamu pantau
           </h2>
         </div>
-        <Link
-          href="/watchlist"
-          className="inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold text-text-muted transition-colors hover:text-brand"
-        >
-          Lihat semua
-          <ChevronRight className="h-3 w-3" aria-hidden />
-        </Link>
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
