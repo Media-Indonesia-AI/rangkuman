@@ -3,6 +3,7 @@
 import { useCallback, useState } from "react";
 import { Eye, EyeOff, Loader2, Plus, Search, X } from "lucide-react";
 import type { WatchlistItem } from "@/lib/api";
+import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { useAddToWatchlist } from "@/lib/hooks/useAddToWatchlist";
 import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
@@ -19,7 +20,19 @@ interface AddStockDialogProps {
  *  each mutation hook calls `invalidateWatchlist()` on success,
  *  which notifies every mounted `useGetWatchlist` via the cache
  *  subscriber bus — the dialog (and the page grid behind it)
- *  re-fetches without this component wiring `refresh()` itself. */
+ *  re-fetches without this component wiring `refresh()` itself.
+ *
+ *  Adds are gated on `WATCHLIST_LIMIT`:
+ *   - Rows already in `existing` stay toggleable (off) even at
+ *     the cap, so the user can always free a slot by removing.
+ *   - Rows not yet in the list are disabled with a tooltip once
+ *     `existing.length >= WATCHLIST_LIMIT`, and a banner above
+ *     the search box spells out the cap.
+ *   - `handleToggle` re-checks the cap before firing the add
+ *     mutation so a stale `existing` (e.g. a remove that's
+ *     mid-flight) can't sneak through and surface a backend
+ *     error — the same message the banner shows is surfaced via
+ *     the toast instead. */
 export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
   const { add: addToList, isLoading: isAdding } = useAddToWatchlist();
   const { remove: removeFromList, isLoading: isRemoving } =
@@ -27,6 +40,7 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
   const [query, setQuery] = useState("");
   const [toast, setToast] = useState<string | null>(null);
   const { data: results, isLoading, error } = useStocksSearch(query);
+  const isAtLimit = existing.length >= WATCHLIST_LIMIT;
 
   /** Membership is derived from the API items passed via `existing`
    *  — no localStorage lookup. Returns true when the row is
@@ -41,22 +55,35 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
 
   const handleToggle = async (kode: string) => {
     if (isIn(kode)) {
+      // Remove path — always allowed (removing lowers the count,
+      // so the cap is irrelevant). Keeping this enabled at the
+      // limit is what lets the user free a slot without leaving
+      // the dialog.
       const { ok } = await removeFromList(kode);
-      if (ok) {
-        setToast(`✕ ${kode} dihapus dari watchlist`);
-      } else {
-        setToast(`⚠ Gagal hapus ${kode}`);
-      }
+      setToast(
+        ok
+          ? `✕ ${kode} dihapus dari watchlist`
+          : `⚠ Gagal hapus ${kode}`,
+      );
+    } else if (isAtLimit) {
+      // Add path blocked at the cap. The result-list button is
+      // also disabled in this state, so this branch only fires
+      // for a stale `existing` (e.g. a remove that's still
+      // mid-flight). Surface the same explanation the banner
+      // shows so the feedback is consistent either way.
+      setToast(
+        `⚠ Watchlist penuh (${WATCHLIST_LIMIT}/${WATCHLIST_LIMIT}). Hapus salah satu dulu.`,
+      );
     } else {
       // New row goes to the end of the user's list — `order`
       // is just the position within the list, and the backend
       // accepts any non-negative integer.
       const res = await addToList(kode, existing.length + 1);
-      if (res !== null) {
-        setToast(`✓ ${kode} ditambahin ke watchlist`);
-      } else {
-        setToast(`⚠ Gagal nambahin ${kode}`);
-      }
+      setToast(
+        res !== null
+          ? `✓ ${kode} ditambahin ke watchlist`
+          : `⚠ Gagal nambahin ${kode}`,
+      );
     }
     setTimeout(() => setToast(null), 2200);
   };
@@ -67,6 +94,9 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
   const showError = !!error && trimmed.length > 0;
   const showNoResults =
     trimmed.length > 0 && !isLoading && !error && results.length === 0;
+  // Shared tooltip / aria text for cap-blocked buttons so the
+  // reason is consistent across mouse-hover and screen readers.
+  const limitTooltip = `Watchlist penuh (${WATCHLIST_LIMIT}/${WATCHLIST_LIMIT})`;
 
   return (
     <div
@@ -85,6 +115,20 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
             <h2 className="text-[14px] font-bold tracking-tight text-text-primary">
               Tambah ke watchlist
             </h2>
+            {/* Always-visible counter so the user can plan their
+                next action without reading the banner. Flips to
+                `text-bearish` at the cap so the "10/10" state
+                reads as a single visual group with the red banner
+                below (and the red toast that fires if the user
+                somehow tries to add past the cap). */}
+            <span
+              className={cn(
+                "font-mono text-[10.5px]",
+                isAtLimit ? "text-bearish" : "text-text-muted",
+              )}
+            >
+              {existing.length}/{WATCHLIST_LIMIT}
+            </span>
           </div>
           <button
             type="button"
@@ -95,6 +139,12 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
             <X className="h-3.5 w-3.5" aria-hidden />
           </button>
         </header>
+
+        {isAtLimit && (
+          <div className="border-b border-border bg-bg-tertiary px-3 py-2 text-[11.5px] leading-snug text-bearish">
+            Watchlist penuh ({existing.length}/{WATCHLIST_LIMIT}). Hapus salah satu saham buat nambah yang baru.
+          </div>
+        )}
 
         <div className="border-b border-border p-3">
           <div className="relative">
@@ -112,7 +162,19 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
             />
           </div>
           {toast && (
-            <p className="mt-2 rounded border border-border bg-bg-tertiary px-2 py-1 font-mono text-[10.5px] text-text-primary">
+            <p
+              className={cn(
+                "mt-2 rounded border bg-bg-tertiary px-2 py-1 font-mono text-[10.5px]",
+                // Warnings (`⚠ …`) flip to the project's red pair —
+                // `text-bearish` + a faint `border-bearish/40` — so
+                // the cap-block and any failed-mutation toast read
+                // as one visual group. Success / info toasts stay
+                // on the default neutral border + primary text.
+                toast.startsWith("⚠")
+                  ? "border-bearish/40 text-bearish"
+                  : "border-border text-text-primary",
+              )}
+            >
               {toast}
             </p>
           )}
@@ -139,13 +201,21 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
           ) : (
             results.map((s) => {
               const inList = isIn(s.ticker);
-              const disabled = isAdding || isRemoving;
+              // Already-in-list rows stay toggleable even when at
+              // the cap so the user can free a slot. Not-yet-in
+              // rows are gated on the cap; the button is disabled
+              // (no click event) and surfaces the cap reason via
+              // tooltip + aria-label.
+              const blockedByLimit = !inList && isAtLimit;
+              const disabled = isAdding || isRemoving || blockedByLimit;
               return (
                 <li key={s.ticker}>
                   <button
                     type="button"
                     onClick={() => handleToggle(s.ticker)}
                     disabled={disabled}
+                    title={blockedByLimit ? limitTooltip : undefined}
+                    aria-label={blockedByLimit ? limitTooltip : undefined}
                     className={cn(
                       "flex w-full items-center gap-3 rounded px-2 py-2 text-left transition-colors",
                       "hover:bg-bg-tertiary",

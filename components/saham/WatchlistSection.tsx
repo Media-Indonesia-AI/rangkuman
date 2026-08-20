@@ -4,7 +4,8 @@ import Link from "next/link";
 import { Sparkles, ChevronRight, Plus, ArrowUpRight } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
+import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 interface WatchlistItemCardProps {
@@ -79,14 +80,17 @@ function WatchlistItemCard({ kode }: WatchlistItemCardProps) {
   );
 }
 
-/**
- * Home-page preview of the user's watchlist. Only renders when:
- *   - the user is logged in (caller decides via `enabled`)
- *   - the watchlist is non-empty
- */
 export function WatchlistSection() {
-  const { codes } = useWatchlist();
-  const visibleCodes = codes.slice(0, 6);
+  const { items } = useGetWatchlist();
+  // Backend doesn't promise wire order; `order` is the source of
+  // truth (sparse-tolerant per the schema). `.slice()` keeps the
+  // sort from mutating React's state array.
+  const codes = items
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((item) => item.ticker_code);
+  const visibleCodes = codes.slice(0, WATCHLIST_LIMIT);
+  const isAtLimit = codes.length >= WATCHLIST_LIMIT;
 
   if (codes.length === 0) return null;
 
@@ -97,8 +101,16 @@ export function WatchlistSection() {
           <div className="mb-0.5 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden />
             <span className="label text-text-secondary">Watchlist kamu</span>
-            <span className="font-mono text-[10.5px] text-text-muted">
-              · {codes.length} saham
+            <span
+              className={cn(
+                "font-mono text-[10.5px]",
+                // At the cap the counter shifts to `text-text-
+                // secondary` so the fullness reads as deliberate
+                // state, not just a quieter color.
+                isAtLimit ? "text-text-secondary" : "text-text-muted",
+              )}
+            >
+              · {codes.length}/{WATCHLIST_LIMIT} saham
             </span>
           </div>
           <h2 className="text-[15px] font-bold tracking-tight text-text-primary">
@@ -119,8 +131,12 @@ export function WatchlistSection() {
           <WatchlistItemCard key={kode} kode={kode} />
         ))}
 
-        {/* Show a CTA tile if user has 0-5 stocks */}
-        {codes.length < 6 && (
+        {/* CTA fills the remaining slot up to the visible cap.
+            At the watchlist cap (10) this branch is also implicitly
+            false because `MAX_VISIBLE_WATCHLIST` < `WATCHLIST_LIMIT` —
+            every user at the cap already has ≥6 rows, so the grid
+            is full and there's no slot to fill. */}
+        {codes.length < WATCHLIST_LIMIT && (
           <Link
             href="/watchlist"
             className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-bg-secondary/40 p-3 text-center transition-colors hover:border-brand hover:bg-bg-secondary"
