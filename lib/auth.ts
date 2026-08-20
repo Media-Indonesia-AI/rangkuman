@@ -130,11 +130,11 @@ function readJson<T>(key: string): T | null {
 
 /**
  * Write JSON to localStorage safely. Exported so external flows
- * (e.g. `app/auth/callback/page.tsx` for Google OAuth) can persist
- * a session the same way `registerUser` / `loginWithIdentifier`
- * do — keeping a single persistence path for email and Google
- * auth, and ensuring the in-process listener bus wakes
- * `useCurrentUser` synchronously.
+ * (e.g. `loginWithGoogle` for client-side GSI JWT exchange) can
+ * persist a session the same way `registerUser` /
+ * `loginWithIdentifier` do — keeping a single persistence path for
+ * email and Google auth, and ensuring the in-process listener bus
+ * wakes `useCurrentUser` synchronously.
  */
 export function writeJson(key: string, value: unknown): void {
   if (typeof window === "undefined") return;
@@ -224,29 +224,65 @@ export async function loginWithIdentifier(
 }
 
 /**
- * Initiates the Google sign-in flow by navigating the browser to the
- * backend's `/auth/google` entrypoint. From there the backend takes
- * over — it 302-redirects to Google's consent screen, exchanges the
- * code on Google's callback, and finally 302-redirects back to our
- * frontend `/auth/callback` page (handled by
- * `app/auth/callback/page.tsx`) with session data for that page to
- * persist.
+ * Client-side Google sign-in. The browser-side
+ * `@react-oauth/google` SDK hands us a JWT `id_token` via
+ * `<GoogleLogin />`'s `onSuccess` callback; we POST it to the
+ * backend's `/auth/google` endpoint, which verifies the token
+ * against Google's JWKS, upserts the user (create-on-first-login),
+ * and returns the same `RegisterResponse` envelope used by
+ * `/auth/login` / `/auth/register`. From there the flow is
+ * identical to `loginWithIdentifier`: build a `MockUser`, persist
+ * via `writeJson` (which wakes `useCurrentUser` synchronously in
+ * the same tab), and return the session so the caller can navigate.
  *
- * Returns `void` because the page is being navigated away from; the
- * caller (the "Lanjutkan dengan Google" button) doesn't await a
- * result. The actual session-write happens in the callback route.
+ * `password` is intentionally left undefined for Google users —
+ * the backend never sees a password for them, and the HTTP Basic
+ * auth header in `lib/api/client.ts`'s `getAuthHeader()` falls
+ * back to empty when `session.password` is missing. Non-auth reads
+ * (watchlist, headlines, etc.) keep working; authenticated
+ * endpoints will surface their own 401s for Google users. (Open
+ * follow-up for the backend team: either mint a synthetic password
+ * during Google upsert and include it in `RegisterResponseUser`,
+ * or accept an alternate auth scheme for Google sessions.)
  *
- * No new npm dependencies are needed — the existing `request()`
- * client in `lib/api/client.ts` and `writeJson` /
- * `useCurrentUser()` chain handle the post-callback side, mirroring
- * what `loginWithIdentifier` (above) does for email sign-in.
+ * No new npm dependencies are needed — `@react-oauth/google` and
+ * `jwt-decode` are already in `package.json`.
  */
-export function loginWithGoogle(): void {
-  if (typeof window === "undefined") return;
-  const base = process.env.NEXT_PUBLIC_API_BASE_URL ?? "";
-  // `base` already ends with `/api/` (see .env.development), so
-  // concatenation is straightforward.
-  window.location.assign(`${base}auth/google`);
+export async function loginWithGoogle(
+  credential: string,
+): Promise<MockUser> {
+  if (!credential || credential.trim().length === 0) {
+    throw new Error("Kredensial Google kosong");
+  }
+
+  let response: RegisterResponse;
+  try {
+    response = await api.googleLogin(credential);
+  } catch (err) {
+    const apiErr = err as ApiError;
+    if (apiErr?.status === 401) {
+      throw new Error("Kredensial Google tidak valid");
+    }
+    if (apiErr?.status === 400) {
+      throw new Error(apiErr.message || "Login Google tidak valid");
+    }
+    throw new Error(apiErr?.message ?? "Gagal terhubung ke server");
+  }
+
+  const session: MockUser = {
+    id: response.user.id,
+    email: response.user.email,
+    username: response.user.username,
+    name: response.user.name,
+    // Google users don't have a password — see docstring above.
+    password: undefined,
+    loggedInAt: response.user.createdAt,
+    provider: "google",
+    isEmailVerified: response.user.isEmailVerified,
+  };
+  writeJson(USER_KEY, session);
+  if (response.setupToken) writeJson(SETUP_TOKEN_KEY, response.setupToken);
+  return session;
 }
 
 /**

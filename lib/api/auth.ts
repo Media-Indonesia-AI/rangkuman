@@ -32,22 +32,21 @@ export function login(
 }
 
 /**
- * Trade a one-time Google OAuth token (delivered by the backend in
- * the `/auth/google/callback` redirect) for the same envelope used
- * by `/auth/login` and `/auth/register`. Consumed by the
- * `/auth/callback` page when the backend ships only a token in the
- * URL — the page hits this endpoint, builds a `MockUser` from the
- * response, persists it via `writeJson`, then hard-navigates to
- * the post-auth destination.
- *
- * If the backend instead ships a base64-encoded session/user in
- * the URL, the callback page prefers that path and never calls
- * this endpoint. Kept as a fallback in case the response shape
- * differs once we probe it.
+ * Trade a Google-issued JWT id_token (delivered directly to the
+ * browser by the GSI script via `@react-oauth/google`'s
+ * `<GoogleLogin />` `onSuccess` callback) for the same
+ * `RegisterResponse` envelope used by `/auth/login` and
+ * `/auth/register`. The backend verifies the credential against
+ * Google's JWKS, upserts the user (create-on-first-login), and
+ * returns the same shape the email flows return so
+ * `loginWithGoogle()` in `lib/auth.ts` can build a `MockUser` and
+ * persist it via the shared `writeJson` plumbing.
  */
-export function googleSession(token: string): Promise<RegisterResponse> {
-  return request<RegisterResponse>(
-    `auth/google/session?token=${encodeURIComponent(token)}`,
-    { method: "GET" },
-  );
+export function googleLogin(
+  credential: string,
+): Promise<RegisterResponse> {
+  return request<RegisterResponse>("auth/google", {
+    method: "POST",
+    body: JSON.stringify({ credential }),
+  });
 }

@@ -17,7 +17,7 @@
  * existing call sites (`api.getTopStocks()`, etc.) keep working.
  */
 
-import { login, register } from "./auth";
+import { googleLogin, login, register } from "./auth";
 import {
   getHeadlineById,
   getHeadlines,
@@ -194,6 +194,7 @@ export const api = {
   // Auth
   register,
   login,
+  googleLogin,
   // Stocks
   getTopStocks,
   getTickers,

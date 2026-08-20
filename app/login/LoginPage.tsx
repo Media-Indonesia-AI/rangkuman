@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
+import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -31,6 +32,18 @@ function LoginPageContent() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<FieldErrors>({});
+  const [googleLoading, setGoogleLoading] = useState(false);
+  const [googleError, setGoogleError] = useState<string | null>(null);
+
+  // Hard fail at first render if the GSI client id is missing.
+  // Next.js inlines `NEXT_PUBLIC_*` at build time, so this only
+  // fires when the env is genuinely absent in a deploy — and we'd
+  // rather see a loud render-time error than ship a silently broken
+  // Google button.
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set");
+  }
 
   // If already logged in, jump straight to wherever the user was
   // headed — usually the page they were reading when they hit the
@@ -107,14 +120,49 @@ function LoginPageContent() {
     }
   };
 
-  const handleGoogleLogin = () => {
+  const handleGoogleSuccess = async (
+    credentialResponse: { credential?: string },
+  ) => {
     // Clear any pre-existing field errors so a user retrying from a
     // failed email/password submit starts the OAuth flow with a
-    // clean form. `loginWithGoogle` then kicks off the OAuth
-    // navigation — see its docstring in lib/auth.ts for the rest
-    // of the flow (backend → Google → /auth/callback → home).
+    // clean form. `loginWithGoogle` then runs the JWT exchange —
+    // see its docstring in lib/auth.ts for the rest of the flow.
     setErrors({});
-    loginWithGoogle();
+    setGoogleError(null);
+    const credential = credentialResponse?.credential;
+    if (!credential) {
+      setGoogleError("Google gak ngirim kredensial — coba lagi.");
+      return;
+    }
+    setGoogleLoading(true);
+    try {
+      await loginWithGoogle(credential);
+      const target = getAuthRedirectTarget(searchParams);
+      console.log("[google-login-success] reached success path");
+      console.log("[google-login-success] redirect target:", target);
+      window.location.assign(target);
+      // Same 3s self-diagnostic as the email flow — catches HMR /
+      // service-worker / App-Router races on the navigation commit.
+      setTimeout(() => {
+        if (typeof window === "undefined") return;
+        if (window.location.pathname.startsWith("/login")) {
+          console.error(
+            "[google-login-success] STILL ON /login 3s after window.location.assign",
+          );
+        }
+      }, 3000);
+    } catch (err) {
+      setGoogleError(
+        err instanceof Error ? err.message : "Login Google gagal",
+      );
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setErrors({});
+    setGoogleLoading(false);
+    setGoogleError("Login Google dibatalkan atau gagal.");
   };
 
   const clearError = (field: keyof FieldErrors) =>
@@ -156,16 +204,44 @@ function LoginPageContent() {
           </div>
 
           <div className="p-5">
-            {/* Google login */}
-            <button
-              type="button"
-              onClick={handleGoogleLogin}
-              disabled={loading}
-              className="flex w-full items-center justify-center gap-2 rounded-md border border-border bg-bg-card py-2.5 text-[13px] font-semibold text-text-primary transition-colors hover:border-border-strong hover:bg-bg-tertiary disabled:opacity-50"
-            >
-              <GoogleIcon className="h-4 w-4" />
-              Lanjutkan dengan Google
-            </button>
+            {/* Google login — `GoogleOAuthProvider` scoped tight to
+                this block so the GSI script is only fetched on /login.
+                `<GoogleLogin />` renders its own branded Google icon,
+                so the `GoogleIcon` helper at the bottom of the file
+                is now unused (deleted below). The `relative` wrapper
+                + absolute spinner lets us show an in-flight overlay
+                without disabling the SDK's own button (which we
+                don't have a `disabled` prop control over). */}
+            <GoogleOAuthProvider clientId={clientId}>
+              <div className="relative">
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  theme="outline"
+                  size="large"
+                  text="continue_with"
+                  shape="rectangular"
+                  width="100%"
+                  useOneTap={false}
+                />
+                {googleLoading && (
+                  <div
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md bg-bg-card/70"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin text-text-muted" />
+                  </div>
+                )}
+              </div>
+              {googleError && (
+                <p
+                  role="alert"
+                  className="mt-2 font-mono text-[11px] text-bearish"
+                >
+                  ⚠ {googleError}
+                </p>
+              )}
+            </GoogleOAuthProvider>
 
             {/* Divider */}
             <div className="my-4 flex items-center gap-3">
@@ -296,21 +372,5 @@ export default function LoginPage() {
       </Suspense>
       <Footer />
     </>
-  );
-}
-
-function GoogleIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      aria-hidden
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        fill="#EA3943"
-        d="M12 11v3.2h7.6c-.3 1.7-2.1 5-7.6 5-4.6 0-8.3-3.8-8.3-8.4S7.4 2.4 12 2.4c2.6 0 4.4 1.1 5.4 2.1l3.7-3.6C18.7-1.5 15.6-3 12-3 5.1-3-.5 2.6-.5 9.5S5.1 22 12 22c6.9 0 11.5-4.8 11.5-11.7 0-.8-.1-1.4-.2-2H12z"
-      />
-    </svg>
   );
 }
