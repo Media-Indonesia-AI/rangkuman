@@ -110,10 +110,9 @@ export function StockCardList({
           <div className="flex shrink-0 items-center gap-1">
             <SentimentBadge sentiment={recap.sentimen} size="sm" />
             <StockCardActions
-              id={recap.sahamKode}
-              publishedAt={recap.tanggal}
               tone="dark"
               href={href}
+              variant="xs"
               title={`Rangkuman — ${recap.ringkasan}`}
             />
           </div>
@@ -139,10 +138,9 @@ export function StockCardList({
             </span>
           </p>
           <StockCardActions
-            id={recap.sahamKode}
-            publishedAt={recap.tanggal}
             tone="dark"
             href={href}
+            variant="xs"
             title={`Rangkuman — ${recap.ringkasan}`}
           />
         </div>

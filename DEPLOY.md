@@ -155,7 +155,7 @@ DOMAIN="https://rangkuman.news"
 curl -sI $DOMAIN/ | head -1
 
 # Test story page
-curl -sI $DOMAIN/crypto/detail/bisnis-mnc-rcti/ | head -1
+curl -sI $DOMAIN/sorotan/detail/bisnis-mnc-rcti/ | head -1
 
 # Test policy detail
 curl -sI $DOMAIN/kebijakan/kenaikan-bbm-subsidi/ | head -1

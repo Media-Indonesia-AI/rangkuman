@@ -7,10 +7,11 @@ import { loadMultiDateStories } from "@/lib/api/cache";
 /**
  * Data hook for `GET headlines/multi-date-stories`.
  *
- * Wraps `loadMultiDateStories(ticker, limit, page)` (the
- * (ticker, limit, page) request-deduping cache wrapper) with React
- * state and a cancel-on-unmount guard. Concurrent mounts for the same
- * tuple share one network round-trip via the cache module.
+ * Wraps `loadMultiDateStories(ticker, limit, page, topicId)` (the
+ * (ticker, topicId, limit, page) request-deduping cache wrapper)
+ * with React state and a cancel-on-unmount guard. Concurrent
+ * mounts for the same tuple share one network round-trip via the
+ * cache module.
  *
  * The endpoint returns `{ data: HeadlineLast7DaysItem[]; total: number }`
  * — `total` is the cross-page story count, independent of how many
@@ -34,6 +35,13 @@ import { loadMultiDateStories } from "@/lib/api/cache";
  * drops the `ticker=` query param entirely, so the request still
  * fires — only the network-suppressed case is `enabled: false`.
  *
+ * `topicId` is an independent orthogonal filter (e.g. the resolved
+ * id of the "saham" or "crypto" topic). Pass a non-empty id to
+ * scope the feed to one topic — `<EmitenStories />` on `/saham` and
+ * `/crypto` use this so each page shows topic-scoped stories
+ * instead of the cross-topic default. Empty / `undefined` →
+ * cross-topic feed (no `topic_id=` param).
+ *
  * @param ticker  Optional ticker code (e.g. `"BBCA"`). Uppercased
  *                inside the cache/request layer, so callers can pass
  *                any case. Empty / `undefined` → cross-ticker feed.
@@ -41,12 +49,15 @@ import { loadMultiDateStories } from "@/lib/api/cache";
  * @param page    1-based page number (default 1).
  * @param enabled When `false`, suppresses the network call and returns
  *                empty data + zero total (default `true`).
+ * @param topicId Optional topic id (e.g. `"saham"`, `"crypto"`).
+ *                Empty / `undefined` → cross-topic feed.
  */
 export function useMultiStories(
   ticker?: string,
   limit = 5,
   page = 1,
   enabled = true,
+  topicId?: string,
 ): {
   data: HeadlineLast7DaysItem[];
   /** Cross-page total from the API response. `0` while loading, on
@@ -73,7 +84,7 @@ export function useMultiStories(
     let cancelled = false;
     setIsLoading(true);
 
-    void loadMultiDateStories(ticker, limit, page)
+    void loadMultiDateStories(ticker, limit, page, topicId)
       .then((res) => {
         if (cancelled) return;
         setData(res.data);
@@ -89,7 +100,7 @@ export function useMultiStories(
     return () => {
       cancelled = true;
     };
-  }, [enabled, ticker, limit, page]);
+  }, [enabled, ticker, limit, page, topicId]);
 
   return { data, total, isLoading };
 }

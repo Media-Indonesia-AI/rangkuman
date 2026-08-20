@@ -13,36 +13,23 @@ export function Footer() {
             <Brand logoSize={36} full />
             <p className="mt-4 max-w-sm text-[12.5px] leading-relaxed text-text-secondary">
               Recap saham harian untuk investor ritel Indonesia. Dikurasi dari
-              CNBC, Bisnis, Kontan, Bloomberg, Reuters, dan 20+ media lainnya.
+              Bloomberg Technoz, Emitennews, CNBC Indonesia, Investor Daily,
+              Katadata, Bisnis.com, Kontan, CryptoNews, The Block, Cointelegraph,
+              dan Decrypt.
             </p>
           </div>
           <div>
             <p className="label mb-2.5">Topik</p>
             <ul aria-label="Topik" className="space-y-1.5 text-[12.5px] text-text-secondary">
               <li><Link href="/saham" className="hover:text-brand">Saham</Link></li>
-              <li><Link href="/bisnis" className="hover:text-brand">Bisnis</Link></li>
-              <li><Link href="/ekonomi" className="hover:text-brand">Ekonomi</Link></li>
-              <li><Link href="/kebijakan" className="hover:text-brand">Kebijakan</Link></li>
-              <li><Link href="/global" className="hover:text-brand">Global</Link></li>
               <li><Link href="/crypto" className="hover:text-brand">Crypto</Link></li>
             </ul>
           </div>
           <div>
             <p className="label mb-2.5">Perusahaan</p>
             <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
-              <li><Link href="/tentang" className="hover:text-brand">Tentang</Link></li>
-              <li><Link href="/tim-redaksi" className="hover:text-brand">Tim Redaksi</Link></li>
-              <li><Link href="/karir" className="hover:text-brand">Karir</Link></li>
-              <li><Link href="/kontak" className="hover:text-brand">Kontak</Link></li>
-            </ul>
-          </div>
-          <div>
-            <p className="label mb-2.5">Legal</p>
-            <ul className="space-y-1.5 text-[12.5px] text-text-secondary">
-              <li><Link href="/disclaimer" className="hover:text-brand">Disclaimer</Link></li>
-              <li><Link href="/privasi" className="hover:text-brand">Privasi</Link></li>
+              <li><Link href="/kontak-kerjasama" className="hover:text-brand">Kontak &amp; Kerjasama</Link></li>
               <li><Link href="/syarat-ketentuan" className="hover:text-brand">Syarat &amp; Ketentuan</Link></li>
-              <li><Link href="/pedoman-media-siber" className="hover:text-brand">Pedoman Media Siber</Link></li>
             </ul>
           </div>
         </div>

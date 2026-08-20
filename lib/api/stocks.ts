@@ -11,7 +11,7 @@
  */
 
 import { request, todayIsoDate } from "./client";
-import { toIsoDateTime, toIsoWithTimezone } from "@/lib/util/formatDate";
+import { toIsoDateTime } from "@/lib/util/formatDate";
 import type { StoryFilter } from "./types/story";
 import type {
   CompositeChartResponse,
@@ -79,8 +79,8 @@ export function getForeignStocks(
   endDate?: string,
 ): Promise<ForeignStocksResponse> {
   const params = new URLSearchParams({
-    start_date: toIsoDateTime(startDate ?? todayIsoDate()),
-    end_date: toIsoDateTime(endDate ?? todayIsoDate()),
+    start_date: startDate ?? todayIsoDate(),
+    end_date: endDate ?? todayIsoDate(),
   });
   return request<ForeignStocksResponse>(
     `stocks/foreign-stocks?${params.toString()}`,
@@ -112,13 +112,22 @@ export function getCompositeChart(
  * `@param ticker` Ticker code (e.g. `"ANTM"`). Uppercased before
  *                 being inserted into the URL so callers can pass
  *                 either case consistently.
+ * `@param date`   Optional ISO date (`YYYY-MM-DD`) for the recap
+ *                 day to fetch. When omitted, the backend defaults
+ *                 to "today" — the param is left out of the URL
+ *                 entirely rather than sent as `?date=undefined`,
+ *                 which is what `URLSearchParams({ date: undefined })`
+ *                 would produce.
  */
 export function getTickerInformation(
   ticker: string,
-  date: string = todayIsoDate(),
+  date?: string,
 ): Promise<TickerInformation> {
   const code = ticker.toUpperCase();
-  const params = new URLSearchParams({ date });
+  const params = new URLSearchParams();
+  if (date) {
+    params.set("date", date);
+  }
   return request<TickerInformation>(
     `stocks/ticker-information/${encodeURIComponent(code)}?${params.toString()}`,
     { method: "GET" },
@@ -215,13 +224,12 @@ export function getStockHistorical(
  * @param limit    Page size (default 20).
  */
 export function getStocksTrending(
-  dateTime: string = new Date().toISOString(),
+  dateTime: string = todayIsoDate(),
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
-  const normalizedDateTime = toIsoWithTimezone(dateTime, "+07:00");
   const params = new URLSearchParams({
-    date: normalizedDateTime,
+    date: dateTime,
     page: String(page),
     limit: String(limit),
   });

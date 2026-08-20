@@ -42,7 +42,7 @@ export function StoryEditorial({
         className,
       )}
     >
-      <Link href={`/crypto/detail/${highlight.id}`} className="flex h-full flex-col">
+      <Link href={`/sorotan/detail/${highlight.id}`} className="flex h-full flex-col">
         {/* Gradient header strip with icon */}
         <div
           className={cn(
@@ -101,7 +101,7 @@ export function StoryEditorial({
 
           {/* Optional summary (12px text-secondary) */}
           {showSummary && (
-            <p className="text-[12px] leading-snug text-text-secondary">
+            <p className="line-clamp-3 text-[12px] leading-snug text-text-secondary">
               {highlight.summary}
             </p>
           )}

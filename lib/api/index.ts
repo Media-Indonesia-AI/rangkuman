@@ -101,3 +101,34 @@ export {
   labelToSentiment,
   sentimentConfig,
 } from "./types/moods";
+
+// Wallet
+export type {
+  TopupBundle,
+  TopupBundlesResponse,
+  TopupRequest,
+  Wallet,
+  WalletLot,
+  WalletResponse,
+  WalletTransaction,
+  WalletTransactionHistoryResponse,
+  WalletTransactionResponse,
+  WalletTransactionMetadata,
+  WalletTransactionPaymentDetails,
+  WalletTransactionQrCode,
+  WalletTransactionQrCodeMetadata,
+} from "./types/wallet";
+
+// Watchlist
+export type {
+  AddToWatchlistRequest,
+  DeleteWatchlistRequest,
+  WatchlistItem,
+  WatchlistResponse,
+} from "./types/watchlist";
+
+// Broadcast settings
+export type {
+  BroadcastSettings,
+  BroadcastSettingsRequest,
+} from "./types/broadcast-settings";

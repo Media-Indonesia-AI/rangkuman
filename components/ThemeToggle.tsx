@@ -3,8 +3,12 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
+import { safeSetItem } from "@/lib/util/safeLocalStorage";
 
-const STORAGE_KEY = "beritainvestor:theme";
+// Local alias — the canonical key lives in `lib/storageKeys.ts`
+// alongside every other storage concern.
+const STORAGE_KEY = STORAGE_KEYS.theme;
 
 type Theme = "light" | "dark";
 
@@ -25,11 +29,7 @@ export function ThemeToggle() {
     } else {
       document.documentElement.classList.remove("dark");
     }
-    try {
-      window.localStorage.setItem(STORAGE_KEY, next);
-    } catch {
-      /* noop */
-    }
+    safeSetItem(STORAGE_KEY, next);
   };
 
   // Avoid hydration flicker — render placeholder until mounted

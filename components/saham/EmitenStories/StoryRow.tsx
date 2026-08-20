@@ -19,6 +19,15 @@ export function StoryRow({
   story: HeadlineLast7DaysItem;
   first?: boolean;
 }) {
+  const latestRecapDate =
+    story.stories && story.stories.length > 0
+      ? story.stories.reduce(
+          (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+          "",
+        )
+      : "";
+  const updateTimestamp = latestRecapDate || story.updated_at || story.created_at;
+
   return (
     <Link
       href={`/story/${story.id}`}
@@ -29,19 +38,12 @@ export function StoryRow({
     >
       <div className="flex w-[52px] shrink-0 flex-col items-start gap-1">
         <TickerBadge kode={story.primary_ticker_code} />
-        {/* Price change "sejak story" — falls back to `n/a` when
-            the endpoint doesn't ship `pct_change_since_story`. */}
-        {story.pct_change_since_story !== undefined ? (
-          <PctChangeChip pct={story.pct_change_since_story} />
-        ) : (
-          <NotAvailable />
-        )}
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-1.5">
           <SentimentPill sentiment={story.sentiment} />
           <span className="font-mono text-[10px] text-text-faint">
-            · {story.keywords.length} kata kunci · {relativeUpdated(story.created_at)}
+            · {story.keywords.length} kata kunci · {relativeUpdated(updateTimestamp)}
           </span>
         </div>
         <h4 className="mt-1 text-[15px] font-semibold leading-tight text-text-primary">

@@ -7,6 +7,7 @@ import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
 import { BfcacheRecovery } from "@/components/BfcacheRecovery";
 import { TopicsProvider } from "@/components/topics-provider";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
 import "./globals.css";
 
 const inter = Inter({
@@ -28,7 +29,7 @@ export const metadata: Metadata = {
     template: "%s",
   },
   description:
-    "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI. Saham, bisnis, ekonomi, kebijakan — intinya aja.",
+    "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI. Saham, bisnis, ekonomi, kebijakan — intinya aja.",
   keywords: [
     "recap saham",
     "berita saham",
@@ -44,22 +45,13 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
-      "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI.",
-    images: [
-      {
-        url: "/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Rangkuman",
-      },
-    ],
+      "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
   },
   twitter: {
     card: "summary_large_image",
     title: "Rangkuman — Baca lebih sedikit, tahu lebih banyak",
     description:
-      "Rangkuman bisnis & ekonomi Indonesia dari 64 sumber, dikurasi AI.",
-    images: ["/og-default.png"],
+      "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
   },
   icons: {
     icon: [
@@ -84,7 +76,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               try {
-                var t = localStorage.getItem('beritainvestor:theme');
+                var t = localStorage.getItem(${JSON.stringify(STORAGE_KEYS.theme)});
                 if (t === 'light') {
                   document.documentElement.classList.remove('dark');
                 } else {

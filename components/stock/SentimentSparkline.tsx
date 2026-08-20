@@ -8,20 +8,14 @@ import type { HeadlineLast7DaysItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
-import { useHeadlinesLast7Days } from "@/lib/hooks/useHeadlinesLast7Days";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
+import { useLast7DaysHeadlines } from "./Last7DaysHeadlinesProvider";
 
 /** One day's worth of chart data — the calendar date (yyyy-mm-dd)
  *  plus the dominant sentiment for that day's headlines. */
 type SentimentDay = { date: string; sentiment: Sentimen };
 
 interface SentimentSparklineProps {
-  /** Ticker code the trail is scoped to (e.g. `"ANTM"`). */
-  kode: string;
-  /** ISO date for "today" — used only to highlight the matching
-   *  bar (the one whose `created_at` date equals this). Doesn't pin
-   *  the window size — the chart's range follows the response. When
-   *  set, it also anchors the last-7-days window end. */
-  todayIso?: string;
   className?: string;
 }
 
@@ -44,8 +38,10 @@ function dayLabel(dateStr: string): { day: string; date: number } {
  * gray = Netral, red = Negatif. Netral bars are slightly shorter so
  * the visual hierarchy is clear.
  *
- * Data flow: `useHeadlinesLast7Days(kode)` fetches the ticker's
- * last-7-days headlines via the shared (ticker, date) request cache.
+ * Data flow: `useLast7DaysHeadlines()` reads the ticker's
+ * last-7-days headlines from the shared `<Last7DaysHeadlinesProvider>`
+ * context. The provider owns the single network round-trip; this
+ * widget is one of two consumers (the other being `<NewsTimeline />`).
  *
  * Each headline is bucketed by its `created_at`'s date portion. The
  * chart's range follows the response — if the API returns headlines
@@ -57,12 +53,18 @@ function dayLabel(dateStr: string): { day: string; date: number } {
  * No placeholder neutral bars are rendered for empty days — the
  * chart's window is the actual data span, not a synthetic window.
  */
-export function SentimentSparkline({ kode, todayIso, className }: SentimentSparklineProps) {
-  // Last-7-days headlines for this ticker, via the shared request cache.
-  const { data: headlines, isLoading: storiesLoading } = useHeadlinesLast7Days(
-    kode,
-    todayIso || undefined,
-  );
+export function SentimentSparkline({ className }: SentimentSparklineProps) {
+  // Last-7-days headlines for this ticker, fetched via the shared
+  // (ticker, date) request cache. The fetch is owned by
+  // `<Last7DaysHeadlinesProvider>` so a sibling `<NewsTimeline />`
+  // shares the same network round-trip instead of issuing its own.
+  // `todayIso` is read from context too — the provider resolves it
+  // once, so we don't have to recompute or accept it as a prop.
+  const {
+    headlines,
+    isLoading: storiesLoading,
+    todayIso,
+  } = useLast7DaysHeadlines();
 
   // Bucket headlines by local-time date (matching <NewsTimeline>), then
   // walk the sorted date list and pick each day's dominant sentiment.
@@ -132,7 +134,7 @@ export function SentimentSparkline({ kode, todayIso, className }: SentimentSpark
 
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn("relative overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
       aria-label="Sentimen trail"
     >
       <header className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -257,6 +259,7 @@ export function SentimentSparkline({ kode, todayIso, className }: SentimentSpark
           </div>
         </div>
       </div>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat sentimen trail" />
     </section>
   );
 }

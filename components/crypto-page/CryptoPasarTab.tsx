@@ -39,7 +39,6 @@ export function CryptoPasarTab() {
         <CryptoSectionHeader
           icon={<BarChart3 className="h-3 w-3" aria-hidden />}
           title="Top Movers 24 jam"
-          subtitle="Koin dengan perubahan harga terbesar"
           count={`${COINS.length} koin diliput`}
         />
         <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">

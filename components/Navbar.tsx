@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useRef, useState, type MouseEvent } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Bitcoin,
-  Bookmark,
   ListChecks,
   Menu,
   MessageCircle,
@@ -13,6 +12,7 @@ import {
   User,
   Wallet,
   X,
+  type LucideIcon,
 } from "lucide-react";
 import { SearchBar } from "./SearchBar";
 import { ThemeToggle } from "./ThemeToggle";
@@ -23,17 +23,47 @@ import { LogoutButton } from "@/components/profile/LogoutButton";
 
 const NAV_LINKS = [
   { href: "/saham", label: "Saham", Icon: TrendingUp },
-  // { href: "/bisnis", label: "Bisnis", Icon: Building2 },
-  // { href: "/ekonomi", label: "Ekonomi", Icon: Landmark },
-  // { href: "/kebijakan", label: "Kebijakan", Icon: Scale },
-  // { href: "/global", label: "Global", Icon: Globe },
   { href: "/crypto", label: "Crypto", Icon: Bitcoin },
 ];
+
+/** Section / item grid for the drawer's profile menu. Each section
+ *  gets its own header row (e.g. "Akun", "Konten") followed by the
+ *  link rows. The map renders both — the structure flows from
+ *  data, so adding a new section is one entry, not a copy-paste
+ *  of the `<li>` / `<Link>` boilerplate. */
+const PROFILE_MENU_SECTIONS: {
+  section: string;
+  items: { href: string; label: string; Icon: LucideIcon }[];
+}[] = [
+  {
+    section: "Akun",
+    items: [
+      { href: "/profile/", label: "Akun", Icon: User },
+      { href: "/profile/top-up/", label: "Top Up", Icon: Wallet },
+    ],
+  },
+  {
+    section: "Konten",
+    items: [
+      { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
+      { href: "/profile/whatsapp/", label: "Kirim Berita ke WhatsApp", Icon: MessageCircle },
+    ],
+  },
+];
+
+/** Shared className for the drawer's profile menu links. Pulled
+ *  out so the active-state styling (hover + `aria-current=page`)
+ *  stays consistent across rows — the desktop navbar's more
+ *  compact links use a different (smaller) layout so they
+ *  intentionally don't share this constant. */
+const DRAWER_LINK_CLASSES =
+  "flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand";
 
 export function Navbar() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const user = useCurrentUser();
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   // Close menu on route change
   useEffect(() => {
@@ -65,6 +95,41 @@ export function Navbar() {
     };
   }, [menuOpen]);
 
+  // Close on click outside the drawer. The navbar is z-40 above
+  // the backdrop (z-30), so clicks on the navbar don't reach the
+  // backdrop's onClick — this listener catches them. Three
+  // exclusions, all by element:
+  //   - the hamburger toggle (`aria-controls="mobile-menu"`) —
+  //     it has its own onClick that toggles, so this listener
+  //     must not also fire `setMenuOpen(false)` on the next tick.
+  //   - the in-drawer close button (`data-close-menu`) — it's
+  //     a `fixed` overlay at the same position as the hamburger
+  //     but at z-50. If this listener fired on it, the menu
+  //     would close on pointerdown, React would unmount the
+  //     close button, and the subsequent click event would land
+  //     on the hamburger (same position, z-40) and toggle the
+  //     menu back open. Excluding it lets the close button's
+  //     own onClick fire while the button is still in the DOM.
+  //   - anything inside the drawer — the drawer's own
+  //     `handleDrawerClick` already closes the menu on link /
+  //     button clicks.
+  // `pointerdown` (not `click`) so the target is the element the
+  // user actually pressed, not the common ancestor of a press-
+  // inside-drag-outside gesture. `pointerdown` also fires for
+  // touch + pen, unified with mouse.
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('[aria-controls="mobile-menu"]')) return;
+      if (target.closest('[data-close-menu]')) return;
+      if (drawerRef.current?.contains(target)) return;
+      setMenuOpen(false);
+    };
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [menuOpen]);
+
   /**
    * Drawer-internal click handler. Closes the menu when the user
    * clicks any `<a>` or `<button>` inside the drawer — covers the
@@ -75,7 +140,7 @@ export function Navbar() {
    * matches links and buttons, so typing into the search bar
    * doesn't dismiss the drawer.
    */
-  const handleDrawerClick = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleDrawerClick = (e: MouseEvent<HTMLDivElement>) => {
     const target = e.target as HTMLElement;
     if (target.closest("a, button")) {
       setMenuOpen(false);
@@ -93,8 +158,14 @@ export function Navbar() {
         {/* Brand logo + name */}
         <Brand logoSize={32} />
 
-        {/* Main links — visible on tablet+ */}
-        <ul className="hidden items-center gap-0.5 md:flex">
+        {/* Main links — visible on every screen size so the user
+            can reach Saham / Crypto from the navbar directly,
+            without opening the drawer. The drawer still renders
+            them too for "menu" completeness, but the navbar is
+            the always-visible affordance. `shrink-0` keeps the
+            row from collapsing under narrow widths — better to
+            overflow than to squish the labels. */}
+        <ul className="flex shrink-0 items-center gap-0.5">
           {NAV_LINKS.map((link) => {
             const active = isActive(link.href);
             return (
@@ -187,15 +258,38 @@ export function Navbar() {
         onClick={() => setMenuOpen(false)}
       />
 
+      {/* Close button — `fixed` overlay at the top right of the
+          viewport, sitting directly on top of the hamburger
+          toggle in the navbar. The hamburger already shows an X
+          when the menu is open, but it's a small 36×36 toggle
+          that the user might miss; this overlay is an explicit
+          "close" affordance at the same position. `z-50` puts
+          it above the navbar (z-40) so the click targets the
+          close, not the toggle. Conditionally rendered — when
+          the menu is closed, the hamburger alone is the
+          affordance. `md:hidden` keeps it off the desktop layout. */}
+      {menuOpen && (
+        <button
+          type="button"
+          data-close-menu
+          onClick={() => setMenuOpen(false)}
+          aria-label="Tutup menu"
+          className="fixed right-4 top-2.5 z-50 inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden"
+        >
+          <X className="h-4 w-4" aria-hidden />
+        </button>
+      )}
+
       {/* Mobile menu drawer — fixed position so it doesn't push
           page content, with its own `overflow-y-auto` so the inner
           scroll is isolated from the body (paired with the
           `useEffect` body-scroll-lock above). */}
       <div
         id="mobile-menu"
+        ref={drawerRef}
         onClick={handleDrawerClick}
         className={cn(
-          "fixed left-0 right-0 top-14 z-40 overflow-y-auto overflow-x-hidden border-t border-border bg-bg-secondary transition-[max-height,opacity] duration-200 md:hidden",
+          "fixed left-0 right-0 top-14 z-40 overflow-y-auto overflow-x-hidden border-t border-border bg-bg-secondary shadow-2xl transition-[max-height,opacity] duration-200 md:hidden",
           menuOpen
             ? "max-h-[calc(100vh-3.5rem)] opacity-100"
             : "max-h-0 opacity-0",
@@ -217,104 +311,35 @@ export function Navbar() {
             </li>
           )}
 
-          {/* Nav links — Saham & Crypto. Rendered before the
-              profile menu items so the brand's primary content
-              surfaces are the first thing the user sees when they
-              open the drawer. Same icon + hover treatment as the
-              profile menu items below for a consistent visual
-              vocabulary. */}
-          {NAV_LINKS.map((link) => {
-            const active = isActive(link.href);
-            const Icon = link.Icon;
-            return (
-              <li key={link.href}>
-                <Link
-                  href={link.href}
-                  className={cn(
-                    "flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium transition-colors",
-                    active
-                      ? "bg-brand-soft text-brand"
-                      : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
-                  )}
-                >
-                  <Icon className="h-3.5 w-3.5" aria-hidden />
-                  {link.label}
-                </Link>
-              </li>
-            );
-          })}
-
           {/* Profile menu items — only visible when logged in.
-              Same grouping + order as the desktop sidebar
-              ("Profil lo" / "Konten lo") so the visual vocabulary
-              is consistent across the brand. Each row uses the
-              same icon + hover treatment so the section reads as a
-              single coherent group. */}
-          {user && (
-            <>
-              <li className="px-2 pt-3 pb-1">
-                <p className="font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-faint">
-                  Akun
-                </p>
-              </li>
-              <li>
-                <Link
-                  href="/profile/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/profile/" ? "page" : undefined}
-                >
-                  <User className="h-3.5 w-3.5" aria-hidden />
-                  Akun
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/profile/top-up/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/profile/top-up/" ? "page" : undefined}
-                >
-                  <Wallet className="h-3.5 w-3.5" aria-hidden />
-                  Top Up
-                </Link>
-              </li>
-
-              <li className="px-2 pt-3 pb-1">
-                <p className="font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-faint">
-                  Konten
-                </p>
-              </li>
-              <li>
-                <Link
-                  href="/watchlist/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/watchlist/" ? "page" : undefined}
-                >
-                  <ListChecks className="h-3.5 w-3.5" aria-hidden />
-                  Watchlist
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/saved/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/saved/" ? "page" : undefined}
-                >
-                  <Bookmark className="h-3.5 w-3.5" aria-hidden />
-                  Berita Tersimpan
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/profile/whatsapp/"
-                  className="flex items-center gap-2 rounded-md px-3 py-2 text-[13px] font-medium text-text-secondary hover:bg-bg-tertiary hover:text-text-primary aria-[current=page]:bg-brand-soft aria-[current=page]:text-brand"
-                  aria-current={pathname === "/profile/whatsapp/" ? "page" : undefined}
-                >
-                  <MessageCircle className="h-3.5 w-3.5" aria-hidden />
-                  Kirim Berita ke WhatsApp
-                </Link>
-              </li>
-            </>
-          )}
+              Each section (header + link rows) is rendered from
+              `PROFILE_MENU_SECTIONS`, so the structure flows from
+              data and adding a new section is one entry. The link
+              rows share `DRAWER_LINK_CLASSES` + the `aria-current`
+              derived from the active pathname so they stay in
+              sync. */}
+          {user &&
+            PROFILE_MENU_SECTIONS.map(({ section, items }) => (
+              <Fragment key={section}>
+                <li className="px-2 pt-3 pb-1">
+                  <p className="font-mono text-[9.5px] font-semibold uppercase tracking-widest text-text-faint">
+                    {section}
+                  </p>
+                </li>
+                {items.map(({ href, label, Icon }) => (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      className={DRAWER_LINK_CLASSES}
+                      aria-current={pathname === href ? "page" : undefined}
+                    >
+                      <Icon className="h-3.5 w-3.5" aria-hidden />
+                      {label}
+                    </Link>
+                  </li>
+                ))}
+              </Fragment>
+            ))}
 
           {/* Logout — pinned at the bottom of the menu list so the
               destructive action is the last thing the user sees,

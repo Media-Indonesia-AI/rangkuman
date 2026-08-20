@@ -67,7 +67,7 @@ ls -la out/*.html
 rangkuman-news/
 ├── app/                              # Next.js App Router (pages + layouts)
 │   ├── layout.tsx                    # Root layout: theme, fonts, OG image
-│   ├── page.tsx                      # Home: Sorotan + Sedang Terjadi + Cerita Lain
+│   ├── page.tsx                      # Home: Sorotan + Berita Terkini
 │   ├── globals.css                   # Tailwind + CSS variables (light/dark)
 │   │
 │   ├── saham/                        # /saham (sub-tab: Recap | Sektor)
@@ -84,9 +84,8 @@ rangkuman-news/
 │   ├── stock/[kode]/                 # 34 stock detail pages
 │   ├── sektor/[slug]/                # 12 sector detail pages
 │   │
-│   ├── trending/  search/  watchlist/  saved/  login/
-│   ├── tentang/  disclaimer/  privasi/  syarat-ketentuan/
-│   ├── pedoman-media-siber/  tim-redaksi/  kontak/  karir/
+│   ├── trending/  search/  watchlist/  login/
+│   ├── kerjasama/  syarat-ketentuan/  kontak/
 │   │
 │   └── not-found.tsx                 # Custom 404
 │
@@ -100,9 +99,7 @@ rangkuman-news/
 │   ├── BrandSlogan.tsx               # Above-the-fold homepage tagline
 │   │
 │   ├── StoryHero.tsx                 # 1 big card (Sorotan)
-│   ├── StoryEditorial.tsx            # 6 editorial cards (Sedang Terjadi)
-│   ├── StoryCompact.tsx              # Compact list (Cerita Lain)
-│   ├── MarketsStrip.tsx              # Markets snapshot widget
+│   ├── StoryEditorial.tsx            # Editorial cards (Berita Terkini)
 │   │
 │   ├── CategoryPageView.tsx          # Shared layout for category pages
 │   ├── PolicyTracker.tsx             # Status board untuk kebijakan
@@ -136,7 +133,7 @@ rangkuman-news/
 │   │   └── index.ts                    # barrel
 │   │
 │   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
-│   ├── ShareButton.tsx  SavedButton.tsx
+│   ├── ShareButton.tsx
 │   ├── SearchBar.tsx  ThemeToggle.tsx
 │   ├── InfoPage.tsx                  # Template for static legal/about pages
 │   ├── KeyDataBlock.tsx              # Story detail key data
@@ -220,7 +217,7 @@ Component usage:
 
 - CSS variables di `app/globals.css` untuk light & dark mode
 - Tailwind config reference variables: `bg-bg-primary`, `text-text-primary`, dll
-- Mode disimpan di localStorage (`beritainvestor:theme`)
+- Mode disimpan di localStorage (`rangkuman-news:theme`)
 - Inline script di `<head>` di root layout untuk prevent flash of wrong theme
 - Toggle component: `components/ThemeToggle.tsx`
 
@@ -278,30 +275,47 @@ Lihat `lib/mock/highlights.ts` untuk schema lengkap.
 
 ### 5. localStorage schema
 
+All keys live under the `rangkuman-news:*` prefix. The previous
+`beritainvestor:*` namespace was retired in a hard cutover with
+no migration shim — existing user data was left under the old
+keys and the app silently re-onboarded those users as fresh
+visitors on first paint.
+
 | Key | Type | Purpose |
 |-----|------|---------|
-| `beritainvestor:theme` | `"dark"` \| `"light"` | Theme preference |
-| `beritainvestor:user` | `{ email, name }` (JSON) | Mock auth session |
-| `beritainvestor:watchlist` | `string[]` (ticker list, max 10) | User's watchlist |
-| `beritainvestor:saved` | `SavedItem[]` (JSON) | Bookmarks (stocks + stories) |
-| `beritainvestor:newsletter-email` | `string` | Subscribed email |
-| `beritainvestor:newsletter-count` | `number` | Animated subscriber counter |
-| `beritainvestor:pill-dismissed` | `number` (ms timestamp) | Pill dismiss cooldown (24h) |
+| `rangkuman-news:user` | `{ email, username, name, password, … }` (JSON) | Mock auth session |
+| `rangkuman-news:setupToken` | `string` | One-time token from `POST /auth/register` |
+| `rangkuman-news:watchlist` | `{ codes: string[], updatedAt: string }` | User's watchlist snapshot (max 10 tickers) |
+| `rangkuman-news:theme` | `"dark"` \| `"light"` | Theme preference |
+| `rangkuman-news:saved` | `SavedItem[]` (JSON) | Bookmarks (stocks + stories + coins) |
+| `rangkuman-news:newsletter` | `SubscriberEntry[]` (JSON) | List of subscribed emails |
+| `rangkuman-news:newsletter_dismissed` | `{ until: ISO string }` | Pill-dismiss cooldown (24h) |
+| `rangkuman-news:saham-tab` | `"recap"` \| `"sektor"` | Active sub-tab on `/saham` |
+| `rangkuman-news:saham-recap-date` | `YYYY-MM-DD` | Active DatePicker value on `/saham` |
 
-**Cross-tab sync:** pakai `storage` event + custom event `beritainvestor:saved-changed`. Lihat `lib/saved.ts`.
+**Cross-tab sync:** pakai `storage` event + custom event
+`rangkuman-news:storage` (and `rangkuman-news:saved-changed` for
+the bookmarks key, which predates the shared helper). Lihat
+`lib/auth.ts`, `lib/newsletter.ts`, `lib/saved.ts`.
+
+**sessionStorage** (separate namespace, cleared per tab):
+
+| Key | Purpose |
+|-----|---------|
+| `rangkuman:auth-prev-path` | Last non-auth pathname, captured by `<PathnameTracker />` and read by `getAuthRedirectTarget()` after login/register |
 
 **Clear all local data (untuk testing):**
 ```js
 // Browser DevTools console
 Object.keys(localStorage)
-  .filter(k => k.startsWith('beritainvestor:'))
+  .filter(k => k.startsWith('rangkuman-news:'))
   .forEach(k => localStorage.removeItem(k));
 ```
 
 ### 6. Routing & static export
 
 - **121 routes total**, all pre-rendered as static HTML
-- Dynamic routes: `/stock/[kode]` (34), `/sektor/[slug]` (12), `/crypto/detail/[id]` (50), `/kebijakan/[slug]` (8)
+- Dynamic routes: `/stock/[kode]` (34), `/sektor/[slug]` (12), `/sorotan/detail/[id]` (50), `/kebijakan/[slug]` (8)
 - Trailing slash enabled di `next.config.js`
 - Custom 404 page di `app/not-found.tsx`
 
@@ -332,17 +346,16 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 ## Pages overview
 
 ### Public
-- `/` — Home (Sorotan + Sedang Terjadi + Cerita Lain)
-- `/crypto/detail/[id]/` — 50 story detail pages
+- `/` — Home (Sorotan + Berita Terkini)
+- `/sorotan/detail/[id]/` — 50 story detail pages
 - `/saham/` — Stocks (sub-tab: Recap | Sektor)
 - `/bisnis/`, `/ekonomi/`, `/kebijakan/`, `/komoditas/` — Category pages
 - `/kebijakan/[slug]/` — 8 policy detail pages
 - `/global/`, `/crypto/` — News portals (sub-tab + info bar)
 - `/sektor/`, `/sektor/[slug]/` — 12 sector pages
 - `/stock/[kode]/` — 34 stock pages
-- `/trending/`, `/search/`, `/watchlist/`, `/saved/`, `/login/`
-- `/tentang/`, `/disclaimer/`, `/privasi/`, `/syarat-ketentuan/`
-- `/pedoman-media-siber/`, `/tim-redaksi/`, `/kontak/`, `/karir/`
+- `/trending/`, `/search/`, `/watchlist/`, `/login/`
+- `/kontak-kerjasama/`, `/syarat-ketentuan/`
 
 ### Internal
 - `/not-found` — custom 404
@@ -418,12 +431,12 @@ npm run build      # generates ./out/
 | `/` (homepage) | 118 kB |
 | `/kebijakan/`, `/bisnis/`, dll | 118 kB |
 | `/kebijakan/[slug]/` | 118 kB (8 pages) |
-| `/crypto/detail/[id]/` | 120 kB (50 pages) |
+| `/sorotan/detail/[id]/` | 120 kB (50 pages) |
 | `/stock/[kode]/` | 118 kB (34 pages) |
 | `/sektor/[slug]/` | 118 kB (12 pages) |
 | `/saham/` | 157 kB |
 | `/crypto/` | 285 kB (heaviest, charts) |
-| `/saved/`, `/login/`, `/search/` | 120-133 kB |
+| `/login/`, `/search/` | 120-133 kB |
 
 Total chunks: ~1.9 MB (well-cached across pages).
 

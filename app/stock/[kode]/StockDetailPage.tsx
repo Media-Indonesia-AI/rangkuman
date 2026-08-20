@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
@@ -15,10 +14,9 @@ import { SentimentSparkline } from "@/components/stock/SentimentSparkline";
 import { PriceChart30d } from "@/components/stock/PriceChart30d";
 import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
+import { Last7DaysHeadlinesProvider } from "@/components/stock/Last7DaysHeadlinesProvider";
 import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
-import { StockLoginDialog } from "@/components/stock/StockLoginDialog";
 import { EmitenStories } from "@/components/saham";
-import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 
 interface PageProps {
@@ -26,22 +24,19 @@ interface PageProps {
 }
 
 export default function StockDetailPage({ params }: PageProps) {
-  const router = useRouter();
   const kode = params.kode.toUpperCase();
-  const recapDate = params.recapDate;
-
-  // Auth gate — show the login prompt dialog on first paint when the
-  // visitor is anonymous. `useCurrentUser()` is `undefined` during
-  // localStorage hydration, `null` when logged out, and a `MockUser`
-  // when authenticated. During the `undefined` window we don't render
-  // the dialog (avoids a flash for already-logged-in users). Closing
-  // the dialog (X / Escape / backdrop / "Lanjut tanpa login") sends
-  // the user to /saham — there is no "stay on this page anonymously"
-  // path because the page's data fetches are auth-gated and would
-  // just keep returning empty.
-  const user = useCurrentUser();
-  const showLoginDialog = user === null;
-  const handleDialogClose = () => router.push("/saham");
+  // Normalize recapDate — the URL segment may carry a full ISO
+  // timestamp (e.g. "2026-08-13T09:15:33.426Z") when visitors
+  // reach the page through a ShareButton URL or any other
+  // caller that pipes `todayIsoDate()` through. Downstream
+  // consumers (DatePicker, the `loadTickerInformation` cache
+  // key, share URLs) expect the calendar-day form `YYYY-MM-DD`,
+  // so trim any time portion here. The regex drops a fully-
+  // malformed value (empty string, garbled segment) back to
+  // `undefined`, and `useTickerInformation` /
+  // `<AggregateSummary recapDate={undefined}>` fall through to
+  // today via their existing `?? todayIsoDate()` guards.
+  const recapDate = params.recapDate?.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
 
   // Live ticker info — drives the hero chip / price / change and the
   // StockAboutPanel info rows. Hook resets state on `kode` change so
@@ -58,7 +53,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
   // Sync the browser tab title with the current ticker so the
   // address bar / tab strip reflects the page the visitor is on.
-  // Mirrors the same pattern in `/crypto/detail/[id]` — the
+  // Mirrors the same pattern in `/sorotan/detail/[id]` — the
   // page is a "use client" component, so there's no server-side
   // `generateMetadata` to set the title; without this effect the
   // tab would stay on the global layout default ("Rangkuman")
@@ -131,11 +126,16 @@ export default function StockDetailPage({ params }: PageProps) {
               {/* Key metrics: Market Cap, P/E, Volume, etc. */}
               <KeyMetrics kode={kode} />
 
-              {/* News timeline */}
-              <NewsTimeline kode={kode} todayIso={''} />
-
-              {/* Sentiment trail — last-7-days headlines for this ticker. */}
-              <SentimentSparkline kode={kode} todayIso={''} />
+              {/* News timeline + sentiment trail — both read from the
+                  shared <Last7DaysHeadlinesProvider>, so the underlying
+                  `headlines/last-7-days` request fires exactly once
+                  even though two widgets render it. The provider owns
+                  the ticker and the "today" marker — children are
+                  prop-less. */}
+              <Last7DaysHeadlinesProvider kode={kode}>
+                <NewsTimeline />
+                <SentimentSparkline />
+              </Last7DaysHeadlinesProvider>
 
               {/* Articles grouped by media — data-driven via the
                   shared headline-scoped stories fetched once by
@@ -181,8 +181,6 @@ export default function StockDetailPage({ params }: PageProps) {
         </HeadlineStoriesProvider>
       </main>
       <Footer />
-
-      {showLoginDialog && <StockLoginDialog onClose={handleDialogClose} />}
     </>
   );
 }

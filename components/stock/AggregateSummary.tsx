@@ -4,12 +4,14 @@ import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { useMemo } from "react";
 import { DatePicker } from "@/components/DatePicker";
 import { Shimmer } from "@/components/Shimmer";
-import { hariIniIso } from "@/lib/util/formatDate";
+import { todayIsoDate } from "@/lib/util/formatDate";
 import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
 import type { TickerArticles } from "@/lib/api/types/stocks";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
+import { ShareButton } from "@/components/ShareButton";
 import { SourceBar } from "@/components/SourceBar";
+import { SITE_URL } from "@/lib/og";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
  *  the widget is self-contained — the page only passes the recap. */
@@ -105,7 +107,7 @@ export function AggregateSummary({
   // lands in `tickerInfo`. Navigation is fully declarative — Next.js
   // `<Link>` prefetches the destination so the recap day loads
   // instantly and we don't need a `useRouter` hook here at all.
-  const isoDate = recapDate ?? hariIniIso();
+  const isoDate = recapDate ?? todayIsoDate();
   const summaryText = stripSumberSuffix(description ?? "");
   const jumlahBerita = articles.length;
   const Icon = SentimenIcon[sentimen];
@@ -128,7 +130,7 @@ export function AggregateSummary({
           <DatePicker
             value={isoDate}
             hrefFor={(iso) => `/stock/${kode}/${iso}`}
-            todayIso={hariIniIso()}
+            todayIso={todayIsoDate()}
             maxLookbackDays={30}
           />
         </div>
@@ -146,10 +148,21 @@ export function AggregateSummary({
           // regardless of class-name order.
           <Shimmer className="!bg-bg-tertiary/60 h-3 w-28" />
         ) : (
-          <span className="font-mono text-[10.5px] font-semibold text-text-muted num-tabular">
-            {jumlahBerita} artikel
-            {sumber.length > 0 && ` · ${sumber.length} media`}
-          </span>
+          <div className="flex items-center gap-2">
+            {/* Share button — sits at the right edge of the
+                header row so visitors can share the recap
+                directly from the card they're reading. URL is
+                the bare `/stock/{kode}` (not the recapDate
+                variant) so receivers land on the freshest
+                recap. Title is just the ticker code — this
+                widget doesn't have company-name data, and the
+                ticker is the most identifiable token of the
+                recap anyway. */}
+            <ShareButton
+              title={kode}
+              url={`${SITE_URL}/stock/${kode}/${isoDate}`}
+            />
+          </div>
         )}
       </div>
 

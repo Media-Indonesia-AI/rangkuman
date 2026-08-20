@@ -1,41 +1,113 @@
 "use client";
 
-import { useMemo } from "react";
 import Link from "next/link";
-import { Sparkles, ChevronRight, Plus, Newspaper, ArrowUpRight } from "lucide-react";
-import { SentimentBadge } from "@/components/SentimentBadge";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
-import { getStockByKode } from "@/lib/mock/stocks";
-import { getRecapForStock, TODAY_ISO } from "@/lib/mock/recaps";
+import { Sparkles, ChevronRight, Plus, X } from "lucide-react";
+import { Shimmer } from "@/components/Shimmer";
+import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
+import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
+import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
-/**
- * Home-page preview of the user's watchlist. Only renders when:
- *   - the user is logged in (caller decides via `enabled`)
- *   - the watchlist is non-empty
- */
+interface WatchlistItemCardProps {
+  kode: string;
+}
+
+/** Single watchlist tile — ticker, company name, price, day change, description, and remove.
+ *
+ *  Every visible field is gated on the API actually returning it: the
+ *  `/stocks/ticker-information/{ticker}` endpoint may omit `company_name`,
+ *  `price`, or `pct_change` for sparsely-covered tickers, so each section
+ *  renders only when its source data is present. The `description` line
+ *  is intentionally hidden when the API returns an empty string so the
+ *  card doesn't reserve a blank line for tickers with no editorial
+ *  summary yet.
+ *
+ *  The X (remove) button is a sibling of the Link, not a child of it,
+ *  so click events don't bubble up to the link navigation. The list
+ *  auto-refreshes after a successful remove: the mutation hook
+ *  invalidates the watchlist cache, which notifies every mounted
+ *  `useGetWatchlist` via the subscriber bus and the card unmounts when
+ *  its row is dropped from the refreshed `items`. */
+function WatchlistItemCard({ kode }: WatchlistItemCardProps) {
+  const { data, isLoading } = useTickerInformation(kode);
+  const { remove, isLoading: isRemoving } = useDeleteFromWatchlist();
+  const description = data?.description?.trim() ?? "";
+  const showDescription = description.length > 0;
+
+  const handleRemove = async () => {
+    await remove(kode);
+  };
+
+  return (
+    <article className="group flex flex-col gap-2 rounded-lg border border-border bg-bg-secondary p-3 transition-all hover:border-border-strong hover:shadow-card-hover">
+      <div className="flex items-center gap-3">
+        <Link href={`/stock/${kode}`} className="min-w-0 flex-1">
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-mono text-[15px] font-bold tracking-tighter text-text-primary group-hover:text-brand">
+              {kode}
+            </span>
+            {isLoading || !data ? (
+              <Shimmer className="h-3 w-24" />
+            ) : (
+              <span className="truncate text-[10.5px] text-text-muted">
+                {data.company_name}
+              </span>
+            )}
+          </div>
+          <div className="mt-1 flex items-center gap-1.5">
+            {isLoading || !data ? (
+              <Shimmer className="h-3 w-20" />
+            ) : (
+              <>
+                <span className="font-mono text-[11px] text-text-secondary num-tabular">
+                  {data.price.toLocaleString("id-ID")}
+                </span>
+                <span
+                  className={cn(
+                    "font-mono text-[10.5px] font-semibold num-tabular",
+                    data.pct_change >= 0 ? "text-bullish" : "text-bearish",
+                  )}
+                >
+                  {data.pct_change >= 0 ? "+" : ""}
+                  {data.pct_change.toFixed(2)}%
+                </span>
+              </>
+            )}
+          </div>
+        </Link>
+        <button
+          type="button"
+          onClick={handleRemove}
+          disabled={isRemoving}
+          aria-label={`Hapus ${kode} dari watchlist`}
+          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded text-text-faint transition-colors hover:bg-bg-secondary hover:text-bearish disabled:opacity-50"
+        >
+          <X className="h-3 w-3" aria-hidden />
+        </button>
+      </div>
+      {showDescription && (
+        <p className="line-clamp-2 text-[11.5px] leading-snug text-text-muted">
+          {description}
+        </p>
+      )}
+    </article>
+  );
+}
+
 export function WatchlistSection() {
-  const { codes } = useWatchlist();
+  const { items } = useGetWatchlist();
+  // Backend doesn't promise wire order; `order` is the source of
+  // truth (sparse-tolerant per the schema). `.slice()` keeps the
+  // sort from mutating React's state array.
+  const codes = items
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((item) => item.ticker_code);
+  const visibleCodes = codes.slice(0, WATCHLIST_LIMIT);
+  const isAtLimit = codes.length >= WATCHLIST_LIMIT;
 
-  const items = useMemo(() => {
-    return codes
-      .map((kode) => {
-        const stock = getStockByKode(kode);
-        const recap = getRecapForStock(kode, TODAY_ISO);
-        if (!stock) return null;
-        return { stock, recap };
-      })
-      .filter((it): it is NonNullable<typeof it> => it !== null);
-  }, [codes]);
-
-  if (items.length === 0) return null;
-
-  // Aggregate: most discussed news from the watchlist
-  const topNews = items
-    .map((it) => it.recap)
-    .filter((r): r is NonNullable<typeof r> => r !== undefined)
-    .sort((a, b) => b.jumlahBerita - a.jumlahBerita)
-    .slice(0, 5);
+  if (codes.length === 0) return null;
 
   return (
     <section aria-label="Watchlist kamu" className="mb-5">
@@ -44,126 +116,43 @@ export function WatchlistSection() {
           <div className="mb-0.5 flex items-center gap-1.5">
             <Sparkles className="h-3.5 w-3.5 text-brand" aria-hidden />
             <span className="label text-text-secondary">Watchlist kamu</span>
-            <span className="font-mono text-[10.5px] text-text-muted">
-              · {items.length} saham
+            <span
+              className={cn(
+                "font-mono text-[10.5px]",
+                // At the cap the counter shifts to `text-text-
+                // secondary` so the fullness reads as deliberate
+                // state, not just a quieter color.
+                isAtLimit ? "text-text-secondary" : "text-text-muted",
+              )}
+            >
+              · {codes.length}/{WATCHLIST_LIMIT} saham
             </span>
           </div>
           <h2 className="text-[15px] font-bold tracking-tight text-text-primary">
             Recap saham yang kamu pantau
           </h2>
         </div>
-        <Link
-          href="/watchlist"
-          className="inline-flex items-center gap-1 font-mono text-[10.5px] font-semibold text-text-muted transition-colors hover:text-brand"
-        >
-          Lihat semua
-          <ChevronRight className="h-3 w-3" aria-hidden />
-        </Link>
+        {/* Same brand-primary button as the /watchlist page header so
+            the two entry points read as one action. Hidden at the cap:
+            the only path to add then is to remove a row from the grid
+            first, and the empty-state CTA on /watchlist is unaffected
+            because empty-state implies zero rows (never at the cap). */}
+        {!isAtLimit && (
+          <Link
+            href="/watchlist"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-brand px-3 text-[12.5px] font-semibold text-bg-primary transition-colors hover:bg-brand-hover"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            Tambah saham
+          </Link>
+        )}
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        {items.slice(0, 6).map(({ stock, recap }) => {
-          const positive = stock.changePercent >= 0;
-          const href = `/stock/${stock.kode}`;
-          return (
-            <Link
-              key={stock.kode}
-              href={href}
-              className="group flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-3 transition-all hover:border-border-strong hover:shadow-card-hover"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-baseline gap-1.5">
-                  <span className="font-mono text-[15px] font-bold tracking-tighter text-text-primary group-hover:text-brand">
-                    {stock.kode}
-                  </span>
-                  <span className="truncate text-[10.5px] text-text-muted">{stock.nama}</span>
-                </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="font-mono text-[11px] text-text-secondary num-tabular">
-                    {stock.price.toLocaleString("id-ID")}
-                  </span>
-                  <span
-                    className={cn(
-                      "font-mono text-[10.5px] font-semibold num-tabular",
-                      positive ? "text-bullish" : "text-bearish",
-                    )}
-                  >
-                    {positive ? "+" : ""}
-                    {stock.changePercent.toFixed(2)}%
-                  </span>
-                  {recap && (
-                    <SentimentBadge sentiment={recap.sentimen} size="sm" showLabel={false} />
-                  )}
-                </div>
-              </div>
-              <ArrowUpRight
-                className="h-3.5 w-3.5 shrink-0 text-text-faint transition-colors group-hover:text-brand"
-                aria-hidden
-              />
-            </Link>
-          );
-        })}
-
-        {/* Show a CTA tile if user has 0-5 stocks */}
-        {items.length < 6 && (
-          <Link
-            href="/watchlist"
-            className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-bg-secondary/40 p-3 text-center transition-colors hover:border-brand hover:bg-bg-secondary"
-          >
-            <Plus className="h-4 w-4 text-text-faint" aria-hidden />
-            <span className="text-[12px] font-semibold text-text-primary">
-              Tambah saham
-            </span>
-            <span className="font-mono text-[10px] text-text-muted">
-              Buka watchlist
-            </span>
-          </Link>
-        )}
+        {visibleCodes.map((kode) => (
+          <WatchlistItemCard key={kode} kode={kode} />
+        ))}
       </div>
-
-      {/* Top news from watchlist */}
-      {topNews.length > 0 && (
-        <div className="mt-3 overflow-hidden rounded-lg border border-border bg-bg-secondary/50">
-          <header className="flex items-center gap-1.5 border-b border-border bg-bg-tertiary px-3 py-1.5">
-            <Newspaper className="h-3 w-3 text-brand" aria-hidden />
-            <span className="label">Berita terbaru dari watchlist</span>
-            <span className="ml-auto font-mono text-[10px] text-text-faint">
-              {topNews.length} cerita · {formatDate(TODAY_ISO)}
-            </span>
-          </header>
-          <ul className="divide-y divide-border">
-            {topNews.map((r) => {
-              const href = `/stock/${r.sahamKode}`;
-              return (
-              <li key={r.id}>
-                <Link
-                  href={href}
-                  className="group flex items-center gap-2 px-3 py-2 transition-colors hover:bg-bg-tertiary"
-                >
-                  <span className="font-mono text-[10.5px] font-semibold uppercase tracking-widest text-text-faint num-tabular">
-                    #{r.sahamKode}
-                  </span>
-                  <span className="line-clamp-1 flex-1 text-[12.5px] text-text-primary group-hover:text-brand">
-                    {r.ringkasan.slice(0, 120)}
-                    {r.ringkasan.length > 120 ? "…" : ""}
-                  </span>
-                  <span className="font-mono text-[10px] text-text-muted">
-                    {r.jumlahBerita} art
-                  </span>
-                </Link>
-              </li>
-              );
-            })}
-          </ul>
-        </div>
-      )}
     </section>
   );
-}
-
-function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-  });
 }

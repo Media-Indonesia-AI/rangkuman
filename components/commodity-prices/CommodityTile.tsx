@@ -83,7 +83,10 @@ function periodChangePercent(
  */
 export function CommodityTile({ commodity, style }: CommodityTileProps) {
   const Icon = iconFor(commodity);
-  const { data: historyPoints } = useCommodityHistorical(commodity.symbol, "1M");
+  const { data: historyPoints, isLoading: isHistoryLoading } = useCommodityHistorical(
+    commodity.symbol,
+    "1M",
+  );
   // Period change from the wire's own historical series. Null
   // while the fetch is in flight (or on error) — we fall back
   // to the mapper's stocks-derived value in that case so the
@@ -135,14 +138,17 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
         </span>
       </div>
 
-      {/* Sparkline — very compact. Falls back to the chart's
-       *  empty-state div while the per-symbol historical fetch
-       *  is in flight (same visual as before data arrives). */}
+      {/* Sparkline — very compact. Renders a pulsing shimmer
+       *  placeholder while the per-symbol historical fetch is in
+       *  flight so the tile's height stays stable and the loading
+       *  window reads as "data on its way" rather than an empty
+       *  bar. Once the fetch settles the real chart swaps in. */}
       <SparklineChart
         data={rates}
         positive={positive}
         height={18}
         showArea
+        isLoading={isHistoryLoading}
       />
 
       {/* Related stocks footer — single line, very small */}

@@ -14,6 +14,16 @@ import { StoryTimeline } from "./StoryTimeline";
  *  timeline which reads the headline's embedded `stories` payload. */
 export function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
   const topic = story.topics[0]?.name;
+  
+  const latestRecapDate =
+    story.stories && story.stories.length > 0
+      ? story.stories.reduce(
+          (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+          "",
+        )
+      : "";
+  const updateTimestamp = latestRecapDate || story.updated_at || story.created_at;
+
   return (
     <Link
       href={`/story/${story.id}`}
@@ -47,26 +57,14 @@ export function FeaturedStory({ story }: { story: HeadlineLast7DaysItem }) {
         <div className="flex items-center gap-2">
           <span className="inline-flex items-center gap-1 font-mono text-[10.5px] text-text-muted">
             <Clock className="h-3 w-3" aria-hidden />
-            Update {relativeUpdated(story.created_at)}
+            Update {relativeUpdated(updateTimestamp)}
           </span>
-          {topic ? (
+          {topic && (
             <span className="rounded border border-border bg-bg-tertiary px-1.5 py-0.5 font-mono text-[9.5px] text-text-secondary">
               {topic}
             </span>
-          ) : (
-            <NotAvailable />
           )}
         </div>
-        {/* Price move "sejak story" — driven by
-            `pct_change_since_story` on the headline. Falls back to
-            `n/a` when the field is absent (older responses). */}
-        <span className="inline-flex items-center gap-1 font-mono text-[11px] text-text-faint">
-          {story.pct_change_since_story !== undefined ? (
-            <PctChangeChip pct={story.pct_change_since_story} />
-          ) : (
-            <NotAvailable />
-          )}
-        </span>
       </div>
     </Link>
   );

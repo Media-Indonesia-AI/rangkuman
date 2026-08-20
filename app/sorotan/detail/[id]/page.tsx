@@ -1,0 +1,166 @@
+import type { Metadata } from "next";
+import { headers } from "next/headers";
+import { SorotanDetailPage } from "@/components/sorotan-detail";
+import { loadHeadlineById } from "@/lib/api/cache";
+import { clampDescription } from "@/lib/util/clampDescription";
+
+interface PageProps {
+  params: { id: string };
+}
+
+interface BackLink {
+  label: string;
+  href: string;
+}
+
+/**
+ * Build the `<meta name="og:*">` and Twitter Card tags for this
+ * route. Telegram, WhatsApp, X, LinkedIn, and Slack all fetch a
+ * shared URL and read these tags to render the link preview —
+ * without them the shared link shows only the bare URL.
+ *
+ * `loadHeadlineById` is called in a try/catch because if the API
+ * is unreachable we still want to emit valid `<meta>` tags
+ * (Telegram in particular drops the whole preview when one tag
+ * is broken). On error we emit route-specific fallback copy —
+ * "Cerita · Rangkuman" / "Rangkuman cerita harian dari 11 sumber
+ * media." — which is more accurate than letting Next.js fall back
+ * to the root layout's generic brand metadata.
+ */
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  let headline = "Cerita · Rangkuman";
+  let description = "Rangkuman cerita harian dari 11 sumber media.";
+  let topics: string[] = [];
+  
+  const resolvedParams = await params;
+  const id = resolvedParams.id;
+  
+  try {
+    const detail = await loadHeadlineById(id);
+    if (detail.title) headline = detail.title;
+    if (detail.summary) description = detail.summary;
+    topics = (detail.topics ?? [])
+      .map((t) => t.name)
+      .filter((name): name is string => Boolean(name));
+  } catch {
+    // API unreachable — emit route-specific fallback so the share
+    // preview still reflects this is a story page, not the generic
+    // brand default from the root layout.
+  }
+  // Telegram / WhatsApp / X / LinkedIn / Slack each clip the preview
+  // description to ~160 chars. Clamping here keeps the rendered
+  // preview on a clean sentence boundary instead of mid-word.
+  const clippedDescription = clampDescription(description);
+  // Relative paths resolve against metadataBase. `trailingSlash: true`
+  // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
+  const canonical = `/sorotan/detail/${id}/`;
+  return {
+    title: `${headline}`,
+    description: clippedDescription,
+    keywords: topics,
+    alternates: { canonical },
+    openGraph: {
+      type: "article",
+      title: headline,
+      description: clippedDescription,
+      siteName: "Rangkuman",
+      locale: "id_ID",
+      url: canonical,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: headline,
+      description: clippedDescription,
+    },
+  };
+}
+
+/**
+ * Map the inbound `Referer` header to a (label, href) pair for the
+ * detail page's breadcrumb. Mirrors the entry-point list from
+ * `app/story/[id]/page.tsx`. Known entry points today:
+ *
+ *   - `/crypto`               — recap tab on `/components/crypto-page/CryptoRecapTab.tsx`
+ *   - `/saham`                — recap tab on `/app/saham/page.tsx`
+ *   - `/stock/[kode]`         — `<NewsTimeline />` on the stock page
+ *                               (`app/stock/[kode]/StockDetailPage.tsx`)
+ *   - `/sorotan`, `/sorotan/detail/[id]` — inter-detail hops and
+ *                               a future `/sorotan` listing (none
+ *                               exists yet, but the path is used
+ *                               by `StoryHero` / `RelatedStoriesList`
+ *                               sidebar links between detail pages)
+ *   - `/`                     — homepage (`/app/HomePage.tsx`) headlines
+ *
+ * Anything else (direct visit, external link, share URL) falls back
+ * to "Kembali ke Beranda" so the breadcrumb never lands on a link
+ * that doesn't exist. The referer is sent by the browser on hard
+ * loads AND by Next.js on RSC payload requests for soft
+ * navigations, so this works for both.
+ */
+function backLinkFromReferer(referer: string | null): BackLink {
+  const FALLBACK: BackLink = { label: "Kembali ke Beranda", href: "/" };
+  if (!referer) return FALLBACK;
+  try {
+    const path = new URL(referer).pathname;
+    if (path === "/crypto" || path.startsWith("/crypto/")) {
+      return { label: "Kembali ke Crypto", href: "/crypto" };
+    }
+    if (path === "/saham" || path.startsWith("/saham/")) {
+      return { label: "Kembali ke Saham", href: "/saham" };
+    }
+    if (path.startsWith("/stock/")) {
+      // `/stock/BBCA` → back to BBCA. Guard against a trailing
+      // slash or a nested segment producing an empty/odd label.
+      const kode = path.split("/")[2]?.trim();
+      if (kode) {
+        return {
+          label: `Kembali ke ${decodeURIComponent(kode).toUpperCase()}`,
+          href: `/stock/${kode}`,
+        };
+      }
+      return FALLBACK;
+    }
+    if (path === "/sorotan" || path.startsWith("/sorotan/")) {
+      return { label: "Kembali ke Sorotan", href: "/" };
+    }
+    if (path === "/" || path === "") {
+      return { label: "Kembali ke Beranda", href: "/" };
+    }
+    return FALLBACK;
+  } catch {
+    return FALLBACK;
+  }
+}
+
+/**
+ * Thin route entry — defers ALL data fetching to the client-side
+ * `<SorotanDetailPage storyId={...} />` orchestrator. The orchestrator
+ * owns `useHeadlineId()` (parent headline) + `useListStory(headline_id)`
+ * (related stories) and composes them into a `Highlight` shape that
+ * the page widgets consume.
+ *
+ * Returning `notFound()` from the body would require a synchronous
+ * check that doesn't exist on the client — instead, the orchestrator
+ * handles the empty-state via the `useHeadlineId` hook's
+ * `{ detail: null, isLoading }` shape, and the widgets naturally
+ * render nothing for empty arrays. The page renders an empty body
+ * for invalid IDs rather than 404-ing — Next.js's `notFound()` is
+ * reserved for the rare case where the API itself fails (the
+ * orchestrator surfaces that as "no content" and the global
+ * `<ErrorBoundary />` can catch it).
+ *
+ * Also reads the inbound `Referer` header (server-side, via
+ * `headers()`) to compute the breadcrumb's back-link label + href
+ * so it follows where the visitor came from instead of being
+ * hardcoded.
+ */
+export default function SorotanDetailRoutePage({ params }: PageProps) {
+  const referer = headers().get("referer");
+  const backLink = backLinkFromReferer(referer);
+  return (
+    <SorotanDetailPage
+      storyId={params.id}
+      backLabel={backLink.label}
+    />
+  );
+}

@@ -50,7 +50,7 @@ Buka di browser. Test:
 - [ ] Homepage load
 - [ ] Navbar: klik semua tab (Saham, Bisnis, Ekonomi, Kebijakan, Global, Crypto)
 - [ ] Theme toggle: switch light/dark
-- [ ] Story page: buka `/crypto/detail/[id]/`
+- [ ] Story page: buka `/sorotan/detail/[id]/`
 - [ ] Detail page: `/kebijakan/kenaikan-bbm-subsidi/`
 - [ ] localStorage: login (mock), watchlist, saved
 
@@ -174,8 +174,8 @@ rangkuman-news/
 │   ├── crypto/  detail/[id]/        # 50 story pages
 │   ├── stock/[kode]/                 # 34 stock pages
 │   ├── sektor/  sektor/[slug]/       # 12 sector pages
-│   ├── trending/  search/  watchlist/  saved/  login/
-│   └── tentang/  disclaimer/  privasi/  ...  (8 static info pages)
+│   ├── trending/  search/  watchlist/  login/
+│   └── kerjasama/  disclaimer/  privasi/  ...  (7 static info pages)
 │
 ├── components/                       # ~58 React components
 ├── lib/mock/                         # All mock data

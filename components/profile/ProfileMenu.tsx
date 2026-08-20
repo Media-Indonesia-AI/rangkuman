@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  Bookmark,
   ListChecks,
   MessageCircle,
   User,
@@ -31,28 +30,31 @@ type MenuLink = {
   href: string;
   label: string;
   Icon: LucideIcon;
+  /** When `true`, the row is rendered in brand color so it
+   *  stands out from the other account items. Used for the
+   *  Top Up entry point — the primary action on the sidebar. */
+  accent?: boolean;
 };
 
 /** Account-related — rendered under the "Profil lo" section. */
 const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
   { href: "/profile/", label: "Akun", Icon: User },
-  { href: "/profile/top-up/", label: "Top Up", Icon: Wallet },
-  
+  { href: "/profile/top-up/", label: "Top Up", Icon: Wallet, accent: true },
+
 ];
 
 /** Content lists — the user's own collections. Lives outside the
  *  `/profile/` tree (these pages already existed before the side
- *  nav was built): Watchlist is at `/watchlist/` and Saved News
- *  is at `/saved/`. The sidebar just adds a discoverability
- *  path so the user can reach them from the profile area too. */
+ *  nav was built): Watchlist is at `/watchlist/`. The sidebar
+ *  just adds a discoverability path so the user can reach them
+ *  from the profile area too. */
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
-  { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
-  { href: "/saved/", label: "Berita Tersimpan", Icon: Bookmark },
   {
     href: "/profile/whatsapp/",
     label: "Kirim Berita ke WhatsApp",
     Icon: MessageCircle,
   },
+  { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
 ];
 
 /**
@@ -115,9 +117,13 @@ export function ProfileMenu({ userName, userEmail }: ProfileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2.5 py-2 text-[12.5px] font-medium transition-colors",
-                  active
-                    ? "bg-bg-tertiary text-text-primary"
-                    : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
+                  m.accent
+                    ? active
+                      ? "bg-brand-soft text-brand"
+                      : "text-brand hover:bg-brand-soft"
+                    : active
+                      ? "bg-bg-tertiary text-text-primary"
+                      : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
                 )}
               >
                 <m.Icon className="h-3.5 w-3.5" aria-hidden />
@@ -144,9 +150,13 @@ export function ProfileMenu({ userName, userEmail }: ProfileMenuProps) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-2 rounded-md px-2.5 py-2 text-[12.5px] font-medium transition-colors",
-                  active
-                    ? "bg-bg-tertiary text-text-primary"
-                    : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
+                  m.accent
+                    ? active
+                      ? "bg-brand-soft text-brand"
+                      : "text-brand hover:bg-brand-soft"
+                    : active
+                      ? "bg-bg-tertiary text-text-primary"
+                      : "text-text-secondary hover:bg-bg-tertiary hover:text-text-primary",
                 )}
               >
                 <m.Icon className="h-3.5 w-3.5" aria-hidden />

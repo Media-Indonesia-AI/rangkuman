@@ -14,6 +14,8 @@ import {
 } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { GUEST_LOGIN_DIALOG_OPEN_EVENT } from "@/components/GuestLoginDialog";
+import { SESSION_STORAGE_KEYS, STORAGE_KEYS } from "@/lib/storageKeys";
+import { safeGetItem } from "@/lib/util/safeLocalStorage";
 import { cn } from "@/lib/utils";
 
 type FieldErrors = {
@@ -66,8 +68,8 @@ function LoginPageContent() {
       console.log("[login-success] reached success path");
       console.log("[login-success] current pathname:", window.location.pathname);
       console.log("[login-success] redirect target:", target);
-      console.log("[login-success] sessionStorage prev-path:", window.sessionStorage.getItem("rangkuman:auth-prev-path"));
-      console.log("[login-success] localStorage user:", window.localStorage.getItem("beritainvestor:user"));
+      console.log("[login-success] sessionStorage prev-path:", window.sessionStorage.getItem(SESSION_STORAGE_KEYS.authPrevPath));
+      console.log("[login-success] localStorage user:", safeGetItem(STORAGE_KEYS.user));
       console.log("[login-success] firing window.location.assign…");
       window.location.assign(target);
       // Self-diagnostic: if we're still on /login 3 seconds later, the
@@ -86,8 +88,8 @@ function LoginPageContent() {
             pathname: window.location.pathname,
             href: window.location.href,
             readyState: document.readyState,
-            sessionStorage_prev: window.sessionStorage.getItem("rangkuman:auth-prev-path"),
-            localStorage_user: window.localStorage.getItem("beritainvestor:user"),
+            sessionStorage_prev: window.sessionStorage.getItem(SESSION_STORAGE_KEYS.authPrevPath),
+            localStorage_user: safeGetItem(STORAGE_KEYS.user),
           });
         }
       }, 3000);

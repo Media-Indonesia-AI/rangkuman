@@ -17,6 +17,7 @@
  * caller's requested date may differ from it on fallback days.
  */
 
+import { hariIniIso } from "@/lib/util/formatDate";
 import { todayIsoDate } from "../client";
 import { api } from "../client";
 import type { ForeignStocksResponse } from "../types/stocks";
@@ -39,13 +40,9 @@ function key(startDate?: string, endDate?: string): string {
 
 /** Shift an ISO date string (`YYYY-MM-DD`) by `days`, local-tz. */
 function shiftIsoDate(dateStr: string, days: number): string {
-  const [y, m, d] = dateStr.split("-").map(Number);
-  const date = new Date(y, m - 1, d);
-  date.setDate(date.getDate() + days);
-  const yyyy = date.getFullYear();
-  const mm = String(date.getMonth() + 1).padStart(2, "0");
-  const dd = String(date.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
+  const result = new Date(dateStr); // Clone the date to prevent mutating the original
+  result.setDate(result.getDate() + days);
+  return result.toISOString();
 }
 
 /** How many days we walk back looking for a non-503 response before giving up. */

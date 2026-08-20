@@ -84,8 +84,6 @@ export function StockCardFeatured({
             <SentimentBadge sentiment={recap.sentimen} size="sm" />
           </div>
           <StockCardActions
-            id={recap.sahamKode}
-            publishedAt={recap.tanggal}
             tone="dark"
             href={href}
             title={`${recap.sahamKode} — Rangkuman`}

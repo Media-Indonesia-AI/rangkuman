@@ -81,8 +81,6 @@ export function StockCardFeed({
             </h3>
           </div>
           <StockCardActions
-            id={recap.sahamKode}
-            publishedAt={recap.tanggal}
             tone="dark"
             href={href}
             title={`${recap.sahamKode} — Rangkuman`}

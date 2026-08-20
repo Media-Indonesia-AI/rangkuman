@@ -3,14 +3,20 @@
  * widgets (not in `lib/mock/crypto.ts`) because the page-level
  * stories carry page-specific display fields (`timeAgo`, `readTime`,
  * `flag`, the per-story title/summary) that are unrelated to the
- * structured `CoinRecap` archive consumed by `/crypto/detail/[id]` and
+ * structured `CoinRecap` archive consumed by `/sorotan/detail/[id]` and
  * `/crypto/{date}` views.
  */
 
 import type { Sentimen } from "@/lib/mock/crypto";
-import type { StoryItem, StoryTopic } from "@/lib/api";
+import type { StoryItem } from "@/lib/api";
 import { toSentimen } from "@/lib/util/sentiment";
 import { getRelativeTime } from "@/lib/util/formatDate";
+import { findCryptoTopicId } from "@/lib/util/topicId";
+
+/** Re-exported so existing imports (`from "@/components/crypto-page/cryptoStories"`)
+ *  keep working — the canonical definition now lives in
+ *  `lib/util/topicId.ts` alongside its `findSahamTopicId` mirror. */
+export { findCryptoTopicId };
 
 export interface CryptoStory {
   id: string;
@@ -148,42 +154,11 @@ export const COIN_KODE_TO_STORY_ID: Record<string, string> = {
 
 /**
  * Resolve the `topic_id` that drives the `/crypto` page's live
- * headline feed. Prefers the canonical **slug** match (URL-safe
- * identifier, stable across renames), then falls back to a
- * case-insensitive **name** match. If neither lands on a topic,
- * the first entry in the list wins as a resilience fallback so
- * the page renders even before a "crypto" topic is registered.
- *
- * Used by `<CryptoRecapTab />` to filter `useHeadlines()`; the
- * returned id flows into the `topic_id=eq:<id>` filter.
- *
- * Return shape mirrors the helper's callers: `null` only when
- * the topics list is empty (still loading or backend returned
- * nothing). Every other path returns a string id.
+ * headline feed. Implementation lives in `lib/util/topicId.ts`
+ * (see `findCryptoTopicId`); this module re-exports it for back-
+ * compat with existing `from "@/components/crypto-page/cryptoStories"`
+ * imports.
  */
-export function findCryptoTopicId(
-  topics: readonly StoryTopic[],
-): string | null {
-  // 1. Canonical slug match — preferred since slugs are stable,
-  //    URL-friendly identifiers the backend exposes as the
-  //    authoritative foreign key reference.
-  const slugHit = topics.find((t) => t.slug === "crypto");
-  if (slugHit) return slugHit.id;
-
-  // 2. Case-insensitive name match — covers backends that ship
-  //    `name: "Crypto"` / `"crypto"` / `"CRYPTO"` while the slug
-  //    is something else (e.g. `"crypto-market"`).
-  const nameHit = topics.find(
-    (t) => t.name.trim().toLowerCase() === "crypto",
-  );
-  if (nameHit) return nameHit.id;
-
-  // 3. First-topic fallback — keeps the page rendering even if
-  //    no "crypto"-tagged topic exists in the dataset yet. The
-  //    caller treats any non-null id as "fetch with this filter";
-  //    we'd rather show *something* than wait forever.
-  return topics[0]?.id ?? null;
-}
 
 /**
  * Best-effort `StoryItem` (live wire) → `CryptoStory` (card

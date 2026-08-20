@@ -43,10 +43,56 @@ import {
 } from "./stocks";
 import { getListStory } from "./story";
 import { getTopic } from "./topic";
+import { doReqTopup, getTopupBundle, getTransactionHistory, getWallet } from "./wallet";
+import { addToWatchlist, deleteWatchlist, getWatchlist, updateWatchlist } from "./watchlist";
+import { getBroadcastSettings, updateBroadcastSettings } from "./broadcast-settings";
 import type { ApiError } from "./types/error";
+import { STORAGE_KEYS } from "@/lib/storageKeys";
+import { safeGetItem } from "@/lib/util/safeLocalStorage";
 
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://145.79.8.90:3007/v1/";
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
+
+/**
+ * Pick the API base URL for an outbound request based on the runtime
+ * environment.
+ *
+ * - **Client** → uses the public `NEXT_PUBLIC_API_BASE_URL` (or the
+ *   `/api/v1/` fallback), resolved against the page origin by the
+ *   browser. The Next.js middleware (`middleware.ts`) catches the
+ *   `/api/*` prefix and forwards to `API_BACKEND_URL`, injecting the
+ *   shared `X-Token` secret. This avoids exposing the backend host /
+ *   token to the browser and skips CORS preflight.
+ *
+ * - **Server** → bypasses the middleware entirely and calls
+ *   `API_BACKEND_URL` directly with the shared token. The server-side
+ *   path matters for `generateMetadata()` (which runs in a Node
+ *   fetch context, not a browser) — the relative `/api/v1/` URL
+ *   would otherwise hit nginx in production, and nginx has no proxy
+ *   for `/api/` (it only serves the static `.next/standalone/`
+ *   output), so the fetch would 404. Calling the backend directly
+ *   also avoids the double-hop (Next.js → middleware → backend).
+ */
+function getApiBaseUrl(): string {
+  if (typeof window === "undefined") {
+    const backend = process.env.API_BACKEND_URL;
+    if (backend) return `${backend.replace(/\/+$/, "")}/v1/`;
+  }
+  return process.env.NEXT_PUBLIC_API_BASE_URL ?? "/api/v1/";
+}
+
+/**
+ * Server-only header that authenticates the server-to-backend hop.
+ * The browser never sees this — client requests go through the
+ * middleware, which adds the same header. Returns `{}` on the
+ * client (where `process.env.API_INTERNAL_TOKEN` is also undefined
+ * since it's not `NEXT_PUBLIC_*`).
+ */
+function getInternalTokenHeader(): Record<string, string> {
+  if (typeof window !== "undefined") return {};
+  const token = process.env.API_INTERNAL_TOKEN;
+  return token ? { "X-Token": token } : {};
+}
 
 /**
  * Build the HTTP Basic auth header from the active session stored in
@@ -58,9 +104,9 @@ export const API_BASE_URL =
  */
 function getAuthHeader(): Record<string, string> {
   if (typeof window === "undefined") return {};
+  const raw = safeGetItem(STORAGE_KEYS.user);
+  if (!raw) return {};
   try {
-    const raw = window.localStorage.getItem("beritainvestor:user");
-    if (!raw) return {};
     const session = JSON.parse(raw) as {
       email?: string;
       password?: string;
@@ -86,7 +132,7 @@ export async function request<T>(
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
-  const url = `${API_BASE_URL}${path}`;
+  const url = `${getApiBaseUrl()}${path}`;
   let res: Response;
   try {
     res = await fetch(url, {
@@ -94,6 +140,7 @@ export async function request<T>(
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
+        ...getInternalTokenHeader(),
         ...getAuthHeader(),
         ...(init.headers ?? {}),
       },
@@ -118,17 +165,26 @@ export async function request<T>(
     throw { status: res.status, message, body } satisfies ApiError;
   }
 
+  // 204 No Content — RFC 7231: no body, so don't try to parse
+  // JSON. Return `null` cast to T; callers handling endpoints that
+  // may legitimately return 204 (e.g. `DELETE watchlist`) should
+  // declare their return type as `T | null` and check the success
+  // signal the mutation hook provides (not the body's presence).
+  if (res.status === 204) {
+    return null as T;
+  }
+
   return (await res.json()) as T;
 }
 
-/** Local-tz today in `YYYY-MM-DD` — used as the default date param. */
-export function todayIsoDate(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd}`;
-}
+/**
+ * Re-exported from `@/lib/util/formatDate` so existing call sites
+ * (default date params in endpoint modules, hook defaults, etc.) keep
+ * importing it from here without churn. The implementation lives with
+ * the other date helpers now; behaviour is unchanged from the previous
+ * in-place definition here.
+ */
+export { todayIsoDate } from "@/lib/util/formatDate";
 
 /**
  * Composite API namespace. Auth + stocks + market endpoints, all
@@ -168,4 +224,17 @@ export const api = {
   getListStory,
   // Topic
   getTopic,
+  // Wallet
+  getTopupBundle,
+  getWallet,
+  getTransactionHistory,
+  doReqTopup,
+  // Watchlist
+  getWatchlist,
+  addToWatchlist,
+  updateWatchlist,
+  deleteWatchlist,
+  // Broadcast settings
+  getBroadcastSettings,
+  updateBroadcastSettings,
 };

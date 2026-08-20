@@ -68,35 +68,21 @@ export function StorySidebar({
  *  metadata line below the title still carries the date and pct
  *  change, with `n/a` fallbacks when the API omits a value. */
 function OtherStoryRow({ story }: { story: HeadlineLast7DaysItem }) {
-  const pct = story?.pct_change_since_story??0;
-  const pctColor =
-    pct === undefined
-      ? "text-text-faint"
-      : pct >= 0
-        ? "text-bullish"
-        : "text-bearish";
-  const pctLabel =
-    pct === undefined
-      ? "n/a"
-      : `${pct >= 0 ? "+" : ""}${pct.toFixed(1)}%`;
-
   return (
     <li>
       <Link href={`/story/${story.id}`} className="group block">
         <div className="flex items-start gap-2">
           <span className="shrink-0 rounded border border-brand/30 bg-brand/10 px-1.5 py-0.5 font-mono text-[10px] font-bold tracking-tight text-brand">
-            {story.primary_ticker_code || "n/a"}
+            {story.primary_ticker_code}
           </span>
           <div className="min-w-0 flex-1">
             <span className="block text-[12.5px] font-medium leading-snug text-text-primary transition-colors group-hover:text-brand">
-              {story.title || "n/a"}
+              {story.title}
             </span>
             <div className="mt-1 flex flex-wrap items-center gap-x-1.5 font-mono text-[9.5px] text-text-faint">
               <time dateTime={story.created_at}>
-                {formatSingkat(story.created_at) || "n/a"}
+                {formatSingkat(story.created_at)}
               </time>
-              <span>·</span>
-              <span className={pctColor}>{pctLabel}</span>
             </div>
           </div>
         </div>

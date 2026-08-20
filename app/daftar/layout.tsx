@@ -10,13 +10,11 @@ export const metadata: Metadata = {
     siteName: "Rangkuman",
     locale: "id_ID",
     type: "website",
-    images: [{ url: "/og-default.png", width: 1200, height: 630, alt: "Daftar Rangkuman" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Daftar · Rangkuman",
     description: "Daftar akun Rangkuman untuk menyimpan watchlist saham.",
-    images: ["/og-default.png"],
   },
 };
 

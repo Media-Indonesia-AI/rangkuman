@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Shimmer } from "@/components/Shimmer";
 
 interface SparklineChartProps {
   data: number[];
@@ -7,6 +8,12 @@ interface SparklineChartProps {
   height?: number;
   showArea?: boolean;
   showDots?: boolean;
+  /** When `true`, render a pulsing placeholder in place of the
+   *  sparkline so the loading window reads as "data on its way"
+   *  instead of an empty bar. Caller is responsible for flipping
+   *  this off once `data.length >= 2` — the component trusts the
+   *  flag and doesn't try to infer loading state from the data. */
+  isLoading?: boolean;
 }
 
 /**
@@ -19,7 +26,24 @@ export function SparklineChart({
   height = 40,
   showArea = true,
   showDots = false,
+  isLoading = false,
 }: SparklineChartProps) {
+  // Loading window: the caller knows the fetch is still in flight
+  // and signals that with `isLoading`. We render a pulsing
+  // placeholder matching the chart's final height so the layout
+  // stays stable and the swap to the real sparkline doesn't cause
+  // a vertical shift on resolution. Takes precedence over the
+  // empty-state branch below.
+  if (isLoading) {
+    return (
+      <Shimmer
+        aria-busy="true"
+        className={cn("h-10 w-full rounded", className)}
+        style={{ height }}
+      />
+    );
+  }
+
   if (!data || data.length < 2) {
     return <div className={cn("h-10 w-full", className)} />;
   }

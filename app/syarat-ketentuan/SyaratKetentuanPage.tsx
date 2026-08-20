@@ -10,10 +10,7 @@ export default function SyaratKetentuanPage() {
       description="Dengan mengakses dan menggunakan Rangkuman, lo setuju dengan syarat & ketentuan berikut. Mohon dibaca dengan seksama."
       lastUpdated="2026-06-09"
       related={[
-        { label: "Privasi", href: "/privasi", description: "Kebijakan privasi kami" },
-        { label: "Disclaimer", href: "/disclaimer", description: "Batasan tanggung jawab" },
-        { label: "Tentang", href: "/tentang", description: "Apa itu Rangkuman" },
-        { label: "Kontak", href: "/kontak", description: "Hubungi tim kami" },
+        { label: "Kontak & Kerjasama", href: "/kontak-kerjasama", description: "Hubungi tim kami" },
       ]}
     >
       <h2>1. Penerimaan syarat</h2>
@@ -83,8 +80,7 @@ export default function SyaratKetentuanPage() {
 
       <h2>6. Batasan tanggung jawab</h2>
       <p>
-        Lihat halaman <a href="/disclaimer">Disclaimer</a> untuk detail lengkap. Poin
-        utamanya: kami <strong>tidak</strong> bertanggung jawab atas kerugian finansial
+        Poin utamanya: kami <strong>tidak</strong> bertanggung jawab atas kerugian finansial
         yang timbul dari keputusan investasi yang diambil berdasarkan informasi di
         Rangkuman.
       </p>
@@ -115,7 +111,7 @@ export default function SyaratKetentuanPage() {
 
       <h2>10. Hubungi kami</h2>
       <p>
-        Pertanyaan soal Syarat & Ketentuan? Hubungi <a href="/kontak">halaman Kontak</a>{" "}
+        Pertanyaan soal Syarat & Ketentuan? Hubungi <a href="/kontak-kerjasama">halaman Kontak &amp; Kerjasama</a>{" "}
         atau email <strong>legal@rangkuman.news</strong>.
       </p>
     </InfoPage>

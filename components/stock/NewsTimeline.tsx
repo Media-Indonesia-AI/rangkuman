@@ -1,18 +1,17 @@
 "use client";
 
+import Link from "next/link";
 import { Calendar } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
-import { useHeadlinesLast7Days } from "@/lib/hooks/useHeadlinesLast7Days";
+import { useLast7DaysHeadlines } from "./Last7DaysHeadlinesProvider";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import type { HeadlineLast7DaysItem, StorySentiment } from "@/lib/api";
 
 interface NewsTimelineProps {
-  /** Ticker code the timeline is scoped to (e.g. `"ANTM"`). */
-  kode: string;
-  todayIso: string;
   className?: string;
 }
 
@@ -64,14 +63,15 @@ function StoriesShimmerList() {
  *  desc so the latest leads the cell. When no headlines are available
  *  for the ticker's last-7-days window, shows an empty-widget branch
  *  instead of fabricating a 7-day placeholder grid. */
-export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
+export function NewsTimeline({ className }: NewsTimelineProps) {
   // Last-7-days headlines for this ticker, fetched via the shared
-  // (ticker, date) request cache. `todayIso` (when set) anchors the
-  // window end; otherwise the hook defaults to today.
-  const { data: headlines, isLoading } = useHeadlinesLast7Days(
-    kode,
-    todayIso || undefined,
-  );
+  // (ticker, date) request cache. The fetch is owned by
+  // `<Last7DaysHeadlinesProvider>` so a sibling
+  // `<SentimentSparkline />` shares the same network round-trip
+  // instead of issuing its own. `todayIso` is also read from
+  // context — the provider resolves it once so we don't have to
+  // recompute or accept it as a prop.
+  const { headlines, isLoading, todayIso } = useLast7DaysHeadlines();
 
   const isFetchingStories = isLoading;
 
@@ -117,7 +117,7 @@ export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
 
   return (
     <section
-      className={cn("overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
+      className={cn("relative overflow-hidden rounded-lg border border-border bg-bg-secondary", className)}
       aria-label="Timeline berita 7 hari"
     >
       <header className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2">
@@ -200,29 +200,41 @@ export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
                     {dayStories.map((s) => (
                       <li
                         key={s.id}
-                        className="rounded-md border border-border bg-bg-tertiary/40 p-2.5"
+                        className="rounded-md border border-border bg-bg-tertiary/40 p-2.5 transition-colors hover:border-border-strong hover:bg-bg-tertiary"
                       >
-                        <div className="mb-1 flex flex-wrap items-center gap-1.5">
-                          <span
-                            className={cn(
-                              "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
-                              sentimentPillClass(s.sentiment),
-                            )}
-                          >
-                            {s.sentiment}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-muted">
-                            {format(parseISO(s.created_at), "HH:mm", {
-                              locale: idLocale,
-                            })}
-                          </span>
-                          <span className="font-mono text-[10px] text-text-muted">
-                            {s.keywords.length} kata kunci
-                          </span>
-                        </div>
-                        <p className="text-[11.5px] leading-snug text-text-primary">
-                          {s.title}
-                        </p>
+                        {/* Whole-row link to the Sorotan detail page
+                            for this headline. The `<Link>` wraps
+                            the chips + title so a click anywhere on
+                            the row navigates; `aria-label` gives
+                            screen readers the headline text since
+                            the link has no visible link copy. */}
+                        <Link
+                          href={`/sorotan/detail/${s.id}`}
+                          aria-label={s.title}
+                          className="block"
+                        >
+                          <div className="mb-1 flex flex-wrap items-center gap-1.5">
+                            <span
+                              className={cn(
+                                "rounded px-1 py-px font-mono text-[8.5px] font-semibold uppercase tracking-widest",
+                                sentimentPillClass(s.sentiment),
+                              )}
+                            >
+                              {s.sentiment}
+                            </span>
+                            <span className="font-mono text-[10px] text-text-muted">
+                              {format(parseISO(s.created_at), "HH:mm", {
+                                locale: idLocale,
+                              })}
+                            </span>
+                            <span className="font-mono text-[10px] text-text-muted">
+                              {s.keywords.length} kata kunci
+                            </span>
+                          </div>
+                          <p className="text-[11.5px] leading-snug text-text-primary">
+                            {s.title}
+                          </p>
+                        </Link>
                       </li>
                     ))}
                   </ul>
@@ -239,6 +251,7 @@ export function NewsTimeline({ kode, todayIso, className }: NewsTimelineProps) {
         })}
       </ol>
       )}
+      <LoginPromptOverlay title="Masuk dulu untuk lihat timeline berita" />
     </section>
   );
 }

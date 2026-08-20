@@ -9,6 +9,7 @@ import {
   Percent,
 } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { useKeyMetrics } from "@/lib/hooks/useKeyMetrics";
 import { formatCompactIdr } from "@/lib/util/formatNumber";
 import { cn } from "@/lib/utils";
@@ -137,7 +138,7 @@ export function KeyMetrics({ kode, className }: KeyMetricsProps) {
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-lg border border-border bg-bg-secondary",
+        "relative overflow-hidden rounded-lg border border-border bg-bg-secondary",
         className,
       )}
       aria-label="Key metrics"
@@ -230,6 +231,7 @@ export function KeyMetrics({ kode, className }: KeyMetricsProps) {
           }
         />
       </div>
+      <LoginPromptOverlay title="Masuk dulu untuk lihat key metrics" />
     </section>
   );
 }

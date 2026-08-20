@@ -4,12 +4,12 @@ import {
   Calendar,
   Newspaper,
   Clock,
-  Tag,
 } from "lucide-react";
 import Link from "next/link";
 import { Shimmer } from "@/components/Shimmer";
+import { ShareButton } from "@/components/ShareButton";
 import { cn } from "@/lib/utils";
-import { getRelativeTime } from "@/lib/util/formatDate";
+import { getRelativeTime, todayIsoDate } from "@/lib/util/formatDate";
 import type { HeadlineDetail } from "@/lib/api";
 import { NotAvailable, STATUS_ICON, sentimentMeta } from "./shared";
 
@@ -23,19 +23,27 @@ interface StoryHeroProps {
    *  date) aren't on the endpoint and stay `n/a`. */
   detail: HeadlineDetail | null;
   isLoading: boolean;
+  /** Absolute URL of this story-detail page, used by the share
+   *  button so WhatsApp/Telegram/clipboard receive a fully-qualified
+   *  link (those targets reject relative URLs). Required to render
+   *  the share affordance; the share button is hidden when the URL
+   *  hasn't resolved yet (SSR pass + first hydration). The parent
+   *  (`app/story/[id]/StoryDetailPage`) reads `window.location.origin`
+   *  inside a `useEffect` and threads it down here. */
+  shareUrl?: string;
 }
 
 /** Hero block — title, brief, stats row, and price-impact strip.
  *  Renders one of three states based on `isLoading` / `detail`:
  *  skeleton while fetching, the headline when present, or a
  *  centered empty state when the id didn't resolve. */
-export function Hero({ detail, isLoading }: StoryHeroProps) {
+export function Hero({ detail, isLoading, shareUrl }: StoryHeroProps) {
   return (
     <section className="mb-6 rounded-lg border border-border-strong bg-bg-secondary/40 p-4 sm:p-5">
       {isLoading ? (
         <HeroSkeleton />
       ) : detail ? (
-        <HeroFeatured detail={detail} />
+        <HeroFeatured detail={detail} shareUrl={shareUrl} />
       ) : (
         <HeroEmpty />
       )}
@@ -43,24 +51,26 @@ export function Hero({ detail, isLoading }: StoryHeroProps) {
   );
 }
 
-function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
+function HeroFeatured({
+  detail,
+  shareUrl,
+}: {
+  detail: HeadlineDetail;
+  shareUrl?: string;
+}) {
   const meta = sentimentMeta[detail.sentiment];
   const StatusIcon = STATUS_ICON[detail.sentiment];
 
-  // Liputan count is the sum of articles across all related
-  // stories — `HeadlineDetail` doesn't expose a top-level article
-  // count, but each `EmbeddedStory.articles[]` does. When the
-  // endpoint grows a `story_count` field on the parent headline,
-  // this reducer can be replaced with `detail.story_count`.
-  const articleCount = detail.stories.reduce(
-    (sum, s) => sum + (s.articles?.length ?? 0),
-    0,
+  // Most recent `recap_date` across related stories — `reduce` on
+  // an empty array falls through to the initial `""`, so no length
+  // guard is needed. Used as the prefer-end of the update chain
+  // (most recent story timestamp beats headline's own update / create).
+  const latestRecapDate = detail.stories.reduce(
+    (latest, s) => (s.recap_date > latest ? s.recap_date : latest),
+    "",
   );
+  const updateTimestamp = latestRecapDate || detail.updated_at || detail.created_at;
   const updateDate = detail.updated_at ?? detail.created_at;
-  // Total stories drives the timeline dot count below. When the
-  // endpoint grows a `story_count` field on the parent headline,
-  // this can be replaced with `detail.story_count`.
-  const totalStories = detail.stories.length;
 
   // Berjalan (duration) — span from the earliest related story
   // to the headline's last update. The single-relative-time
@@ -93,7 +103,7 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
       ? Math.max(
           0,
           Math.floor(
-            (new Date(updateDate).getTime() -
+            (new Date(todayIsoDate()).getTime() -
               new Date(earliestStoryDate).getTime()) /
               86_400_000,
           ),
@@ -104,7 +114,11 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
     <>
       {/* Status + ticker + sector badges — `ticker` and `sektor`
           come straight off `HeadlineDetail`. Sector still falls
-          back to `n/a` since the endpoint doesn't carry it yet. */}
+          back to `n/a` since the endpoint doesn't carry it yet.
+          Share button sits at the right edge of this row (via
+          `ml-auto`) — only rendered once the parent has resolved
+          the absolute URL (SSR + first hydration pass receive
+          `shareUrl` undefined). */}
       <div className="mb-2.5 flex flex-wrap items-center gap-1.5">
         <span
           className={cn(
@@ -121,9 +135,15 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         >
           {detail.primary_ticker_code}
         </Link>
-        <span className="rounded border border-border bg-bg-tertiary/60 px-2 py-0.5 font-mono text-[10px] text-text-faint">
-          sektor <span className="text-text-muted">n/a</span>
-        </span>
+        {shareUrl && (
+          <div className="ml-auto">
+            <ShareButton
+              url={shareUrl}
+              title={detail.title}
+              variant="compact"
+            />
+          </div>
+        )}
       </div>
 
       {/* Title + brief */}
@@ -134,15 +154,11 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
         {detail.summary}
       </p>
 
-      {/* Timeline — one dot per `detail.stories[]` entry, connected
-          by a thin line. The active (most recent) dot is enlarged
-          and brand-colored; the rest are smaller muted markers.
-          Renders nothing when there are no stories to show. */}
-      {/* <StoryTimeline totalStories={totalStories} /> */}
-
-      {/* Stats row — `liputan` (summed) and `update` come from the
-          API; `durasi` and `dimulai` are `n/a` since the endpoint
-          doesn't carry a start date yet. */}
+      {/* Stats row — `update` comes from the API; `durasi` and
+          `dimulai` are `n/a` since the endpoint doesn't carry a
+          start date yet. `liputan` (summed article count across
+          related stories) is currently hidden — re-enable when the
+          liputan section comes back. */}
       <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-border/60 pt-3 text-[11.5px]">
         <div className="flex items-center gap-1.5">
           <Calendar className="h-3.5 w-3.5 text-text-faint" aria-hidden />
@@ -154,19 +170,10 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
           </span>
         </div>
         <div className="flex items-center gap-1.5">
-          <Newspaper className="h-3.5 w-3.5 text-text-faint" aria-hidden />
-          <span className="font-mono text-text-secondary">
-            <span className="font-bold text-text-primary">
-              {articleCount}
-            </span>{" "}
-            liputan
-          </span>
-        </div>
-        <div className="flex items-center gap-1.5">
           <Clock className="h-3.5 w-3.5 text-text-faint" aria-hidden />
           <span className="font-mono text-text-secondary">
             <span className="font-bold text-text-primary">
-              {getRelativeTime(updateDate)}
+              {getRelativeTime(updateTimestamp)}
             </span>
           </span>
         </div>
@@ -184,35 +191,40 @@ function HeroFeatured({ detail }: { detail: HeadlineDetail }) {
           undefined check would let `null` through and crash on
           `pct.toFixed(1)`. `!= null` covers both nullish values
           and TypeScript narrows `pct` to `number` automatically
-          inside the IIFE. */}
+          inside `<PriceImpactStrip />`. */}
       {detail.pct_change_since_story != null && (
-        <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
-          {(() => {
-            const pct = detail.pct_change_since_story;
-            const isPositive = pct >= 0;
-            const Icon = isPositive ? TrendingUp : TrendingDown;
-            const color = isPositive ? "text-bullish" : "text-bearish";
-            return (
-              <>
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums",
-                    color,
-                  )}
-                >
-                  <Icon className="h-4 w-4" aria-hidden />
-                  {isPositive ? "+" : ""}
-                  {pct.toFixed(1)}%
-                </span>
-                <span className="font-mono text-[10.5px] text-text-muted">
-                  Pergerakan harga sejak story
-                </span>
-              </>
-            );
-          })()}
-        </div>
+        <PriceImpactStrip pct={detail.pct_change_since_story} />
       )}
     </>
+  );
+}
+
+/** Price impact strip — rounded pill showing the percentage move
+ *  since the headline's story, with a bullish/bearish icon and
+ *  color. Sign convention: positive = up (bullish + TrendingUp),
+ *  negative = down (bearish + TrendingDown). The caller guards on
+ *  `pct_change_since_story != null` so the type narrows to
+ *  `number` at the call site. */
+function PriceImpactStrip({ pct }: { pct: number }) {
+  const isPositive = pct >= 0;
+  const Icon = isPositive ? TrendingUp : TrendingDown;
+  const color = isPositive ? "text-bullish" : "text-bearish";
+  return (
+    <div className="mt-3 flex flex-wrap items-center gap-3 rounded border border-border bg-bg-tertiary/30 px-3 py-2.5">
+      <span
+        className={cn(
+          "inline-flex items-center gap-1 font-mono text-[14px] font-bold tabular-nums",
+          color,
+        )}
+      >
+        <Icon className="h-4 w-4" aria-hidden />
+        {isPositive ? "+" : ""}
+        {pct.toFixed(1)}%
+      </span>
+      <span className="font-mono text-[10.5px] text-text-muted">
+        Pergerakan harga sejak story
+      </span>
+    </div>
   );
 }
 
@@ -256,53 +268,6 @@ function HeroSkeleton() {
   );
 }
 
-/** Dot timeline — one dot per story in the headline, connected by
- *  a thin horizontal line. The active dot defaults to the most
- *  recent story (last index) and is rendered larger and brand-
- *  colored to mark the current position in the sequence; the rest
- *  are smaller muted markers. Renders nothing when there's nothing
- *  to show, so callers can pass `totalStories` of zero safely. */
-function StoryTimeline({
-  totalStories,
-  currentIndex,
-}: {
-  totalStories: number;
-  /** Optional override for which dot is rendered as the active one.
-   *  Defaults to the last index (most recent story). */
-  currentIndex?: number;
-}) {
-  if (totalStories <= 0) return null;
-  const active = currentIndex ?? totalStories - 1;
-
-  return (
-    <div className="mt-3 flex items-center gap-3">
-      <span className="shrink-0 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
-        Timeline
-      </span>
-      <div className="relative flex flex-1 items-center">
-        {/* Connecting line — sits behind the dots, inset slightly so
-            it doesn't poke out past the first/last marker. */}
-        <div className="absolute inset-x-1.5 top-1/2 h-px -translate-y-1/2 bg-border" />
-        {Array.from({ length: totalStories }).map((_, i) => {
-          const isActive = i === active;
-          return (
-            <div
-              key={i}
-              className="relative z-10 flex flex-1 items-center justify-center"
-            >
-              <span
-                aria-hidden
-                className={cn(
-                  "block rounded-full transition-colors",
-                  isActive
-                    ? "h-2.5 w-2.5 bg-brand"
-                    : "h-1.5 w-1.5 bg-text-muted",
-                )}
-              />
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+/** (StoryTimeline deleted — never mounted; the future timeline
+ *  component lives in a sibling file so this module stays focused
+ *  on the hero.) */

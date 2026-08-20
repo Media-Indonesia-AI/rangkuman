@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import type { HeadlineLast7DaysItem } from "@/lib/api";
 import { loadHeadlinesLast7Days } from "@/lib/api/cache";
-import { todayIsoDate } from "@/lib/api/client";
 
 /**
  * Data hook for `GET headlines/last-7-days`.
@@ -31,7 +30,7 @@ import { todayIsoDate } from "@/lib/api/client";
  */
 export function useHeadlinesLast7Days(
   ticker: string,
-  date: string = todayIsoDate(),
+  date?: string,
   enabled = true,
 ): { data: HeadlineLast7DaysItem[]; isLoading: boolean } {
   const active = enabled && ticker.trim().length > 0;

@@ -1,11 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
-import { Inbox, ArrowUpRight, Flame, BookOpen } from "lucide-react";
+import { Inbox, Flame, ClipboardList } from "lucide-react";
 import type { StoryFilter } from "@/lib/api";
 import { useTopicsContext } from "@/components/topics-provider";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
+import { EmitenStories } from "@/components/saham";
 import { CryptoSectionHeader } from "./CryptoSectionHeader";
 import { CryptoFeaturedCard } from "./CryptoFeaturedCard";
 import { CryptoStoryCard } from "./CryptoStoryCard";
@@ -36,11 +36,9 @@ import {
  *     filters (the same array-identity gotcha covered for
  *     `HeadlineStoriesProvider` / `useListStory`),
  *   - the live-when-available / mock-fallback source picking
- *     and the slice into the three layers
- *     (lead / sedang-terjadi / cerita-lain),
- *   - the empty-state row + the bottom "Lihat lebih banyak"
- *     CTA — both live here because they only matter when this
- *     tab is shown.
+ *     and the slice into the lead + Berita Terkini cluster,
+ *   - the empty-state row — it lives here because it only
+ *     matters when this tab is shown.
  *
  * The parent (`CryptoPage`) doesn't pass anything in; it just
  * decides whether to render this tab or `<CryptoPasarTab />`
@@ -86,13 +84,11 @@ export function CryptoRecapTab() {
       ? liveHeadlines.map(storyItemToCryptoStory)
       : CRYPTO_PAGE_STORIES;
 
-  // Slice the chosen source into the three layers the Sorotan
-  // page renders. Lead is always index 0; layers 2-3 split the
-  // tail with a fixed 4-card "Sedang Terjadi" cap so the layout
-  // stays predictable regardless of how many stories arrive.
+  // Slice the chosen source into the lead + Berita Terkini
+  // cluster the recap tab renders. Lead is always index 0;
+  // the rest feed the merged Berita Terkini section.
   const lead = sourceStories[0];
-  const sedangTerjadi = sourceStories.slice(1, 5);
-  const ceritaLain = sourceStories.slice(5);
+  const beritaTerkini = sourceStories.slice(1);
 
   return (
     <>
@@ -109,35 +105,38 @@ export function CryptoRecapTab() {
         </section>
       )}
 
-      {/* 📋 LAYER 2: SEDANG TERJADI — 4 cards in 2-col */}
-      {sedangTerjadi.length > 0 && (
-        <section aria-label="Sedang terjadi" className="mt-8">
+      {/* 📰 Story — multi-date, ticker-agnostic context
+          threads. Sits between LAYER 1 (today's lead) and
+          the Berita Terkini feed so the visitor first reads
+          the lead headline, then encounters the longer-
+          running story threads the headline is part of,
+          before moving on to the rolling-news cluster
+          below. Uses the default `feed` variant —
+          borderless, flows with the tab chrome. Scoped to
+          the "crypto" topic via `topicId` so the feed shows
+          crypto-tagged stories instead of the cross-topic
+          default. */}
+      <div className="mt-8">
+        <EmitenStories storyLimit={3} topicId={topicId ?? undefined} />
+      </div>
+
+      {/* 📋 BERITA TERKINI — tail of the source stories,
+          2-col grid, non-compact cards. Merged from the old
+          "Sedang Terjadi" (4 cards) + "Cerita Lain"
+          (rest) sections into a single rolling-news feed.
+          Uses Sedang Terjadi's design: `CryptoStoryCard`
+          without the `compact` flag so each card shows the
+          full summary line, and a 2-col grid on >= sm. */}
+      {beritaTerkini.length > 0 && (
+        <section aria-label="Berita terkini" className="mt-8">
           <CryptoSectionHeader
-            icon={<Flame className="h-3 w-3" aria-hidden />}
-            title="Sedang Terjadi"
-            subtitle="Cerita penting lainnya"
-            count={`Top ${sedangTerjadi.length} cerita`}
+            icon={<ClipboardList className="h-3 w-3" aria-hidden />}
+            title="Berita Terkini"
+            count={`${beritaTerkini.length} cerita`}
           />
           <div className="grid gap-2.5 sm:grid-cols-2">
-            {sedangTerjadi.map((s) => (
+            {beritaTerkini.map((s) => (
               <CryptoStoryCard key={s.id} story={s} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* 📚 LAYER 3: CERITA LAIN — 3-col grid (compact, no summary) */}
-      {ceritaLain.length > 0 && (
-        <section aria-label="Cerita lain" className="mt-8">
-          <CryptoSectionHeader
-            icon={<BookOpen className="h-3 w-3" aria-hidden />}
-            title="Cerita Lain"
-            subtitle="Berita tambahan hari ini"
-            count={`${ceritaLain.length} cerita`}
-          />
-          <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-            {ceritaLain.map((s) => (
-              <CryptoStoryCard key={s.id} story={s} compact />
             ))}
           </div>
         </section>
@@ -151,19 +150,6 @@ export function CryptoRecapTab() {
           </p>
         </div>
       )}
-
-      <div className="mt-6 flex justify-center">
-        <Link
-          href="/trending"
-          className="group inline-flex items-center gap-1.5 rounded-md border border-border bg-bg-secondary px-3.5 py-2 text-[12.5px] font-semibold text-text-secondary transition-all hover:border-brand hover:text-brand"
-        >
-          Lihat lebih banyak
-          <ArrowUpRight
-            className="h-3 w-3 transition-transform group-hover:-translate-y-px group-hover:translate-x-px"
-            aria-hidden
-          />
-        </Link>
-      </div>
     </>
   );
 }

@@ -1,19 +1,9 @@
 "use client";
 
-import { SavedButton } from "@/components/SavedButton";
 import { ShareButton } from "@/components/ShareButton";
 import { SITE_URL } from "@/lib/og";
 
 interface StockCardActionsProps {
-  /** Ticker / share id passed to `<SavedButton />` (the saved items
-   *  store keys on ticker). */
-  id: string;
-  /** ISO date string passed through to `<SavedButton />` as the
-   *  `publishedAt` for sortability inside the saved list. */
-  publishedAt: string;
-  /** Color tone — the dark variant is the card-on-dark surfaces
-   *  used everywhere on this page. */
-  tone: "light" | "dark";
   /** Card's deep-link href, used to build the absolute URL passed
    *  to `<ShareButton />`. Should already include the optional
    *  `?id=` query param when the parent knows the backend headline
@@ -21,31 +11,34 @@ interface StockCardActionsProps {
   href: string;
   /** Share title. Convention: `"{TICKER} — Rangkuman"`. */
   title: string;
+  /** Color tone — `light` for dark surfaces (e.g. a card on a
+   *  hero gradient), `dark` for light surfaces. Passed through
+   *  to `<ShareButton />` so the action button matches the
+   *  card's surface. */
+  tone: "light" | "dark";
+  /** Share button size — `compact` (default) for normal cards,
+   *  `xs` for dense list rows where a smaller footprint fits
+   *  the row layout better. See `<ShareButton />` for the full
+   *  size grid. */
+  variant?: "xs" | "compact";
 }
 
 /**
- * Save + share button group used across every non-compact
- * `<StockCard />` variant. Wrapped at `z-10` so the buttons stay
- * clickable above the card's stretched overlay `<Link />`. Each
+ * Share-button group used across every non-compact
+ * `<StockCard />` variant. Wrapped at `z-10` so the button stays
+ * clickable above the card's stretched overlay `<Link />`. The
  * button's own `onClick` calls `preventDefault` + `stopPropagation`
- * to cancel the overlay link's navigation, so saving / sharing
- * never accidentally opens the detail page.
+ * to cancel the overlay link's navigation, so sharing never
+ * accidentally opens the detail page.
  */
 export function StockCardActions({
-  id,
-  publishedAt,
-  tone,
   href,
   title,
+  tone,
+  variant = "compact",
 }: StockCardActionsProps) {
   return (
     <div className="relative z-10 flex shrink-0 items-center gap-1">
-      <SavedButton
-        id={id}
-        kind="stock"
-        publishedAt={publishedAt}
-        tone={tone}
-      />
       {/*
         The share URL becomes a daily-recap deep link by
         appending today's date (`yyyy-MM-dd`, derived from
@@ -61,13 +54,13 @@ export function StockCardActions({
           href: /stock/BBCA?id=ABC    → /<origin>/stock/BBCA/2026-07-30?id=ABC
       */}
       {(() => {
-        const today = new Date().toISOString().slice(0, 10); // yyyy-MM-dd
-        const url = `${SITE_URL}${href}/${today}`;
+        const url = `${SITE_URL}${href}`;
         return (
           <ShareButton
             url={url}
             title={title}
             tone={tone}
+            variant={variant}
           />
         );
       })()}

@@ -2,12 +2,12 @@
 
 import { useState } from "react";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
-import { useWatchlist } from "@/lib/hooks/useWatchlist";
+import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
+import { WATCHLIST_LIMIT } from "@/lib/auth";
 import {
   WatchlistHeader,
   WatchlistEmptyState,
   WatchlistStockGrid,
-  WatchlistInfo,
   AddStockDialog,
 } from "@/components/watchlist";
 
@@ -20,11 +20,20 @@ import {
  * that pressing Keluar (which clears auth synchronously) doesn't race
  * with the effect and pull the user to /login instead of "/" — the
  * actual sign-out then does a hard navigation to clean state.
+ *
+ * `WATCHLIST_LIMIT` (10) caps the user's free-tier watchlist. At
+ * the cap, the header's "Tambah saham" button is hidden so the
+ * dialog can't be opened — the only path to add more is to
+ * remove one from the grid first. `isAtLimit` is derived purely
+ * from `items.length` so the page reacts as soon as a mutation
+ * (add / remove via the dialog) lands and `useGetWatchlist`
+ * re-fetches via its subscriber bus.
  */
 export default function WatchlistPage() {
   const user = useCurrentUser();
-  const { codes, isFull } = useWatchlist();
+  const { items, isLoading } = useGetWatchlist();
   const [showAdd, setShowAdd] = useState(false);
+  const isAtLimit = items.length >= WATCHLIST_LIMIT;
 
   // Hydration state — show a neutral loader while we figure out auth.
   if (user === undefined) {
@@ -38,27 +47,23 @@ export default function WatchlistPage() {
 
   return (
     <>
-      <main className="flex flex-col gap-4">
+      <main className="flex flex-col">
         <WatchlistHeader
-          userName={user.name}
-          isFull={isFull}
           onAddClick={() => setShowAdd(true)}
+          isAtLimit={isAtLimit}
         />
 
-        {codes.length === 0 ? (
+        {items.length === 0 && !isLoading ? (
           <WatchlistEmptyState onAddClick={() => setShowAdd(true)} />
         ) : (
-          <WatchlistStockGrid codes={codes} isFull={isFull} />
+          <WatchlistStockGrid items={items} />
         )}
-
-        <WatchlistInfo />
       </main>
 
       {showAdd && (
         <AddStockDialog
           onClose={() => setShowAdd(false)}
-          isFull={isFull}
-          existing={codes}
+          existing={items}
         />
       )}
     </>
