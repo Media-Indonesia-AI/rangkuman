@@ -132,32 +132,26 @@ export function WatchlistSection() {
             Recap saham yang kamu pantau
           </h2>
         </div>
+        {/* Same brand-primary button as the /watchlist page header so
+            the two entry points read as one action. Hidden at the cap:
+            the only path to add then is to remove a row from the grid
+            first, and the empty-state CTA on /watchlist is unaffected
+            because empty-state implies zero rows (never at the cap). */}
+        {!isAtLimit && (
+          <Link
+            href="/watchlist"
+            className="inline-flex h-9 items-center gap-1.5 rounded-md bg-brand px-3 text-[12.5px] font-semibold text-bg-primary transition-colors hover:bg-brand-hover"
+          >
+            <Plus className="h-3.5 w-3.5" aria-hidden />
+            Tambah saham
+          </Link>
+        )}
       </header>
 
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {visibleCodes.map((kode) => (
           <WatchlistItemCard key={kode} kode={kode} />
         ))}
-
-        {/* CTA fills the remaining slot up to the visible cap.
-            At the watchlist cap (10) this branch is also implicitly
-            false because `MAX_VISIBLE_WATCHLIST` < `WATCHLIST_LIMIT` —
-            every user at the cap already has ≥6 rows, so the grid
-            is full and there's no slot to fill. */}
-        {codes.length < WATCHLIST_LIMIT && (
-          <Link
-            href="/watchlist"
-            className="flex flex-col items-center justify-center gap-1.5 rounded-lg border border-dashed border-border bg-bg-secondary/40 p-3 text-center transition-colors hover:border-brand hover:bg-bg-secondary"
-          >
-            <Plus className="h-4 w-4 text-text-faint" aria-hidden />
-            <span className="text-[12px] font-semibold text-text-primary">
-              Tambah saham
-            </span>
-            <span className="font-mono text-[10px] text-text-muted">
-              Buka watchlist
-            </span>
-          </Link>
-        )}
       </div>
     </section>
   );
