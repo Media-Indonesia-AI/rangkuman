@@ -16,24 +16,33 @@ export const STATUS_ICON: Record<
 };
 
 /** Pill / dot colors per sentiment. Reused by the hero status badge,
- * the row sentiment pill, and the sidebar pill. */
+ * the row sentiment pill, and the sidebar pill.
+ *
+ * - `color` is the bordered badge used on the hero / sidebar (slightly
+ *   stronger contrast for a header role).
+ * - `pill` is the soft-background label used inline inside story
+ *   cards (matches the NewsTimeline pills).
+ * - `dot` is the solid dot used on the timeline rail. */
 export const sentimentMeta: Record<
   StorySentiment,
-  { label: string; color: string; dot: string }
+  { label: string; color: string; pill: string; dot: string }
 > = {
   positive: {
     label: "Positif",
     color: "border-bullish/30 bg-bullish/10 text-bullish",
+    pill: "bg-bullish-soft text-bullish",
     dot: "bg-bullish",
   },
   negative: {
     label: "Negatif",
     color: "border-bearish/30 bg-bearish/10 text-bearish",
+    pill: "bg-bearish-soft text-bearish",
     dot: "bg-bearish",
   },
   neutral: {
     label: "Netral",
     color: "border-border bg-bg-tertiary text-text-muted",
+    pill: "bg-mixed-soft text-mixed",
     dot: "bg-text-muted",
   },
 };
