@@ -40,6 +40,14 @@ export const STORAGE_KEYS = {
   /** One-time setup token returned by `POST /auth/register`.
    *  Used to seed the verified email flow. */
   setupToken: "rangkuman-news:setupToken",
+  /** Timestamp (ms since epoch) when the user explicitly dismissed
+   *  the Google One Tap prompt on `/login`. The login page reads
+   *  this via `isGoogleOneTapDismissed()` in `lib/auth.ts` and
+   *  gates the prompt on it: a non-empty value within the last 30
+   *  days suppresses the prompt. Stored as a string so it survives
+   *  the `safeGetItem` / `safeSetItem` JSON-string serialization
+   *  path without a separate numeric-encode layer. */
+  googleOneTapDismissed: "rangkuman-news:google-one-tap-dismissed",
 
   // ── Watchlist ─────────────────────────────────────────────────
   /** Watchlist snapshot — `{ codes: string[], updatedAt: string }`.

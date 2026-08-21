@@ -8,6 +8,7 @@ import { api, type ApiError, type RegisterResponse } from "./api";
 import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "./util/safeLocalStorage";
 
+
 // Local aliases — kept short because the rest of the file uses
 // them ~30 times. The canonical key strings live in
 // `lib/storageKeys.ts` so this file stays a single-source-of-truth
@@ -358,6 +359,49 @@ export async function registerUser(input: {
 export function logout(): void {
   removeKey(USER_KEY);
   removeKey(SETUP_TOKEN_KEY);
+}
+
+// ─── GOOGLE ONE TAP DISMISSAL ─────────────────────────────────────
+
+/** How long the user stays opted out of the One Tap prompt after
+ *  dismissing it. 30 days matches Google's own recommendation for
+ *  the GSI client's `disableAutoSelect` window — past that, the
+ *  user is much more likely to actually want to sign in again, so
+ *  re-prompting is the right default. */
+const ONE_TAP_DISMISS_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+
+/**
+ * Whether the user has dismissed the Google One Tap prompt on
+ * `/login` within the last 30 days. The login page reads this
+ * synchronously on mount and passes the inverse to
+ * `<GoogleLogin useOneTap={…} />` to gate the prompt. Returning
+ * `false` for the SSR pass is intentional — `localStorage` isn't
+ * available server-side, so the first render can't know the user's
+ * preference; the `useEffect` on the page re-reads after hydration.
+ */
+export function isGoogleOneTapDismissed(): boolean {
+  const raw = safeGetItem(STORAGE_KEYS.googleOneTapDismissed);
+  if (!raw) return false;
+  const ts = Number(raw);
+  if (!Number.isFinite(ts)) return false;
+  return Date.now() - ts < ONE_TAP_DISMISS_TTL_MS;
+}
+
+/**
+ * Persist a Google One Tap dismissal. The GSI client's own X button
+ * is session-scoped only — without this, reloading the page would
+ * re-show the prompt. The login page's `promptMomentNotification`
+ * handler writes the flag whenever the user genuinely opts out
+ * (X button, tap outside, user cancel), and the `<GoogleLogin>`
+ * `useOneTap` prop reads it on the next mount to keep the prompt
+ * suppressed for 30 days.
+ *
+ * Writes the current timestamp so the TTL window is anchored to
+ * the latest dismissal, not the original visit. After 30 days the
+ * prompt shows again on the next visit.
+ */
+export function dismissGoogleOneTap(): void {
+  safeSetItem(STORAGE_KEYS.googleOneTapDismissed, String(Date.now()));
 }
 
 /** Read the one-time setupToken returned by `POST /auth/register`. */

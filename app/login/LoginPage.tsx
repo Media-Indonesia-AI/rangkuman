@@ -4,12 +4,18 @@ import { Suspense, useEffect, useState, type FormEvent } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { AtSign, Mail, Lock, ArrowRight, Loader2 } from "lucide-react";
-import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import {
+  GoogleLogin,
+  GoogleOAuthProvider,
+  type PromptMomentNotification,
+} from "@react-oauth/google";
 import { Logo } from "@/components/Logo";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import {
+  dismissGoogleOneTap,
   getAuthRedirectTarget,
+  isGoogleOneTapDismissed,
   loginWithGoogle,
   loginWithIdentifier,
 } from "@/lib/auth";
@@ -34,6 +40,13 @@ function LoginPageContent() {
   const [errors, setErrors] = useState<FieldErrors>({});
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
+  /** Whether the user has dismissed the Google One Tap prompt
+   *  within the last 30 days. Initialised lazily from localStorage
+   *  on mount (the SSR pass returns `false`; the `useEffect` below
+   *  re-syncs after hydration). Toggles the `useOneTap` prop on the
+   *  `<GoogleLogin />` component, so flipping `true` here cancels
+   *  the prompt and prevents it from re-appearing on this page. */
+  const [oneTapDismissed, setOneTapDismissed] = useState(false);
 
   // Hard fail at first render if the GSI client id is missing.
   // Next.js inlines `NEXT_PUBLIC_*` at build time, so this only
@@ -52,6 +65,57 @@ function LoginPageContent() {
   useEffect(() => {
     if (user) router.replace(getAuthRedirectTarget(searchParams));
   }, [user, router, searchParams]);
+
+  // Re-sync the One Tap dismissal flag from localStorage after the
+  // initial render. The state is intentionally initialised to
+  // `false` (the SSR-safe default) so the first paint of the page
+  // doesn't flash the prompt before the hydration step completes.
+  // On the client we read the flag and flip the state if the user
+  // previously dismissed — the `<GoogleLogin>` `useOneTap` prop
+  // picks up the change on the next render and the GSI client
+  // cancels the prompt before it becomes visible.
+  useEffect(() => {
+    setOneTapDismissed(isGoogleOneTapDismissed());
+  }, []);
+
+  /**
+   * One Tap prompt moment listener — fires for every display /
+   * skipped / dismissed `PromptMomentNotification` the GSI
+   * client emits. We use it to persist a 30-day opt-out when the
+   * user closes the prompt (X button, tap outside), so the next
+   * visit doesn't re-show it.
+   *
+   * Reason filter:
+   *   - `cancel_called` → our own code called `cancel()`. Nothing
+   *     to persist; the dismiss flow is already in motion.
+   *   - `credential_returned` → the user successfully logged in.
+   *     Nothing to persist; the success flow is already running.
+   *   - `tap_outside` / `user_cancel` (skipped) → genuine opt-out.
+   *     Persist.
+   *   - `auto_cancel` / `issuing_failed` (skipped) → transient /
+   *     one-off. Don't persist; the next visit is allowed to try
+   *     again.
+   */
+  const handlePromptMomentNotification = (
+    notification: PromptMomentNotification,
+  ) => {
+    if (notification.isDismissedMoment()) {
+      const reason = notification.getDismissedReason();
+      if (reason === "cancel_called" || reason === "credential_returned") {
+        return;
+      }
+      dismissGoogleOneTap();
+      setOneTapDismissed(true);
+      return;
+    }
+    if (notification.isSkippedMoment()) {
+      const reason = notification.getSkippedReason();
+      if (reason === "tap_outside" || reason === "user_cancel") {
+        dismissGoogleOneTap();
+        setOneTapDismissed(true);
+      }
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -222,7 +286,62 @@ function LoginPageContent() {
                   text="continue_with"
                   shape="rectangular"
                   width="100%"
-                  useOneTap={false}
+                  // ─── Google One Tap / FedCM ─────────────────
+                  // Enable the One Tap prompt. The GSI client
+                  // transparently uses FedCM when the browser
+                  // supports it (Chrome 117+, Edge 117+, Safari
+                  // 17+); otherwise it falls back to the legacy
+                  // iframe. Same `onSuccess` callback handles
+                  // credential delivery from both the button and
+                  // the One Tap prompt.
+                  //
+                  // Gated by `oneTapDismissed` so the prompt stays
+                  // hidden for 30 days after the user closes it.
+                  // The library's effect re-runs when this prop
+                  // changes and calls `cancel()` on the way down.
+                  //
+                  // Also gated by `!user` so a logged-in user
+                  // landing on `/login` (e.g. via the back button
+                  // after signing in elsewhere) doesn't get a
+                  // prompt briefly before the redirect effect
+                  // navigates them away.
+                  useOneTap={!oneTapDismissed && !user}
+                  // Auto-select when there's a single trusted
+                  // Google account — the prompt is shown briefly
+                  // with a single tap to confirm, or auto-completes
+                  // if there's a single account. FedCM handles this
+                  // via the browser's account chooser instead of
+                  // the iframe's, when supported.
+                  auto_select={!oneTapDismissed && !user}
+                  // Safari ITP blocks third-party cookies for the
+                  // GSI iframe. This opts the GSI client into its
+                  // same-site iframe shim so One Tap still works
+                  // on Safari.
+                  itp_support
+                  // Opt into FedCM for the One Tap prompt. The GSI
+                  // client uses the browser's native FedCM dialog
+                  // when available, which keeps the prompt inside
+                  // the browser chrome (no cross-origin iframe).
+                  // Falls back to the legacy iframe prompt on
+                  // browsers that don't support FedCM.
+                  use_fedcm_for_prompt
+                  // Opt into FedCM for the Sign-In With Google
+                  // button too. The button flow is unchanged
+                  // visually; the credential is just delivered via
+                  // the FedCM API under the hood.
+                  use_fedcm_for_button
+                  // Stay visible until the user explicitly closes
+                  // it. The default `true` dismisses the prompt
+                  // when the user clicks anywhere outside it, which
+                  // is too aggressive on a dedicated /login page
+                  // — the user is here to log in, not to scroll
+                  // their stocks feed.
+                  cancel_on_tap_outside={false}
+                  // Track every prompt moment so we can persist a
+                  // 30-day opt-out when the user dismisses (X
+                  // button, tap outside, etc.). See the handler
+                  // for the reason filter.
+                  promptMomentNotification={handlePromptMomentNotification}
                 />
                 {googleLoading && (
                   <div

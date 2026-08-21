@@ -45,7 +45,7 @@ export function login(
 export function googleLogin(
   credential: string,
 ): Promise<RegisterResponse> {
-  return request<RegisterResponse>("auth/google", {
+  return request<RegisterResponse>("auth/google/verify", {
     method: "POST",
     body: JSON.stringify({ credential }),
   });
