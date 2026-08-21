@@ -49,9 +49,13 @@ type FieldErrors = {
 };
 
 interface LoginPageContentProps {
-  /** GSI client id, resolved server-side from `process.env.GOOGLE_CLIENT_ID`
-   *  by the parent `LoginPage` server component and passed in. */
-  clientId: string;
+  /** GSI client id, resolved server-side from
+   *  `process.env.GOOGLE_CLIENT_ID` by the route entry
+   *  (`app/login/page.tsx`) and threaded through `LoginPage` to here.
+   *  Non-`NEXT_PUBLIC_*` env vars are not inlined into the browser
+   *  bundle, so the value must reach us as a prop — never read it
+   *  directly from `process.env` inside a `"use client"` module. */
+  googleClientId: string;
 }
 
 // ── Sub-components ────────────────────────────────────────────────
@@ -230,7 +234,7 @@ function SubmitButton({ pending }: { pending: boolean }) {
  * One Tap / FedCM flags are documented inline at the prop sites.
  */
 function GoogleLoginSection({
-  clientId,
+  googleClientId,
   onSuccess,
   onError,
   showPrompt,
@@ -238,7 +242,7 @@ function GoogleLoginSection({
   error,
   pending,
 }: {
-  clientId: string;
+  googleClientId: string;
   onSuccess: (r: CredentialResponse) => void;
   onError: () => void;
   showPrompt: boolean;
@@ -252,8 +256,12 @@ function GoogleLoginSection({
    *  closure) so the section self-contains the loading state. */
   pending: boolean;
 }) {
+  // The `@react-oauth/google` SDK expects its own `clientId` prop on
+  // `<GoogleOAuthProvider>` — fixed by the SDK contract. We name our
+  // own prop `googleClientId` to match the route entry's prop name
+  // and avoid ambiguity at call sites.
   return (
-    <GoogleOAuthProvider clientId={clientId}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <div>
         <div className="relative">
           <GoogleLogin
@@ -327,7 +335,7 @@ function GoogleLoginSection({
 
 // ── Page content ──────────────────────────────────────────────────
 
-export function LoginPageContent({ clientId }: LoginPageContentProps) {
+export function LoginPageContent({ googleClientId }: LoginPageContentProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useCurrentUser();
@@ -434,7 +442,7 @@ export function LoginPageContent({ clientId }: LoginPageContentProps) {
 
         <div className="p-5">
           <GoogleLoginSection
-            clientId={clientId}
+            googleClientId={googleClientId}
             onSuccess={handleGoogleSuccess}
             onError={handleGoogleError}
             showPrompt={!oneTapDismissed && !user}
