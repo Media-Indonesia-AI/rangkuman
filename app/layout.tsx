@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
+import { Suspense } from "react";
 import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
 import { PathnameTracker } from "@/components/PathnameTracker";
 import { ToastContainer } from "@/components/Toast";
@@ -7,6 +8,7 @@ import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
 import { BfcacheRecovery } from "@/components/BfcacheRecovery";
 import { TopicsProvider } from "@/components/topics-provider";
+import { GoogleAnalytics } from "@/components/GoogleAnalytics";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import "./globals.css";
 
@@ -98,6 +100,17 @@ export default function RootLayout({
           without re-fetching.
         */}
         <TopicsProvider>
+          {/* Google Analytics — loads gtag.js + fires pageviews on
+              every App Router navigation. Wrapped in `<Suspense>`
+              because the client component uses `useSearchParams()`
+              inside its pageview-tracking effect, which would
+              otherwise force the whole layout into dynamic rendering.
+              The fallback is `null` because the analytics effect
+              itself doesn't render anything — the `<Suspense>` only
+              exists to satisfy Next.js's prerender-time check. */}
+          <Suspense fallback={null}>
+            <GoogleAnalytics />
+          </Suspense>
           <TopTickerRouter />
           <BfcacheRecovery />
           {/* Side-effect-only: writes the current pathname to
