@@ -34,7 +34,7 @@ import { useEffect, useState } from "react";
 
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { hariIniIso } from "@/lib/util/formatDate";
-import { safeGetItem, safeSetItem } from "@/lib/util/safeLocalStorage";
+import { safeGetItem, safeRemoveItem, safeSetItem } from "@/lib/util/safeLocalStorage";
 
 const RECAP_DATE_INACTIVITY_MS = 3 * 60 * 1000;
 
@@ -92,11 +92,18 @@ export function useRecapDateSession(): readonly [
   }, []);
 
   // Persist non-today picks so a refresh-within-session restores
-  // them. Today is intentionally NOT written — every visit would
-  // otherwise thrash the slot, and today is the default anyway.
+  // them. Today is *cleared* (not just skipped) so the slot doesn't
+  // keep returning a stale past pick on the next hydration — e.g.
+  // user picks 2026-08-15 (slot = "2026-08-15"), then picks today
+  // and refreshes; without the clear, the next hydration would
+  // read "2026-08-15" and the DatePicker would land back on that
+  // past date instead of today.
   useEffect(() => {
     if (date === null) return;
-    if (date === hariIniIso()) return;
+    if (date === hariIniIso()) {
+      safeRemoveItem(STORAGE_KEYS.sahamRecapDate);
+      return;
+    }
     safeSetItem(STORAGE_KEYS.sahamRecapDate, date);
   }, [date]);
 
