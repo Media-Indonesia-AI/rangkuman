@@ -44,10 +44,10 @@ export function login(
  * persist it via the shared `writeJson` plumbing.
  */
 export function googleLogin(
-  credential: string,
+  idToken: string,
 ): Promise<GoogleLoginResponse> {
   return request<GoogleLoginResponse>("auth/google", {
     method: "POST",
-    body: JSON.stringify({ credential }),
+    body: JSON.stringify({ idToken }),
   });
 }
