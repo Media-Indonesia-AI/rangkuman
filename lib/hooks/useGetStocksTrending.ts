@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { type StockTrendingItem } from "@/lib/api";
 import { loadStocksTrending } from "@/lib/api/cache";
 import { todayIsoDate } from "@/lib/api/client";
+import { hariIniIso } from "../util/formatDate";
 
 /**
  * Data hook for the "Paling banyak diberitakan" rail on `/saham`.
@@ -28,7 +29,7 @@ import { todayIsoDate } from "@/lib/api/client";
  * @param limit Page size (default 20).
  */
 export function useGetStocksTrending(
-  date: string = todayIsoDate(),
+  date: string = hariIniIso(),
   page = 1,
   limit = 20,
 ): {
