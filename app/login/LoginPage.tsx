@@ -56,9 +56,9 @@ type FieldErrors = {
  * Google button.
  */
 function requireGoogleClientId(): string {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
   if (!clientId) {
-    throw new Error("GOOGLE_CLIENT_ID is not set");
+    throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set");
   }
   return clientId;
 }
