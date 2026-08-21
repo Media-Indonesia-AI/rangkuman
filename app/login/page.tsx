@@ -1,9 +1,9 @@
-/**
- * Next.js App Router entry for /login.
- *
- * The actual page component lives in `./LoginPage.tsx` so the source
- * file is named to match the component (and can be imported / reused
- * outside the route). This file just re-exports it so Next.js picks it
- * up as the route handler.
- */
-export { default } from "./LoginPage";
+import LoginPage from "./LoginPage";
+
+export default function LoginRoute() {
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw new Error("NEXT_PUBLIC_GOOGLE_CLIENT_ID is not set");
+  }
+  return <LoginPage googleClientId={clientId} />;
+}

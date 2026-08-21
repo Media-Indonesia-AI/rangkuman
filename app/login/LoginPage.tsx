@@ -46,23 +46,6 @@ type FieldErrors = {
   password?: string;
 };
 
-// ── Hard env fail ─────────────────────────────────────────────────
-
-/**
- * Resolve the GSI client id at first render and throw if absent.
- * Next.js inlines `NEXT_PUBLIC_*` at build time, so this only
- * fires when the env is genuinely missing in a deploy — and we'd
- * rather see a loud render-time error than ship a silently broken
- * Google button.
- */
-function requireGoogleClientId(): string {
-  const clientId = process.env.GOOGLE_CLIENT_ID;
-  if (!clientId) {
-    throw new Error("GOOGLE_CLIENT_ID is not set");
-  }
-  return clientId;
-}
-
 // ── Sub-components ────────────────────────────────────────────────
 
 function LoginCardHeader() {
@@ -336,11 +319,10 @@ function GoogleLoginSection({
 
 // ── Page content ──────────────────────────────────────────────────
 
-function LoginPageContent() {
+function LoginPageContent({ clientId }: { clientId: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const user = useCurrentUser();
-  const clientId = requireGoogleClientId();
   const { oneTapDismissed, onPromptMomentNotification } = useGoogleOneTap();
 
   const [identifier, setIdentifier] = useState("");
@@ -508,12 +490,12 @@ function LoginPageContent() {
  * prerenders the chrome (Navbar / Footer) and streams the
  * content in client-side. Mirrors `app/search/SearchPage.tsx:162-172`.
  */
-export default function LoginPage() {
+export default function LoginPage({ googleClientId }: { googleClientId: string }) {
   return (
     <>
       <Navbar />
       <Suspense fallback={null}>
-        <LoginPageContent />
+        <LoginPageContent clientId={googleClientId} />
       </Suspense>
       <Footer />
     </>
