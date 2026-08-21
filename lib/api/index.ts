@@ -14,6 +14,7 @@ export type { ApiError } from "./types/error";
 
 // Auth
 export type {
+  GoogleLoginResponse,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,

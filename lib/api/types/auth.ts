@@ -33,3 +33,10 @@ export interface RegisterResponse {
   setupToken: string;
   message: string;
 }
+
+/** `/auth/google/verify` envelope — `{ user, message }` with no
+ *  `setupToken` (Google users have no password to set up). */
+export interface GoogleLoginResponse {
+  user: RegisterResponseUser;
+  message: string;
+}

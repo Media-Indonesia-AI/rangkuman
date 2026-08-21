@@ -8,6 +8,7 @@
 
 import { request } from "./client";
 import type {
+  GoogleLoginResponse,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -44,8 +45,8 @@ export function login(
  */
 export function googleLogin(
   credential: string,
-): Promise<RegisterResponse> {
-  return request<RegisterResponse>("auth/google/verify", {
+): Promise<GoogleLoginResponse> {
+  return request<GoogleLoginResponse>("auth/google", {
     method: "POST",
     body: JSON.stringify({ credential }),
   });

@@ -4,7 +4,7 @@
  * The active session is persisted to localStorage so it survives reloads.
  */
 
-import { api, type ApiError, type RegisterResponse } from "./api";
+import { api, type ApiError, type GoogleLoginResponse, type RegisterResponse } from "./api";
 import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "./util/safeLocalStorage";
 
@@ -256,7 +256,7 @@ export async function loginWithGoogle(
     throw new Error("Kredensial Google kosong");
   }
 
-  let response: RegisterResponse;
+  let response: GoogleLoginResponse;
   try {
     response = await api.googleLogin(credential);
   } catch (err) {
@@ -282,7 +282,9 @@ export async function loginWithGoogle(
     isEmailVerified: response.user.isEmailVerified,
   };
   writeJson(USER_KEY, session);
-  if (response.setupToken) writeJson(SETUP_TOKEN_KEY, response.setupToken);
+  // Google login returns no `setupToken` — the backend creates the
+  // account without a password, so the one-time setup-token flow
+  // doesn't apply.
   return session;
 }
 
