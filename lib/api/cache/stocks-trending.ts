@@ -7,7 +7,7 @@
  * slot so the next mount can retry.
  */
 
-import { toIsoDateTime } from "@/lib/util/formatDate";
+import { hariIniIso, toIsoDateTime } from "@/lib/util/formatDate";
 import { api, todayIsoDate } from "../client";
 import type { StocksTrendingResponse } from "../types/stocks";
 
@@ -29,7 +29,7 @@ function key(date: string, page: number, limit: number): string {
  * @param limit Page size (default 20).
  */
 export function loadStocksTrending(
-  date: string = todayIsoDate(),
+  date: string = hariIniIso(),
   page = 1,
   limit = 20,
 ): Promise<StocksTrendingResponse> {
