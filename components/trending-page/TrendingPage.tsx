@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
-import { type TrendingPeriod } from "@/lib/mock/trending";
 import { TrendingPageHeader } from "./TrendingPageHeader";
-import { TrendingPeriodTabs } from "./TrendingPeriodTabs";
 import { TrendingStatStrip } from "./TrendingStatStrip";
 import { TrendingList } from "./TrendingList";
 import { computeTrendingStats } from "./trendingStats";
@@ -17,31 +14,25 @@ import { computeTrendingStats } from "./trendingStats";
  * `/trending` page — "Saham paling banyak dibicarakan" with an
  * aggregate stats strip and a per-row table.
  *
- * Data source: live `useGetStocksTrending()` hook (no mock). The
- * hook returns `StockTrendingItem[]` — the same payload the new
- * `/stocks/stock/trending` endpoint serves. The stat strip +
- * list subscribe to the same array, so the totals stay in sync
+ * Data source: live `useGetStocksTrending()` hook. The hook
+ * returns `StockTrendingItem[]` — the payload the new
+ * `/stocks/stock/trending` endpoint serves. The stat strip and
+ * the list subscribe to the same array, so the totals stay in sync
  * with the rows.
  *
- * Composes the small widgets in this folder:
+ * Composes the widgets in this folder:
  *   - `<TrendingPageHeader />` — title + editorial description,
- *   - `<TrendingStatStrip />` — 4-cell sentiment & volume strip,
- *   - `<TrendingList />` — the bordered table card that maps each
- *     row to a `<TrendingRow />`,
+ *   - `<TrendingStatStrip />`  — 4-cell sentiment & volume strip,
+ *   - `<TrendingList />`       — the bordered table card that maps
+ *                                 each row to a `<TrendingRow />`,
  *   - `computeTrendingStats()` — pure helper that aggregates
- *     sentiment counts + total articles from the resolved
- *     `StockTrendingItem[]`.
+ *                                 sentiment counts + total
+ *                                 articles from the resolved
+ *                                 `StockTrendingItem[]`.
  *
- * `TrendingPage` is a client component because the hook owns
- * its own fetch + state.
+ * Client component because the hook owns its own fetch + state.
  */
 export default function TrendingPage() {
-  // Period filter — owned locally so the tabs render and stay
-  // selectable, but the hook only takes a single `date` so the
-  // selected period is purely visual until a period-aware endpoint
-  // lands. See the docstring on `<TrendingPeriodTabs />` for the
-  // wire-up path.
-  const [period, setPeriod] = useState<TrendingPeriod>("today");
   const { data: rows, isLoading } = useGetStocksTrending();
   const stats = computeTrendingStats(rows);
 
@@ -60,8 +51,6 @@ export default function TrendingPage() {
         </Link>
 
         <TrendingPageHeader />
-
-        {/* <TrendingPeriodTabs active={period} onChange={setPeriod} /> */}
 
         <TrendingStatStrip
           positif={stats.positif}
