@@ -1,11 +1,10 @@
 /**
  * Aggregation helpers for the `/trending` page stat strip.
  *
- * Numbers follow the source convention — `rows` is the resolved
- * `StockTrendingItem[]` from `useGetStocksTrending()`. The shape of
- * each derived value matches the previous inline computation
- * (which operated on the mock `TrendingStock[]`) so the visible
- * totals don't shift when the data source changes.
+ * `rows` is the resolved `StockTrendingItem[]` from
+ * `useGetStocksTrending()`. The stat strip and the per-row list
+ * subscribe to the same array, so the totals stay in sync with
+ * the rows.
  *
  * Field mapping:
  *
@@ -13,8 +12,8 @@
  *   - `r.article_count`      → summed into `totalArticles`
  *   - `r.distinct_sources`   → counted in `totalMedia` (one ticker =
  *                              one entry regardless of how many publishers
- *                              covered it, matching the prior mock formula
- *                              which synthesized duplicates per row)
+ *                              covered it, so the cell matches the
+ *                              "how many rows have any media" meaning)
  */
 
 import type { StockTrendingItem } from "@/lib/api";
