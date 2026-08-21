@@ -151,7 +151,6 @@ rangkuman-news/
 │   │   ├── policy-tracker.ts         # 8 trending policy topics
 │   │   ├── policy-stories.ts         # 3-4 stories per policy topic
 │   │   ├── category-widgets.ts       # MacroIndicators + WorldIndices
-│   │   ├── market-mood.ts            # Market mood snapshot
 │   │   ├── commodities.ts            # Commodity prices
 │   │   └── ...                       # 10+ more
 │   │

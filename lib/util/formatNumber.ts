@@ -13,7 +13,7 @@
  */
 
 import type { ForeignStocksResponse } from "@/lib/api";
-import type { MarketWidget } from "@/lib/mock/market-mood";
+import type { MarketWidget } from "@/components/MarketMoodMerge";
 
 /**
  * Format a percent rate as Indonesian-style `"5,75%"`.

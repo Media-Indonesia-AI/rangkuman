@@ -6,7 +6,6 @@ import {
   sentimentConfig,
 } from "@/lib/api";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
-import type { MarketWidget } from "@/lib/mock/market-mood";
 import type { Sentimen } from "@/lib/mock/recaps";
 import { cn } from "@/lib/utils";
 import { MarketMoodCell } from "./MarketMoodCell";
@@ -16,6 +15,7 @@ import {
   buildForeignFlowWidget,
   buildIhsgWidget,
   buildUsdIdrWidget,
+  type MarketWidget,
 } from "./MarketMoodMerge";
 
 /**
@@ -67,7 +67,7 @@ export function MarketMood() {
   // sub-label undefined in that case so the cell falls back to
   // `"Harian"` instead of showing a misleading date.
   const widgets: MarketWidget[] = [
-    buildIhsgWidget(compositeChart, mood, isLoading.compositeChart),
+    buildIhsgWidget(compositeChart, isLoading.compositeChart),
     buildForeignFlowWidget(
       foreignFlow,
       isLoading.foreignFlow,

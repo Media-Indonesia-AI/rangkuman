@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import type { MarketWidget } from "@/lib/mock/market-mood";
+import type { MarketWidget } from "./MarketMoodMerge";
 import { GaugeChart } from "./GaugeChart";
 import { ProgressBarChart } from "./ProgressBarChart";
 import { Shimmer } from "./Shimmer";

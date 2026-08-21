@@ -96,8 +96,8 @@ export interface ForeignStocksResponse {
  * should not assume a fixed decimal precision.
  */
 export interface CompositeChartPoint {
-  dateTime: string;
   price: number;
+  price_change: number;
 }
 
 /** Wire format for `GET stocks/composite-chart` — a bare array, no wrapper. */
