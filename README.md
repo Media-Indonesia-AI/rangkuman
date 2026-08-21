@@ -290,7 +290,6 @@ visitors on first paint.
 | `rangkuman-news:newsletter` | `SubscriberEntry[]` (JSON) | List of subscribed emails |
 | `rangkuman-news:newsletter_dismissed` | `{ until: ISO string }` | Pill-dismiss cooldown (24h) |
 | `rangkuman-news:saham-tab` | `"recap"` \| `"sektor"` | Active sub-tab on `/saham` |
-| `rangkuman-news:saham-recap-date` | `YYYY-MM-DD` | Active DatePicker value on `/saham` |
 
 **Cross-tab sync:** pakai `storage` event + custom event
 `rangkuman-news:storage` (and `rangkuman-news:saved-changed` for
