@@ -24,10 +24,11 @@ export function TrendingPageHeader() {
       <h1 className="text-[24px] font-bold leading-tight tracking-tight text-text-primary sm:text-[30px]">
         Saham paling banyak dibicarakan
       </h1>
-      <p className="mt-1 max-w-2xl text-[12.5px] leading-[1.55] text-text-secondary">
-        Ranking diurutin berdasarkan jumlah artikel dari CNBC, Bisnis,
-        Kontan, Bloomberg, Reuters, dan 20+ media lainnya. Update setiap
-        sesi perdagangan.
+      <p className="mt-1 text-[12.5px] leading-[1.55] text-text-secondary">
+        Ranking diurutin berdasarkan jumlah artikel dari Recap saham harian untuk investor 
+        ritel Indonesia. Dikurasi dari Bloomberg Technoz, Emitennews, CNBC Indonesia, Investor Daily, 
+        Katadata, Bisnis.com, Kontan, CryptoNews, The Block, Cointelegraph, dan Decrypt. 
+        Update setiap sesi perdagangan.
       </p>
     </header>
   );
