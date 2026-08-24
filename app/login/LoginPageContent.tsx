@@ -305,11 +305,17 @@ function GoogleLoginSection({
             // elsewhere) doesn't see a prompt briefly before the
             // redirect effect navigates them away.
             useOneTap={showPrompt}
-            // Auto-select when there's a single trusted Google
-            // account — single-tap to confirm, or auto-complete.
-            // FedCM handles this via the browser's account chooser
-            // when supported.
-            auto_select={showPrompt}
+            // Auto-select is intentionally OFF. Even when One Tap
+            // is showing (and even when Google considers the
+            // device trusted + there's a single eligible account),
+            // the user must explicitly click to sign in — silent
+            // auto-sign-in is a surprising UX, and this is a
+            // finance-adjacent app where every sign-in should be a
+            // deliberate user action. The FedCM "auto re-auth"
+            // path is reachable from other surfaces (Chrome's
+            // password manager UI, etc.), so we lose nothing by
+            // not opting in here.
+            auto_select={false}
             // Safari ITP blocks third-party cookies for the GSI
             // iframe. This opts the GSI client into its same-site
             // iframe shim so One Tap still works on Safari.
