@@ -3,7 +3,7 @@
  *
  * ─── What this module provides ───────────────────────────────────
  *
- *   - `GA_ID` — the GA4 measurement ID read from `NEXT_PUBLIC_GA_ID`.
+ *   - `GA_ID` — the GA4 measurement ID read from `GA_ID`.
  *     `undefined` when the env var is missing; consumers should
  *     treat that as "analytics disabled" and no-op.
  *   - `pageview(url)` / `event(name, params?)` — typed wrappers
@@ -33,7 +33,7 @@
  * call, and the value doesn't change between server / client.
  */
 
-export const GA_ID = process.env.NEXT_PUBLIC_GA_ID;
+export const GA_ID = process.env.GA_ID;
 
 /** `true` when the measurement ID is configured. Use this to gate
  *  the `<Script>` tags so we don't ship two empty `<script>` tags
