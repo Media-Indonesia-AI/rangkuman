@@ -102,8 +102,13 @@ export interface MockUser {
   username: string;
   name: string;
   /** Plaintext password — kept so we can build HTTP Basic auth on every request.
-   *  Demo-only: the real app would use HTTP-only session cookies. */
+   *  Demo-only: the real app would use HTTP-only session cookies.
+   *  Undefined for Google sessions — those authenticate with `googleId` instead. */
   password?: string;
+  /** Google account id (`sub` claim from the id_token). Set only for
+   *  Google sessions; pairs with `email` to form the Basic auth credential
+   *  on backend calls. See `getAuthHeader()` in `lib/api/client.ts`. */
+  googleId?: string;
   /** ISO timestamp of when the session was created. */
   loggedInAt: string;
   /** Provider used at sign-in: "email" | "google". */
@@ -277,6 +282,11 @@ export async function loginWithGoogle(
     name: response.user.name,
     // Google users don't have a password — see docstring above.
     password: undefined,
+    // Persist the Google `sub` so `getAuthHeader()` can build the
+    // `${email}:${googleId}` Basic auth credential on subsequent
+    // authenticated calls. Backend's auth scheme accepts the Google
+    // account id as the password-equivalent slot for Google sessions.
+    googleId: response.user.googleId ?? undefined,
     loggedInAt: response.user.createdAt,
     provider: "google",
     isEmailVerified: response.user.isEmailVerified,

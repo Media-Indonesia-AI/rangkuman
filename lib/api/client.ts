@@ -97,8 +97,10 @@ function getInternalTokenHeader(): Record<string, string> {
 /**
  * Build the HTTP Basic auth header from the active session stored in
  * localStorage. The session object is written by `lib/auth.ts` on
- * register/login and includes the plaintext password — required because
- * the backend's auth scheme is `Authorization: Basic base64(email:password)`.
+ * register/login and includes the credential the backend expects —
+ * `password` for email/password sessions, `googleId` for Google
+ * sessions. Backend's auth scheme is `Authorization: Basic
+ * base64(email:password_or_googleId)`.
  *
  * Safe to call on the server — returns {} (no auth header).
  */
@@ -110,9 +112,20 @@ function getAuthHeader(): Record<string, string> {
     const session = JSON.parse(raw) as {
       email?: string;
       password?: string;
+      googleId?: string;
     };
-    if (!session.email || !session.password) return {};
-    const credentials = `${session.email}:${session.password}`;
+    if (!session.email) return {};
+    // Email/password sessions use the stored password; Google
+    // sessions use the persisted `sub` claim as the password-
+    // equivalent slot so the same Basic auth header format
+    // works for both providers.
+    const secret =
+      session.password ??
+      (typeof session.googleId === "string" && session.googleId.length > 0
+        ? session.googleId
+        : undefined);
+    if (!secret) return {};
+    const credentials = `${session.email}:${secret}`;
     const encoded =
       typeof btoa === "function"
         ? btoa(credentials)
