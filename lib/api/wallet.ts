@@ -9,14 +9,14 @@ import type {
 
 /** `GET wallet/topup/bundle` — curated top-up catalogue. Render rows in `sort` ascending. */
 export function getTopupBundle(): Promise<TopupBundlesResponse> {
-  return request<TopupBundlesResponse>("wallet/topup/bundle", {
+  return request<TopupBundlesResponse>("wallet/topup/bundle/", {
     method: "GET",
   });
 }
 
 /** `GET wallet` — active user's wallet. `balance` is server-aggregated; `lots[]` is FIFO. Auth-gated. */
 export function getWallet(): Promise<WalletResponse> {
-  return request<WalletResponse>("wallet", {
+  return request<WalletResponse>("wallet/", {
     method: "GET",
   });
 }
@@ -36,7 +36,7 @@ export function getTransactionHistory(
     skip: String(skip),
   });
   return request<WalletTransactionHistoryResponse>(
-    `wallet/transaction?${params.toString()}`,
+    `wallet/transaction/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -58,7 +58,7 @@ export function getTransactionHistory(
  * `GET wallet/transaction`, just a single-object envelope.
  */
 export function doReqTopup(body: TopupRequest): Promise<WalletTransactionResponse> {
-  return request<WalletTransactionResponse>("wallet/topup", {
+  return request<WalletTransactionResponse>("wallet/topup/", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -85,5 +85,5 @@ export function doReqTopup(body: TopupRequest): Promise<WalletTransactionRespons
  *                    `payment_ref`s still travel safely.
  */
 export function getWalletTopupStreamPath(paymentRef: string): string {
-  return `wallet/topup/stream/${encodeURIComponent(paymentRef)}`;
+  return `wallet/topup/stream/${encodeURIComponent(paymentRef)}/`;
 }

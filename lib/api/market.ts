@@ -23,7 +23,7 @@ export function getInterestRate(
 ): Promise<InterestRate> {
   const params = new URLSearchParams({ date: date ?? todayIsoDate() });
   return request<InterestRate>(
-    `interest-rate?${params.toString()}`,
+    `interest-rate/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -40,7 +40,7 @@ export function getExchangeRate(
 ): Promise<ExchangeRateChartResponse> {
   const params = new URLSearchParams({ initial_currency: initialCurrency, exchange });
   return request<ExchangeRateChartResponse>(
-    `exchange-rate/chart?${params.toString()}`,
+    `exchange-rate/chart/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -60,7 +60,7 @@ export function getExchangeRate(
  */
 export function getMarketMood(): Promise<MarketMood> {
   return request<MarketMoodResponse>(
-    "market-mood",
+    "market-mood/",
     { method: "GET" },
   ).then((res) => res.data);
 }

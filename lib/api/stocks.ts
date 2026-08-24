@@ -31,14 +31,14 @@ import type {
 export function getTopStocks(limit = 5): Promise<TopStocksResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<TopStocksResponse>(
-    `stocks/top-stocks?${params.toString()}`,
+    `stocks/top-stocks/?${params.toString()}`,
     { method: "GET" },
   );
 }
 
 /** Fetch the full ticker catalog with latest price and day change. */
 export function getTickers(): Promise<TickersResponse> {
-  return request<TickersResponse>("stocks/ticker", { method: "GET" });
+  return request<TickersResponse>("stocks/ticker/", { method: "GET" });
 }
 
 /** Search stocks by ticker or company name. */
@@ -51,7 +51,7 @@ export function getStocksSearch(
     limit: String(limit),
   });
   return request<StocksSearchResponse>(
-    `stocks/search?${params.toString()}`,
+    `stocks/search/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -64,7 +64,7 @@ export function getStocksSearch(
 export function getIndexMover(limit = 10): Promise<IndexMoverResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<IndexMoverResponse>(
-    `stocks/index-mover?${params.toString()}`,
+    `stocks/index-mover/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -83,7 +83,7 @@ export function getForeignStocks(
     end_date: endDate ?? todayIsoDate(),
   });
   return request<ForeignStocksResponse>(
-    `stocks/foreign-stocks?${params.toString()}`,
+    `stocks/foreign-stocks/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -100,7 +100,7 @@ export function getCompositeChart(
 ): Promise<CompositeChartResponse> {
   const params = new URLSearchParams({ period });
   return request<CompositeChartResponse>(
-    `stocks/composite-chart?${params.toString()}`,
+    `stocks/composite-chart/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -129,7 +129,7 @@ export function getTickerInformation(
     params.set("date", date);
   }
   return request<TickerInformation>(
-    `stocks/ticker-information/${encodeURIComponent(code)}?${params.toString()}`,
+    `stocks/ticker-information/${encodeURIComponent(code)}/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -158,7 +158,7 @@ export function getTickerListArticles(
     params.set("filters", JSON.stringify(filters));
   }
   return request<TickerListResponse>(
-    `stocks/ticker-information?${params.toString()}`,
+    `stocks/ticker-information/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -176,7 +176,7 @@ export function getKeyMetrics(
 ): Promise<KeyMetrics> {
   const code = ticker.toUpperCase();
   return request<KeyMetrics>(
-    `stocks/key-metrics/${encodeURIComponent(code)}`,
+    `stocks/key-metrics/${encodeURIComponent(code)}/`,
     { method: "GET" },
   );
 }
@@ -197,7 +197,7 @@ export function getStockHistorical(
   const code = ticker.toUpperCase();
   const params = new URLSearchParams({ ticker: code });
   return request<StockHistoricalResponse>(
-    `stocks/stock/historical?${params.toString()}`,
+    `stocks/stock/historical/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -234,7 +234,7 @@ export function getStocksTrending(
     limit: String(limit),
   });
   return request<StocksTrendingResponse>(
-    `stocks/stock/trending?${params.toString()}`,
+    `stocks/stock/trending/?${params.toString()}`,
     { method: "GET" },
   );
 }

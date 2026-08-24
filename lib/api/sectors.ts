@@ -29,5 +29,5 @@ import type { SectorsResponse } from "./types/sectors";
  * directly. See `SectorsResponse` for the raw wire shape.
  */
 export function getSectors(): Promise<SectorsResponse> {
-  return request<SectorsResponse>("stocks/sectors", { method: "GET" });
+  return request<SectorsResponse>("stocks/sectors/", { method: "GET" });
 }

@@ -50,7 +50,7 @@ export function getListStory(
     params.set("filters", JSON.stringify(filters));
   }
   return request<StoryListResponse>(
-    `story?${params.toString()}`,
+    `story/?${params.toString()}`,
     { method: "GET" },
   );
 }
