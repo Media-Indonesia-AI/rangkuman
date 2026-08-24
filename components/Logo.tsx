@@ -1,4 +1,7 @@
+"use client";
+
 import { cn } from "@/lib/utils";
+import { useTheme } from "@/lib/hooks/useTheme";
 
 interface LogoProps {
   size?: number;
@@ -10,22 +13,20 @@ interface LogoProps {
 }
 
 /**
- * Rangkuman.news logo — uses the brand asset at /logo-icon.svg and /logo.svg.
+ * Rangkuman.news logo — uses the brand assets in `public/`:
  *
- * Variants:
- * - Icon only (default) — used in navbar, favicon-sized contexts.
- * - Full lockup (`full={true}`) — used in footer, login, and any hero context
- *   where the wordmark should appear next to the icon.
+ * - `biru.svg`   — blue R icon, light theme
+ * - `orange.svg` — orange R icon, dark theme
  *
- * Color palette (locked to brand):
- * - Navy:   #1E3A8A   (R letterform, "rangkuman")
- * - Teal:   #14B8A6   (stripes, "news", R leg detail)
- * - Orange: #F7931A   (third stripe, "." in wordmark)
+ * Theme handling:
+ * The icon picks the blue or orange variant based on the site's
+ * `.dark` class on `<html>` via `useTheme()`. SSR + first client
+ * render default to light (`biru.svg`) to match the `:root` palette;
+ * the hook re-renders with the correct variant once the theme is known.
  *
- * Light/dark mode handling:
- * The full SVG colors are baked in. In dark mode the navy R stays navy
- * (looks good on dark bg); the teal and orange are already accent colors
- * and remain readable. No filter/invert needed.
+ * Both files are square (1:1) — the wordmark stays composed in React
+ * (see `components/Brand.tsx`), so we render the same icon asset in
+ * both `full={true}` and `full={false}` modes.
  */
 export function Logo({
   size = 32,
@@ -33,11 +34,10 @@ export function Logo({
   full = false,
   withRing = false,
 }: LogoProps) {
-  const src = full ? "/logo.svg" : "/logo-icon.svg";
+  const theme = useTheme();
+  const src = theme === "dark" ? "/orange.svg" : "/biru.svg";
 
-  // Aspect ratio: icon is square, full lockup is wide (1.8:1).
-  const aspect = full ? 1.8 : 1;
-  const width = size * aspect;
+  const width = size;
   const height = size;
 
   return (
