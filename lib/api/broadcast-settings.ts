@@ -22,7 +22,7 @@ import type {
  * watchlist wire shape (see `lib/api/types/watchlist.ts`).
  */
 export function getBroadcastSettings(): Promise<BroadcastSettings> {
-  return request<BroadcastSettings>("broadcast-settings", {
+  return request<BroadcastSettings>("broadcast-settings/", {
     method: "GET",
   });
 }
@@ -45,7 +45,7 @@ export function getBroadcastSettings(): Promise<BroadcastSettings> {
 export function updateBroadcastSettings(
   body: BroadcastSettingsRequest,
 ): Promise<BroadcastSettings> {
-  return request<BroadcastSettings>("broadcast-settings", {
+  return request<BroadcastSettings>("broadcast-settings/", {
     method: "PUT",
     body: JSON.stringify(body),
   });

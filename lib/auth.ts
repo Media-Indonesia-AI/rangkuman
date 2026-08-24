@@ -4,7 +4,7 @@
  * The active session is persisted to localStorage so it survives reloads.
  */
 
-import { api, type ApiError, type RegisterResponse } from "./api";
+import { api, type ApiError, type GoogleLoginResponse, type RegisterResponse } from "./api";
 import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "./util/safeLocalStorage";
 
@@ -102,8 +102,13 @@ export interface MockUser {
   username: string;
   name: string;
   /** Plaintext password — kept so we can build HTTP Basic auth on every request.
-   *  Demo-only: the real app would use HTTP-only session cookies. */
+   *  Demo-only: the real app would use HTTP-only session cookies.
+   *  Undefined for Google sessions — those authenticate with `googleId` instead. */
   password?: string;
+  /** Google account id (`sub` claim from the id_token). Set only for
+   *  Google sessions; pairs with `email` to form the Basic auth credential
+   *  on backend calls. See `getAuthHeader()` in `lib/api/client.ts`. */
+  googleId?: string;
   /** ISO timestamp of when the session was created. */
   loggedInAt: string;
   /** Provider used at sign-in: "email" | "google". */
@@ -256,7 +261,7 @@ export async function loginWithGoogle(
     throw new Error("Kredensial Google kosong");
   }
 
-  let response: RegisterResponse;
+  let response: GoogleLoginResponse;
   try {
     response = await api.googleLogin(credential);
   } catch (err) {
@@ -277,12 +282,19 @@ export async function loginWithGoogle(
     name: response.user.name,
     // Google users don't have a password — see docstring above.
     password: undefined,
+    // Persist the Google `sub` so `getAuthHeader()` can build the
+    // `${email}:${googleId}` Basic auth credential on subsequent
+    // authenticated calls. Backend's auth scheme accepts the Google
+    // account id as the password-equivalent slot for Google sessions.
+    googleId: response.user.googleId ?? undefined,
     loggedInAt: response.user.createdAt,
     provider: "google",
     isEmailVerified: response.user.isEmailVerified,
   };
   writeJson(USER_KEY, session);
-  if (response.setupToken) writeJson(SETUP_TOKEN_KEY, response.setupToken);
+  // Google login returns no `setupToken` — the backend creates the
+  // account without a password, so the one-time setup-token flow
+  // doesn't apply.
   return session;
 }
 

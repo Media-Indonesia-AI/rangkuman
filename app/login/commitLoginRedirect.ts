@@ -72,22 +72,6 @@ export function commitLoginRedirect(
 ): void {
   const target = getAuthRedirectTarget(searchParams);
 
-  if (process.env.NODE_ENV !== "production") {
-    // Single grouped log line for each interesting state — keep
-    // the developer's console readable. The fields are stable
-    // across navigations so log-search works.
-    console.group(`[${label}-login-success]`);
-    console.log("current pathname:", window.location.pathname);
-    console.log("redirect target:", target);
-    console.log(
-      "sessionStorage prev-path:",
-      window.sessionStorage.getItem(SESSION_STORAGE_KEYS.authPrevPath),
-    );
-    console.log("localStorage user:", safeGetItem(STORAGE_KEYS.user));
-    console.log("firing window.location.assign…");
-    console.groupEnd();
-  }
-
   window.location.assign(target);
 
   // Self-diagnostic — see file header.

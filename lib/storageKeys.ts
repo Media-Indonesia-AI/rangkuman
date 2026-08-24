@@ -74,12 +74,8 @@ export const STORAGE_KEYS = {
   newsletterDismissed: "rangkuman-news:newsletter_dismissed",
 
   // ── /saham page state ─────────────────────────────────────────
-  /** Active sub-tab on `/saham` (`"recap" | "sektor"`). Mirrors
-   *  the same `null`-sentinel hydration pattern as the recap
-   *  date below. */
+  /** Active sub-tab on `/saham` (`"recap" | "sektor"`). */
   sahamTab: "rangkuman-news:saham-tab",
-  /** Active DatePicker value on `/saham` (`YYYY-MM-DD`). */
-  sahamRecapDate: "rangkuman-news:saham-recap-date",
 } as const;
 
 /** Every sessionStorage key the app uses. Kept on its own object

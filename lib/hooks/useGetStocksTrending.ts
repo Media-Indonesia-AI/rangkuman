@@ -33,6 +33,10 @@ import { hariIniIso } from "../util/formatDate";
  * and re-fired, leaving `data` permanently empty. The same pattern
  * is used by the bare-mount `effectiveDate` fallback on `/saham`.
  *
+ * The freeze applies **only to the auto-generated default**; an
+ * explicit `date` prop (e.g. the DatePicker's value on `/saham`)
+ * must flow through live so a date pick triggers a refetch.
+ *
  * @param date  ISO date string `YYYY-MM-DD` (default today, frozen
  *              once per mount).
  * @param page  1-indexed page number (default 1).
@@ -47,14 +51,11 @@ export function useGetStocksTrending(
   isLoading: boolean;
   refresh: () => void;
 } {
-  // Freeze the default `date` once per mount so the effect's
-  // dependency array doesn't see a "new" date every render.
-  // The previous `date: string = hariIniIso()` default-param form
-  // re-evaluated `hariIniIso()` on every call — every render
-  // produced a fresh ISO string, every strict-mode / HMR remount
-  // saw a "changed" date, and the effect looped, leaving `data`
-  // permanently empty.
-  const [resolvedDate] = useState(() => date ?? hariIniIso());
+  // Freeze the *default* only — `useState(() => hariIniIso())`
+  // runs once at mount. An explicit `date` prop is used as-is so
+  // the caller (DatePicker) can drive refetches.
+  const [defaultDate] = useState(() => hariIniIso());
+  const effectiveDate = date ?? defaultDate;
 
   const [data, setData] = useState<StockTrendingItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,7 +67,7 @@ export function useGetStocksTrending(
     setData([]);
     setIsLoading(true);
 
-    void loadStocksTrending(resolvedDate, page, limit)
+    void loadStocksTrending(effectiveDate, page, limit)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })
@@ -80,7 +81,7 @@ export function useGetStocksTrending(
     return () => {
       cancelled = true;
     };
-  }, [resolvedDate, page, limit, refreshKey]);
+  }, [effectiveDate, page, limit, refreshKey]);
 
   const refresh = useCallback(() => {
     setRefreshKey((current) => current + 1);

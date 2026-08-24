@@ -18,7 +18,7 @@ import type {
  * list lands first; the backend doesn't guarantee a wire order.
  */
 export function getWatchlist(): Promise<WatchlistResponse> {
-  return request<WatchlistResponse>("watchlist", {
+  return request<WatchlistResponse>("watchlist/", {
     method: "GET",
   });
 }
@@ -41,7 +41,7 @@ export function getWatchlist(): Promise<WatchlistResponse> {
 export function addToWatchlist(
   body: AddToWatchlistRequest,
 ): Promise<WatchlistItem> {
-  return request<WatchlistItem>("watchlist", {
+  return request<WatchlistItem>("watchlist/", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -64,7 +64,7 @@ export function addToWatchlist(
 export function updateWatchlist(
   body: AddToWatchlistRequest,
 ): Promise<WatchlistItem> {
-  return request<WatchlistItem>("watchlist", {
+  return request<WatchlistItem>("watchlist/", {
     method: "PUT",
     body: JSON.stringify(body),
   });
@@ -88,7 +88,7 @@ export function updateWatchlist(
 export function deleteWatchlist(
   body: DeleteWatchlistRequest,
 ): Promise<WatchlistResponse | null> {
-  return request<WatchlistResponse | null>("watchlist", {
+  return request<WatchlistResponse | null>("watchlist/", {
     method: "DELETE",
     body: JSON.stringify(body),
   });

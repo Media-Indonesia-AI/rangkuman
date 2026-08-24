@@ -38,10 +38,10 @@ export function CryptoFeaturedCard({ story }: CryptoFeaturedCardProps) {
           <div className="absolute inset-0 opacity-50 pattern-chart-line" />
           <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-bg-secondary to-transparent" />
           <div className="absolute left-3 top-3 flex items-center gap-1.5 sm:left-4 sm:top-4">
-            <span className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 rounded border border-black/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm dark:border-white/20">
               {story.flag} {story.coinKode}
             </span>
-            <span className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+            <span className="inline-flex items-center gap-1 rounded border border-black/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm dark:border-white/20">
               <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               LIVE
             </span>

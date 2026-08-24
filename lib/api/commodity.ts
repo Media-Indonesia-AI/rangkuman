@@ -45,7 +45,7 @@ export function getCommodityCategories(
     skip: String(skip),
   });
   return request<CommodityCategoriesResponse>(
-    `commodity-categories?${params.toString()}`,
+    `commodity-categories/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -75,7 +75,7 @@ export function getCommodityHistorical(
 ): Promise<CommodityHistoricalResponse> {
   const params = new URLSearchParams({ symbol, period });
   return request<CommodityHistoricalResponse>(
-    `commodities/historical?${params.toString()}`,
+    `commodities/historical/?${params.toString()}`,
     { method: "GET" },
   );
 }

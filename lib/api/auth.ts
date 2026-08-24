@@ -8,6 +8,7 @@
 
 import { request } from "./client";
 import type {
+  GoogleLoginResponse,
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
@@ -16,7 +17,7 @@ import type {
 export function register(
   body: RegisterRequest,
 ): Promise<RegisterResponse> {
-  return request<RegisterResponse>("auth/register", {
+  return request<RegisterResponse>("auth/register/", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -25,7 +26,7 @@ export function register(
 export function login(
   body: LoginRequest,
 ): Promise<RegisterResponse> {
-  return request<RegisterResponse>("auth/login", {
+  return request<RegisterResponse>("auth/login/", {
     method: "POST",
     body: JSON.stringify(body),
   });
@@ -43,10 +44,10 @@ export function login(
  * persist it via the shared `writeJson` plumbing.
  */
 export function googleLogin(
-  credential: string,
-): Promise<RegisterResponse> {
-  return request<RegisterResponse>("auth/google/verify", {
+  idToken: string,
+): Promise<GoogleLoginResponse> {
+  return request<GoogleLoginResponse>("auth/google/", {
     method: "POST",
-    body: JSON.stringify({ credential }),
+    body: JSON.stringify({ idToken }),
   });
 }

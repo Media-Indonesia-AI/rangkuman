@@ -56,9 +56,12 @@ export const metadata: Metadata = {
       "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
   },
   icons: {
-    icon: [
-      { url: "/favicon.svg", type: "image/svg+xml" },
-    ],
+    // Single favicon — `/biru.svg`. The browser tab does not reliably
+    // flip on theme changes (the favicon is loaded outside the React
+    // tree and is cached on first paint by the browser/OS), so we
+    // commit to one variant for the tab and reserve theme-awareness
+    // for the in-page `Logo` component.
+    icon: [{ url: "/biru.svg", type: "image/svg+xml" }],
   },
 };
 

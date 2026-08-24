@@ -39,7 +39,7 @@ export function getTopic(
     params.set("filters", JSON.stringify(filters));
   }
   return request<TopicResponse>(
-    `topic?${params.toString()}`,
+    `topic/?${params.toString()}`,
     { method: "GET" },
   );
 }

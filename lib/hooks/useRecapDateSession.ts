@@ -3,45 +3,41 @@
 /**
  * Session state for the `/saham` recap date.
  *
- * Three concerns bundled into one hook because they share the
- * same `isoDate` state and would otherwise tangle the page:
+ * Two concerns bundled into one hook because they share the same
+ * `isoDate` state and would otherwise tangle the page:
  *
  *   1. **URL hint hydration** — `?date=` is set by the
  *      StockDetailPage back link so /saham lands on the same day
  *      the user was viewing on the detail page. The hint is
- *      consumed once and stripped via `history.replaceState` so
- *      a subsequent refresh falls through to today (and to the
- *      localStorage layer for picks within an active session).
- *   2. **localStorage persistence** — picks made via the
- *      DatePicker are persisted so a refresh within the same
- *      session restores them. Only non-today values are written
- *      to keep the storage slot minimal.
- *   3. **Inactivity auto-expiry** — after `RECAP_DATE_INACTIVITY_MS`
+ *      consumed once and stripped via `history.replaceState` so a
+ *      subsequent refresh falls through to today.
+ *   2. **Inactivity auto-expiry** — after `RECAP_DATE_INACTIVITY_MS`
  *      of no user activity (mousedown / keydown / touchstart /
- *      scroll / wheel), the date snaps to today and the session
- *      is cleared. A fresh session starts on any edit that lands
- *      the date on a non-today value (manual pick, new
- *      back-from-detail navigation).
+ *      scroll / wheel), the date snaps to today. A fresh session
+ *      starts on any edit that lands the date on a non-today
+ *      value (manual pick, new back-from-detail navigation).
+ *
+ * Picks made via the DatePicker are intentionally NOT persisted
+ * across refreshes — each visit starts from today (or the URL
+ * hint), and the inactivity timer brings the date back to today
+ * within a single session.
  *
  * The hook returns `[effectiveDate, setDate]` — `effectiveDate`
  * is always a string (today as the pre-hydration fallback), so
  * consumers don't need their own null-coalesce. `setDate` accepts
  * a non-null string; the hook owns the null-sentinel internally
- * to gate the persistence and inactivity effects.
+ * to gate the inactivity effect.
  */
 
 import { useEffect, useState } from "react";
 
-import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { hariIniIso } from "@/lib/util/formatDate";
-import { safeGetItem, safeSetItem } from "@/lib/util/safeLocalStorage";
 
 const RECAP_DATE_INACTIVITY_MS = 3 * 60 * 1000;
 
-/** Type guard for the persisted / URL value — accepts only
- *  ISO-shaped `YYYY-MM-DD` strings (anything else falls through
- *  to today). Defensive against manual localStorage edits and
- *  URL parameter tampering. */
+/** Type guard for the URL hint value — accepts only ISO-shaped
+ *  `YYYY-MM-DD` strings (anything else falls through to today).
+ *  Defensive against URL parameter tampering. */
 const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 function isIsoDate(value: unknown): value is string {
   return typeof value === "string" && ISO_DATE_RE.test(value);
@@ -68,10 +64,9 @@ export function useRecapDateSession(): readonly [
   // falls back to today via the `??` on return.
   const [date, setDate] = useState<string | null>(null);
 
-  // Hydrate on mount: URL hint → localStorage → today. The hint
-  // wins because it's the freshest signal (back-from-detail just
-  // happened). The URL query is then stripped so the next refresh
-  // doesn't re-honor it.
+  // Hydrate on mount: URL hint → today. The hint wins because it's
+  // the freshest signal (back-from-detail just happened). The URL
+  // query is then stripped so the next refresh doesn't re-honor it.
   useEffect(() => {
     const dateParam = new URLSearchParams(window.location.search).get(
       "date",
@@ -79,8 +74,7 @@ export function useRecapDateSession(): readonly [
     if (isIsoDate(dateParam)) {
       setDate(dateParam);
     } else {
-      const raw = safeGetItem(STORAGE_KEYS.sahamRecapDate);
-      setDate(isIsoDate(raw) ? raw : hariIniIso());
+      setDate(hariIniIso());
     }
     if (window.location.search) {
       window.history.replaceState(
@@ -90,15 +84,6 @@ export function useRecapDateSession(): readonly [
       );
     }
   }, []);
-
-  // Persist non-today picks so a refresh-within-session restores
-  // them. Today is intentionally NOT written — every visit would
-  // otherwise thrash the slot, and today is the default anyway.
-  useEffect(() => {
-    if (date === null) return;
-    if (date === hariIniIso()) return;
-    safeSetItem(STORAGE_KEYS.sahamRecapDate, date);
-  }, [date]);
 
   // Inactivity timer — see header for the full lifecycle.
   useEffect(() => {

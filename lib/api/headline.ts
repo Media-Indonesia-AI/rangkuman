@@ -37,7 +37,7 @@ export function getTrendingStories(
     limit: String(limit),
   });
   return request<TrendingStoriesResponse>(
-    `headlines/trending?${params.toString()}`,
+    `headlines/trending/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -67,7 +67,7 @@ export function getHeadlines(
     params.set("filters", JSON.stringify(filters));
   }
   return request<StoryResponse>(
-    `headlines?${params.toString()}`,
+    `headlines/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -90,7 +90,7 @@ export function getHeadlineById(
   id: string,
 ): Promise<HeadlineDetail> {
   return request<HeadlineDetailResponse>(
-    `headlines/${encodeURIComponent(id)}`,
+    `headlines/${encodeURIComponent(id)}/`,
     { method: "GET" },
   ).then((res) => res.data);
 }
@@ -116,7 +116,7 @@ export function getHeadlinesLast7Days(
     date: date,
   });
   return request<HeadlinesLast7DaysResponse>(
-    `headlines/last-7-days?${params.toString()}`,
+    `headlines/last-7-days/?${params.toString()}`,
     { method: "GET" },
   );
 }
@@ -177,7 +177,7 @@ export function getMultiDateStories(
     params.set("topic_id", trimmedTopicId);
   }
   return request<MultiDateStoriesResponse>(
-    `headlines/multi-date-stories?${params.toString()}`,
+    `headlines/multi-date-stories/?${params.toString()}`,
     { method: "GET" },
   );
 }
