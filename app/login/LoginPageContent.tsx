@@ -274,7 +274,7 @@ function GoogleLoginSection({
   // own prop `googleClientId` to match the route entry's prop name
   // and avoid ambiguity at call sites.
   return (
-    <GoogleOAuthProvider clientId={googleClientId}>
+    <GoogleOAuthProvider clientId={googleClientId} locale="id">
       <div>
         <div className="relative">
           <GoogleLogin
