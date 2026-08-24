@@ -17,6 +17,7 @@ import {
   loginWithIdentifier,
 } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { useTheme } from "@/lib/hooks/useTheme";
 import { cn } from "@/lib/utils";
 import { commitLoginRedirect } from "./commitLoginRedirect";
 import { useGoogleOneTap } from "./useGoogleOneTap";
@@ -256,6 +257,18 @@ function GoogleLoginSection({
    *  closure) so the section self-contains the loading state. */
   pending: boolean;
 }) {
+  // Subscribe to the site's active theme so the GSI button reads
+  // as part of the card. We map our two-theme model onto GSI's
+  // themed surfaces — `outline` for light, `filled_black` for
+  // dark — and default to `outline` while `useTheme()` is in its
+  // pre-hydration null state (matches GSI's own default and the
+  // `:root` palette in `globals.css`). The MutationObserver inside
+  // `useTheme` re-renders the section when the user toggles theme
+  // via `<ThemeToggle />`, so the button stays in sync.
+  const theme = useTheme();
+  const gsiTheme: "outline" | "filled_black" =
+    theme === "dark" ? "filled_black" : "outline";
+
   // The `@react-oauth/google` SDK expects its own `clientId` prop on
   // `<GoogleOAuthProvider>` — fixed by the SDK contract. We name our
   // own prop `googleClientId` to match the route entry's prop name
@@ -267,7 +280,12 @@ function GoogleLoginSection({
           <GoogleLogin
             onSuccess={onSuccess}
             onError={onError}
-            theme="outline"
+            // Tracks the site's active theme: `outline` in light
+            // mode (white bg, dark text), `filled_black` in dark
+            // mode (black bg, white text). Resolved from
+            // `useTheme()` above — see that comment for the
+            // pre-hydration default.
+            theme={gsiTheme}
             size="large"
             text="continue_with"
             shape="rectangular"
