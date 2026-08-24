@@ -24,7 +24,6 @@ const config: Config = {
         // Borders
         border: "var(--border)",
         "border-strong": "var(--border-strong)",
-        "border-glow": "var(--border-glow)",
         // Brand — Bitcoin orange (constant in both themes)
         brand: "var(--brand)",
         "brand-hover": "var(--brand-hover)",
@@ -89,7 +88,6 @@ const config: Config = {
       },
       boxShadow: {
         "card-hover": "var(--shadow-card-hover)",
-        "card-glow": "var(--shadow-card-glow)",
         ticker: "0 1px 0 0 rgba(255, 255, 255, 0.04) inset",
       },
       keyframes: {

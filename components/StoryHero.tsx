@@ -97,14 +97,14 @@ export function StoryHero({ highlight }: StoryHeroProps) {
             return (
               <span
                 key={c}
-                className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm"
+                className="inline-flex items-center gap-1 rounded border border-black/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-white backdrop-blur-sm dark:border-white/20"
               >
                 <CategoryIcon className="h-2.5 w-2.5" aria-hidden />
                 {cc.label}
               </span>
             );
           })}
-          <span className="inline-flex items-center gap-1 rounded border border-white/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm">
+          <span className="inline-flex items-center gap-1 rounded border border-black/20 bg-black/30 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-white/90 backdrop-blur-sm dark:border-white/20">
             <span className="h-1.5 w-1.5 rounded-full bg-brand" />
             LIVE
           </span>

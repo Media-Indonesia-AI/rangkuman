@@ -22,7 +22,6 @@
 
     --border: #CBD5E1;
     --border-strong: #94A3B8;
-    --border-glow: rgba(247, 147, 26, 0.20);
 
     --brand: #F7931A;
     --brand-hover: #E07F0F;
@@ -80,7 +79,6 @@
     --cat-komoditas-line: #D97706;
 
     --shadow-card-hover: 0 8px 24px -8px rgba(15, 23, 42, 0.12), 0 0 0 1px rgba(247, 147, 26, 0.10);
-    --shadow-card-glow: 0 0 0 1px rgba(247, 147, 26, 0.30), 0 0 20px -4px rgba(247, 147, 26, 0.20);
   }
 
   /* Dark mode — applied by .dark class on <html> */
@@ -99,7 +97,6 @@
 
     --border: #262626;
     --border-strong: #3F3F46;
-    --border-glow: rgba(247, 147, 26, 0.20);
 
     --brand: #F7931A;
     --brand-hover: #FFA940;
@@ -153,7 +150,6 @@
     --cat-komoditas-line: rgba(217, 119, 6, 0.30);
 
     --shadow-card-hover: 0 8px 24px -8px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(247, 147, 26, 0.10);
-    --shadow-card-glow: 0 0 0 1px rgba(247, 147, 26, 0.30), 0 0 20px -4px rgba(247, 147, 26, 0.20);
 
     --logo-accent: #F7931A;
   }
@@ -224,20 +220,6 @@
     @apply hover:border-border-strong hover:bg-bg-tertiary;
   }
 
-  /* Category badge */
-  .badge {
-    @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest;
-  }
-  .badge-bullish {
-    @apply bg-bullish-bg text-bullish border border-bullish-line;
-  }
-  .badge-bearish {
-    @apply bg-bearish-bg text-bearish border border-bearish-line;
-  }
-  .badge-mixed {
-    @apply bg-mixed-bg text-mixed border border-mixed-line;
-  }
-
   /* Mono caps labels */
   .label {
     @apply font-mono text-[10px] uppercase tracking-widest text-text-muted;
@@ -255,23 +237,49 @@
   /* =========================================================
      Hero gradient backgrounds per category (Sorotan section)
      Subtle: opacity handled by parent, not here.
+
+     Theme-aware: light mode (`:root` below) gets a medium-tone
+     gradient using the category hue so the hero reads as part of
+     the light card surface; dark mode (`:root.dark` overrides)
+     keeps the original moody, near-black gradients — those are
+     what the white-on-dark pill chrome and watermark icons were
+     designed against.
      ========================================================= */
   .bg-hero-ekonomi {
-    background: linear-gradient(135deg, #0f1f3d 0%, #1e3a5f 50%, #2d5a8a 100%);
+    background: linear-gradient(135deg, #FED7AA 0%, #FB923C 50%, #EA580C 100%);
   }
   .bg-hero-bisnis {
-    background: linear-gradient(135deg, #061a1a 0%, #0d3b3b 50%, #115e59 100%);
+    background: linear-gradient(135deg, #BFDBFE 0%, #60A5FA 50%, #2563EB 100%);
   }
   .bg-hero-kebijakan {
-    background: linear-gradient(135deg, #1a0a0a 0%, #3b0a0a 50%, #5c1010 100%);
+    background: linear-gradient(135deg, #FECACA 0%, #F87171 50%, #DC2626 100%);
   }
   .bg-hero-saham {
-    background: linear-gradient(135deg, #051a05 0%, #0a2e0a 50%, #0f4411 100%);
+    background: linear-gradient(135deg, #A7F3D0 0%, #34D399 50%, #059669 100%);
   }
   .bg-hero-global {
-    background: linear-gradient(135deg, #0e0620 0%, #1a0a3e 50%, #2d1060 100%);
+    background: linear-gradient(135deg, #DDD6FE 0%, #A78BFA 50%, #7C3AED 100%);
   }
   .bg-hero-komoditas {
+    background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #D97706 100%);
+  }
+
+  :root.dark .bg-hero-ekonomi {
+    background: linear-gradient(135deg, #0f1f3d 0%, #1e3a5f 50%, #2d5a8a 100%);
+  }
+  :root.dark .bg-hero-bisnis {
+    background: linear-gradient(135deg, #061a1a 0%, #0d3b3b 50%, #115e59 100%);
+  }
+  :root.dark .bg-hero-kebijakan {
+    background: linear-gradient(135deg, #1a0a0a 0%, #3b0a0a 50%, #5c1010 100%);
+  }
+  :root.dark .bg-hero-saham {
+    background: linear-gradient(135deg, #051a05 0%, #0a2e0a 50%, #0f4411 100%);
+  }
+  :root.dark .bg-hero-global {
+    background: linear-gradient(135deg, #0e0620 0%, #1a0a3e 50%, #2d1060 100%);
+  }
+  :root.dark .bg-hero-komoditas {
     background: linear-gradient(135deg, #1a0f05 0%, #2d1a0a 50%, #452710 100%);
   }
 
@@ -291,11 +299,6 @@
       transparent 1px
     );
     background-size: 24px 24px;
-  }
-
-  /* Subtle noise texture (inline SVG) for hero areas */
-  .pattern-noise {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' /%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.4'/%3E%3C/svg%3E");
   }
 
   /* Geometric pattern (chart-line subtle) */
