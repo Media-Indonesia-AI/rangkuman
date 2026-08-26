@@ -84,6 +84,20 @@ export function normalizeLocalPhone(s: string): string {
   return s.replace(/^\+/, "").replace(/^62/, "").replace(/^0/, "");
 }
 
+/** Content-equality between two sets — `true` when both carry
+ *  the same elements regardless of insertion order or reference
+ *  identity. Standard size-match + every-element-in-b check.
+ *  Used by the broadcast-settings dirty check to compare the
+ *  user's selected frequency set against the saved baseline. */
+export function setsContainSameItems<T>(
+  a: ReadonlySet<T>,
+  b: ReadonlySet<T>,
+): boolean {
+  if (a.size !== b.size) return false;
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
+}
+
 /** Re-export so the page can keep the `BroadcastSettings` import
  *  scoped to this module — only widgets that need the type reach
  *  into `@/lib/api` directly. (The `BroadcastSettings` type is
