@@ -90,8 +90,8 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
       // accepts any non-negative integer.
       const res = await addToList(kode, existing.length + 1);
       message = res !== null
-        ? `✓ ${kode} ditambahin ke watchlist`
-        : `⚠ Gagal nambahin ${kode}`;
+        ? `✓ ${kode} ditambahkan ke watchlist`
+        : `⚠ Gagal menambahkan ${kode}`;
     }
 
     setToast(message);
