@@ -37,6 +37,7 @@ export type {
   StockTrendingItem,
   StocksTrendingResponse,
   StockTrendingSource,
+  TickerArticles,
   TickerInformation,
   TickerItem,
   TickerListItem,

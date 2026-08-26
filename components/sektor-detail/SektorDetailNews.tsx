@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { Newspaper } from "lucide-react";
-import type { EmbeddedStory } from "@/lib/api";
+import type { TickerArticles } from "@/lib/api";
 import type { SektorDisplay } from "@/lib/util/sectorMappers";
 import { useSektorDetail } from "@/lib/hooks/useSektorDetail";
 import { SektorNewsItem } from "./SektorNewsItem";
@@ -18,7 +18,7 @@ interface SektorDetailNewsProps {
 
 /** One (ticker, story) pair from the flattened stories list.
  *  Used for both the sort input and the bucket entries. */
-type SortedPair = { ticker: string; story: EmbeddedStory };
+type SortedPair = { ticker: string; story: TickerArticles };
 
 /** dayKey → ordered list of pairs sharing that recap date. */
 interface DayGroup {
@@ -41,8 +41,8 @@ type StockByKode = Map<string, SektorDisplay["stocks"][number]>;
  *   - yesterday → "Kemarin"
  *   - otherwise → long Indonesian format
  *     (e.g. "Minggu, 12 Januari 2025")
- * Stories without a `recap_date`/`created_at` all collapse into a
- * single "Tanggal tidak diketahui" group at the bottom.
+ * Stories without a `recap_date` all collapse into a single
+ * "Tanggal tidak diketahui" group at the bottom.
  *
  * **One row per story**, not per stock. A stock with multiple
  * stories surfaces as multiple rows; stocks with no stories
@@ -59,8 +59,8 @@ type StockByKode = Map<string, SektorDisplay["stocks"][number]>;
  *   - So the parent mounts an invisible `<StoryCollector />` per
  *     stock, which fetches its stories and reports them back via
  *     a stable callback. The parent flattens all reported
- *     stories, sorts by `created_at`/`recap_date` desc, groups
- *     by day, and renders `<SektorNewsItem />` rows.
+ *     stories, sorts by `recap_date` desc, groups by day, and
+ *     renders `<SektorNewsItem />` rows.
  *
  * Edge cases:
  *   - sector with no stocks → "Belum ada emiten di sektor ini"
@@ -76,11 +76,11 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
   // own the merge here so the rendered rows can carry a globally
   // sorted order.
   const [storiesByTicker, setStoriesByTicker] = useState<
-    Map<string, EmbeddedStory[]>
+    Map<string, TickerArticles[]>
   >(() => new Map());
 
   const reportStories = useCallback(
-    (ticker: string, stories: EmbeddedStory[]) => {
+    (ticker: string, stories: TickerArticles[]) => {
       setStoriesByTicker((prev) => {
         // Skip the update when the stories array for this ticker
         // hasn't actually changed — keeps `sortedPairs` and the
@@ -95,8 +95,8 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
     [],
   );
 
-  // Flatten + sort by `created_at` / `recap_date` desc. Tie-break
-  // by ticker so equal timestamps stay in a deterministic order.
+  // Flatten + sort by `recap_date` desc. Tie-break by ticker so
+  // equal timestamps stay in a deterministic order.
   const sortedPairs: SortedPair[] = [];
   for (const [ticker, stories] of storiesByTicker) {
     for (const story of stories) {
@@ -251,7 +251,7 @@ function StoryCollector({
   onStories,
 }: {
   ticker: string;
-  onStories: (ticker: string, stories: EmbeddedStory[]) => void;
+  onStories: (ticker: string, stories: TickerArticles[]) => void;
 }) {
   const { stories, isLoading } = useSektorDetail(ticker);
 
@@ -268,24 +268,20 @@ function StoryCollector({
   return null;
 }
 
-/** Best-effort date accessor for an `EmbeddedStory`. Newer wire
- *  rows carry `created_at`; older rows only have `recap_date`.
- *  Returns `0` when neither is present so such stories sink to
- *  the bottom of the sort without throwing. */
-function storyDate(story: EmbeddedStory): number {
-  const iso = story.created_at || story.recap_date || "";
-  const ms = iso ? new Date(iso).getTime() : 0;
+/** Best-effort date accessor for a ticker article. Returns `0`
+ *  when `recap_date` is missing or unparseable so such stories
+ *  sink to the bottom of the sort without throwing. */
+function storyDate(story: TickerArticles): number {
+  const ms = story.recap_date ? new Date(story.recap_date).getTime() : 0;
   return Number.isNaN(ms) ? 0 : ms;
 }
 
-/** Stable bucket key for a story's recap date — `YYYY-MM-DD` from
- *  either `recap_date` (preferred — the actual publication day)
- *  or `created_at` as a fallback. The `"unknown"` sentinel
- *  collects stories without any date so they still render
- *  somewhere instead of dropping on the floor. */
-function dayKey(story: EmbeddedStory): string {
-  const iso = story.recap_date || story.created_at || "";
-  return iso ? iso.slice(0, 10) : "unknown";
+/** Stable bucket key for an article's recap date — `YYYY-MM-DD`
+ *  sliced from `recap_date`. The `"unknown"` sentinel collects
+ *  articles without a date so they still render somewhere instead
+ *  of dropping on the floor. */
+function dayKey(story: TickerArticles): string {
+  return story.recap_date ? story.recap_date.slice(0, 10) : "unknown";
 }
 
 /** Format a `YYYY-MM-DD` bucket key for display. "Hari ini" and
