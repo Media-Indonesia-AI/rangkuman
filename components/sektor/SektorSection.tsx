@@ -99,7 +99,8 @@ function SektorSectionEmpty() {
 /**
  * Reusable sektor block:
  *  - CommodityPrices (Energi, Logam, Pertanian) — optional
- *  - 12 sector grid (with sentiment, top 3 stocks, avg change)
+ *  - 12 sector grid (with sentiment, two-column top leading /
+ *    top lagging stock block, avg change)
  *
  * Used by:
  *  - /sektor/ page (with commodities)
@@ -108,7 +109,7 @@ function SektorSectionEmpty() {
  * Data is fetched live from `GET stocks/sectors` via `useSectors`
  * and mapped (API `Sector` → display shape) by `mapSector` — see
  * `lib/util/sectorMappers.ts` for the per-field derivation rules
- * (slug, hue, sentiment, percent change).
+ * (slug, hue, sentiment, percent change, leading/lagging split).
  *
  * Three render branches:
  *   1. `isLoading`     → shimmer skeleton
