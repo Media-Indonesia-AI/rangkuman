@@ -4,7 +4,10 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
 import { useUpdatePhone } from "@/lib/hooks/useUpdatePhone";
-import { normalizeLocalPhone } from "@/components/profile/whatsapp/constants";
+import {
+  normalizeLocalPhone,
+  validateIndonesianPhone,
+} from "@/components/profile/whatsapp/constants";
 
 /**
  * Form-state hook for the WhatsApp phone-number card.
@@ -81,6 +84,14 @@ export function usePhoneForm(): UsePhoneFormResult {
   // enabled during first paint when both sides would compare as
   // empty strings.
   const phoneDirty = user != null && normalizeLocalPhone(phone) !== savedPhone;
+  // Validity gate — the inline Perbarui is only enabled when
+  // the typed number passes the Indonesian-mobile contract
+  // (9–12 digits, leading `8`). Same helper the card uses for
+  // its red helper text, so the gate and the field stay in sync.
+  // An invalid input can't be saved even if it differs from the
+  // saved baseline, so we AND the two conditions in
+  // `saveDisabled` below.
+  const phoneValid = validateIndonesianPhone(phone).ok;
 
   const onSave = useCallback(async (): Promise<{ ok: boolean }> => {
     const result = await savePhone({ phoneNumber: phone });
@@ -90,7 +101,7 @@ export function usePhoneForm(): UsePhoneFormResult {
   return {
     phone,
     setPhone,
-    saveDisabled: !phoneDirty,
+    saveDisabled: !phoneDirty || !phoneValid,
     isSaving,
     saveError,
     onSave,

@@ -48,13 +48,9 @@ export default function WhatsappPage() {
         onPhoneChange={phone.setPhone}
         saveDisabled={phone.saveDisabled}
         isSaving={phone.isSaving}
+        error={phone.saveError}
         onSave={phone.onSave}
       />
-      {phone.saveError && (
-        <p className="font-mono text-[10.5px] text-bearish">
-          ⚠ {phone.saveError}
-        </p>
-      )}
       <NotificationToggleCard
         enabled={broadcast.enabled}
         onToggle={() => broadcast.setEnabled(!broadcast.enabled)}

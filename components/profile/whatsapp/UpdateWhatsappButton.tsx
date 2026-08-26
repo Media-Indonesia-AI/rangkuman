@@ -13,7 +13,10 @@
  *
  * Purely presentational. The page owns the dirty check, the
  * `isSaving` flag, and the click handler; the widget just
- * reflects them.
+ * reflects them. Save-error rendering lives in the parent card
+ * (single message slot below the field) so it doesn't compete
+ * with field-validation feedback for vertical space inside the
+ * row.
  */
 
 import { cn } from "@/lib/utils";
