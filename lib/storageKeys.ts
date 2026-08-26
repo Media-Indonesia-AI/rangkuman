@@ -32,7 +32,7 @@
 /** Every localStorage key the app uses, grouped by concern. */
 export const STORAGE_KEYS = {
   // ── Auth & session ────────────────────────────────────────────
-  /** Active user session (`MockUser`). Read on every API call to
+  /** Active user session (`User`). Read on every API call to
    *  attach HTTP Basic auth; written by `loginWithIdentifier()`,
    *  `loginWithGoogle()`, `registerUser()`, and cleared by
    *  `logout()`. */

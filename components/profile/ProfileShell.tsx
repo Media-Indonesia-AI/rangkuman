@@ -14,7 +14,7 @@ import { Footer } from "@/components/Footer";
 import { ProfileMenu } from "./ProfileMenu";
 import { LogoutButton } from "./LogoutButton";
 import { Shimmer } from "@/components/Shimmer";
-import type { MockUser } from "@/lib/auth";
+import type { User as SessionUser } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 /** Menu items — duplicated here so the mobile pill row can render
@@ -46,13 +46,13 @@ interface ProfileShellProps {
    * Auth state. `undefined` = localStorage hydration in flight
    * (renders a stable two-column skeleton). `null` = anonymous
    * (renders `null` so the calling layout's redirect effect can
-   * push to `/login` without a flash). `MockUser` = logged in
+   * push to `/login` without a flash). `User` = logged in
    * (renders the full layout with sidebar + content).
    *
    * The shell intentionally does NOT own the redirect effect —
    * each route's `layout.tsx` decides whether to gate.
    */
-  user: MockUser | null | undefined;
+  user: SessionUser | null | undefined;
   /** Tab title override. When the calling layout wants the same
    *  title for every sub-route (e.g. `/profile/*` uses
    *  "Rangkuman - <tab>"), it can pass `null` and write its own
@@ -81,7 +81,7 @@ interface ProfileShellProps {
  *   - `null` → returns `null`. The calling layout handles the
  *     redirect to `/login` itself; rendering nothing here avoids
  *     a flash of the unauthenticated page.
- *   - `MockUser` → full layout, with the user card in the sidebar
+ *   - `User` → full layout, with the user card in the sidebar
  *     carrying the avatar / name / email.
  *
  * Active state: each menu item matches by `href` (exact) so a

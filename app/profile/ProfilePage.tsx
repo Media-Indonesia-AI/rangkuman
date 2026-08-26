@@ -20,13 +20,20 @@ import { formatTanggalIndonesia } from "@/lib/util/formatDate";
 export default function ProfilePage() {
   const user = useCurrentUser();
   // The layout already gates on `user === null | undefined`, so
-  // by the time we render here `user` is the populated `MockUser`.
-  // The non-null assertion signals "the layout owns this gate" to
-  // future readers and lets the JSX stay terse.
+  // by the time we render here `user` is the populated session
+  // object. The non-null assertion signals "the layout owns this
+  // gate" to future readers and lets the JSX stay terse.
   if (!user) return null;
 
   const initial = (user.name.trim().charAt(0) || "?").toUpperCase();
-  const joinedAt = formatTanggalIndonesia(user.loggedInAt.slice(0, 10));
+  // `loggedInAt` is a client-only session field populated by
+  // `loginWithIdentifier` / `loginWithGoogle` / `registerUser` —
+  // guaranteed to be present on a session that came from any of
+  // those flows. Fallback to `createdAt` (server-side) covers the
+  // edge case where the session is somehow missing the field.
+  const joinedAt = formatTanggalIndonesia(
+    (user.loggedInAt ?? user.createdAt).slice(0, 10),
+  );
 
   const handleNotImplemented = () => {
     if (typeof window === "undefined") return;

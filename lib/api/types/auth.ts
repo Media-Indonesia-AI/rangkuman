@@ -1,8 +1,17 @@
 /**
  * Types for `/auth/*` endpoints — register and login.
+ *
+ * The wire shape uses the canonical `User` type from `./users.ts`
+ * (formerly the narrower `RegisterResponseUser`, which was a strict
+ * subset — `User` adds optional phone fields that the auth endpoints
+ * don't return yet). `RegisterResponse` / `GoogleLoginResponse` /
+ * `LoginRequest` / `RegisterRequest` all live here.
+ *
  * Consumed by `../auth.ts` (request functions) and `lib/auth.ts`
  * (auth state helpers).
  */
+
+import type { User } from "./users";
 
 export interface RegisterRequest {
   email: string;
@@ -17,26 +26,23 @@ export interface LoginRequest {
   password: string;
 }
 
-export interface RegisterResponseUser {
-  id: string;
-  email: string;
-  username: string;
-  name: string;
-  googleId: string | null;
-  isEmailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
-}
-
+/**
+ * `/auth/register` and `/auth/login` envelope — the user (canonical
+ * `User`, with phone fields omitted because those endpoints predate
+ * the phone flow), plus a one-time `setupToken` for the verified-
+ * email bootstrap and a server message.
+ */
 export interface RegisterResponse {
-  user: RegisterResponseUser;
+  user: User;
   setupToken: string;
   message: string;
 }
 
-/** `/auth/google/verify` envelope — `{ user, message }` with no
- *  `setupToken` (Google users have no password to set up). */
+/**
+ * `/auth/google/verify` envelope — `{ user, message }` with no
+ * `setupToken` (Google users have no password to set up).
+ */
 export interface GoogleLoginResponse {
-  user: RegisterResponseUser;
+  user: User;
   message: string;
 }

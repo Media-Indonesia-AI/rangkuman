@@ -83,10 +83,10 @@ interface TopicsProviderProps {
 export function TopicsProvider({ children }: TopicsProviderProps) {
   // `useCurrentUser()` returns `undefined` on first paint (still
   // hydrating from localStorage), `null` when the user is logged
-  // out, and the `MockUser` object once the session has resolved.
-  // We forward `enabled = user !== null && user !== undefined` to
-  // `useTopics` so the fetch fires the moment a session is
-  // available (post-login or post-register).
+  // out, and the `User` session object once the session has
+  // resolved. We forward `enabled = user !== null && user !==
+  // undefined` to `useTopics` so the fetch fires the moment a
+  // session is available (post-login or post-register).
   
   const { data: topics, isLoading } = useTopics(
     10,
