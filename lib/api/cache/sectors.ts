@@ -24,11 +24,11 @@ export function peekSectors(): SectorsResponse | null {
   return cached;
 }
 
-export function loadSectors(): Promise<SectorsResponse> {
+export function loadSectors(limit = 1): Promise<SectorsResponse> {
   if (cached !== null) return Promise.resolve(cached);
   if (inflight !== null) return inflight;
   inflight = api
-    .getSectors()
+    .getSectors(limit)
     .then((res) => {
       cached = res;
       return res;

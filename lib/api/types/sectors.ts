@@ -3,17 +3,19 @@
  *
  * Separate file from `types/stocks.ts` because the wire shape is
  * a sector-bucketed aggregate (one row per sector with embedded
- * stocks), not a per-ticker record like the other `/stocks/*`
- * endpoints. Keeping it in its own module also makes it easy to
- * evolve the sector-specific fields (e.g. `total_stock`, the
- * nested `stocks[]`) without churning the per-ticker type file.
+ * `leading_stocks[]` / `lagging_stocks[]`), not a per-ticker
+ * record like the other `/stocks/*` endpoints. Keeping it in its
+ * own module also makes it easy to evolve the sector-specific
+ * fields (e.g. `total_stock`, the nested stock buckets) without
+ * churning the per-ticker type file.
  *
  * Consumed by `../sectors.ts` (request function) and any
  * sector-list / sector-detail components that build on top of it.
  */
 
 /**
- * One stock inside a sector's nested `stocks[]` array.
+ * One stock inside a sector's nested `leading_stocks[]` /
+ * `lagging_stocks[]` arrays.
  *
  * `price_change` is the day-change percent (signed; positive = up)
  * — matches the convention used by `RelatedStock.price` /
@@ -47,11 +49,13 @@ export interface SectorStock {
  *   - `change`→ absolute point change `last - prev` (signed;
  *               positive = sector up)
  *
- * `total_stock` is the count of constituents; `stocks` is a
- * sample/listing of the constituents (the wire payload only
- * includes a small per-sector slice — not a full enumeration of
- * all 94). Consumers that need every member should pair this
- * with `GET stocks/ticker` and filter by sector on the client.
+ * `total_stock` is the count of constituents; `leading_stocks`
+ * and `lagging_stocks` are the top-N gainers / losers
+ * respectively — the wire payload only includes a small
+ * per-sector slice (capped by the `?limit=` query param), not
+ * a full enumeration of all 94. Consumers that need every
+ * member should pair this with `GET stocks/ticker` and filter
+ * by sector on the client.
  */
 export interface Sector {
   /** Server-side sector id (UUID). */
@@ -72,8 +76,10 @@ export interface Sector {
   change: number;
   /** Number of constituent stocks in the sector. */
   total_stock: number;
-  /** Embedded slice of constituent stocks. */
-  stocks: SectorStock[];
+  /** Top-N gainers in this sector (capped by `?limit=`). */
+  leading_stocks: SectorStock[];
+  /** Top-N losers in this sector (capped by `?limit=`). */
+  lagging_stocks: SectorStock[];
 }
 
 /** Wire format for `GET stocks/sectors` — `{ data: Sector[] }`. */

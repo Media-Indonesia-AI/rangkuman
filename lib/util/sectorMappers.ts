@@ -112,7 +112,14 @@ export function mapSector(api: ApiSector): SektorDisplay {
     sentiment,
     avgChange,
     totalStock: api.total_stock,
-    stocks: api.stocks.map(mapStock),
+    // The wire shape splits the constituent sample into two
+    // buckets (leading + lagging). The display shape still
+    // exposes a single flat `stocks` array so existing UI
+    // consumers (`<SektorCard />`, `<SektorTopStocks />`,
+    // `<SektorDetailNews />`) keep reading it the same way —
+    // the leading bucket comes first so top movers surface
+    // at the top of `topStocksByAbsChange()`.
+    stocks: [...api.leading_stocks, ...api.lagging_stocks].map(mapStock),
   };
 }
 

@@ -24,10 +24,21 @@ import type { SectorsResponse } from "./types/sectors";
  * sample of constituent stocks. See `Sector` and
  * `SectorStock` for field semantics.
  *
+ * `limit` controls how many constituent stocks the backend
+ * includes inside each sector's `leading_stocks` /
+ * `lagging_stocks` arrays. Defaults to `1` so the home-page
+ * sector grid gets a lightweight payload (just the single
+ * top mover per bucket) — callers that need a deeper sample
+ * (e.g. the sector-detail page's "Top Stocks" list) pass a
+ * larger value.
+ *
  * The response is unwrapped here (the wire format is
  * `{ data: Sector[] }`) — call sites receive `Sector[]`
  * directly. See `SectorsResponse` for the raw wire shape.
  */
-export function getSectors(): Promise<SectorsResponse> {
-  return request<SectorsResponse>("stocks/sectors/", { method: "GET" });
+export function getSectors(limit = 3): Promise<SectorsResponse> {
+  return request<SectorsResponse>(
+    `stocks/sectors/?limit=${limit}`,
+    { method: "GET" },
+  );
 }
