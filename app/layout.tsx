@@ -7,6 +7,7 @@ import { GuestLoginDialog } from "@/components/GuestLoginDialog";
 import { TopTickerRouter } from "@/components/TopTickerRouter";
 import { BfcacheRecovery } from "@/components/BfcacheRecovery";
 import { TopicsProvider } from "@/components/topics-provider";
+import { FaviconSync } from "@/components/FaviconSync";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import "./globals.css";
 
@@ -54,14 +55,29 @@ export const metadata: Metadata = {
       "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
   },
   icons: {
-    // Single favicon — `/favicon.svg`. The browser tab does not reliably
-    // flip on theme changes (the favicon is loaded outside the React
-    // tree and is cached on first paint by the browser/OS), so we
-    // commit to one variant for the tab and reserve theme-awareness
-    // for the in-page `Logo` component. The favicon wraps the
-    // brand icon on a white background so the tab reads cleanly
-    // regardless of browser/OS chrome color.
-    icon: [{ url: "/favicon.svg", type: "image/svg+xml" }],
+    // Two favicons, one per `prefers-color-scheme`. Browsers that
+    // respect the media query (Safari, Firefox, Chrome on macOS /
+    // iOS) pick the right one at cold load based on the OS theme.
+    // Browsers that don't still get a valid link, just not a
+    // theme-aware one. `<FaviconSync />` in the body handles the
+    // user-toggle case: it rewrites the link href whenever the
+    // `.dark` class flips, so the tab icon follows the in-app
+    // theme toggle instead of staying pinned to the OS preference.
+    // The background stays white in both variants — only the icon
+    // glyph (blue vs orange) flips — so the tab reads cleanly on
+    // any browser/OS chrome.
+    icon: [
+      {
+        url: "/favicon-light.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-dark.svg",
+        type: "image/svg+xml",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
   },
 };
 
@@ -105,6 +121,7 @@ export default function RootLayout({
         <TopicsProvider>
           <TopTickerRouter />
           <BfcacheRecovery />
+          <FaviconSync />
           {/* Side-effect-only: writes the current pathname to
               sessionStorage on every navigation so the auth
               pages know which page the user came from and can
