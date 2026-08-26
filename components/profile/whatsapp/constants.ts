@@ -70,6 +70,20 @@ export function frequenciesFromSettings(settings: {
   return next;
 }
 
+/** Strip the phone-formatting prefix off a digit string so two
+ *  equivalent numbers (`+62XXXXXXXXXX`, `62XXXXXXXXXX`,
+ *  `0XXXXXXXXXX`, bare `XXXXXXXXXX`) collapse to the same
+ *  canonical local-digit form. The input is already digit-only
+ *  (the `PhoneNumberCard` strips non-digits on type), so this
+ *  just peels off leading `+`, `62`, and `0`. Used by the page's
+ *  phone dirty check — the saved wire number and the user's
+ *  typed number feed through this before comparison so any
+ *  prefix form matches.
+ */
+export function normalizeLocalPhone(s: string): string {
+  return s.replace(/^\+/, "").replace(/^62/, "").replace(/^0/, "");
+}
+
 /** Re-export so the page can keep the `BroadcastSettings` import
  *  scoped to this module — only widgets that need the type reach
  *  into `@/lib/api` directly. (The `BroadcastSettings` type is

@@ -4,32 +4,34 @@
  * `/profile/whatsapp/` — Kirim Berita ke WhatsApp tab.
  *
  * Thin orchestrator. Owns:
- *   - The data layer (the two broadcast-settings hooks).
- *   - Local UI state (toggle, phone, frequency set).
- *   - The two hydration effects that seed local state from
- *     `settings` (initial GET) and `savedData` (PUT response).
- *   - The button visibility gate and click handler.
+ *   - The data layer (broadcast-settings GET/PUT, user-info GET
+ *     for the active phone + verification state).
+ *   - Local UI state (toggle, phone, frequency set) plus the
+ *     hydration effects that seed them from the GET responses.
+ *   - The dirty gates that decide when each save button surfaces.
  *
  * Everything visual is delegated to widgets under
  * `@/components/profile/whatsapp/`:
  *
  *   - `WhatsappPageHeader`     — page title + subtitle.
- *   - `PhoneNumberCard`        — E.164 input + +62 chip.
+ *   - `PhoneNumberCard`        — input + inline `UpdateWhatsappButton`.
  *   - `NotificationToggleCard` — master on/off switch.
  *   - `FrequencyCard`          — pagi / siang / sore checkboxes.
- *   - `PerbaruiButton`         — save button + inline error.
+ *   - `PerbaruiButton`         — broadcast-settings save button + inline error.
  *   - `MessagePreviewCard`     — static "Preview pesan" sample.
  *
- * The shared `FrequencyId` type and `frequenciesFromSettings`
- * helper live next to the widgets in `constants.ts` so both the
- * page and `FrequencyCard` can reach them without pulling each
- * other in.
+ * The shared `FrequencyId` type, `frequenciesFromSettings` helper,
+ * and `normalizeLocalPhone` helper live next to the widgets in
+ * `constants.ts` so both the page and the widgets can reach
+ * them without pulling each other in.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
+import { api } from "@/lib/api";
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
+import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
 import { useUpdateBroadcastSettings } from "@/lib/hooks/useUpdateBroadcastSettings";
 
 import { FrequencyCard } from "@/components/profile/whatsapp/FrequencyCard";
@@ -40,6 +42,7 @@ import { PhoneNumberCard } from "@/components/profile/whatsapp/PhoneNumberCard";
 import { WhatsappPageHeader } from "@/components/profile/whatsapp/WhatsappPageHeader";
 import {
   frequenciesFromSettings,
+  normalizeLocalPhone,
   type FrequencyId,
 } from "@/components/profile/whatsapp/constants";
 
@@ -60,12 +63,18 @@ export default function WhatsappPage() {
   // the derived baselines below update with it, and
   // `toggleMatchesSaved` flips back to true.
   const { data: settings } = useGetBroadcastSettings();
-  // Update hook drives the Perbarui button: `update` is the save
-  // action invoked on click, `isSaving` gates the button + label,
-  // `error` surfaces inline when the PUT fails, and `data` is the
-  // server's authoritative saved row returned by the PUT itself —
-  // we mirror it into local state below so the UI reflects what
-  // was actually persisted, not just what we submitted.
+  // Active-user GET → source for the on-file phone number that
+  // seeds the input field and the baseline that drives the
+  // phone-update button's `disabled` flag. The phone also drives
+  // the verification badge inside `PhoneNumberCard`.
+  const { data: user } = useGetUserInformation();
+  // Update hook drives the broadcast-settings Perbarui button:
+  // `update` is the save action invoked on click, `isSaving`
+  // gates the button + label, `error` surfaces inline when the
+  // PUT fails, and `data` is the server's authoritative saved
+  // row returned by the PUT itself — we mirror it into local
+  // state below so the UI reflects what was actually persisted,
+  // not just what we submitted.
   const {
     data: savedData,
     update: saveBroadcastSettings,
@@ -74,10 +83,10 @@ export default function WhatsappPage() {
   } = useUpdateBroadcastSettings();
 
   // Local UI state — seeds are intentionally empty / `false`
-  // (no notifications assumed). The hydration effect below
-  // mirrors the saved row from `settings` once the GET resolves,
-  // so the user sees their actual saved frequencies (and toggle
-  // position) instead of an arbitrary default.
+  // (no notifications assumed). The hydration effects below
+  // mirror the saved rows from `settings` (broadcast) and `user`
+  // (phone) once the GETs resolve, so the user sees their actual
+  // saved values instead of arbitrary defaults.
   const [enabled, setEnabled] = useState(false);
   const [phone, setPhone] = useState("");
   // Set of selected time-of-day slots. The user can pick any
@@ -87,6 +96,23 @@ export default function WhatsappPage() {
   const [frequencies, setFrequencies] = useState<Set<FrequencyId>>(
     () => new Set<FrequencyId>(),
   );
+
+  // In-flight flag for the phone-update save. Kept local to the
+  // page (rather than wrapped in a `useUpdatePhone` hook) because
+  // it's only used here, the call is a one-shot, and the page
+  // already has the read-side `useGetUserInformation` driving
+  // `user.phoneNumber` so the optimistic UI doesn't need its own
+  // mirror.
+  const [isSavingPhone, setIsSavingPhone] = useState(false);
+  const [phoneSaveError, setPhoneSaveError] = useState<string | null>(null);
+
+  // Saved baseline for the phone field. Wire is whatever the
+  // backend hands back (E.164 `+62XXXXXXXXXX`); the input strips
+  // non-digits on type so the same number typed in ends up as
+  // `6281234567890` in local state. Both forms normalise to
+  // canonical local digits (`81234567890`) for the dirty check
+  // below — see `normalizeLocalPhone` in `constants.ts`.
+  const savedPhone = normalizeLocalPhone(user?.phoneNumber ?? "");
 
   // One-shot hydration — when the broadcast-settings GET first
   // resolves, mirror `is_enabled` + the per-slot opt-ins into
@@ -107,6 +133,20 @@ export default function WhatsappPage() {
     setFrequencies(frequenciesFromSettings(settings));
     hydratedRef.current = true;
   }, [settings]);
+
+  // Phone hydration — separate ref because the user-info GET
+  // lands independently of the broadcast-settings GET. We only
+  // seed once so a later `useGetUserInformation` refresh (e.g.
+  // after the phone-update endpoint invalidates the cache)
+  // doesn't bounce the user's edit. The local field shows the
+  // active on-file number in canonical local-digit form so the
+  // user sees their actual number, not a placeholder.
+  const phoneHydratedRef = useRef(false);
+  useEffect(() => {
+    if (!user || phoneHydratedRef.current) return;
+    setPhone(savedPhone);
+    phoneHydratedRef.current = true;
+  }, [user, savedPhone]);
 
   // Mirror the PUT response (`savedData`) into local state so
   // the UI reflects what the server actually persisted. This is
@@ -167,6 +207,18 @@ export default function WhatsappPage() {
   // button hides.
   const frequenciesMatchSaved = sameSet(frequencies, savedFrequencies);
 
+  // Phone dirty check — only true when (a) the user-info GET has
+  // resolved (so we actually have a baseline to compare against),
+  // AND (b) the local field, normalised, differs from the saved
+  // active number. The `user != null` guard prevents the button
+  // from flashing enabled during first paint when both sides
+  // would compare as empty strings. After a successful save,
+  // `invalidateUserInformation` triggers a `useGetUserInformation`
+  // re-fetch, `user.phoneNumber` updates with the freshly-saved
+  // row, `savedPhone` re-derives to match `phone`, and the gate
+  // flips back to `false`.
+  const phoneDirty = user != null && normalizeLocalPhone(phone) !== savedPhone;
+
   // Persist the current UI state to the backend on click. The
   // hook handles cache invalidation, error capture, and loading
   // state — we just feed it the body. No manual baseline
@@ -202,6 +254,36 @@ export default function WhatsappPage() {
     }
   };
 
+  // Phone save handler. Inline (no `useUpdatePhone` hook) because
+  // the call is one-shot and the read-side `useGetUserInformation`
+  // already owns the cache invalidation bus. On success we
+  // invalidate the user-info cache so the next
+  // `useGetUserInformation` re-fetch lands the freshly-saved
+  // row — `user.phoneNumber` updates, `savedPhone` re-derives,
+  // and the dirty gate flips back to false. On failure local
+  // state stays put (the user keeps their edit) and we surface
+  // the error inline via `phoneSaveError` so they can retry.
+  const handleSavePhone = async () => {
+    setIsSavingPhone(true);
+    setPhoneSaveError(null);
+    try {
+      await api.updatePhone({ phoneNumber: phone });
+      // Re-pull the user profile so `user.phoneNumber` reflects
+      // what the server actually stored (the backend may still
+      // report the on-file number as `null` until OTP verifies —
+      // see `lib/api/users.ts` for the contract; the next render
+      // re-derives `savedPhone` accordingly).
+      router.refresh();
+    } catch (err) {
+      const message =
+        (err as { message?: string }).message ??
+        "Gagal update nomor WhatsApp";
+      setPhoneSaveError(message);
+    } finally {
+      setIsSavingPhone(false);
+    }
+  };
+
   // Toggle one slot on/off. Always produces a fresh `Set` so the
   // reference changes per toggle and React re-renders the checkbox
   // group. (Mutating the same Set in place would skip the update.)
@@ -220,7 +302,18 @@ export default function WhatsappPage() {
   return (
     <div className="flex flex-col gap-4">
       <WhatsappPageHeader />
-      <PhoneNumberCard phone={phone} onPhoneChange={setPhone} />
+      <PhoneNumberCard
+        phone={phone}
+        onPhoneChange={setPhone}
+        saveDisabled={!phoneDirty}
+        isSaving={isSavingPhone}
+        onSave={handleSavePhone}
+      />
+      {phoneSaveError && (
+        <p className="font-mono text-[10.5px] text-bearish">
+          ⚠ {phoneSaveError}
+        </p>
+      )}
       <NotificationToggleCard
         enabled={enabled}
         onToggle={() => setEnabled((v) => !v)}
