@@ -23,12 +23,17 @@ interface BackLink {
  * is unreachable we still want to emit valid `<meta>` tags
  * (Telegram in particular drops the whole preview when one tag
  * is broken). On error we emit route-specific fallback copy —
- * "Cerita · Rangkuman" / "Rangkuman cerita harian dari 11 sumber
- * media." — which is more accurate than letting Next.js fall back
- * to the root layout's generic brand metadata.
+ * "Cerita" / "Rangkuman cerita harian dari 11 sumber media." —
+ * which is more accurate than letting Next.js fall back to the
+ * root layout's generic brand metadata.
+ *
+ * Note: the `Rangkuman` brand prefix is intentionally NOT applied
+ * here — story detail pages stand on their own (the headline
+ * carries the topic), so the tab / share preview shows just the
+ * headline.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  let headline = "Cerita · Rangkuman";
+  let headline = "Cerita";
   let description = "Rangkuman cerita harian dari 11 sumber media.";
   let topics: string[] = [];
   
