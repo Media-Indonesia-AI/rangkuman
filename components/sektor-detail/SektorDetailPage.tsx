@@ -47,6 +47,12 @@ interface PageProps {
  * build time.
  */
 export default function SektorDetailPage({ params }: PageProps) {
+  // Larger limit than the home-page default (3) — the detail page
+  // shows every stock in both `leadingStocks` and `laggingStocks`,
+  // so we want a deeper sample than the compact home card. The
+  // sectors cache is keyed by limit (see
+  // `lib/api/cache/sectors.ts`), so this doesn't shadow the home
+  // page's smaller payload — they live in separate slots.
   const { data, isLoading } = useSectors();
 
   // Map wire sectors → display shape, then look up the slug.

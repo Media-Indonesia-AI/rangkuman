@@ -20,9 +20,9 @@ interface SektorDetailNewsProps {
  * "Berita sektor" section on the sector detail page
  * (`/sektor/{slug}`).
  *
- * Renders the section header (Newspaper icon + label + H2 +
- * "<N> cerita · agregat dari 6+ media" meta) and a flex column of
- * `<SektorNewsItem />` rows — **one per story**, not per stock.
+ * Renders the section header (Newspaper icon + label + H2)
+ * and a flex column of `<SektorNewsItem />` rows — **one per
+ * story**, not per stock.
  * A stock with multiple stories surfaces as multiple rows; stocks
  * with no stories disappear from the list entirely.
  *
@@ -65,9 +65,9 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
     (ticker: string, stories: EmbeddedStory[]) => {
       setStoriesByTicker((prev) => {
         // Skip the update when the stories array for this ticker
-        // hasn't actually changed — keeps `sortedPairs` /
-        // `totalStories` / rank assignments stable while the
-        // parent re-renders for unrelated reasons.
+        // hasn't actually changed — keeps `sortedPairs` and the
+        // rank assignments stable while the parent re-renders for
+        // unrelated reasons.
         if (prev.get(ticker) === stories) return prev;
         const next = new Map(prev);
         next.set(ticker, stories);
@@ -93,7 +93,6 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
   });
 
   const stockByKode = new Map(sektor.stocks.map((s) => [s.kode, s]));
-  const totalStories = sortedPairs.length;
   const hasStocks = sektor.stocks.length > 0;
 
   return (
@@ -108,11 +107,6 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
             Recap terbaru dari emiten {sektor.name}
           </h2>
         </div>
-        <span className="font-mono text-[10.5px] text-text-muted">
-          {hasStocks
-            ? `${totalStories > 0 ? `${totalStories} cerita · ` : ""}agregat dari 6+ media`
-            : "agregat dari 6+ media"}
-        </span>
       </header>
 
       {/* Per-stock collectors — invisible, just trigger fetches
@@ -129,7 +123,7 @@ export function SektorDetailNews({ sektor }: SektorDetailNewsProps) {
         </div>
       )}
 
-      {totalStories > 0 ? (
+      {sortedPairs.length > 0 ? (
         <ul className="flex flex-col gap-2">
           {sortedPairs.map(({ ticker, story }, idx) => {
             const stock = stockByKode.get(ticker);
