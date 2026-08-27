@@ -9,13 +9,16 @@
  */
 
 import { useCallback } from "react";
+import { Wallet } from "lucide-react";
 
 import { useBroadcastSettingsForm } from "@/lib/hooks/useBroadcastSettingsForm";
 import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
+import { useGetWallet } from "@/lib/hooks/useGetWallet";
 import { usePhoneForm } from "@/lib/hooks/usePhoneForm";
 
 import { track, EVENTS } from "@/lib/analytics-events";
 
+import { Shimmer } from "@/components/Shimmer";
 import { FrequencyCard } from "@/components/profile/whatsapp/FrequencyCard";
 import { MessagePreviewCard } from "@/components/profile/whatsapp/MessagePreviewCard";
 import { NotificationToggleCard } from "@/components/profile/whatsapp/NotificationToggleCard";
@@ -33,6 +36,13 @@ export default function WhatsappPage() {
   // destination from the active user's record — we just need
   // it for the helper text.
   const { data: user } = useGetUserInformation();
+  // Live coin balance — surfaced on this page as contextual
+  // account info. Sourced from `GET wallet` (separate from
+  // `users/me`) because the wallet endpoint also owns the
+  // expiry/lot data the top-up page renders. The balance
+  // itself is just the aggregate of remaining lots, so this
+  // single hook call is enough for the display here.
+  const { data: wallet, isLoading: isWalletLoading } = useGetWallet();
   // Single source of truth for "is this user's number verified".
   // Used both to gate `VerificationCard` rendering and to disable
   // the broadcast toggle — the OTP flow flips it via the user-
@@ -56,6 +66,42 @@ export default function WhatsappPage() {
   return (
     <div className="flex flex-col gap-4">
       <WhatsappPageHeader verifiedAt={phone.verifiedAt} />
+      {/* Koin balance — read-only display. Stays informational
+          (no "Top up" CTA) because this page's primary purpose is
+          WhatsApp notification setup, not wallet management;
+          the top-up page owns the full CoinBalanceCard with
+          expiring lots. Renders "0 koin" while the wallet fetch
+          is in flight or after an error so a transient network
+          failure doesn't leave an empty slot. */}
+      <section
+        className="flex items-center gap-3 rounded-lg border border-border bg-bg-secondary p-4"
+        aria-label="Saldo koin saat ini"
+      >
+        <span
+          aria-hidden
+          className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-brand-soft text-brand"
+        >
+          <Wallet className="h-5 w-5" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-[10.5px] font-semibold uppercase tracking-widest text-text-muted">
+            Koin saat ini
+          </p>
+          {isWalletLoading ? (
+            <Shimmer aria-busy="true" className="mt-1 h-6 w-24" />
+          ) : (
+            <p
+              className="mt-0.5 font-mono text-[28px] font-bold tabular-nums text-text-primary"
+              aria-label={`${wallet?.balance ?? 0} koin`}
+            >
+              {(wallet?.balance ?? 0).toLocaleString("id-ID")}
+              <span className="ml-1 font-mono text-[12px] font-medium text-text-muted">
+                koin
+              </span>
+            </p>
+          )}
+        </div>
+      </section>
       <PhoneNumberCard
         phone={phone.phone}
         onPhoneChange={phone.setPhone}
