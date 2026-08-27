@@ -51,9 +51,21 @@ export default function WhatsappPage() {
         error={phone.saveError}
         onSave={phone.onSave}
       />
+      {/* Notification toggle is gated on phone verification —
+          no point letting the user flip the master switch on
+          if their WhatsApp number isn't verified (the messages
+          can't be delivered). `isVerified` reads through
+          `usePhoneForm → useGetUserInformation`. The card's
+          own `disabled` UI is the user-visible signal; the
+          `onToggle` no-op is defense-in-depth in case any
+          programmatic flip slips through. */}
       <NotificationToggleCard
         enabled={broadcast.enabled}
-        onToggle={() => broadcast.setEnabled(!broadcast.enabled)}
+        disabled={!phone.verifiedAt}
+        onToggle={() => {
+          if (!phone.verifiedAt) return;
+          broadcast.setEnabled(!broadcast.enabled);
+        }}
       />
       {broadcast.enabled && (
         <FrequencyCard
