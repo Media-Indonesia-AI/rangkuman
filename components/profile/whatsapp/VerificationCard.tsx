@@ -80,20 +80,24 @@ function formatCountdown(seconds: number): string {
 
 export function VerificationCard({
   phoneNumber,
-  isVerified,
 }: {
   /** Active user's phone number (the candidate the OTP was sent
    *  to). Used purely for the "dikirim ke +62…" helper so the
    *  user can confirm where the SMS landed. The card doesn't
    *  call any phone-number APIs itself. */
   phoneNumber?: string | null;
-  /** When `true`, the card is fully inert — useful for tests /
-   *  explicit overrides. The parent already gates render on
-   *  `verifiedAt`, so this is mostly a safety belt. */
-  isVerified?: boolean;
 }) {
   const reqOtp = useReqOtp();
   const verifyPhone = useVerifyPhone();
+  // Mirror `verifyPhone` into a ref so the auto-submit's
+  // `.then` callback can read the LATEST `verifyPhone.error`
+  // at call-time. Without this, the callback would close over
+  // the `verifyPhone` object from the render where the effect
+  // ran (when `error` was still `null` — the hook clears it at
+  // the start of each `verify()` call) and miss the real error
+  // the hook surfaces in the failure render.
+  const verifyPhoneRef = useRef(verifyPhone);
+  verifyPhoneRef.current = verifyPhone;
 
   const [phase, setPhase] = useState<Phase>("idle");
   // Six single-character slots. Each slot is either `""` (empty)
@@ -126,17 +130,6 @@ export function VerificationCard({
     return () => clearInterval(id);
   }, [phase, secondsLeft]);
 
-  // When the OTP input first appears, drop focus into the first
-  // slot so the user can start typing immediately. Only fires
-  // on the idle → awaiting transition (the dependency array).
-  useEffect(() => {
-    if (phase === "awaiting") {
-      // Microtask delay so React has mounted the inputs before
-      // we try to focus — `setPhase` flush is async.
-      queueMicrotask(() => inputRefs.current[0]?.focus());
-    }
-  }, [phase]);
-
   // Auto-submit when the user fills the last slot. Re-runs on
   // `code` / `phase` changes so the user's typing drives it;
   // guards below keep it from double-firing on the verifying
@@ -163,13 +156,15 @@ export function VerificationCard({
       // card; failure → user stays in awaiting and retries.
       setPhase("awaiting");
       if (!result.ok) {
-        // Mirror the hook's error into local state so it lives
-        // in the unified error slot below the inputs (alongside
-        // any request-side `reqOtp.error`). Falls back to a
-        // generic wrong-code message if the hook didn't surface
-        // one — defence against a future ApiError shape change.
+        // Read the LATEST `verifyPhone.error` via the ref.
+        // Without this the closure captures the render-time
+        // object where `error` was still `null` (the hook
+        // clears it at the start of each `verify()` call), so
+        // the fallback message would fire even when the hook
+        // has a real, localised error to show.
         setSubmitError(
-          verifyPhone.error ?? "Kode OTP salah atau udah kadaluarsa.",
+          verifyPhoneRef.current.error ??
+            "Kode OTP salah atau udah kadaluarsa.",
         );
         // Clear the slots and drop focus back into the first
         // one so the user can correct + retry immediately
@@ -197,11 +192,15 @@ export function VerificationCard({
     const result = await reqOtp.req();
     if (result.ok) {
       // Successful dispatch — flip to awaiting, restart the
-      // cooldown, and let the focus effect move focus into the
-      // first input slot.
+      // cooldown, and queueMicrotask the focus into the first
+      // input slot. The microtask defer is required because
+      // `setPhase("awaiting")` is async — the OTP inputs
+      // aren't mounted yet when we reach this line, so a
+      // direct `.focus()` would no-op.
       setCode(Array.from({ length: OTP_LENGTH }, () => ""));
       setSecondsLeft(RESEND_COOLDOWN_SECONDS);
       setPhase("awaiting");
+      queueMicrotask(() => inputRefs.current[0]?.focus());
     } else {
       // Failure: stay in idle so the user can retry the
       // initial send. `reqOtp.error` already holds the
@@ -220,10 +219,13 @@ export function VerificationCard({
     const result = await reqOtp.req();
     if (result.ok) {
       // New OTP dispatched server-side (old code is now
-      // invalidated by the rotation). Clear the slots so the
-      // user starts fresh on the new code; the focus effect
-      // moves focus into the first slot.
+      // invalidated by the rotation). Clear the slots and
+      // refocus the first input. The inputs are already
+      // mounted (we're in the awaiting phase), so no
+      // queueMicrotask needed — focus() is synchronous and
+      // safe to call here.
       setCode(Array.from({ length: OTP_LENGTH }, () => ""));
+      inputRefs.current[0]?.focus();
     }
     // On failure: leave the slots intact. If the failure was
     // a transient network error, the previous OTP may still
@@ -310,14 +312,12 @@ export function VerificationCard({
 
   // Render --------------------------------------------------------------
 
-  if (isVerified) return null;
-
-  // Helper for the "dikirim ke +62…" message — only renders when
-  // we have a phone number on file. The full E.164 form is
-  // reconstructed by hand because the card receives the local
-  // digits; the page hydrates that from the wire's E.164 via
-  // `normalizeLocalPhone`.
-  const phoneHint = phoneNumber ? `+62${phoneNumber}` : null;
+  // Helper for the "dikirim ke +62…" message — only renders
+  // when we have a phone number on file. The page passes the
+  // wire E.164 form (e.g. `+6281234567890`) straight through
+  // from `user.phoneNumber`, so we use it as-is. (Previous
+  // version prepended `+62` and produced `+62+6281234567890`.)
+  const phoneHint = phoneNumber ?? null;
 
   const canResend = phase === "awaiting" && secondsLeft <= 0;
   const showTimer = phase === "awaiting" && secondsLeft > 0;
@@ -443,11 +443,7 @@ export function VerificationCard({
             <button
               type="button"
               onClick={handleResend}
-              disabled={
-                !canResend ||
-                reqOtp.isLoading ||
-                phase === "verifying"
-              }
+              disabled={!canResend || reqOtp.isLoading}
               className={cn(
                 "inline-flex h-8 items-center gap-1.5 rounded-md px-3 font-mono text-[11px] font-semibold transition-colors",
                 "border border-border bg-bg-card text-text-primary",
@@ -467,13 +463,19 @@ export function VerificationCard({
             </button>
           </div>
 
-          {/* Verify-side error — wrong / expired code. Captured
-              from `useVerifyPhone` into `submitError` on
-              `result.ok === false`. Distinct from the request-
-              side error below. */}
-          {(submitError || verifyPhone.error) && (
+          {/* Verify-side error — wrong / expired code. Single
+              source of truth is `submitError` (local state).
+              We deliberately do NOT fall back to
+              `verifyPhone.error` here: that hook-level state
+              is only cleared by the next `verify()` call, so
+              falling back would let the error persist across
+              a resend (which clears `submitError` but not the
+              hook's error). With `submitError` as the only
+              source, the resend handler's `setSubmitError(null)`
+              reliably hides the message. */}
+          {submitError && (
             <p className="font-mono text-[10.5px] text-bearish">
-              ⚠ {submitError ?? verifyPhone.error}
+              ⚠ {submitError}
             </p>
           )}
 

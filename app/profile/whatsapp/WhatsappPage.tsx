@@ -1,33 +1,14 @@
 "use client";
 
 /**
- * `/profile/whatsapp/` — Kirim Berita ke WhatsApp tab.
- *
- * Thin orchestrator. Composition only — the heavy lifting lives
- * in the two form hooks:
- *
- *   - `usePhoneForm`            — phone input + dirty check +
- *                                 save handler.
- *   - `useBroadcastSettingsForm` — toggle + frequency set +
- *                                 dirty check + save handler.
- *
- * The page binds the two hooks' outputs to the widgets and
- * decides where each save button renders. The wire-format
- * invariants (force `notified_* = false` when the toggle is
- * off, normalise phone prefixes before comparing) live inside
- * the hooks, not here.
- *
- * Visual widgets (under `@/components/profile/whatsapp/`):
- *   - `WhatsappPageHeader`     — page title + subtitle.
- *   - `PhoneNumberCard`        — input + inline `UpdateWhatsappButton`.
- *   - `VerificationCard`       — OTP request + 6-digit input +
- *                                 countdown + resend (renders
- *                                 only while `!verifiedAt`).
- *   - `NotificationToggleCard` — master on/off switch.
- *   - `FrequencyCard`          — pagi / siang / sore checkboxes.
- *   - `PerbaruiButton`         — broadcast-settings save button + inline error.
- *   - `MessagePreviewCard`     — static "Preview pesan" sample.
+ * `/profile/whatsapp/` — Kirim Berita ke WhatsApp tab. Thin
+ * orchestrator: composes the phone, verification, and broadcast
+ * widgets from their form hooks. Wire-format invariants
+ * (`notified_* = false` when the toggle is off, prefix
+ * normalisation before comparing) live in the hooks, not here.
  */
+
+import { useCallback } from "react";
 
 import { useBroadcastSettingsForm } from "@/lib/hooks/useBroadcastSettingsForm";
 import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
@@ -50,6 +31,20 @@ export default function WhatsappPage() {
   // destination from the active user's record — we just need
   // it for the helper text.
   const { data: user } = useGetUserInformation();
+  // Single source of truth for "is this user's number verified".
+  // Used both to gate `VerificationCard` rendering and to disable
+  // the broadcast toggle — the OTP flow flips it via the user-
+  // info cache invalidation → refetch chain.
+  const isVerified = Boolean(phone.verifiedAt);
+
+  // Defense-in-depth on top of `NotificationToggleCard`'s own
+  // `disabled` UI: the page refuses to mutate state if the
+  // verification gate isn't open, in case any future child ever
+  // fires `onToggle` while the button is rendered disabled.
+  const handleToggle = useCallback(() => {
+    if (!isVerified) return;
+    broadcast.setEnabled(!broadcast.enabled);
+  }, [isVerified, broadcast]);
 
   return (
     <div className="flex flex-col gap-4">
@@ -62,32 +57,16 @@ export default function WhatsappPage() {
         error={phone.saveError}
         onSave={phone.onSave}
       />
-      {/* OTP verification card — sits between the phone field
-          and the broadcast toggle. Renders only while the user
-          isn't verified yet; once `verifyPhone` succeeds the
-          card unmounts itself via the cache invalidation →
-          `verifiedAt` flip. */}
-      {!phone.verifiedAt && (
-        <VerificationCard
-          phoneNumber={user?.phoneNumber ?? null}
-          isVerified={Boolean(phone.verifiedAt)}
-        />
+      {/* Self-unmounts once `verifiedAt` flips: `useVerifyPhone`
+          invalidates the user-info cache on success → hook
+          refetches → `phone.verifiedAt` becomes truthy. */}
+      {!isVerified && (
+        <VerificationCard phoneNumber={user?.phoneNumber ?? null} />
       )}
-      {/* Notification toggle is gated on phone verification —
-          no point letting the user flip the master switch on
-          if their WhatsApp number isn't verified (the messages
-          can't be delivered). `isVerified` reads through
-          `usePhoneForm → useGetUserInformation`. The card's
-          own `disabled` UI is the user-visible signal; the
-          `onToggle` no-op is defense-in-depth in case any
-          programmatic flip slips through. */}
       <NotificationToggleCard
         enabled={broadcast.enabled}
-        disabled={!phone.verifiedAt}
-        onToggle={() => {
-          if (!phone.verifiedAt) return;
-          broadcast.setEnabled(!broadcast.enabled);
-        }}
+        disabled={!isVerified}
+        onToggle={handleToggle}
       />
       {broadcast.enabled && (
         <FrequencyCard
@@ -95,10 +74,9 @@ export default function WhatsappPage() {
           onToggle={broadcast.toggleFrequency}
         />
       )}
-      {/* `isReady` guards the button during first paint — before
-          the GET resolves, the hook reports `isDirty: false`
-          (placeholder baselines match placeholder local state)
-          but `isReady: false` so the button still hides. */}
+      {/* `isReady` hides the save button during first paint:
+          before the GET resolves, baselines match placeholder
+          local state and `isDirty` is falsely `false`. */}
       {broadcast.isReady && broadcast.isDirty && (
         <PerbaruiButton
           onClick={broadcast.save}
