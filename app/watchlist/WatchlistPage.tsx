@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useGetWatchlist } from "@/lib/hooks/useGetWatchlist";
 import { WATCHLIST_LIMIT } from "@/lib/auth";
+import { track, EVENTS } from "@/lib/analytics-events";
 import {
   WatchlistHeader,
   WatchlistEmptyState,
@@ -34,6 +35,31 @@ export default function WatchlistPage() {
   const { items, isLoading } = useGetWatchlist();
   const [showAdd, setShowAdd] = useState(false);
   const isAtLimit = items.length >= WATCHLIST_LIMIT;
+
+  // Fire a single `watchlist_view` event when the page becomes
+  // interactive. Fires AFTER the auth gate (`user === null`
+  // returns early above) so the event is only recorded for
+  // authenticated views — anonymous visitors get bounced to
+  // `/login` and shouldn't pollute the watchlist funnel. Skipped
+  // during the initial auth-resolution render (`user === undefined`)
+  // for the same reason. `items_count` lets the report segment
+  // empty vs populated views, which is the meaningful funnel
+  // split (empty → "did they add?") rather than treating every
+  // load as identical.
+  useEffect(() => {
+    if (!user) return;
+    track(EVENTS.watchlist_view, {
+      items_count: items.length,
+      is_empty: items.length === 0,
+      is_at_limit: isAtLimit,
+    });
+    // Intentionally fire ONCE on mount. Including `items` /
+    // `isAtLimit` in deps would re-fire on every cache refresh
+    // (after add/remove), inflating counts. The watchlist
+    // mutation events already cover those transitions; this
+    // event is purely "user opened the page".
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Hydration state — show a neutral loader while we figure out auth.
   if (user === undefined) {

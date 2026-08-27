@@ -56,6 +56,7 @@ export const EVENTS = {
   one_tap_dismissed: "one_tap_dismissed",
 
   // Watchlist
+  watchlist_view: "watchlist_view",
   watchlist_add: "watchlist_add",
   watchlist_add_blocked_at_limit: "watchlist_add_blocked_at_limit",
   watchlist_remove: "watchlist_remove",
