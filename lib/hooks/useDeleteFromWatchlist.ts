@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { api } from "@/lib/api";
 import { invalidateWatchlist } from "@/lib/api/cache";
 import type { WatchlistResponse } from "@/lib/api";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 /**
  * Mutation hook for `DELETE watchlist`. Unlike the read-side
@@ -67,6 +68,10 @@ export function useDeleteFromWatchlist(): {
         // notify subscribers in both branches.
         setData(res);
         invalidateWatchlist();
+        // Hook-layer is the SOLE source of `watchlist_remove`
+        // events — components call `remove()` but must NOT also
+        // fire this event (would double-count).
+        track(EVENTS.watchlist_remove, { ticker: ticker_code });
         return { ok: true, data: res };
       } catch (err) {
         const message =

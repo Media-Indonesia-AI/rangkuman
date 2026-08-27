@@ -8,6 +8,7 @@ import { useGetTransactionHistory } from "@/lib/hooks/useGetTransactionHistory";
 import { useGetWallet } from "@/lib/hooks/useGetWallet";
 import { useRequestTopup } from "@/lib/hooks/useRequestTopup";
 import { useWalletTransactionStream } from "@/lib/hooks/useWalletTransactionStream";
+import { track, EVENTS } from "@/lib/analytics-events";
 import {
   BundleSelector,
   CoinBalanceCard,
@@ -251,8 +252,24 @@ export default function TopUpPage() {
       setSelectedBundleId(null);
       setCustomAmount("");
       setSelectedPending(null);
+      // `topup_start` fires BEFORE the toast so the funnel
+      // join works against `topup_success` / `topup_expired` /
+      // `topup_failed` later. `bundle_code` is `"custom"` for
+      // non-preset amounts so the funnel groups cleanly.
+      track(EVENTS.topup_start, {
+        bundle_code: selectedBundle?.code ?? "custom",
+        amount_idr: effectiveAmount,
+        payment_ref: result.payment_ref,
+      });
       dispatchToast(`Invoice dibuat · ref ${result.payment_ref}`);
     } else if (submitError) {
+      // Mirror the same params on failure so GA can compute
+      // a clean `topup_start → topup_start_failed` drop-off.
+      track(EVENTS.topup_start_failed, {
+        bundle_code: selectedBundle?.code ?? "custom",
+        amount_idr: effectiveAmount,
+        error: submitError,
+      });
       dispatchToast(submitError);
     }
   };

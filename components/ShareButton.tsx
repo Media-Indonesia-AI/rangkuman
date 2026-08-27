@@ -11,6 +11,7 @@ import { createPortal } from "react-dom";
 import { Check, Link2, MessageCircle, Send, Share2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 interface ShareButtonProps {
   /** Full URL to share (e.g. "https://rangkuman.news/stock/BBCA"). */
@@ -40,6 +41,17 @@ interface ShareButtonProps {
   tone?: "light" | "dark";
   /** Accessible label override. */
   ariaLabel?: string;
+  /** GA4 attribution key — see `EVENTS` in
+   *  `lib/analytics-events.ts`. Used in every share event so
+   *  GA funnels can break down share intent by surface
+   *  (e.g. `story_detail_hero` vs `stock_card_actions`). If
+   *  callers forget to thread this through, events default
+   *  to `surface: "unknown"` rather than throwing — the type
+   *  is forgiving so pre-existing call sites keep compiling
+   *  while instrumentation is being rolled out. Once every
+   *  ShareButton call site has been updated, tighten this
+   *  prop to a required string literal in a follow-up PR. */
+  surface?: string;
 }
 
 interface PopoverPos {
@@ -106,6 +118,7 @@ export function ShareButton({
   variant = "compact",
   tone,
   ariaLabel = "Bagikan",
+  surface = "unknown",
 }: ShareButtonProps) {
   // Auto-pick the right styling when no explicit `tone` is given:
   // - dark mode → `"light"` styling (white-on-dark for the dark
@@ -141,6 +154,7 @@ export function ShareButton({
     try {
       await navigator.clipboard.writeText(url);
       setCopied(true);
+      track(EVENTS.share_copy_link, { surface });
       window.dispatchEvent(
         new CustomEvent("berita-investor:toast", { detail: "Link disalin!" }),
       );
@@ -155,10 +169,18 @@ export function ShareButton({
       ta.select();
       try {
         document.execCommand("copy");
+        track(EVENTS.share_copy_link, { surface });
         window.dispatchEvent(
           new CustomEvent("berita-investor:toast", { detail: "Link disalin!" }),
         );
-      } catch {
+      } catch (innerErr) {
+        // Both clipboard APIs failed — surface as a distinct
+        // failure event so the share funnel can distinguish
+        // "user dismissed" from "browser blocked clipboard".
+        track(EVENTS.share_copy_failed, {
+          surface,
+          error: innerErr instanceof Error ? innerErr.message : "unknown",
+        });
         window.dispatchEvent(
           new CustomEvent("berita-investor:toast", {
             detail: "Gagal menyalin link",
@@ -168,27 +190,38 @@ export function ShareButton({
       document.body.removeChild(ta);
       setOpen(false);
     }
-  }, [url]);
+  }, [url, surface]);
 
   const handleWhatsApp = useCallback(() => {
+    // BUGFIX: prior version computed `clampTitle(title)` here
+    // but never included it in the wa.me URL — only the URL
+    // went out, so receivers never saw the headline. WhatsApp
+    // accepts `?text=` and concatenates with newlines; the
+    // title on the first line and the URL on the second is
+    // what the platform renders by default.
     const text = clampTitle(title);
+    track(EVENTS.share_whatsapp, { surface });
     window.open(
-      `https://wa.me/?text=${encodeURIComponent(url)}`,
+      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
       "_blank",
       "noopener,noreferrer",
     );
     setOpen(false);
-  }, [title, url]);
+  }, [title, url, surface]);
 
   const handleTelegram = useCallback(() => {
+    // BUGFIX (same as WhatsApp above). Telegram has separate
+    // `url=` and `text=` params — both must be included for
+    // the preview to render correctly.
     const text = clampTitle(title);
+    track(EVENTS.share_telegram, { surface });
     window.open(
-      `https://t.me/share/url?url=${encodeURIComponent(url)}`,
+      `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
       "_blank",
       "noopener,noreferrer",
     );
     setOpen(false);
-  }, [title, url]);
+  }, [title, url, surface]);
 
   const computePos = useCallback(() => {
     const trigger = triggerRef.current;
@@ -375,7 +408,15 @@ export function ShareButton({
             // Skipped on the close path: the popover is already
             // unmounting, no fresh measurement needed.
             setOpen((v) => {
-              if (!v) computePos();
+              if (!v) {
+                computePos();
+                // Track only the OPEN path, not close — a
+                // re-open after close is a fresh intent and
+                // gets its own event. This keeps the GA
+                // shares-per-pageview funnel from being
+                // inflated by accidental double-clicks.
+                track(EVENTS.share_open, { surface });
+              }
               return !v;
             });
           }}

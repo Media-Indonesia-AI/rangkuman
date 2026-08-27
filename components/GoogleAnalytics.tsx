@@ -3,7 +3,7 @@
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, useRef } from "react";
 import Script from "next/script";
-import { GA_ID, isAnalyticsEnabled, pageview } from "@/lib/analytics";
+import { isAnalyticsEnabled, pageview } from "@/lib/analytics";
 
 /**
  * Google Analytics 4 bootstrapper.
@@ -42,8 +42,21 @@ import { GA_ID, isAnalyticsEnabled, pageview } from "@/lib/analytics";
  * double-count the first page. `lastTrackedUrl` lets us skip the
  * `pageview()` call on the first run when the URL hasn't changed,
  * and only fire on subsequent navigations.
+ *
+ * ─── Why `gaId` is a prop, not read from env here ───────────────
+ *
+ * Reading `process.env.GA_ID` from a client component returns
+ * `undefined` because Next.js only inlines `NEXT_PUBLIC_*` vars
+ * into the client bundle. Doing so would create a hydration
+ * mismatch: the server (where the env var IS set) renders the
+ * `<Script>` tags, then the client re-renders to `null` because
+ * `GA_ID` is `undefined`, and React drops the `<Script>` elements
+ * before the inline init executes — leaving `window.dataLayer`
+ * undefined and every `gtag(...)` call a no-op. The fix is to read
+ * the env var in `app/layout.tsx` (a server component) and pass
+ * it down as a prop, so server and client agree from the start.
  */
-export function GoogleAnalytics() {
+export function GoogleAnalytics({ gaId }: { gaId?: string }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const lastTrackedUrl = useRef<string | null>(null);
@@ -64,7 +77,7 @@ export function GoogleAnalytics() {
   // No measurement ID configured → render nothing. Keeps the HTML
   // payload clean (no empty `<script>` tags) when running a build
   // without the env var.
-  if (!isAnalyticsEnabled() || !GA_ID) return null;
+  if (!gaId) return null;
 
   return (
     <>
@@ -74,7 +87,7 @@ export function GoogleAnalytics() {
           deduplication key. */}
       <Script
         id="ga-loader"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_ID}`}
+        src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
         strategy="afterInteractive"
       />
       {/* Inline init — must run before the loader script tries to
@@ -88,7 +101,7 @@ export function GoogleAnalytics() {
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', '${GA_ID}');
+          gtag('config', '${gaId}');
         `}
       </Script>
     </>

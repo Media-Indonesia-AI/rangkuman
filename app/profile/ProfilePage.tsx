@@ -4,6 +4,7 @@ import { CheckCircle2, KeyRound, Mail, Pencil, Sparkles, User as UserIcon, type 
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils";
 import { formatTanggalIndonesia } from "@/lib/util/formatDate";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 /**
  * `/profile/` — Akun tab. Read-only summary of the signed-in user:
@@ -35,8 +36,15 @@ export default function ProfilePage() {
     (user.loggedInAt ?? user.createdAt).slice(0, 10),
   );
 
-  const handleNotImplemented = () => {
+  const handleNotImplemented = (surface: string) => () => {
     if (typeof window === "undefined") return;
+    // One event for all "Coming soon" affordances on the Akun
+    // tab. `surface` distinguishes which field the user tried
+    // to edit so GA can group the demand signal: `name` /
+    // `email` / `username` / `password`. The handler is a
+    // factory so each InfoRow binds a different surface
+    // string without re-reading the DOM.
+    track(EVENTS.feature_not_implemented, { surface });
     window.dispatchEvent(
       new CustomEvent("berita-investor:toast", {
         detail: "Coming soon — lagi digarap.",
@@ -88,7 +96,7 @@ export default function ProfilePage() {
           label="Nama"
           icon={UserIcon}
           value={user.name}
-          onEdit={handleNotImplemented}
+          onEdit={handleNotImplemented("name")}
         />
         <InfoRow
           label="Email"
@@ -106,13 +114,13 @@ export default function ProfilePage() {
               </span>
             )
           }
-          onEdit={handleNotImplemented}
+          onEdit={handleNotImplemented("email")}
         />
         <InfoRow
           label="Username"
           icon={UserIcon}
           value={user.username}
-          onEdit={handleNotImplemented}
+          onEdit={handleNotImplemented("username")}
         />
         <InfoRow
           label="Provider"
@@ -142,7 +150,7 @@ export default function ProfilePage() {
         </div>
         <button
           type="button"
-          onClick={handleNotImplemented}
+          onClick={handleNotImplemented("password")}
           className="inline-flex h-9 items-center gap-1.5 rounded-md border border-border bg-bg-card px-3.5 text-[12.5px] font-semibold text-text-secondary transition-colors hover:border-border-strong hover:text-text-primary"
         >
           <KeyRound className="h-3.5 w-3.5" aria-hidden />

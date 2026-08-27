@@ -7,6 +7,7 @@ import { WATCHLIST_LIMIT } from "@/lib/auth";
 import { useAddToWatchlist } from "@/lib/hooks/useAddToWatchlist";
 import { useDeleteFromWatchlist } from "@/lib/hooks/useDeleteFromWatchlist";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
 
 interface AddStockDialogProps {
@@ -74,6 +75,8 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
       // limit is what lets the user free a slot without leaving
       // the dialog.
       const { ok } = await removeFromList(kode);
+      // NOTE: success / failure of `watchlist_remove` is fired
+      // INSIDE the hook — do not re-fire here, or it double-counts.
       message = ok
         ? `✕ ${kode} dihapus dari watchlist`
         : `⚠ Gagal hapus ${kode}`;
@@ -83,15 +86,25 @@ export function AddStockDialog({ onClose, existing }: AddStockDialogProps) {
       // for a stale `existing` (e.g. a remove that's still
       // mid-flight). Surface the same explanation the banner
       // shows so the feedback is consistent either way.
+      // Track this as a product-demand signal: the user wanted
+      // to add but hit the cap. Counting these tells us when
+      // to raise the limit.
+      track(EVENTS.watchlist_add_blocked_at_limit, {
+        limit: WATCHLIST_LIMIT,
+        current_count: existing.length,
+      });
       message = `⚠ Watchlist penuh (${capFraction(WATCHLIST_LIMIT)}). Hapus salah satu dulu.`;
     } else {
       // New row goes to the end of the user's list — `order`
       // is just the position within the list, and the backend
       // accepts any non-negative integer.
       const res = await addToList(kode, existing.length + 1);
-      message = res !== null
-        ? `✓ ${kode} ditambahkan ke watchlist`
-        : `⚠ Gagal menambahkan ${kode}`;
+      if (res !== null) {
+        track(EVENTS.watchlist_add, { ticker: kode });
+        message = `✓ ${kode} ditambahkan ke watchlist`;
+      } else {
+        message = `⚠ Gagal menambahkan ${kode}`;
+      }
     }
 
     setToast(message);

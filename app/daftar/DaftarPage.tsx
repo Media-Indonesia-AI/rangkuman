@@ -9,6 +9,7 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { getAuthRedirectTarget, registerUser } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
 
 type FieldErrors = {
@@ -79,6 +80,14 @@ function DaftarPageContent() {
         email: email.trim(),
         password,
       });
+      // Fire BEFORE the hard navigation. Register always uses
+      // the email/identifier path today; if a google-register
+      // flow is added, branch `method` from the form payload.
+      track(
+        EVENTS.register,
+        { method: "identifier" },
+        { transport: "beacon" },
+      );
       // Hard-navigate after a successful register. The flow is:
       //   1. registerUser writes the new session via writeJson
       //   2. writeJson synchronously fires the useCurrentUser
@@ -101,6 +110,13 @@ function DaftarPageContent() {
       // Map server-side / network errors back to the relevant field when possible.
       const msg = err instanceof Error ? err.message : "Gagal daftar";
       const lower = msg.toLowerCase();
+      const errorClass = lower.includes("username")
+        ? "username"
+        : lower.includes("email")
+          ? "email"
+          : lower.includes("password")
+            ? "password"
+            : "unknown";
       if (lower.includes("username")) {
         setErrors({ username: msg });
       } else if (lower.includes("email")) {
@@ -111,6 +127,10 @@ function DaftarPageContent() {
         // Network / unknown error — show under the submit button as a form-level message
         setErrors({ password: msg });
       }
+      track(EVENTS.register_failed, {
+        method: "identifier",
+        error_class: errorClass,
+      });
       setLoading(false);
     }
   };

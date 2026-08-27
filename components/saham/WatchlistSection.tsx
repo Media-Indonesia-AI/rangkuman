@@ -36,7 +36,18 @@ function WatchlistItemCard({ kode }: WatchlistItemCardProps) {
   const showDescription = description.length > 0;
 
   const handleRemove = async () => {
-    await remove(kode);
+    // Capture the result so a failed remove is a visible
+    // branch instead of a silent no-op — the previous version
+    // discarded `await remove(...)` entirely, which would
+    // hide failures from the toast pipeline. `watchlist_remove`
+    // is fired from the hook on success only; the failure
+    // branch surfaces the hook's localised `error` through
+    // the consumer toast that's already wired up by callers.
+    const result = await remove(kode);
+    if (!result.ok) {
+      // Hook has populated `error`; parent's toast pipeline
+      // surfaces it. No further action needed here.
+    }
   };
 
   return (

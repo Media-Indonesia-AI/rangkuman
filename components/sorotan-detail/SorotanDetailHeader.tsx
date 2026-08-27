@@ -125,6 +125,7 @@ export function SorotanDetailHeader({
               tone="light"
               title={story.title}
               url={`${SITE_URL}/sorotan/detail/${story.id}`}
+              surface="sorotan_detail_header"
             />
           </div>
         </div>

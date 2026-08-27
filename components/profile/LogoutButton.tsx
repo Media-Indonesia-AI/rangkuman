@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { LogOut } from "lucide-react";
 import { logout } from "@/lib/auth";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { LogoutConfirmDialog } from "@/components/watchlist/LogoutConfirmDialog";
 
 interface LogoutButtonProps {
@@ -43,6 +44,11 @@ export function LogoutButton({
 
   const handleConfirm = () => {
     logout();
+    // Fire BEFORE the hard navigation — `window.location.assign`
+    // tears the page down before the default `image` transport
+    // can commit. The beacon transport (`navigator.sendBeacon`)
+    // survives the unload, so the logout event is still recorded.
+    track(EVENTS.logout, undefined, { transport: "beacon" });
     setShowConfirm(false);
     if (typeof window !== "undefined") {
       window.location.assign("/");

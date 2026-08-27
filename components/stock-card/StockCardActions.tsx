@@ -61,6 +61,7 @@ export function StockCardActions({
             title={title}
             tone={tone}
             variant={variant}
+            surface="stock_card_actions"
           />
         );
       })()}

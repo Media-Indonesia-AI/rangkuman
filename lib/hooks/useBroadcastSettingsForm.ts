@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import type { BroadcastSettings } from "@/lib/api";
 import { useGetBroadcastSettings } from "@/lib/hooks/useGetBroadcastSettings";
 import { useUpdateBroadcastSettings } from "@/lib/hooks/useUpdateBroadcastSettings";
+import { track, EVENTS } from "@/lib/analytics-events";
 import {
   frequenciesFromSettings,
   setsContainSameItems,
@@ -152,12 +153,29 @@ export function useBroadcastSettingsForm(): UseBroadcastSettingsFormResult {
       notified_afternoon: enabled && frequencies.has("siang"),
       notified_evening: enabled && frequencies.has("sore"),
     });
-    // Refresh the route on success only — re-runs the route's
-    // RSC payload so layout-level server data that keys off
-    // broadcast settings picks up the new state. Skipped on
-    // failure so the user can retry without losing their edits;
-    // `saveError` is rendered inline.
-    if (result.ok) router.refresh();
+    if (result.ok) {
+      // Capture what the user actually committed BEFORE the
+      // route refresh invalidates local state. Tag the most
+      // common slot if exactly one is selected — when multiple
+      // slots are on, surface as `multi`.
+      const selectedSlots = [
+        frequencies.has("pagi") ? "pagi" : null,
+        frequencies.has("siang") ? "siang" : null,
+        frequencies.has("sore") ? "sore" : null,
+      ].filter(Boolean) as FrequencyId[];
+      const frequencyTag =
+        selectedSlots.length === 1 ? selectedSlots[0] : "multi";
+      track(EVENTS.broadcast_settings_saved, {
+        enabled,
+        frequency: frequencyTag,
+      });
+      // Refresh the route on success only — re-runs the route's
+      // RSC payload so layout-level server data that keys off
+      // broadcast settings picks up the new state. Skipped on
+      // failure so the user can retry without losing their edits;
+      // `saveError` is rendered inline.
+      router.refresh();
+    }
     return { ok: result.ok };
   }, [enabled, frequencies, router, saveBroadcastSettings]);
 

@@ -138,6 +138,7 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
             variant="xs"
             title={story.title}
             url={`${SITE_URL}/sorotan/detail/${story.id}`}
+            surface="latest_headlines_row"
           />
         </div>
       </div>

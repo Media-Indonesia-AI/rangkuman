@@ -55,6 +55,8 @@ import {
 import { useReqOtp } from "@/lib/hooks/useReqOtp";
 import { useVerifyPhone } from "@/lib/hooks/useVerifyPhone";
 
+import { track, EVENTS } from "@/lib/analytics-events";
+
 import { cn } from "@/lib/utils";
 
 import {
@@ -156,6 +158,7 @@ export function VerificationCard({
       // card; failure → user stays in awaiting and retries.
       setPhase("awaiting");
       if (!result.ok) {
+        track(EVENTS.otp_verify_failed);
         // Read the LATEST `verifyPhone.error` via the ref.
         // Without this the closure captures the render-time
         // object where `error` was still `null` (the hook
@@ -171,6 +174,13 @@ export function VerificationCard({
         // without re-tabbing through the row.
         setCode(Array.from({ length: OTP_LENGTH }, () => ""));
         queueMicrotask(() => inputRefs.current[0]?.focus());
+      } else {
+        // Fire SUCCESS BEFORE the parent unmounts the card.
+        // `track()` is synchronous against `window.gtag`, so
+        // this commits to dataLayer in the same tick — even
+        // if a future refactor moves the unmount into a
+        // commit phase, the event has already been queued.
+        track(EVENTS.otp_verify_success);
       }
     });
     return () => {
@@ -191,6 +201,7 @@ export function VerificationCard({
     // instead of try/catch.
     const result = await reqOtp.req();
     if (result.ok) {
+      track(EVENTS.otp_request);
       // Successful dispatch — flip to awaiting, restart the
       // cooldown, and queueMicrotask the focus into the first
       // input slot. The microtask defer is required because
@@ -202,6 +213,9 @@ export function VerificationCard({
       setPhase("awaiting");
       queueMicrotask(() => inputRefs.current[0]?.focus());
     } else {
+      track(EVENTS.otp_request_failed, {
+        error: reqOtp.error ?? "unknown",
+      });
       // Failure: stay in idle so the user can retry the
       // initial send. `reqOtp.error` already holds the
       // localised message and renders below the button.
@@ -218,6 +232,11 @@ export function VerificationCard({
     setSecondsLeft(RESEND_COOLDOWN_SECONDS);
     const result = await reqOtp.req();
     if (result.ok) {
+      // Distinct from `otp_request` so GA surfaces the resend
+      // rate as its own deliverability metric — high resend
+      // counts typically indicate the user didn't receive
+      // the first SMS.
+      track(EVENTS.otp_resend);
       // New OTP dispatched server-side (old code is now
       // invalidated by the rotation). Clear the slots and
       // refocus the first input. The inputs are already

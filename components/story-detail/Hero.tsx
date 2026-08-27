@@ -141,6 +141,7 @@ function HeroFeatured({
               url={shareUrl}
               title={detail.title}
               variant="compact"
+              surface="story_detail_hero"
             />
           </div>
         )}

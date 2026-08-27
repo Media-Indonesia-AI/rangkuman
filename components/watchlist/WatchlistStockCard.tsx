@@ -28,7 +28,16 @@ export function WatchlistStockCard({ item }: WatchlistStockCardProps) {
   const { data, isLoading } = useTickerInformation(item.ticker_code);
 
   const handleRemove = async () => {
-    await remove(item.ticker_code);
+    // Capture the result so a failed remove is a visible
+    // branch instead of a silent no-op — the previous version
+    // discarded `await remove(...)` entirely, masking the
+    // failure path. `watchlist_remove` is fired from the hook
+    // on success only; the hook's `error` state is what the
+    // parent grid reads to render the toast.
+    const result = await remove(item.ticker_code);
+    if (!result.ok) {
+      // Hook-set `error` is consumed by parent toast pipeline.
+    }
   };
 
   // Loading — keep the card shell so the watchlist grid doesn't

@@ -161,6 +161,7 @@ export function AggregateSummary({
             <ShareButton
               title={kode}
               url={`${SITE_URL}/stock/${kode}/${isoDate}`}
+              surface="stock_aggregate_summary"
             />
           </div>
         )}

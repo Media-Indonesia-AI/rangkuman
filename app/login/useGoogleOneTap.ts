@@ -6,6 +6,7 @@ import {
   dismissGoogleOneTap,
   isGoogleOneTapDismissed,
 } from "@/lib/auth";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { shouldPersistOneTapDismissal } from "./googleOneTap";
 
 /**
@@ -49,6 +50,12 @@ export function useGoogleOneTap(): {
       if (!shouldPersistOneTapDismissal(notification)) return;
       dismissGoogleOneTap();
       setOneTapDismissed(true);
+      // The dismissal reason is intentionally not broken out
+      // today — Google's notification payload includes 5+
+      // granular reasons (dismissed/skipped/etc.), but the
+      // first-event funnel only needs the aggregate count.
+      // Future PRs can enrich with `reason: <payload.reason>`.
+      track(EVENTS.one_tap_dismissed);
     },
     [],
   );

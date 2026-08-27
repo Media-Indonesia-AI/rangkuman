@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Mail, X } from "lucide-react";
 import { isPillDismissed, dismissPill } from "@/lib/newsletter";
 import { cn } from "@/lib/utils";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 interface NewsletterFloatingPillProps {
   className?: string;
@@ -44,6 +45,13 @@ export function NewsletterFloatingPill({ className }: NewsletterFloatingPillProp
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
+    // Fires for the click only — the keyboard handler below
+    // also goes through `handleDismiss` so the X is consistent
+    // (the synthetic event typing differs but `track` reads
+    // neither). One event per real dismiss, no double-fire
+    // from key + click in the same gesture (they're both
+    // routed through the same `dismissPill()` write).
+    track(EVENTS.newsletter_pill_dismissed);
     dismissPill();
     setVisible(false);
   };

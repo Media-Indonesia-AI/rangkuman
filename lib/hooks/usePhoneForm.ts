@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
 import { useUpdatePhone } from "@/lib/hooks/useUpdatePhone";
+import { track, EVENTS } from "@/lib/analytics-events";
 import {
   normalizeLocalPhone,
   validateIndonesianPhone,
@@ -109,6 +110,18 @@ export function usePhoneForm(): UsePhoneFormResult {
 
   const onSave = useCallback(async (): Promise<{ ok: boolean }> => {
     const result = await savePhone({ phone_number: phone });
+    if (result.ok) {
+      // We deliberately don't log the phone number itself —
+      // even a hash-truncated phone is PII. `has_country_code`
+      // is the only product-relevant question we ask here:
+      // do users tend to enter numbers with the `+62` prefix
+      // (intentional) versus the bare local form (auto-
+      // normalised server-side)? The shape flag answers it
+      // without identifying the user.
+      const trimmed = phone.trim();
+      const hasCountryCode = trimmed.startsWith("+") || trimmed.startsWith("62");
+      track(EVENTS.phone_number_updated, { has_country_code: hasCountryCode });
+    }
     return { ok: result.ok };
   }, [phone, savePhone]);
 

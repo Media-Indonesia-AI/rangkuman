@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { X, UserPlus, LogIn } from "lucide-react";
 import { STORAGE_EVENT, STORAGE_KEYS } from "@/lib/storageKeys";
 import { safeGetItem } from "@/lib/util/safeLocalStorage";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 /** Event name any surface can dispatch on `window` to force the dialog open. */
 export const GUEST_LOGIN_DIALOG_OPEN_EVENT = "guest-login-dialog:open";
@@ -165,6 +166,13 @@ export function GuestLoginDialog() {
             type="button"
             onClick={() => {
               dismiss();
+              // Track CTA intent BEFORE the router.push so a
+              // slow navigation doesn't drop the hit. The
+              // event name reflects the funnel position — the
+              // guest gate is what surfaces the prompt, the
+              // eventual `register` / `login` event captures
+              // the downstream conversion.
+              track(EVENTS.guest_gate_cta, { path: "daftar" });
               router.push("/daftar");
             }}
             className="flex w-full items-center gap-3 rounded-md border border-brand/30 bg-brand/10 px-4 py-3 text-left transition-colors hover:border-brand hover:bg-brand/20"
@@ -188,6 +196,10 @@ export function GuestLoginDialog() {
             type="button"
             onClick={() => {
               dismiss();
+              // Mirror `path: "daftar"` for the daftar arm —
+              // GA reads the relative split between the two
+              // CTAs without needing a separate event.
+              track(EVENTS.guest_gate_cta, { path: "login" });
               router.push("/login");
             }}
             className="flex w-full items-center gap-3 rounded-md border border-border bg-bg-tertiary px-4 py-3 text-left transition-colors hover:border-border-strong"

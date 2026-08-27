@@ -6,6 +6,7 @@ import { API_BASE_URL } from "@/lib/api/client";
 import { getWalletTopupStreamPath } from "@/lib/api/wallet";
 import { invalidateWallet } from "@/lib/api/cache/wallet";
 import { invalidateTransactionHistory } from "@/lib/api/cache/wallet-transactions";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 type Status = "success" | "expired" | "failed" | "pending";
 
@@ -97,6 +98,20 @@ export function useWalletTransactionStream(
 
       const entry = TOAST[payload.status];
       if (entry) showToast(entry.message, entry.variant);
+
+      // Terminal-status funnel events. The `payment_ref` is the
+      // only join key with `topup_start`; the stream is already
+      // scoped per invoice so we trust the subscription. Fire
+      // these BEFORE the cache invalidations so they don't get
+      // flushed by an unmount that the invalidation could
+      // trigger downstream.
+      if (payload.status === "success") {
+        track(EVENTS.topup_success, { payment_ref: paymentRef });
+      } else if (payload.status === "expired") {
+        track(EVENTS.topup_expired, { payment_ref: paymentRef });
+      } else if (payload.status === "failed") {
+        track(EVENTS.topup_failed, { payment_ref: paymentRef });
+      }
 
       invalidateWallet();
       invalidateTransactionHistory(10, 0);

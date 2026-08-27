@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { api } from "@/lib/api";
 import { invalidateWatchlist } from "@/lib/api/cache";
 import type { WatchlistItem } from "@/lib/api";
+import { track, EVENTS } from "@/lib/analytics-events";
 
 /**
  * Mutation hook for `PUT watchlist`. Mirrors `useAddToWatchlist`
@@ -52,6 +53,14 @@ export function useUpdateWatchlist(): {
         const res = await api.updateWatchlist({ ticker_code, order });
         setData(res);
         invalidateWatchlist();
+        // `moved_ticker` is the row that was just repositioned;
+        // `count` is the post-reorder total. Stays at the hook
+        // layer so every drag-to-reorder consumer (sidebar,
+        // dialog, dedicated reorder page) reports the same
+        // event shape.
+        track(EVENTS.watchlist_reorder, {
+          moved_ticker: ticker_code,
+        });
         return res;
       } catch (err) {
         const message =

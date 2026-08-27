@@ -130,7 +130,12 @@ export default function RootLayout({
               itself doesn't render anything — the `<Suspense>` only
               exists to satisfy Next.js's prerender-time check. */}
           <Suspense fallback={null}>
-            <GoogleAnalytics />
+            {/* Pass `gaId` from the server component instead of letting
+                the client component read `process.env.GA_ID` itself —
+                non-`NEXT_PUBLIC_` env vars are `undefined` in the
+                client bundle and would cause a hydration mismatch
+                that drops the gtag init script. */}
+            <GoogleAnalytics gaId={process.env.GA_ID} />
           </Suspense>
           <TopTickerRouter />
           <BfcacheRecovery />

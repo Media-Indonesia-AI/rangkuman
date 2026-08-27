@@ -14,6 +14,8 @@ import { useBroadcastSettingsForm } from "@/lib/hooks/useBroadcastSettingsForm";
 import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
 import { usePhoneForm } from "@/lib/hooks/usePhoneForm";
 
+import { track, EVENTS } from "@/lib/analytics-events";
+
 import { FrequencyCard } from "@/components/profile/whatsapp/FrequencyCard";
 import { MessagePreviewCard } from "@/components/profile/whatsapp/MessagePreviewCard";
 import { NotificationToggleCard } from "@/components/profile/whatsapp/NotificationToggleCard";
@@ -43,6 +45,11 @@ export default function WhatsappPage() {
   // fires `onToggle` while the button is rendered disabled.
   const handleToggle = useCallback(() => {
     if (!isVerified) return;
+    // The toggle flip is INTENT — `broadcast_settings_saved` is
+    // CONVERSION (fired from `useBroadcastSettingsForm.save`).
+    // Splitting them lets GA read the drop-off between toggle
+    // and "Perbarui" commit.
+    track(EVENTS.broadcast_toggled, { enabled: !broadcast.enabled });
     broadcast.setEnabled(!broadcast.enabled);
   }, [isVerified, broadcast]);
 

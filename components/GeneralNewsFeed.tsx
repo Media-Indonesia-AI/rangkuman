@@ -222,6 +222,7 @@ function StoryItem({ story, isoDate }: { story: Story; isoDate: string }) {
                   url={`https://rangkuman.news/?date=${isoDate}#${story.id}`}
                   title={story.title}
                   tone="dark"
+                  surface="general_news_feed_row"
                 />
               </div>
             </div>
@@ -271,6 +272,7 @@ function StoryItem({ story, isoDate }: { story: Story; isoDate: string }) {
               url={`https://rangkuman.news/?date=${isoDate}#${story.id}`}
               title={story.title}
               tone="dark"
+              surface="general_news_feed_header"
             />
           </div>
         </div>

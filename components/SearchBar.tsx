@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, TrendingUp, ArrowRight, X, AlertCircle } from "lucide-react";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
 
 interface StockSuggestion {
@@ -64,18 +65,36 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
   const navigate = (item: StockSuggestion) => {
     setOpen(false);
     setQuery("");
+    // The ticker is the symbol before any `:kode` or `/`-delimited
+    // segments, lowercased. `StockSuggestion.href` looks like
+    // `/stock/BBCA` or `/stock/BBCA/2024-08-27`.
+    const ticker = item.href.split("/").filter(Boolean).pop()?.split(":")[0] ?? "";
+    track(EVENTS.search_result_select, { ticker: ticker.toUpperCase() });
     router.push(item.href);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmed = query.trim();
     if (stockResults[activeIdx]) {
+      // Suggestion branch — form submit selected the active
+      // suggestion. Distinct from a click-on-suggestion (which
+      // goes through `onMouseDown` on the dropdown item, also
+      // routed through `navigate()`). Both arms fire
+      // `search_result_select` via `navigate()`. We also fire
+      // `search_submit` here so the form-driven funnel is
+      // distinguished from the click-through path.
+      track(EVENTS.search_submit, {
+        mode: "suggestion",
+        query: stockResults[activeIdx].label,
+      });
       navigate(stockResults[activeIdx]);
       return;
     }
-    if (query.trim().length > 0) {
+    if (trimmed.length > 0) {
+      track(EVENTS.search_submit, { mode: "free_text", query: trimmed });
       setOpen(false);
-      router.push(`/search/?q=${encodeURIComponent(query.trim())}`);
+      router.push(`/search/?q=${encodeURIComponent(trimmed)}`);
     }
   };
 

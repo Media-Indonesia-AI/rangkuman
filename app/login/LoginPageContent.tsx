@@ -24,6 +24,7 @@ import {
 } from "@/lib/auth";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { useTheme } from "@/lib/hooks/useTheme";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { cn } from "@/lib/utils";
 import { commitLoginRedirect } from "./commitLoginRedirect";
 import { useGoogleOneTap } from "./useGoogleOneTap";
@@ -222,9 +223,18 @@ function useLoginForm(searchParams: ReturnType<typeof useSearchParams>) {
     setPending(true);
     try {
       await loginWithIdentifier(identifier, password);
+      // Fire BEFORE the hard navigation — `commitLoginRedirect`
+      // calls `window.location.assign` and the beacon transport
+      // is the only way the hit survives the unload race.
+      track(
+        EVENTS.login,
+        { method: "identifier" },
+        { transport: "beacon" },
+      );
       commitLoginRedirect(searchParams, "identifier");
     } catch (err) {
       setErrors(routeAuthError(err instanceof Error ? err.message : "Gagal masuk"));
+      track(EVENTS.login_failed, { method: "identifier", reason: "error" });
       setPending(false);
     }
   };
@@ -357,14 +367,24 @@ export function LoginPageContent({ googleClientId }: LoginPageContentProps) {
     const credential = response?.credential;
     if (!credential) {
       setGoogleError("Google gak ngirim kredensial — coba lagi.");
+      track(EVENTS.login_failed, { method: "google", reason: "no_credential" });
       return;
     }
     setGooglePending(true);
     try {
       await loginWithGoogle(credential);
+      // Fire BEFORE the hard navigation — `commitLoginRedirect`
+      // calls `window.location.assign` and the beacon transport
+      // is the only way the hit survives the unload race.
+      track(
+        EVENTS.login,
+        { method: "google" },
+        { transport: "beacon" },
+      );
       commitLoginRedirect(searchParams, "google");
     } catch (err) {
       setGoogleError(err instanceof Error ? err.message : "Login Google gagal");
+      track(EVENTS.login_failed, { method: "google", reason: "error" });
       setGooglePending(false);
     }
   };
@@ -372,6 +392,10 @@ export function LoginPageContent({ googleClientId }: LoginPageContentProps) {
   const handleGoogleError = () => {
     setGooglePending(false);
     setGoogleError("Login Google dibatalkan atau gagal.");
+    // No `credential` ever returned — surface as a cancelled
+    // outcome so the funnel shows sign-in attempts that didn't
+    // produce a credential at all.
+    track(EVENTS.login_failed, { method: "google", reason: "cancelled" });
   };
 
   return (
