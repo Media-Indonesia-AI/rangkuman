@@ -37,10 +37,14 @@ interface UsePhoneFormResult {
    *  non-digits on type). */
   phone: string;
   setPhone: (next: string) => void;
-  /** Bind to the card's `saveDisabled` prop. `true` until the
-   *  user has typed something that differs from the saved
-   *  active number, normalised. */
-  saveDisabled: boolean;
+  /** Bind to the card's `showSave` prop. `true` only when the
+   *  local field differs from the saved active number AND
+   *  passes validation — i.e. there's actually something to
+   *  flush. The card uses this to conditionally render the
+   *  inline `Perbarui` button (mirrors the broadcast-settings
+   *  button pattern at the page level): the button is hidden
+   *  until it's actionable, rather than rendered disabled. */
+  showSave: boolean;
   /** In-flight flag — bind to the card's `isSaving` prop so the
    *  inline button label flips to "Memperbarui…". */
   isSaving: boolean;
@@ -84,13 +88,14 @@ export function usePhoneForm(): UsePhoneFormResult {
   // enabled during first paint when both sides would compare as
   // empty strings.
   const phoneDirty = user != null && normalizeLocalPhone(phone) !== savedPhone;
-  // Validity gate — the inline Perbarui is only enabled when
-  // the typed number passes the Indonesian-mobile contract
+  // Validity gate — the inline Perbarui is only shown when the
+  // typed number passes the Indonesian-mobile contract
   // (9–12 digits, leading `8`). Same helper the card uses for
   // its red helper text, so the gate and the field stay in sync.
   // An invalid input can't be saved even if it differs from the
-  // saved baseline, so we AND the two conditions in
-  // `saveDisabled` below.
+  // saved baseline, so we AND the two conditions in `showSave`
+  // below — the card conditionally renders the button only when
+  // both hold.
   const phoneValid = validateIndonesianPhone(phone).ok;
 
   const onSave = useCallback(async (): Promise<{ ok: boolean }> => {
@@ -101,7 +106,7 @@ export function usePhoneForm(): UsePhoneFormResult {
   return {
     phone,
     setPhone,
-    saveDisabled: !phoneDirty || !phoneValid,
+    showSave: phoneDirty && phoneValid,
     isSaving,
     saveError,
     onSave,

@@ -46,7 +46,7 @@ export default function WhatsappPage() {
       <PhoneNumberCard
         phone={phone.phone}
         onPhoneChange={phone.setPhone}
-        saveDisabled={phone.saveDisabled}
+        showSave={phone.showSave}
         isSaving={phone.isSaving}
         error={phone.saveError}
         onSave={phone.onSave}

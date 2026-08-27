@@ -24,28 +24,32 @@ import { cn } from "@/lib/utils";
  *      attempt, bearish text only.
  *   3. Otherwise, the neutral helper text.
  *
- * The page drives `saveDisabled` from the same validator (via
+ * The page drives `showSave` from the same validator (via
  * `usePhoneForm`), so the inline `Perbarui` button is only
- * enabled when both the local field differs from the saved
+ * rendered when both the local field differs from the saved
  * active number AND the new value passes validation. Single
- * source of truth.
+ * source of truth. When `showSave` is `false` the button is
+ * hidden entirely — same pattern as the broadcast-settings
+ * `PerbaruiButton` at the page level, so the user sees a clean
+ * row (prefix + input only) until there's actually something to
+ * flush.
  */
 
 export function PhoneNumberCard({
   phone,
   onPhoneChange,
-  saveDisabled,
+  showSave,
   isSaving,
   error,
   onSave,
 }: {
   phone: string;
   onPhoneChange: (next: string) => void;
-  /** Disable the inline save button. The page sets this when
-   *  either (a) the local input matches the saved active number
-   *  (no diff to flush), or (b) the new value fails
-   *  `validateIndonesianPhone`. */
-  saveDisabled: boolean;
+  /** Render the inline save button. The page sets this when both
+   *  (a) the local input differs from the saved active number
+   *  (a real diff to flush), and (b) the new value passes
+   *  `validateIndonesianPhone`. `false` hides the button. */
+  showSave: boolean;
   /** In-flight flag — flips the button label to "Memperbarui…". */
   isSaving: boolean;
   /** Inline error from the most recent `useUpdatePhone` save
@@ -105,11 +109,35 @@ export function PhoneNumberCard({
               : "border-border focus:border-brand",
           )}
         />
-        <UpdateWhatsappButton
-          disabled={saveDisabled}
-          isSaving={isSaving}
-          onClick={onSave}
-        />
+        {/* Slide-in / slide-out wrapper. The button stays
+            mounted across the show/hide transition so the CSS
+            `max-width` + `opacity` transition runs in both
+            directions (true conditional render would just
+            pop in/out). Matches the mobile-menu drawer pattern
+            in `Navbar.tsx` (`transition-[max-height,opacity]
+            duration-200`) — here we animate the horizontal axis
+            instead. `min-w-0` is required so flex honours the
+            collapsed `max-w-0` (default flex `min-width: auto`
+            would otherwise hold the wrapper at content width);
+            `overflow-hidden` clips the button body while the
+            wrapper is collapsed; `pointer-events-none` removes
+            the collapsed wrapper from the click target; and
+            `aria-hidden` keeps it out of the AT tree. */}
+        <div
+          aria-hidden={!showSave}
+          className={cn(
+            "min-w-0 overflow-hidden transition-[max-width,opacity,margin] duration-200 ease-out",
+            showSave
+              ? "max-w-32 opacity-100"
+              : "pointer-events-none max-w-0 opacity-0",
+          )}
+        >
+          <UpdateWhatsappButton
+            disabled={false}
+            isSaving={isSaving}
+            onClick={onSave}
+          />
+        </div>
       </div>
       {/* Single message slot below the row — field validation
           > save error > neutral helper text, in that order. */}
