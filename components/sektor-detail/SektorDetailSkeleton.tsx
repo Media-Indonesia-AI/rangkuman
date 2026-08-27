@@ -16,10 +16,11 @@ import { Shimmer } from "@/components/Shimmer";
  *                     `sm:2 lg:3` responsive layout
  *   3. News section — three list-row placeholders
  *
- * Same pattern as `<SektorSectionShimmer />` from the main
- * `/sektor` index — extracted into its own file rather than
- * inlined so the `<SektorDetailPage />` orchestrator stays
- * focused on routing logic.
+ * Same pattern as `<SektorSectionShimmer />` from the sector
+ * grid (rendered inside the `/saham/` "Sektor" sub-tab) —
+ * extracted into its own file rather than inlined so the
+ * `<SektorDetailPage />` orchestrator stays focused on routing
+ * logic.
  */
 export function SektorDetailSkeleton() {
   return (

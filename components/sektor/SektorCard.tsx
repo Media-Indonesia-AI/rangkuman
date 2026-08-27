@@ -16,7 +16,8 @@ interface SektorCardProps {
 }
 
 /**
- * One tile in the sector grid (home + `/sektor/`).
+ * One tile in the sector grid (rendered by `<SektorSection />`
+ * inside the `/saham/` sub-tab "Sektor").
  * Self-contained — `<SektorSection />` only orchestrates the
  * surrounding grid + section header.
  *

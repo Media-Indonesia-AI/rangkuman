@@ -108,7 +108,7 @@ rangkuman-news/
 │   │
 │   ├── CryptoInfoBar.tsx             # 1-line crypto info (F&G, sparklines, BTC.D)
 │   ├── CryptoSubNav.tsx              # /crypto/ Recap | Pasar tabs
-│   ├── sektor/                       # /saham/ + /sektor/ sector grid
+│   ├── sektor/                       # /saham/ sub-tab sector grid (no standalone /sektor/ route)
 │   │   ├── SektorSection.tsx          # section + grid orchestration
 │   │   ├── SektorCard.tsx             # one tile in the 12-sector grid
 │   │   ├── hueStyles.ts               # per-hue Tailwind class maps
@@ -350,7 +350,7 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 - `/bisnis/`, `/ekonomi/`, `/kebijakan/`, `/komoditas/` — Category pages
 - `/kebijakan/[slug]/` — 8 policy detail pages
 - `/global/`, `/crypto/` — News portals (sub-tab + info bar)
-- `/sektor/`, `/sektor/[slug]/` — 12 sector pages
+- `/saham/` (sub-tab "Sektor"), `/sektor/[slug]/` — 12 sector detail pages (sector grid lives inside /saham/)
 - `/stock/[kode]/` — 34 stock pages
 - `/trending/`, `/search/`, `/watchlist/`, `/login/`
 - `/kontak-kerjasama/`, `/syarat-ketentuan/`

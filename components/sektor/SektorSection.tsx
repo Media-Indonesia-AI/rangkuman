@@ -22,8 +22,11 @@ const ARIA_LABEL = "Sektor IHSG";
  * sector `<SektorCard />` grid below.
  *
  * Used by:
- *   - `/sektor/` page (with commodities)
  *   - `/saham/` sub-tab "Sektor" (with commodities, in compact mode)
+ *
+ * The previous standalone `/sektor/` index route was removed — the
+ * grid only renders here now. Detail pages (`/sektor/[slug]/`) are
+ * still served from a sibling route and untouched.
  *
  * Data is fetched live from `GET stocks/sectors` via `useSectors`
  * and mapped (API `Sector` → display shape) by `mapSector` — see
