@@ -73,7 +73,7 @@ export function updatePhone(body: UpdatePhoneRequest): Promise<User> {
  * suitable for surfacing as a toast / status banner.
  */
 export function reqOtp(): Promise<ReqOtpResponse> {
-  return request<ReqOtpResponse>("users/me/otp/", {
+  return request<ReqOtpResponse>("users/me/phone/otp/", {
     method: "POST",
   });
 }

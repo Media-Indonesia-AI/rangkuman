@@ -20,6 +20,9 @@
  * Visual widgets (under `@/components/profile/whatsapp/`):
  *   - `WhatsappPageHeader`     — page title + subtitle.
  *   - `PhoneNumberCard`        — input + inline `UpdateWhatsappButton`.
+ *   - `VerificationCard`       — OTP request + 6-digit input +
+ *                                 countdown + resend (renders
+ *                                 only while `!verifiedAt`).
  *   - `NotificationToggleCard` — master on/off switch.
  *   - `FrequencyCard`          — pagi / siang / sore checkboxes.
  *   - `PerbaruiButton`         — broadcast-settings save button + inline error.
@@ -27,6 +30,7 @@
  */
 
 import { useBroadcastSettingsForm } from "@/lib/hooks/useBroadcastSettingsForm";
+import { useGetUserInformation } from "@/lib/hooks/useGetUserInformation";
 import { usePhoneForm } from "@/lib/hooks/usePhoneForm";
 
 import { FrequencyCard } from "@/components/profile/whatsapp/FrequencyCard";
@@ -34,11 +38,18 @@ import { MessagePreviewCard } from "@/components/profile/whatsapp/MessagePreview
 import { NotificationToggleCard } from "@/components/profile/whatsapp/NotificationToggleCard";
 import { PerbaruiButton } from "@/components/profile/whatsapp/PerbaruiButton";
 import { PhoneNumberCard } from "@/components/profile/whatsapp/PhoneNumberCard";
+import { VerificationCard } from "@/components/profile/whatsapp/VerificationCard";
 import { WhatsappPageHeader } from "@/components/profile/whatsapp/WhatsappPageHeader";
 
 export default function WhatsappPage() {
   const phone = usePhoneForm();
   const broadcast = useBroadcastSettingsForm();
+  // Read the saved wire `phoneNumber` directly so the
+  // `VerificationCard` can show where the OTP was sent
+  // ("dikirim ke +62…"). The OTP API itself resolves the
+  // destination from the active user's record — we just need
+  // it for the helper text.
+  const { data: user } = useGetUserInformation();
 
   return (
     <div className="flex flex-col gap-4">
@@ -51,6 +62,17 @@ export default function WhatsappPage() {
         error={phone.saveError}
         onSave={phone.onSave}
       />
+      {/* OTP verification card — sits between the phone field
+          and the broadcast toggle. Renders only while the user
+          isn't verified yet; once `verifyPhone` succeeds the
+          card unmounts itself via the cache invalidation →
+          `verifiedAt` flip. */}
+      {!phone.verifiedAt && (
+        <VerificationCard
+          phoneNumber={user?.phoneNumber ?? null}
+          isVerified={Boolean(phone.verifiedAt)}
+        />
+      )}
       {/* Notification toggle is gated on phone verification —
           no point letting the user flip the master switch on
           if their WhatsApp number isn't verified (the messages
