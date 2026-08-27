@@ -40,7 +40,7 @@ export function login(
  * `/auth/register`. The backend verifies the credential against
  * Google's JWKS, upserts the user (create-on-first-login), and
  * returns the same shape the email flows return so
- * `loginWithGoogle()` in `lib/auth.ts` can build a `MockUser` and
+ * `loginWithGoogle()` in `lib/auth.ts` can build a `User` session and
  * persist it via the shared `writeJson` plumbing.
  */
 export function googleLogin(

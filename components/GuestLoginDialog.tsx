@@ -217,7 +217,7 @@ const DELAY_MS = 60_000;
 /**
  * Local re-implementation of `useCurrentUser` — we need only the
  * `null`-vs-non-null signal (to flip `shouldArmTimer`), not the full
- * `MockUser` shape, and importing `useAuth` here would pull in a
+ * `User` shape, and importing `useAuth` here would pull in a
  * transitive `useSyncExternalStore` that we don't otherwise need in
  * this dialog. The dialog subscribes to the same `localStorage`
  * + `beritainvestor:storage` event the hook reads from, so the

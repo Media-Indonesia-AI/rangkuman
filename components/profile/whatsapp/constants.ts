@@ -70,6 +70,70 @@ export function frequenciesFromSettings(settings: {
   return next;
 }
 
+/** Strip the phone-formatting prefix off a digit string so two
+ *  equivalent numbers (`+62XXXXXXXXXX`, `62XXXXXXXXXX`,
+ *  `0XXXXXXXXXX`, bare `XXXXXXXXXX`) collapse to the same
+ *  canonical local-digit form. The input is already digit-only
+ *  (the `PhoneNumberCard` strips non-digits on type), so this
+ *  just peels off leading `+`, `62`, and `0`. Used by the page's
+ *  phone dirty check — the saved wire number and the user's
+ *  typed number feed through this before comparison so any
+ *  prefix form matches.
+ */
+export function normalizeLocalPhone(s: string): string {
+  return s.replace(/^\+/, "").replace(/^62/, "").replace(/^0/, "");
+}
+
+/** Content-equality between two sets — `true` when both carry
+ *  the same elements regardless of insertion order or reference
+ *  identity. Standard size-match + every-element-in-b check.
+ *  Used by the broadcast-settings dirty check to compare the
+ *  user's selected frequency set against the saved baseline. */
+export function setsContainSameItems<T>(
+  a: ReadonlySet<T>,
+  b: ReadonlySet<T>,
+): boolean {
+  if (a.size !== b.size) return false;
+  for (const x of a) if (!b.has(x)) return false;
+  return true;
+}
+
+/** Result of `validateIndonesianPhone` — `ok` is `true` when
+ *  the digits represent a valid Indonesian mobile number. On
+ *  failure `reason` carries a short Indonesian message suitable
+ *  for inline display under the field. */
+export interface PhoneValidation {
+  ok: boolean;
+  reason?: string;
+}
+
+/** Indonesian-mobile validator. The card renders a `🇮🇩 +62`
+ *  prefix widget, so the user only ever types the local-digit
+ *  portion. The full wire form is `+62` followed by 9–12 digits
+ *  starting with `8` (mobile prefix). This helper checks the
+ *  digit string against that contract and returns a UI-shaped
+ *  reason on failure.
+ *
+ *  Rules (in evaluation order):
+ *    1. Empty → `"Nomor wajib diisi."` (the helper text on the
+ *       field says "Nomor WhatsApp kamu", so this name aligns).
+ *    2. Leading digit ≠ `8` → `"Awalan harus 8."` Indonesian
+ *       mobile numbers start with `8` (e.g. `812…`, `813…`,
+ *       `852…`); `+62` landline-style (`2x`, `6x`) is rejected.
+ *    3. Length outside 9–12 → `"Nomor harus 9–12 digit."`
+ *
+ *  Used by both `PhoneNumberCard` (for the inline red helper
+ *  text on every keystroke) and `usePhoneForm` (to gate the
+ *  `saveDisabled` flag). Single source of truth. */
+export function validateIndonesianPhone(digits: string): PhoneValidation {
+  if (!digits) return { ok: false, reason: "Nomor wajib diisi." };
+  if (digits[0] !== "8") return { ok: false, reason: "Awalan harus 8." };
+  if (digits.length < 9 || digits.length > 12) {
+    return { ok: false, reason: "Nomor harus 9–12 digit." };
+  }
+  return { ok: true };
+}
+
 /** Re-export so the page can keep the `BroadcastSettings` import
  *  scoped to this module — only widgets that need the type reach
  *  into `@/lib/api` directly. (The `BroadcastSettings` type is

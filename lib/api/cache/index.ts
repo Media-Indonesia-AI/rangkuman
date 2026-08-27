@@ -25,7 +25,7 @@ export { loadTickerInformation } from "./ticker-information";
 export { loadTickerListArticles } from "./ticker-list-articles";
 export { loadKeyMetrics } from "./key-metrics";
 export { loadStockHistorical } from "./stock-historical";
-export { loadSectors, peekSectors } from "./sectors";
+export { loadSectors } from "./sectors";
 export { loadCommodityCategories } from "./commodity-categories";
 export { loadCommodityHistorical } from "./commodity-historical";
 export { loadInterestRate } from "./interest-rate";
@@ -54,3 +54,8 @@ export {
   invalidateBroadcastSettings,
   subscribeBroadcastSettingsInvalidate,
 } from "./broadcast-settings";
+export {
+  loadUserInformation,
+  invalidateUserInformation,
+  subscribeUserInformationInvalidate,
+} from "./users";

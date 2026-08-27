@@ -7,6 +7,7 @@
  * modules:
  *
  *   - `./auth`     — register, login
+ *   - `./users`    — getUserInformation, updatePhone, reqOtp, verifyPhone
  *   - `./stocks`   — getTopStocks, getTickers, getForeignStocks
  *   - `./market`   — getInterestRate, getExchangeRate
  *   - `./headline` — getTrendingStories, getHeadlines, getHeadlineById
@@ -18,6 +19,12 @@
  */
 
 import { googleLogin, login, register } from "./auth";
+import {
+  getUserInformation,
+  reqOtp,
+  updatePhone,
+  verifyPhone,
+} from "./users";
 import {
   getHeadlineById,
   getHeadlines,
@@ -208,6 +215,11 @@ export const api = {
   register,
   login,
   googleLogin,
+  // User profile + phone verification
+  getUserInformation,
+  updatePhone,
+  reqOtp,
+  verifyPhone,
   // Stocks
   getTopStocks,
   getTickers,

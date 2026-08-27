@@ -73,7 +73,19 @@ export interface SektorDisplay {
   avgChange: number;
   /** Number of constituent stocks in the sector. */
   totalStock: number;
-  /** Slice of constituent stocks (see `topStocksByAbsChange`). */
+  /** Top-N gainers in this sector (mapped from
+   *  `api.leading_stocks`). Displayed as the "Top leading" column
+   *  on `<SektorCard />`. */
+  leadingStocks: SektorDisplayStock[];
+  /** Top-N losers in this sector (mapped from
+   *  `api.lagging_stocks`). Displayed as the "Top lagging" column
+   *  on `<SektorCard />`. */
+  laggingStocks: SektorDisplayStock[];
+  /** Flat concatenation of `leadingStocks` + `laggingStocks`,
+   *  in that order. Kept for the sector-detail page consumers
+   *  (`<SektorTopStocks />` / `<SektorDetailNews />`) that want
+   *  one combined list to sort through; the home-page card
+   *  uses the split buckets directly. */
   stocks: SektorDisplayStock[];
 }
 
@@ -104,6 +116,13 @@ export function mapSector(api: ApiSector): SektorDisplay {
   const sentiment: SektorSentiment =
     api.change > 0 ? "positif" : api.change < 0 ? "negatif" : "netral";
 
+  // Map the two wire buckets into display shape once, then
+  // expose both individually (for the card's two-column view)
+  // AND a flat concat (for sector-detail consumers that want
+  // one combined list).
+  const leadingStocks = api.leading_stocks.map(mapStock);
+  const laggingStocks = api.lagging_stocks.map(mapStock);
+
   return {
     id: api.id,
     slug: slugify(api.name),
@@ -112,7 +131,9 @@ export function mapSector(api: ApiSector): SektorDisplay {
     sentiment,
     avgChange,
     totalStock: api.total_stock,
-    stocks: api.stocks.map(mapStock),
+    leadingStocks,
+    laggingStocks,
+    stocks: [...leadingStocks, ...laggingStocks],
   };
 }
 

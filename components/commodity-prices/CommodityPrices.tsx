@@ -66,7 +66,7 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
   // the whole tree with a login prompt for anonymous visitors so the
   // auth requirement is explicit. `useCurrentUser()` is `undefined`
   // during hydration (no flash), `null` when logged out, and a
-  // `MockUser` once authenticated.
+  // `User` once authenticated.
   const user = useCurrentUser();
   const { data, isLoading } = useCommodityCategories();
 

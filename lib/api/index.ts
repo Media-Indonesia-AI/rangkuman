@@ -18,7 +18,6 @@ export type {
   LoginRequest,
   RegisterRequest,
   RegisterResponse,
-  RegisterResponseUser,
 } from "./types/auth";
 
 // Stocks
@@ -38,6 +37,7 @@ export type {
   StockTrendingItem,
   StocksTrendingResponse,
   StockTrendingSource,
+  TickerArticles,
   TickerInformation,
   TickerItem,
   TickerListItem,
@@ -133,3 +133,12 @@ export type {
   BroadcastSettings,
   BroadcastSettingsRequest,
 } from "./types/broadcast-settings";
+
+// User profile + phone verification
+export type {
+  User,
+  UserInformationResponse,
+  UpdatePhoneRequest,
+  VerifyPhoneRequest,
+  ReqOtpResponse,
+} from "./types/users";

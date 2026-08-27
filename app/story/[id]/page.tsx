@@ -24,17 +24,22 @@ interface PageProps {
  * is unreachable we still want to emit valid `<meta>` tags
  * (Telegram in particular drops the whole preview when one tag
  * is broken). On error we emit route-specific fallback copy —
- * "Story · Rangkuman" / "Story pasar modal Indonesia yang sedang
- * tren, dikurasi dari 11 sumber media." — which is more accurate
- * than letting Next.js fall back to the root layout's generic
- * brand metadata.
+ * "Story" / "Story pasar modal Indonesia yang sedang tren,
+ * dikurasi dari 11 sumber media." — which is more accurate than
+ * letting Next.js fall back to the root layout's generic brand
+ * metadata.
+ *
+ * Note: the `Rangkuman` brand prefix is intentionally NOT applied
+ * here — story detail pages stand on their own (the headline
+ * carries the topic), so the tab / share preview shows just the
+ * headline. Mirrors `app/sorotan/detail/[id]/page.tsx`.
  *
  * Mirrors the structure of `app/sorotan/detail/[id]/page.tsx`,
  * including the `await params` (Next.js 15) and the 160-char
  * description clamp.
  */
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  let headline = "Story · Rangkuman";
+  let headline = "Story";
   let description = "Story pasar modal Indonesia yang sedang tren, dikurasi dari 11 sumber media.";
   let topics: string[] = [];
 

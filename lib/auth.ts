@@ -4,7 +4,7 @@
  * The active session is persisted to localStorage so it survives reloads.
  */
 
-import { api, type ApiError, type GoogleLoginResponse, type RegisterResponse } from "./api";
+import { api, type ApiError, type GoogleLoginResponse, type RegisterResponse, type User } from "./api";
 import { SESSION_STORAGE_KEYS, STORAGE_EVENT, STORAGE_KEYS } from "./storageKeys";
 import { safeGetItem, safeRemoveItem, safeSetItem } from "./util/safeLocalStorage";
 
@@ -95,27 +95,16 @@ type ReadonlyURLSearchParams = {
   get(key: string): string | null;
 };
 
-export interface MockUser {
-  /** Server-assigned user id (MongoDB-style). Empty for legacy local sessions. */
-  id?: string;
-  email: string;
-  username: string;
-  name: string;
-  /** Plaintext password — kept so we can build HTTP Basic auth on every request.
-   *  Demo-only: the real app would use HTTP-only session cookies.
-   *  Undefined for Google sessions — those authenticate with `googleId` instead. */
-  password?: string;
-  /** Google account id (`sub` claim from the id_token). Set only for
-   *  Google sessions; pairs with `email` to form the Basic auth credential
-   *  on backend calls. See `getAuthHeader()` in `lib/api/client.ts`. */
-  googleId?: string;
-  /** ISO timestamp of when the session was created. */
-  loggedInAt: string;
-  /** Provider used at sign-in: "email" | "google". */
-  provider: "email" | "google";
-  /** Whether the user has verified their email (from server). */
-  isEmailVerified?: boolean;
-}
+/**
+ * Re-export of the canonical `User` type from `lib/api` so existing
+ * call sites (`import { type User } from "@/lib/auth"`) keep working.
+ * The full docstring lives on `lib/api/types/users.ts` — see that
+ * file for the field-by-field semantics (especially the
+ * client-only `password` / `loggedInAt` / `provider` session fields
+ * populated by `loginWithIdentifier` / `loginWithGoogle` /
+ * `registerUser`).
+ */
+export type { User } from "./api";
 
 export interface WatchlistSnapshot {
   codes: string[];          // stock tickers, oldest-added first
@@ -171,8 +160,8 @@ function isValidEmail(email: string): boolean {
 
 // ─── AUTH ─────────────────────────────────────────────────────────
 
-export function getCurrentUser(): MockUser | null {
-  return readJson<MockUser>(USER_KEY);
+export function getCurrentUser(): User | null {
+  return readJson<User>(USER_KEY);
 }
 
 export function isLoggedIn(): boolean {
@@ -191,7 +180,7 @@ export function isLoggedIn(): boolean {
 export async function loginWithIdentifier(
   identifier: string,
   password: string,
-): Promise<MockUser> {
+): Promise<User> {
   const id = identifier.trim();
   const pw = password;
 
@@ -214,7 +203,7 @@ export async function loginWithIdentifier(
     throw new Error(apiErr?.message ?? "Gagal terhubung ke server");
   }
 
-  const session: MockUser = {
+  const session: User = {
     id: response.user.id,
     email: response.user.email,
     username: response.user.username,
@@ -223,6 +212,8 @@ export async function loginWithIdentifier(
     loggedInAt: response.user.createdAt,
     provider: "email",
     isEmailVerified: response.user.isEmailVerified,
+    createdAt: response.user.createdAt,
+    updatedAt: response.user.updatedAt,
   };
   writeJson(USER_KEY, session);
   if (response.setupToken) writeJson(SETUP_TOKEN_KEY, response.setupToken);
@@ -237,9 +228,10 @@ export async function loginWithIdentifier(
  * against Google's JWKS, upserts the user (create-on-first-login),
  * and returns the same `RegisterResponse` envelope used by
  * `/auth/login` / `/auth/register`. From there the flow is
- * identical to `loginWithIdentifier`: build a `MockUser`, persist
- * via `writeJson` (which wakes `useCurrentUser` synchronously in
- * the same tab), and return the session so the caller can navigate.
+ * identical to `loginWithIdentifier`: build a `User` session,
+ * persist via `writeJson` (which wakes `useCurrentUser`
+ * synchronously in the same tab), and return the session so the
+ * caller can navigate.
  *
  * `password` is intentionally left undefined for Google users —
  * the backend never sees a password for them, and the HTTP Basic
@@ -256,7 +248,7 @@ export async function loginWithIdentifier(
  */
 export async function loginWithGoogle(
   credential: string,
-): Promise<MockUser> {
+): Promise<User> {
   if (!credential || credential.trim().length === 0) {
     throw new Error("Kredensial Google kosong");
   }
@@ -275,7 +267,7 @@ export async function loginWithGoogle(
     throw new Error(apiErr?.message ?? "Gagal terhubung ke server");
   }
 
-  const session: MockUser = {
+  const session: User = {
     id: response.user.id,
     email: response.user.email,
     username: response.user.username,
@@ -290,11 +282,10 @@ export async function loginWithGoogle(
     loggedInAt: response.user.createdAt,
     provider: "google",
     isEmailVerified: response.user.isEmailVerified,
+    createdAt: response.user.createdAt,
+    updatedAt: response.user.updatedAt,
   };
   writeJson(USER_KEY, session);
-  // Google login returns no `setupToken` — the backend creates the
-  // account without a password, so the one-time setup-token flow
-  // doesn't apply.
   return session;
 }
 
@@ -311,7 +302,7 @@ export async function registerUser(input: {
   name: string;
   email: string;
   password: string;
-}): Promise<MockUser> {
+}): Promise<User> {
   const username = input.username.trim();
   const name = input.name.trim();
   const email = input.email.trim().toLowerCase();
@@ -353,7 +344,7 @@ export async function registerUser(input: {
   }
 
   // ---- Persist session + setupToken ----
-  const session: MockUser = {
+  const session: User = {
     id: response.user.id,
     email: response.user.email,
     username: response.user.username,
@@ -362,6 +353,8 @@ export async function registerUser(input: {
     loggedInAt: response.user.createdAt,
     provider: "email",
     isEmailVerified: response.user.isEmailVerified,
+    createdAt: response.user.createdAt,
+    updatedAt: response.user.updatedAt,
   };
   writeJson(USER_KEY, session);
   writeJson(SETUP_TOKEN_KEY, response.setupToken);

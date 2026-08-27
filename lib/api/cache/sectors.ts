@@ -1,41 +1,49 @@
 /**
  * Request-level cache for `GET stocks/sectors`.
  *
- * Single-slot cache — the sector list is global (not per-ticker)
- * and rarely changes mid-session. Concurrent mounts share one
- * network round-trip. Errors clear the in-flight slot so the
- * next mount can retry.
+ * **Per-limit cache** — the sector endpoint takes a `?limit=`
+ * query param that controls how many stocks the backend includes
+ * per `leading_stocks` / `lagging_stocks` bucket. The home page
+ * uses a small limit (default `3`, so 3 + 3 = 6 stocks per
+ * sector for a compact card grid); the sector-detail page uses
+ * a larger limit (e.g. `10`) so the "Top leading" / "Top
+ * lagging" sections can show more constituents. A single-slot
+ * cache would shadow the second call with the first one's
+ * payload, so we key both `cached` and `inflight` by `limit`
+ * and let each `limit` value dedup independently.
  *
- * `peekSectors()` reads the currently-cached value without
- * triggering a fetch — useful for code paths that want the
- * list synchronously (e.g. sector-name lookups from a
- * per-ticker page) and can fall back to `null` if it's not
- * warmed yet.
+ * `inflight` clears on resolve (success populates `cached`) and
+ * on reject (lets the next mount retry).
  */
 
 import { api } from "../client";
 import type { SectorsResponse } from "../types/sectors";
 
-let cached: SectorsResponse | null = null;
-let inflight: Promise<SectorsResponse> | null = null;
+/** Resolved payloads, keyed by the `?limit=` value they were
+ *  fetched with. */
+const cached = new Map<number, SectorsResponse>();
+/** Pending fetches, keyed by the same `?limit=` value, so two
+ *  concurrent mounts with the same limit share one round-trip. */
+const inflight = new Map<number, Promise<SectorsResponse>>();
 
-/** Read the currently cached sector list without triggering a fetch. */
-export function peekSectors(): SectorsResponse | null {
-  return cached;
-}
+export function loadSectors(limit = 3): Promise<SectorsResponse> {
+  const existing = cached.get(limit);
+  if (existing) return Promise.resolve(existing);
 
-export function loadSectors(): Promise<SectorsResponse> {
-  if (cached !== null) return Promise.resolve(cached);
-  if (inflight !== null) return inflight;
-  inflight = api
-    .getSectors()
+  const pending = inflight.get(limit);
+  if (pending) return pending;
+
+  const promise = api
+    .getSectors(limit)
     .then((res) => {
-      cached = res;
+      cached.set(limit, res);
+      inflight.delete(limit);
       return res;
     })
     .catch((err) => {
-      inflight = null; // allow retry on next mount
+      inflight.delete(limit); // allow retry on next mount
       throw err;
     });
-  return inflight;
+  inflight.set(limit, promise);
+  return promise;
 }

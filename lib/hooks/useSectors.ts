@@ -25,7 +25,7 @@ import { loadSectors } from "@/lib/api/cache";
  * beyond the existing "data is loading" path. `isLoading` flips
  * to `false` once the fetch settles either way.
  */
-export function useSectors(): {
+export function useSectors(limit = 3): {
   data: Sector[] | null;
   isLoading: boolean;
 } {
@@ -37,7 +37,7 @@ export function useSectors(): {
     setData(null);
     setIsLoading(true);
 
-    void loadSectors()
+    void loadSectors(limit)
       .then((res) => {
         if (!cancelled) setData(res.data);
       })
@@ -53,7 +53,7 @@ export function useSectors(): {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [limit]);
 
   return { data, isLoading };
 }
