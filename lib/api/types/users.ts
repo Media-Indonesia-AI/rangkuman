@@ -122,7 +122,7 @@ export interface UserInformationResponse {
  * triggers an OTP to be sent to it.
  */
 export interface UpdatePhoneRequest {
-  phoneNumber: string;
+  phone_number: string;
 }
 
 /**

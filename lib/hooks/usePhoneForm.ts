@@ -94,7 +94,7 @@ export function usePhoneForm(): UsePhoneFormResult {
   const phoneValid = validateIndonesianPhone(phone).ok;
 
   const onSave = useCallback(async (): Promise<{ ok: boolean }> => {
-    const result = await savePhone({ phoneNumber: phone });
+    const result = await savePhone({ phone_number: phone });
     return { ok: result.ok };
   }, [phone, savePhone]);
 

@@ -13,6 +13,15 @@ import { invalidateUserInformation } from "@/lib/api/cache/users";
  * phone number to a new value, which kicks off the OTP step.
  * Pairs with `useVerifyPhone` to complete verification.
  *
+ * The hook normalises `body.phoneNumber` to E.164
+ * (`+62XXXXXXXXXX`) before sending — the input field carries local
+ * digits only (e.g. `81234567890`, `081234567890`,
+ * `6281234567890`, or `+6281234567890` if pasted), and the
+ * backend expects the full country-code form. The prefix is
+ * always `+62` (Indonesian mobile), matching the static prefix
+ * widget in `PhoneNumberCard`. Any leading `+`, `62`, or `0` is
+ * stripped first so paste variants don't get double-prefixed.
+ *
  * Mirrors `useUpdateBroadcastSettings` — exposes a callable
  * `update(body)` rather than auto-firing on mount, so the consumer
  * decides when the save lands (typically on click of the inline
@@ -71,7 +80,16 @@ export function useUpdatePhone(): {
       setIsLoading(true);
       setError(null);
       try {
-        const res = await api.updatePhone(body);
+        // Canonicalise to E.164 `+62XXXXXXXXXX`. Strip any
+        // leading `+`, `62`, or `0` so paste variants collapse
+        // to the same local digits, then prepend `+62` once.
+        // This mirrors `normalizeLocalPhone` in reverse — same
+        // strip chain, just re-prefixed for the wire.
+        const digits = body.phone_number
+          .replace(/^\+/, "")
+          .replace(/^62/, "")
+          .replace(/^0/, "");
+        const res = await api.updatePhone({ phone_number: `+62${digits}` });
         setData(res);
         invalidateUserInformation();
         return { ok: true, data: res };
