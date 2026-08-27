@@ -42,7 +42,7 @@ export default function WhatsappPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <WhatsappPageHeader />
+      <WhatsappPageHeader verifiedAt={phone.verifiedAt} />
       <PhoneNumberCard
         phone={phone.phone}
         onPhoneChange={phone.setPhone}

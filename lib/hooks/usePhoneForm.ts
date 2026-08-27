@@ -52,6 +52,15 @@ interface UsePhoneFormResult {
   saveError: string | null;
   /** Click handler — bind to the card's `onSave` prop. */
   onSave: () => Promise<{ ok: boolean }>;
+  /** ISO timestamp from `User.phoneNumberVerifiedAt`, forwarded
+   *  to the card so it can render the verified badge. The card
+   *  treats `null` / `undefined` as "no badge" — passing the
+   *  raw value (not a precomputed boolean) keeps the badge able
+   *  to surface the actual verification timestamp on hover via
+   *  its `title` tooltip, and stays consistent with the rest of
+   *  the user-info surface where the wire shape is the source
+   *  of truth. */
+  verifiedAt: string | null;
 }
 
 export function usePhoneForm(): UsePhoneFormResult {
@@ -110,5 +119,12 @@ export function usePhoneForm(): UsePhoneFormResult {
     isSaving,
     saveError,
     onSave,
+    // Mirror `user.phoneNumberVerifiedAt` straight through. The
+    // badge widget renders `null` when this is falsy, so the
+    // card doesn't need to branch on a separate `isVerified`
+    // boolean. A `null` here means the user has a number on
+    // file but hasn't completed OTP, or has no number at all —
+    // either way, no badge.
+    verifiedAt: user?.phoneNumberVerifiedAt ?? null,
   };
 }
