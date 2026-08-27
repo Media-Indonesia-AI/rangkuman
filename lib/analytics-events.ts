@@ -62,6 +62,16 @@ export const EVENTS = {
   watchlist_remove: "watchlist_remove",
   watchlist_reorder: "watchlist_reorder",
 
+  // Saham sub-tabs — fired on /saham/ for whichever tab the
+  // user is viewing (Recap or Sektor). Distinct from the
+  // generic `page_view` because the URL doesn't change when
+  // the user switches tabs (it's client-side state in
+  // localStorage), so the global pageview tracker misses it.
+  // `saham_*` prefix keeps these tab-specific events easy to
+  // filter for in the GA4 event report.
+  saham_tab_recap_view: "saham_tab_saham_view",
+  saham_tab_sektor_view: "saham_tab_sektor_view",
+
   // Share
   share_open: "share_open",
   share_copy_link: "share_copy_link",

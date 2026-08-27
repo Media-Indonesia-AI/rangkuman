@@ -10,7 +10,7 @@
  * data wiring + JSX composition.
  */
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -28,6 +28,7 @@ import {
   type SahamTab,
 } from "@/components/saham";
 import { useTopicsContext } from "@/components/topics-provider";
+import { track, EVENTS } from "@/lib/analytics-events";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { useRecapDateSession } from "@/lib/hooks/useRecapDateSession";
 import { findSahamTopicId } from "@/lib/util/topicId";
@@ -85,6 +86,29 @@ export default function SahamPage() {
   useEffect(() => {
     if (subTab === null) return;
     safeSetItem(STORAGE_KEYS.sahamTab, subTab);
+  }, [subTab]);
+
+  // Distinguish the first tab render (after localStorage
+  // hydration) from subsequent in-session tab switches. Both
+  // get tracked with their own GA4 event — `saham_tab_recap_view`
+  // / `saham_tab_sektor_view` — but the `source` param lets
+  // the report split "which tab did the visitor land on"
+  // from "which tab did they switch to". The generic
+  // `page_view` from GoogleAnalytics already covers the bare
+  // /saham landing, so it doesn't tell you which tab was
+  // active — these tab-specific events fill that gap.
+  const isFirstTabRender = useRef(true);
+  useEffect(() => {
+    if (subTab === null) return;
+    track(
+      subTab === "recap"
+        ? EVENTS.saham_tab_recap_view
+        : EVENTS.saham_tab_sektor_view,
+      {
+        source: isFirstTabRender.current ? "initial" : "switch",
+      },
+    );
+    isFirstTabRender.current = false;
   }, [subTab]);
 
   // Pre-hydration guard — render only the static chrome until
