@@ -128,6 +128,9 @@ export type {
   WatchlistResponse,
 } from "./types/watchlist";
 
+// Coin
+export type { CoinTickerItem } from "./types/coin";
+
 // Broadcast settings
 export type {
   BroadcastSettings,

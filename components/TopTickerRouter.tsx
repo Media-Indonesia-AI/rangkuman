@@ -6,6 +6,8 @@ import { TopTicker, type TopTickerVariant } from "./TopTicker";
 /** First matching prefix wins. Add new routes here as needed. */
 const VARIANT_BY_PREFIX: Array<[string, TopTickerVariant]> = [
   ["/crypto", "crypto"],
+  ["/saham", "stocks"],
+  ["/", "home"], // default for all other routes
 ];
 
 /**
