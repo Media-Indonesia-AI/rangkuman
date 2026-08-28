@@ -35,7 +35,7 @@ export function CryptoPasarTab() {
   return (
     <div className="mt-5 space-y-6">
       {/* Top movers — per-token ticker */}
-      <section>
+      {/* <section>
         <CryptoSectionHeader
           icon={<BarChart3 className="h-3 w-3" aria-hidden />}
           title="Top Movers 24 jam"
@@ -51,7 +51,7 @@ export function CryptoPasarTab() {
               <CoinTickerCard key={c.kode} coin={c} />
             ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Categories */}
       <CryptoSection />
