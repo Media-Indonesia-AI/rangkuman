@@ -3,28 +3,21 @@
 import { Newspaper, Tag } from "lucide-react";
 import { CATEGORY_CONFIG, type Highlight } from "@/lib/mock/highlights";
 import { ShareButton } from "@/components/ShareButton";
-import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/og";
 
-interface CategoryConfig {
-  label: string;
-  colorClass: string;
-}
+/** The primary category config — labels + colors live in the
+ *  design system (`CATEGORY_CONFIG`), so the orchestrator just
+ *  forwards the resolved entry instead of re-declaring the shape
+ *  here. */
+export type PrimaryCategoryConfig = (typeof CATEGORY_CONFIG)[keyof typeof CATEGORY_CONFIG];
 
 interface SorotanDetailHeaderProps {
   story: Highlight;
-  primary: CategoryConfig;
+  primary: PrimaryCategoryConfig;
 }
 
-const HERO_GRADIENT: Record<string, string> = {
-  saham: "bg-hero-saham",
-  bisnis: "bg-hero-bisnis",
-  ekonomi: "bg-hero-ekonomi",
-  kebijakan: "bg-hero-kebijakan",
-  global: "bg-hero-global",
-  komoditas: "bg-hero-komoditas",
-};
+const HERO_GRADIENT_CLASS = "bg-hero-global";
 
 /**
  * Hero card at the top of the detail page — category gradient strip,
@@ -61,7 +54,7 @@ export function SorotanDetailHeader({
       <div
         className={cn(
           "absolute inset-x-0 top-0 h-1.5 opacity-90",
-          HERO_GRADIENT['global'],
+          HERO_GRADIENT_CLASS,
         )}
         aria-hidden
       />
@@ -130,15 +123,6 @@ export function SorotanDetailHeader({
           </div>
         </div>
       </div>
-
-      {/*
-        Auth gate. The hero card's `<header>` is already
-        `relative overflow-hidden`, so the overlay positions
-        correctly over the whole hero. Hidden automatically when
-        the user is signed in (`LoginPromptOverlay` early-returns
-        on truthy user).
-      */}
-      {/* <LoginPromptOverlay title="Masuk dulu untuk lihat headline crypto ini" /> */}
     </header>
   );
 }

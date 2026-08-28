@@ -3,9 +3,8 @@
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
 import { Shimmer } from "@/components/Shimmer";
-import type { EmbeddedStory, StoryArticle } from "@/lib/api";
-import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
+import type { EmbeddedStory, StoryArticle } from "@/lib/api";
 
 interface SorotanDetailSourcesProps {
   /** Stories fetched via `useListStory(headline_id)`. The widget
@@ -18,10 +17,30 @@ interface SorotanDetailSourcesProps {
   isLoading?: boolean;
 }
 
+interface MediaGroup {
+  media: string;
+  items: StoryArticle[];
+}
+
 // `source_url` may arrive as either a hostname (`market.bisnis.com`)
 // or a full canonical URL. Anchor `href` needs a scheme, so we normalize.
 function articleHref(sourceUrl: string): string {
   return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
+}
+
+/** Flatten `stories → articles` and bucket them by `source_name`,
+ *  preserving first-seen order so the most-cited media lands on
+ *  top of the list. */
+function groupArticlesByMedia(stories: EmbeddedStory[]): MediaGroup[] {
+  const groups = new Map<string, StoryArticle[]>();
+  for (const story of stories) {
+    for (const article of story.articles ?? []) {
+      const bucket = groups.get(article.source_name);
+      if (bucket) bucket.push(article);
+      else groups.set(article.source_name, [article]);
+    }
+  }
+  return Array.from(groups, ([media, items]) => ({ media, items }));
 }
 
 const SHIMMER_GROUP_COUNT = 3;
@@ -80,19 +99,7 @@ export function SorotanDetailSources({
   const user = useCurrentUser();
   if (!user) return null;
 
-  // Flatten stories → articles, group by source_name.
-  const groups = new Map<string, StoryArticle[]>();
-  for (const story of stories) {
-    for (const article of story.articles ?? []) {
-      const bucket = groups.get(article.source_name);
-      if (bucket) bucket.push(article);
-      else groups.set(article.source_name, [article]);
-    }
-  }
-  const grouped = Array.from(groups.entries()).map(([media, items]) => ({
-    media,
-    items,
-  }));
+  const grouped = groupArticlesByMedia(stories);
 
   return (
     <section aria-label="Daftar sumber" className="mt-8">

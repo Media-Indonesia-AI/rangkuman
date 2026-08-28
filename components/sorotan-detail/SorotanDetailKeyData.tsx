@@ -1,6 +1,6 @@
 import { KeyDataBlock } from "@/components/KeyDataBlock";
+import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { KeywordItem } from "@/lib/api/types/story";
-import { LoginPromptOverlay } from "../LoginPromptOverlay";
 
 interface SorotanDetailKeyDataProps {
   keywords: KeywordItem[];

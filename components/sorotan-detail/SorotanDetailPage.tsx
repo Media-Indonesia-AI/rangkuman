@@ -10,11 +10,11 @@ import type {
   StoryFilter,
 } from "@/lib/api";
 import { getRelativeTime } from "@/lib/util/formatDate";
-import type { Category, Highlight, StoryEvent } from "@/lib/mock/highlights";
+import { CATEGORY_CONFIG, type Category, type Highlight, type StoryEvent } from "@/lib/mock/highlights";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { SorotanDetailBreadcrumb } from "./SorotanDetailBreadcrumb";
-import { SorotanDetailHeader } from "./SorotanDetailHeader";
+import { SorotanDetailHeader, type PrimaryCategoryConfig } from "./SorotanDetailHeader";
 import { SorotanDetailSummary } from "./SorotanDetailSummary";
 import { SorotanDetailTags } from "./SorotanDetailTags";
 import { SorotanDetailKeyData } from "./SorotanDetailKeyData";
@@ -22,22 +22,11 @@ import { SorotanDetailTimeline } from "./SorotanDetailTimeline";
 import { SorotanDetailSources } from "./SorotanDetailSources";
 import { SorotanDetailSidebar } from "./SorotanDetailSidebar";
 
-interface CategoryConfig {
-  label: string;
-  colorClass: string;
-}
-
-/** Static palette mapping category slugs to their display label +
- *  color class. Colors live in the design system (Tailwind), not in
- *  the API, so the orchestrator keeps this lookup locally instead
- *  of plumbing a `CategoryConfig[]` map through the route entry. */
-const CATEGORY_PALETTE: Record<string, CategoryConfig> = {
-  crypto: { label: "Crypto", colorClass: "text-cat-crypto" },
-};
-const DEFAULT_CATEGORY: CategoryConfig = {
-  label: "Crypto",
-  colorClass: "text-cat-crypto",
-};
+/** The crypto detail route is gated to a single primary category;
+ *  pull its display config straight from the design-system
+ *  `CATEGORY_CONFIG` so label + color stay in sync with the rest
+ *  of the app. */
+const PRIMARY_CATEGORY: PrimaryCategoryConfig = CATEGORY_CONFIG.crypto;
 
 export interface SorotanDetailPageProps {
   /** Headline ID — same as the route's `[id]` segment. Drives both
@@ -243,12 +232,10 @@ export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps
 
   // Primary category config (label + color) for the badge row.
   // The crypto detail route is gated to the `crypto` category,
-  // so the lookup only needs to know about that one. Affected
-  // categories are derived inside the header from
-  // `story.affectedCategories` directly — no need to thread them
-  // through here.
-  const primary =
-    CATEGORY_PALETTE[displayStory.category] ?? DEFAULT_CATEGORY;
+  // so a single constant covers every render. Affected categories
+  // are derived inside the header from `story.affectedCategories`
+  // directly — no need to thread them through here.
+  const primary = PRIMARY_CATEGORY;
 
   return (
     <>

@@ -11,7 +11,10 @@
  */
 export { SorotanDetailPage, type SorotanDetailPageProps } from "./SorotanDetailPage";
 export { SorotanDetailBreadcrumb } from "./SorotanDetailBreadcrumb";
-export { SorotanDetailHeader } from "./SorotanDetailHeader";
+export {
+  SorotanDetailHeader,
+  type PrimaryCategoryConfig,
+} from "./SorotanDetailHeader";
 export { SorotanDetailSummary } from "./SorotanDetailSummary";
 export { SorotanDetailTags } from "./SorotanDetailTags";
 export { SorotanDetailKeyData } from "./SorotanDetailKeyData";
