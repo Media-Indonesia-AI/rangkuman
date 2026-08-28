@@ -14,7 +14,7 @@ import { getRelativeTime } from "@/lib/util/formatDate";
 import { findCryptoTopicId } from "@/lib/util/topicId";
 
 /** Re-exported so existing imports (`from "@/components/crypto-page/cryptoStories"`)
- *  keep working — the canonical definition now lives in
+ *  keep working — the canonical definition lives in
  *  `lib/util/topicId.ts` alongside its `findSahamTopicId` mirror. */
 export { findCryptoTopicId };
 
@@ -151,14 +151,6 @@ export const COIN_KODE_TO_STORY_ID: Record<string, string> = {
   LINK: "cr-link-2026-06-07",
   FET: "cr-fet-2026-06-07",
 };
-
-/**
- * Resolve the `topic_id` that drives the `/crypto` page's live
- * headline feed. Implementation lives in `lib/util/topicId.ts`
- * (see `findCryptoTopicId`); this module re-exports it for back-
- * compat with existing `from "@/components/crypto-page/cryptoStories"`
- * imports.
- */
 
 /**
  * Best-effort `StoryItem` (live wire) → `CryptoStory` (card

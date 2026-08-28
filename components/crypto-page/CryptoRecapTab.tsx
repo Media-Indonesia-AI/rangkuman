@@ -115,10 +115,15 @@ export function CryptoRecapTab() {
           borderless, flows with the tab chrome. Scoped to
           the "crypto" topic via `topicId` so the feed shows
           crypto-tagged stories instead of the cross-topic
-          default. */}
-      <div className="mt-8">
-        <EmitenStories storyLimit={3} topicId={topicId ?? undefined} />
-      </div>
+          default. Rendered only when `topicId` has a value
+          (topics still loading or the catalog returned no
+          crypto-tagged entry); otherwise the slot collapses
+          so we never hit the cross-topic default fallback. */}
+      {topicId && (
+        <div className="mt-8">
+          <EmitenStories storyLimit={3} topicId={topicId} />
+        </div>
+      )}
 
       {/* 📋 BERITA TERKINI — tail of the source stories,
           2-col grid, non-compact cards. Merged from the old

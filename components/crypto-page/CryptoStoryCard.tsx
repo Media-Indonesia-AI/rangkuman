@@ -1,8 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { formatPrice } from "./cryptoFormatters";
 import type { CryptoStory } from "./cryptoStories";
 
 interface CryptoStoryCardProps {
@@ -21,17 +19,14 @@ interface CryptoStoryCardProps {
  *   - a thin amber hairline,
  *   - the coin flag + ticker + time-ago row,
  *   - the headline,
- *   - (in the non-compact layout) a 2-line `line-clamp-2` summary,
- *   - a footer with the source count + read-time meta on the left
- *     and the live price + 24h change on the right.
+ *   - (in the non-compact layout) a 2-line `line-clamp-2` summary.
  *
  * The card stretches to the row's tallest sibling via
- * `h-full flex flex-col` so the price/footer always sits at the
+ * `h-full flex flex-col` so the trailing spacer always sits at the
  * bottom regardless of the headline length — mirrors the
  * `h-full` layout used by `StockCardList`.
  */
 export function CryptoStoryCard({ story, compact = false }: CryptoStoryCardProps) {
-  const isUp = story.coinChange >= 0;
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong">
       <Link href={`/sorotan/detail/${story.id}`} className="flex h-full flex-col">
@@ -54,30 +49,6 @@ export function CryptoStoryCard({ story, compact = false }: CryptoStoryCardProps
             </p>
           )}
           <div className="mt-auto" />
-          {/* <div className="flex items-center justify-between gap-2 border-t border-border pt-2">
-            <div className="flex items-center gap-2 font-mono text-[9.5px] text-text-muted">
-              <span className="font-bold tabular-nums text-cat-amber-500">
-                {story.jumlahBerita}
-              </span>
-              <span>sumber</span>
-              <span className="mx-1">·</span>
-              <span>{story.readTime}</span>
-            </div>
-            <div className="text-right">
-              <div className="font-mono text-[12px] font-bold tabular-nums text-text-primary">
-                ${formatPrice(story.coinPrice)}
-              </div>
-              <div
-                className={cn(
-                  "font-mono text-[10px] font-semibold tabular-nums",
-                  isUp ? "text-cat-saham" : "text-cat-kebijakan",
-                )}
-              >
-                {isUp ? "+" : ""}
-                {story.coinChange.toFixed(2)}%
-              </div>
-            </div>
-          </div> */}
         </div>
       </Link>
     </article>
