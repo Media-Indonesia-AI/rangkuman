@@ -11,34 +11,47 @@ import { cn } from "@/lib/utils";
 
 export type TopTickerVariant = "stocks" | "crypto" | "home";
 
-/** Discriminator for the `label` prop. Anything other than
- *  `"saham"` or `"crypto"` (or unset) falls through to the
- *  combined branch — `RandomMixedLabel` is exported as a
- *  self-documenting marker for call sites that want the mixed
- *  behaviour explicitly. */
+/** Section discriminator for the `label` prop. Drives the render branch:
+ *  - `"saham"`            → only the stocks list
+ *  - `"crypto"`           → only the crypto list
+ *  - anything else / unset → combined: up to 15 random stocks + up to
+ *                            15 random crypto, interleaved
+ *
+ *  Overrides `variant` when both are set. */
 export type TopTickerLabel = "saham" | "crypto" | (string & {});
 
 interface TopTickerProps {
-  /** Legacy default when `label` is not provided.
-   *  - `"stocks"` → mixed / saham branch when no `label`
-   *  - `"crypto"` → crypto branch when no `label`
-   *  - `"home"`   → combined branch (saham + crypto, random)
-   *                 when no `label`
-   *
-   *  When `label` is set, it takes precedence over `variant`. */
+  /** Legacy default when `label` is not provided. Ignored if `label` is set.
+   *  - `"stocks"` → `"saham"` branch
+   *  - `"crypto"` → `"crypto"` branch
+   *  - `"home"`   → combined branch */
   variant?: TopTickerVariant;
-  /** Section discriminator. Drives the render branch:
-   *    - `"saham"` → only the stocks list
-   *    - `"crypto"` → only the crypto list
-   *    - any other value (or unset) → both lists combined, with
-   *      up to 15 items drawn at random from each side and
-   *      interleaved
-   *
-   *  Overrides `variant` when both are set. */
   label?: TopTickerLabel;
 }
 
 const COMBINED_RANDOM_LIMIT = 15;
+
+/** Resolve the actual label the component renders against.
+ *  `label` wins when both are set; otherwise `variant` seeds the
+ *  default. `undefined` (and any non-`"saham"`/non-`"crypto"` label)
+ *  falls through to the combined branch. */
+function resolveEffectiveLabel(
+  label: TopTickerLabel | undefined,
+  variant: TopTickerVariant,
+): TopTickerLabel | undefined {
+  if (label) return label;
+  if (variant === "crypto") return "crypto";
+  if (variant === "home") return undefined;
+  return "saham";
+}
+
+/** Screen-reader string for the marquee container. Mirrors the
+ *  resolved label so the announced list matches what's visible. */
+function ariaLabelFor(label: TopTickerLabel | undefined): string {
+  if (label === "crypto") return "Harga crypto real-time";
+  if (label === "saham") return "Harga saham real-time";
+  return "Harga saham & crypto real-time";
+}
 
 /** Fisher–Yates shuffle. Pure / non-mutating — returns a new
  *  array. Used to draw the random subset for the combined label
@@ -128,6 +141,39 @@ function cryptoRecapHref(kode: string): string {
   return storyId ? `/sorotan/detail/${storyId}` : `/stock/${kode}`;
 }
 
+/** Single marquee cell. Pulled out of the render loop so the JSX
+ *  in the parent stays focused on iteration + duplication rather
+ *  than formatting rules. The `key` lives on the element at the
+ *  call site (React reserves the prop name). */
+function TickerRowView({ row }: { row: TickerRow }) {
+  const positive = row.changePercent >= 0;
+  const isCoin = row.kind === "crypto";
+  const href = isCoin ? cryptoRecapHref(row.kode) : `/stock/${row.kode}`;
+  const priceLabel = isCoin
+    ? `$${formatCoinPrice(row.price)}`
+    : formatStockPrice(row.price);
+  return (
+    <a
+      href={href}
+      className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
+    >
+      <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">
+        {row.kode}
+      </span>
+      <span className="num-tabular text-text-secondary">{priceLabel}</span>
+      <span
+        className={cn(
+          "num-tabular",
+          positive ? "text-bullish" : "text-bearish",
+        )}
+      >
+        {positive ? "▲" : "▼"} {Math.abs(row.changePercent).toFixed(2)}%
+      </span>
+      <span className="text-text-faint">·</span>
+    </a>
+  );
+}
+
 /**
  * Sticky horizontal price ticker. Renders one row per
  * `TickerRow` (stock or crypto) — the rows a visitor sees depend
@@ -155,19 +201,8 @@ export function TopTicker({
   // working). `undefined` falls through to the combined branch —
   // any non-`"saham"`/non-`"crypto"` label (including absent)
   // renders the random interleaved feed.
-  const effectiveLabel: TopTickerLabel | undefined =
-    label ??
-    (variant === "crypto"
-      ? "crypto"
-      : variant === "home"
-        ? undefined
-        : "saham");
-  const ariaLabel =
-    effectiveLabel === "crypto"
-      ? "Harga crypto real-time"
-      : effectiveLabel === "saham"
-        ? "Harga saham real-time"
-        : "Harga saham & crypto real-time";
+  const effectiveLabel = resolveEffectiveLabel(label, variant);
+  const ariaLabel = ariaLabelFor(effectiveLabel);
 
   // Live ticker data for both feeds. Both hooks are called
   // unconditionally so the combined branch has both lists ready
@@ -203,11 +238,14 @@ export function TopTicker({
   // Pick the row set the visitor actually sees. The combined
   // branch draws a fresh random subset of 15 from each side and
   // interleaves them so the marquee doesn't read as "stocks then
-  // crypto". The initial state is the deterministic concat — the
-  // shuffle runs in a post-mount `useEffect` below so the server
-  // and client renders agree on the first paint (avoids the React
-  // hydration mismatch `Math.random()` would otherwise cause).
-  const initialRows: TickerRow[] = useMemo(() => {
+  // crypto".
+  //
+  // The initial state is a deterministic concat (no `Math.random()`)
+  // — the lazy initializer runs exactly once at mount, with the same
+  // inputs on the server and the client's first render, so both agree
+  // on the first paint (avoids the React hydration mismatch that a
+  // non-deterministic shuffle would cause).
+  const [rows, setRows] = useState<TickerRow[]>(() => {
     if (effectiveLabel === "saham") {
       return stockSource;
     }
@@ -218,15 +256,13 @@ export function TopTicker({
       ...stockSource.slice(0, COMBINED_RANDOM_LIMIT),
       ...cryptoSource.slice(0, COMBINED_RANDOM_LIMIT),
     ];
-  }, [effectiveLabel, stockSource, cryptoSource]);
-
-  const [rows, setRows] = useState<TickerRow[]>(initialRows);
+  });
 
   // Post-mount shuffle — only runs on the client, so the
   // server-rendered HTML stays in sync with the client's first
-  // render (both produce `initialRows`). When the source feeds
-  // update (live data lands, label changes) we recompute from the
-  // new sources and re-shuffle the combined branch.
+  // render. When the source feeds update (live data lands, label
+  // changes) we recompute from the new sources and re-shuffle the
+  // combined branch.
   useEffect(() => {
     if (effectiveLabel === "saham") {
       setRows(stockSource);
@@ -241,15 +277,6 @@ export function TopTicker({
     setRows(shuffle([...stockPick, ...cryptoPick]));
   }, [effectiveLabel, stockSource, cryptoSource]);
 
-  // Pre-compute the ARIA label once so the marquee container
-  // doesn't re-render unnecessarily when the random shuffle
-  // re-runs. (Kept as a local hook-style ref so the existing
-  // `useEffect` from the previous implementation has a home for
-  // any future side-effect.)
-  useEffect(() => {
-    /* reserved for future ticker-broadcast effects */
-  }, []);
-
   return (
     <div
       className="relative overflow-hidden border-b border-border bg-bg-secondary"
@@ -262,38 +289,12 @@ export function TopTicker({
       <div className="flex animate-marquee whitespace-nowrap py-1.5 will-change-transform sm:py-2">
         {/* Render items twice for seamless infinite loop (when first set scrolls off, second set is already in view) */}
         {[0, 1].flatMap((dupIdx) =>
-          rows.map((row, idx) => {
-            const positive = row.changePercent >= 0;
-            const isCoin = row.kind === "crypto";
-            const href = isCoin ? cryptoRecapHref(row.kode) : `/stock/${row.kode}`;
-            const priceLabel = isCoin
-              ? `$${formatCoinPrice(row.price)}`
-              : formatStockPrice(row.price);
-            return (
-              <a
-                key={`row-d${dupIdx}-${row.kind}-${row.kode}-${idx}`}
-                href={href}
-                className="group inline-flex shrink-0 items-center gap-1.5 px-3 font-mono text-[11px] text-text-secondary transition-colors hover:text-text-primary sm:gap-2 sm:px-4 sm:text-[12px]"
-              >
-                <span className="font-semibold tracking-tight text-text-primary group-hover:text-brand">
-                  {row.kode}
-                </span>
-                <span className="num-tabular text-text-secondary">
-                  {priceLabel}
-                </span>
-                <span
-                  className={cn(
-                    "num-tabular",
-                    positive ? "text-bullish" : "text-bearish",
-                  )}
-                >
-                  {positive ? "▲" : "▼"}{" "}
-                  {Math.abs(row.changePercent).toFixed(2)}%
-                </span>
-                <span className="text-text-faint">·</span>
-              </a>
-            );
-          }),
+          rows.map((row, idx) => (
+            <TickerRowView
+              key={`row-d${dupIdx}-${row.kind}-${row.kode}-${idx}`}
+              row={row}
+            />
+          )),
         )}
       </div>
     </div>
