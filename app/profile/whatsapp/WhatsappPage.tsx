@@ -48,6 +48,15 @@ export default function WhatsappPage() {
   // the broadcast toggle — the OTP flow flips it via the user-
   // info cache invalidation → refetch chain.
   const isVerified = Boolean(phone.verifiedAt);
+  // The OTP API sends to the user's saved number on file. If the
+  // user hasn't saved one yet (or the field landed as `null` / a
+  // whitespace-only string), there's nothing to verify — the
+  // `<VerificationCard />` would just show a dead CTA, so we
+  // collapse it. The `<PhoneNumberCard />` above is where the
+  // number actually gets set; once it lands and is saved, this
+  // gate re-opens and the card mounts on the next render.
+  const savedPhoneNumber = user?.phoneNumber?.trim() ?? null;
+  const hasSavedPhoneNumber = Boolean(savedPhoneNumber);
 
   // Defense-in-depth on top of `NotificationToggleCard`'s own
   // `disabled` UI: the page refuses to mutate state if the
@@ -112,9 +121,11 @@ export default function WhatsappPage() {
       />
       {/* Self-unmounts once `verifiedAt` flips: `useVerifyPhone`
           invalidates the user-info cache on success → hook
-          refetches → `phone.verifiedAt` becomes truthy. */}
-      {!isVerified && (
-        <VerificationCard phoneNumber={user?.phoneNumber ?? null} />
+          refetches → `phone.verifiedAt` becomes truthy. Also
+          hidden until a phone number is actually saved on file —
+          there's nothing to verify without a candidate number. */}
+      {!isVerified && hasSavedPhoneNumber && (
+        <VerificationCard phoneNumber={savedPhoneNumber} />
       )}
       <NotificationToggleCard
         enabled={broadcast.enabled}
