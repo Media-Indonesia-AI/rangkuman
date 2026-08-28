@@ -53,6 +53,7 @@ import { getTopic } from "./topic";
 import { doReqTopup, getTopupBundle, getTransactionHistory, getWallet } from "./wallet";
 import { addToWatchlist, deleteWatchlist, getWatchlist, updateWatchlist } from "./watchlist";
 import { getBroadcastSettings, updateBroadcastSettings } from "./broadcast-settings";
+import { getCoinTicker } from "./coin";
 import type { ApiError } from "./types/error";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
 import { safeGetItem } from "@/lib/util/safeLocalStorage";
@@ -263,4 +264,6 @@ export const api = {
   // Broadcast settings
   getBroadcastSettings,
   updateBroadcastSettings,
+  // Coin
+  getCoinTicker,
 };
