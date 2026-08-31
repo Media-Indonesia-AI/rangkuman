@@ -14,9 +14,11 @@
  *                    doubled rows).
  *   - `TickerRowView` — a single marquee cell.
  *   - `useTopTickerRows` — row-resolution hook (label/variant
- *                    dispatch + hydration-safe shuffle).
+ *                    dispatch + first-N slice + post-mount
+ *                    cross-list shuffle).
  *   - `formatters` — IDR/USD price formatters.
- *   - `tickerData` — entry mappers, shuffle, recap-href lookup.
+ *   - `tickerData` — entry mappers, cross-list shuffle, recap-href
+ *                    lookup.
  *   - `types` — `TickerRow`, `TopTickerVariant`, `TopTickerLabel`.
  */
 export { TopTicker } from "./TopTicker";

@@ -1,7 +1,8 @@
 /**
- * Pure data transforms for `TopTicker` — entry mappers, shuffle,
- * and the crypto recap-href lookup. No React, no I/O — easy to
- * unit-test in isolation.
+ * Pure data transforms for `TopTicker` — entry mappers, the
+ * cross-list shuffle, the crypto recap-href lookup, and the
+ * resolved mocks. No React, no I/O — easy to unit-test in
+ * isolation.
  *
  * Entry mappers normalize the three wire shapes (live stock ticker,
  * mock stock, live coin ticker) into one `TickerRow` so the render
@@ -12,9 +13,13 @@ import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
 import { COIN_KODE_TO_STORY_ID } from "@/components/crypto-page/cryptoStories";
 import type { TickerRow } from "./types";
 
-/** How many random rows to pull from each side for the combined
- *  branch (label undefined or non-`"saham"`/non-`"crypto"`). */
-export const COMBINED_RANDOM_LIMIT = 10;
+/** Per-side row count for the combined branch (label undefined or
+ *  non-`"saham"`/non-`"crypto"`). Each side contributes the first
+ *  N rows from its source — no ranking, no per-source shuffle.
+ *  The wire API's order (or the mock array's order) is what
+ *  supplies the slice; the cross-list merge then shuffles the
+ *  two top-N lists together. */
+export const TOP_N_PER_SIDE = 10;
 
 /** Resolve the actual label the component renders against.
  *  `label` wins when both are set; otherwise `variant` seeds the
@@ -39,8 +44,14 @@ export function ariaLabelFor(label: string | undefined): string {
 }
 
 /** Fisher–Yates shuffle. Pure / non-mutating — returns a new
- *  array. Used to draw the random subset for the combined label
- *  branch. */
+ *  array. Used to interleave the stock and crypto top-N picks in
+ *  the combined branch so the marquee doesn't read as "stocks
+ *  then crypto".
+ *
+ *  Called only post-mount (inside a `useEffect`) so the server
+ *  render and the client's first paint stay aligned — the lazy
+ *  initializer produces the deterministic slice+concat that the
+ *  SSR HTML carries. */
 export function shuffle<T>(arr: readonly T[]): T[] {
   const out = [...arr];
   for (let i = out.length - 1; i > 0; i--) {

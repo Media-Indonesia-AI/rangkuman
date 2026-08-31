@@ -7,13 +7,14 @@
  *
  *   - `"saham"`           → only stocks
  *   - `"crypto"`          → only crypto
- *   - anything else       → up to 10 random stocks + up to 10
- *                           random crypto, interleaved
+ *   - anything else       → first 10 stocks + first 10 crypto,
+ *                           then Fisher–Yates shuffled together
+ *                           so the marquee interleaves both
  *
  * Pure CSS marquee (no JS animation) with duplicated content for
- * seamless loop. The row-resolution + hydration-safe shuffle lives
- * in `useTopTickerRows`; the marquee chrome lives in `<Marquee />`
- *; the per-row cell in `<TickerRowView />`.
+ * seamless loop. The row-resolution lives in `useTopTickerRows`;
+ * the marquee chrome in `<Marquee />`; the per-row cell in
+ * `<TickerRowView />`.
  *
  * `label` wins when both are set so the new prop drives dispatch;
  * `variant` only seeds the default when `label` is omitted
