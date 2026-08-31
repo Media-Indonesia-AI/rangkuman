@@ -33,9 +33,9 @@ export function getCoinTicker(limit = 30): Promise<CoinTickerItem[]> {
  * two sides with the same layout.
  *
  * `limit` controls the per-group size — the endpoint returns up
- * to `limit` coins in each group (default 5).
+ * to `limit` coins in each group (default 6).
  */
-export function getCoinTopTickers(limit = 5): Promise<CoinTopTickersResponse> {
+export function getCoinTopTickers(limit = 6): Promise<CoinTopTickersResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<CoinTopTickersResponse>(
     `coin/top-tickers/?${params.toString()}`,

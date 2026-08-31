@@ -59,3 +59,4 @@ export {
   invalidateUserInformation,
   subscribeUserInformationInvalidate,
 } from "./users";
+export { loadCoinTopTickers } from "./coin-top-tickers";
