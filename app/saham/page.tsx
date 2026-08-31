@@ -14,17 +14,10 @@ import { useEffect, useRef, useState } from "react";
 
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { DatePicker } from "@/components/DatePicker";
-import { LatestHeadlines } from "@/components/latest-headlines/LatestHeadlines";
-import { MarketMood } from "@/components/MarketMood";
 import { SektorSection } from "@/components/sektor";
 import {
-  EmitenStories,
-  LeftSidebar,
-  MobileTopMovers,
-  PalingBanyakDiberitakan,
+  RecapStockSection,
   SahamSubTabs,
-  WatchlistSection,
   type SahamTab,
 } from "@/components/saham";
 import { useTopicsContext } from "@/components/topics-provider";
@@ -33,7 +26,6 @@ import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
 import { useRecapDateSession } from "@/lib/hooks/useRecapDateSession";
 import { findSahamTopicId } from "@/lib/util/topicId";
 import { STORAGE_KEYS } from "@/lib/storageKeys";
-import { hariIniIso } from "@/lib/util/formatDate";
 import { safeGetItem, safeSetItem } from "@/lib/util/safeLocalStorage";
 
 /** Type guard for the persisted sub-tab — ignores anything other
@@ -139,60 +131,14 @@ export default function SahamPage() {
       </div>
 
       {subTab === "recap" && (
-        <>
-          <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5">
-            <MarketMood />
-            <div className="mt-3">
-              <MobileTopMovers />
-            </div>
-            <div className="mt-3 xl:hidden">
-              <LatestHeadlines />
-            </div>
-          </div>
-
-          <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">
-            {/* Watchlist preview — only shown when user is logged in & watchlist isn't empty */}
-            <WatchlistSection />
-
-            <div className="grid gap-6 xl:grid-cols-[240px_1fr_320px]">
-              {/* Left rail — Top Movers */}
-              <div className="hidden xl:block">
-                <div className="sticky top-20">
-                  <LeftSidebar />
-                </div>
-              </div>
-
-              {/* Feed column */}
-              <div className="min-w-0 space-y-5">
-                <EmitenStories storyLimit={3} topicId={sahamTopicId ?? undefined} />
-
-                {/* Date picker + recap summary */}
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <DatePicker
-                    value={effectiveDate}
-                    onChange={setIsoDate}
-                    todayIso={hariIniIso()}
-                    maxLookbackDays={30}
-                  />
-                </div>
-
-                <PalingBanyakDiberitakan
-                  trending={trending}
-                  trendingLoading={trendingLoading}
-                  onRefresh={refreshTrending}
-                  recapDate={effectiveDate}
-                />
-              </div>
-
-              {/* Right sidebar — desktop only, contains Market Mood + Headlines + Newsletter */}
-              <div className="hidden xl:block">
-                <div className="sticky top-20">
-                  <LatestHeadlines />
-                </div>
-              </div>
-            </div>
-          </main>
-        </>
+        <RecapStockSection
+          trending={trending}
+          trendingLoading={trendingLoading}
+          onRefresh={refreshTrending}
+          recapDate={effectiveDate}
+          onDateChange={setIsoDate}
+          topicId={sahamTopicId ?? undefined}
+        />
       )}
 
       {subTab === "sektor" && (
