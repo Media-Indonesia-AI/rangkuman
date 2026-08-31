@@ -29,7 +29,7 @@ interface TopTickerProps {
   label?: TopTickerLabel;
 }
 
-const COMBINED_RANDOM_LIMIT = 15;
+const COMBINED_RANDOM_LIMIT = 10;
 
 /** Resolve the actual label the component renders against.
  *  `label` wins when both are set; otherwise `variant` seeds the
