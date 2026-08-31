@@ -1,6 +1,6 @@
 "use client";
 
-import { TrendingDown, TrendingUp } from "lucide-react";
+import { BarChart3, TrendingDown, TrendingUp } from "lucide-react";
 import { useCoinTopTickers } from "@/lib/hooks/useCoinTopTickers";
 import { TopMoverGroup } from "./TopMoverGroup";
 import { TopMoversError } from "./TopMoversError";
@@ -12,10 +12,13 @@ function TopMoversHeader() {
   return (
     <header className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
       <div>
-        <h2 className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
-          Top Movers
-        </h2>
-        <p className="mt-0.5 text-[11px] text-text-muted">
+        <div className="mb-0.5 flex items-center gap-1.5">
+          <BarChart3 className="h-3.5 w-3.5 text-brand" aria-hidden />
+          <h2 className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
+            Top Movers
+          </h2>
+        </div>
+        <p className="text-[11px] text-text-muted">
           Koin dengan perubahan harga terbesar
         </p>
       </div>
