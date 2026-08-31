@@ -13,7 +13,7 @@ function TopMoversHeader() {
     <header className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
       <div>
         <h2 className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
-          Top Movers 24 jam
+          Top Movers
         </h2>
         <p className="mt-0.5 text-[11px] text-text-muted">
           Koin dengan perubahan harga terbesar
@@ -36,7 +36,7 @@ export function TopMovers() {
   const { state, refetch } = useCoinTopTickers();
 
   return (
-    <section aria-label="Top movers 24 jam">
+    <section aria-label="Top movers">
       <TopMoversHeader />
 
       {state.kind === "loading" && <TopMoversSkeleton />}
