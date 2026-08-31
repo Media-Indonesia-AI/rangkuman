@@ -156,7 +156,7 @@ export function Navbar() {
     <header className="sticky top-0 z-40 border-b border-border bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/80">
       <nav className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
         {/* Brand logo + name */}
-        <Brand logoSize={32} />
+        <Brand logoSize={42} />
 
         {/* Main links — visible on every screen size so the user
             can reach Saham / Crypto from the navbar directly,
