@@ -7,6 +7,7 @@
  */
 export { EmitenStories } from "./EmitenStories/EmitenStories";
 export { PalingBanyakDiberitakan } from "./PalingBanyakDiberitakan";
+export { RecapLoginPrompt } from "./RecapLoginPrompt";
 export { RecapStockSection } from "./RecapStockSection";
 export { SahamSubTabs, type SahamTab } from "./SahamSubTabs";
 export { MobileTopMovers } from "./MobileTopMovers";
