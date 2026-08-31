@@ -1,13 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, type StockSearchItem } from "@/lib/api";
+import { api, type ApiError, type StockSearchItem } from "@/lib/api";
 
 interface UseStocksSearchResult {
   data: StockSearchItem[];
   isLoading: boolean;
   error: Error | null;
+  /** HTTP status from the failing response, when the failure
+   *  came from the API (vs. a thrown JS exception). Callers
+   *  can use this to special-case auth-gated errors (e.g.
+   *  `401` → surface a login prompt). */
+  status?: number;
 }
+
+/** Default message when the transport throws an error without
+ *  one of its own. Kept here so the wire-shape strings aren't
+ *  scattered across consumer components. */
+const FALLBACK_ERROR_MESSAGE = "Gagal mencari saham. Coba lagi.";
 
 /**
  * Debounced stock search for `GET stocks/search`.
@@ -23,6 +33,7 @@ export function useStocksSearch(
   const [data, setData] = useState<StockSearchItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [status, setStatus] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     const q = query.trim();
@@ -30,6 +41,7 @@ export function useStocksSearch(
 
     setData([]);
     setError(null);
+    setStatus(undefined);
     if (!q) {
       setIsLoading(false);
       return;
@@ -43,14 +55,19 @@ export function useStocksSearch(
           if (!cancelled) setData(response.data);
         })
         .catch((err: unknown) => {
-          if (!cancelled) {
-            setData([]);
-            setError(
-              err instanceof Error
-                ? err
-                : new Error("Gagal mencari saham. Coba lagi."),
-            );
-          }
+          if (cancelled) return;
+          // The transport throws `ApiError` (`{ status, message,
+          // body }`) on non-2xx and on network failures, so the
+          // cast always succeeds. We surface the wire message
+          // when present and keep the `status` so the consumer
+          // can branch on auth-gated failures (401) separately
+          // from generic ones.
+          const apiErr = err as ApiError;
+          setData([]);
+          setError(
+            new Error(apiErr?.message ?? FALLBACK_ERROR_MESSAGE),
+          );
+          setStatus(apiErr?.status);
         })
         .finally(() => {
           if (!cancelled) setIsLoading(false);
@@ -63,5 +80,5 @@ export function useStocksSearch(
     };
   }, [query, limit]);
 
-  return { data, isLoading, error };
+  return { data, isLoading, error, status };
 }

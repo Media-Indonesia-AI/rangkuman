@@ -223,21 +223,27 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Mobile menu button — only on phones */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen((v) => !v)}
-            aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
-            aria-expanded={menuOpen}
-            aria-controls="mobile-menu"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden"
-          >
-            {menuOpen ? (
-              <X className="h-4 w-4" aria-hidden />
-            ) : (
-              <Menu className="h-4 w-4" aria-hidden />
-            )}
-          </button>
+          {/* Mobile menu button — only on phones, and only when
+              logged in. Anonymous users have no drawer content
+              (no profile/watchlist/logout entries), so the toggle
+              would just open a near-empty panel — the "Masuk"
+              button next to it is the action they actually need. */}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setMenuOpen((v) => !v)}
+              aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
+              aria-expanded={menuOpen}
+              aria-controls="mobile-menu"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden"
+            >
+              {menuOpen ? (
+                <X className="h-4 w-4" aria-hidden />
+              ) : (
+                <Menu className="h-4 w-4" aria-hidden />
+              )}
+            </button>
+          )}
         </div>
       </nav>
 

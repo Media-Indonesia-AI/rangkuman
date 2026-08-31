@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SparklineChart } from "@/components/SparklineChart";
 import { useCommodityHistorical } from "@/lib/hooks/useCommodityHistorical";
@@ -72,9 +71,12 @@ function periodChangePercent(
  * text and the sparkline color read the same flag, so they
  * stay in sync.
  *
- * The whole tile is a single `<Link>` so the click hit area
- * covers the entire card, not just the footer CTA — mirrors the
- * `SektorCard` convention.
+ * The tile is non-interactive (a plain `<div>`, not a `<Link>`)
+ * — the underlying items don't have a clickable destination yet,
+ * so we deliberately avoid the affordance of a pointer cursor
+ * and the broken-navigation pitfall of `href="#"`. When a real
+ * destination exists, swap this back to a `<Link>` so the entire
+ * card is the click hit area.
  *
  * `style` is passed in (rather than re-resolved inside) so a
  * future caller can mix-and-match — e.g. a "highlight" tile that
@@ -97,8 +99,7 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
   const rates = historyPoints?.map((p) => p.rate) ?? [];
 
   return (
-    <Link
-      href="#"
+    <div
       className="group relative flex flex-col gap-1 overflow-hidden rounded-md border border-border bg-bg-secondary p-2 transition-all hover:border-border-strong hover:shadow-card-hover"
     >
       {/* Top row: icon + name + change */}
@@ -175,6 +176,6 @@ export function CommodityTile({ commodity, style }: CommodityTileProps) {
           aria-hidden
         />
       </div> */}
-    </Link>
+    </div>
   );
 }
