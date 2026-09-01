@@ -16,6 +16,7 @@ import type {
   CoinTickerItem,
   CoinTopTickersResponse,
 } from "./types/coin";
+import type { CoinHistoricalResponse } from "./types/coin-historical";
 
 /** Fetch the coin ticker catalog with current price, 24h change,
  *  market cap, and logo. `limit` controls page size (default 30). */
@@ -65,6 +66,39 @@ export function getCoinCategories(
   });
   return request<CoinCategoriesResponse>(
     `coin-category/?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the time-series of a single coin's price history for a
+ * given period.
+ *
+ * Hits `/coin/{ticker}/historical` — the ticker is part of the
+ * path (URL-encoded so symbols like `"btc"` survive, but also
+ * future-proofs against any ticker containing reserved
+ * characters). The `period` param is query-string-encoded.
+ *
+ * @param ticker  Wire ticker code (e.g. `"btc"`). Matches the
+ *                lowercase `CoinTickerItem.ticker` shape used
+ *                by the rest of the coin domain. Lowercased
+ *                before being used so callers can pass any case.
+ * @param period  Time-window code (default `"1D"`). Common values:
+ *                `"1D"`, `"5D"`, `"1M"`, `"3M"`, `"6M"`, `"1Y"`,
+ *                `"YTD"`, `"ALL"`. Exact accepted values are
+ *                determined by the backend.
+ *
+ * Returns the bare series (no envelope) — call sites iterate
+ * `CoinHistoricalPoint[]` directly. See `CoinHistoricalResponse`
+ * for the raw wire shape.
+ */
+export function getCoinHistorical(
+  ticker: string,
+  period = "1D",
+): Promise<CoinHistoricalResponse> {
+  const params = new URLSearchParams({ period });
+  return request<CoinHistoricalResponse>(
+    `coin/${encodeURIComponent(ticker.toLowerCase())}/historical/?${params.toString()}`,
     { method: "GET" },
   );
 }

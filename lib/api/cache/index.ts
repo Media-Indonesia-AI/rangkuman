@@ -61,3 +61,4 @@ export {
 } from "./users";
 export { loadCoinTopTickers } from "./coin-top-tickers";
 export { loadCoinCategories } from "./coin-categories";
+export { loadCoinHistorical } from "./coin-historical";

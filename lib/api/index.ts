@@ -134,6 +134,10 @@ export type {
   CoinCategory,
   CoinTickerItem,
 } from "./types/coin";
+export type {
+  CoinHistoricalPoint,
+  CoinHistoricalResponse,
+} from "./types/coin-historical";
 
 // Broadcast settings
 export type {
