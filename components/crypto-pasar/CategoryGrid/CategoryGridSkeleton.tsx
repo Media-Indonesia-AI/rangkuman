@@ -18,16 +18,21 @@ export function CategoryGridSkeleton() {
   );
 }
 
-/** Skeleton list item — header strip (category name + volume,
- *  on the same `bg-bg-tertiary` background the real header uses)
- *  then two group blocks (gainer + looser) split by the same
- *  hairline divider, each with three coin-row placeholders. */
+/** Skeleton list item — header strip (category name + volume +
+ *  market cap, on the same `bg-bg-tertiary` background the real
+ *  header uses) then two group blocks (gainer + looser) split
+ *  by the same hairline divider, each with three coin-row
+ *  placeholders that include a price-change shimmer slot so the
+ *  loading shape matches the populated row. */
 function ItemSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
-      <div className="flex items-baseline justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
+      <div className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
         <Shimmer className="h-3 w-40" />
-        <Shimmer className="h-2 w-16" />
+        <div className="flex flex-col items-end gap-1">
+          <Shimmer className="h-2 w-20" />
+          <Shimmer className="h-2 w-16" />
+        </div>
       </div>
       <div className="px-3.5 py-3">
         <GroupSkeleton />
@@ -54,14 +59,18 @@ function GroupSkeleton() {
 }
 
 /** Skeleton for one coin row — small round icon + ticker pill +
- *  name line + price pill. */
+ *  name line + price pill + price-change pill underneath, so the
+ *  loading row matches the populated row's right-side stack. */
 function CoinRowSkeleton() {
   return (
     <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1">
       <Shimmer className="h-5 w-5 rounded-full" />
       <Shimmer className="h-3 w-10" />
       <Shimmer className="h-2.5 flex-1" />
-      <Shimmer className="h-3 w-12" />
+      <div className="flex flex-col items-end gap-1">
+        <Shimmer className="h-3 w-12" />
+        <Shimmer className="h-2 w-10" />
+      </div>
     </div>
   );
 }
