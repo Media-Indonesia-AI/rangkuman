@@ -30,8 +30,8 @@ function ItemSkeleton() {
       <div className="flex items-center justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
         <Shimmer className="h-3 w-40" />
         <div className="flex flex-col items-end gap-1">
+          <Shimmer className="h-2 w-24" />
           <Shimmer className="h-2 w-20" />
-          <Shimmer className="h-2 w-16" />
         </div>
       </div>
       <div className="px-3.5 py-3">

@@ -1,7 +1,7 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type { CoinCategory } from "@/lib/api";
 import { CategoryCoinRow } from "./CategoryCoinRow";
-import { formatUsd } from "./formatters";
+import { formatFullUsd } from "./formatters";
 
 interface CategoryListItemProps {
   /** One category returned by `GET coin-category/`. The list
@@ -16,8 +16,8 @@ interface CategoryListItemProps {
  * One row in the Pasar tab's category list. Replaces the old
  * card grid with a stacked, list-friendly layout:
  *
- *   WORLD LIBERTY FINANCIAL PORTFOLIO    Vol 24h $609,88B
- *                                        MCap    $1,20T
+ *   WORLD LIBERTY FINANCIAL PORTFOLIO    Vol 24h     $609,880,000,000
+ *                                        Kap. Pasar  $1,200,000,000,000
  *   ↑ Gainer
  *     [icon] BTC   Bitcoin          $0,14   +4,12%
  *     [icon] LINK  Chainlink        $11,38  +2,05%
@@ -32,15 +32,19 @@ interface CategoryListItemProps {
  * with a `border-b` divider underneath so the category name
  * reads as a distinct block from the coin rows. The right side
  * of the header stacks the category's 24h volume above its
- * market cap so both metrics fit without crowding the name.
- * The gainer and looser groups are stacked under mini section
- * headers (with the project's `TrendingUp` / `TrendingDown`
- * icons tinted to bullish / bearish) and split by a thin
- * `border-t` divider so the two groups read as separate
- * buckets without the whole card turning into three bordered
- * boxes. Each coin row's price-change line is tinted via the
- * `priceChangeTone` helper — bullish / bearish / muted for
- * up / down / flat moves respectively.
+ * market cap (`Kap. Pasar`) using `formatFullUsd` so both
+ * metrics render their full magnitude (no `T` / `B` / `M`
+ * suffix) with `en-US` thousand grouping. Each metric line
+ * pairs a semi-bold default-color label with the value so the
+ * eye lands on the "what" first and reads the "how much"
+ * second. The gainer and looser groups are stacked under mini
+ * section headers (with the project's `TrendingUp` /
+ * `TrendingDown` icons tinted to bullish / bearish) and split
+ * by a thin `border-t` divider so the two groups read as
+ * separate buckets without the whole card turning into three
+ * bordered boxes. Each coin row's price-change line is tinted
+ * via the `priceChangeTone` helper — bullish / bearish /
+ * muted for up / down / flat moves respectively.
  */
 export function CategoryListItem({ cat }: CategoryListItemProps) {
   return (
@@ -49,9 +53,15 @@ export function CategoryListItem({ cat }: CategoryListItemProps) {
         <h3 className="truncate font-mono text-[13px] font-bold uppercase tracking-wider text-text-primary">
           {cat.name}
         </h3>
-        <div className="shrink-0 text-right font-mono text-[10px] leading-tight text-text-muted">
-          <div>Vol 24h {formatUsd(cat.volume_24h)}</div>
-          <div>MCap {formatUsd(cat.market_cap)}</div>
+        <div className="shrink-0 text-right font-mono text-[12px] leading-tight">
+          <div>
+            <span className="font-semibold text-text-secondary">Vol 24h</span>{" "}
+            {formatFullUsd(cat.volume_24h)}
+          </div>
+          <div>
+            <span className="font-semibold text-text-secondary">Kap. Pasar</span>{" "}
+            {formatFullUsd(cat.market_cap)}
+          </div>
         </div>
       </header>
 
