@@ -1,43 +1,112 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { Coins } from "lucide-react";
+import type { CoinCategory } from "@/lib/api";
 import { Shimmer } from "@/components/Shimmer";
 import { useCoinCategories } from "@/lib/hooks/useCoinCategories";
 import { CategoryGridError } from "./CategoryGridError";
 import { CategoryGridSkeleton } from "./CategoryGridSkeleton";
 import { CategoryListItem } from "./CategoryListItem";
+import { CategoryLoadMore } from "./CategoryLoadMore";
 
+const PAGE_SIZE = 10;
 const GRID_CLASSES = "grid grid-cols-1 gap-3 sm:grid-cols-2";
 
 /**
  * Pasar tab's category grid — one `<CategoryListItem />` per
- * entry returned by `GET coin-category/?limit=10&skip=0` via
+ * entry returned by `GET coin-category/?limit=10&skip=...` via
  * `useCoinCategories`.
+ *
+ * Pagination model:
+ *
+ *   - `skip` starts at 0. The hook fetches `limit` items at the
+ *     current `skip` and returns a single page.
+ *   - `<CategoryLoadMore />` increments `skip` by `PAGE_SIZE`;
+ *     the hook refetches for the new `skip`, and the effect
+ *     below appends the new page to `accumulated` (with a
+ *     dedupe pass on the id).
+ *   - `hasMore` flips off when the most recent page came back
+ *     short of `PAGE_SIZE` — that's the only "no more" signal
+ *     the wire format exposes (the endpoint doesn't send a
+ *     total count).
  *
  * Render branches, in priority order (mirrors `<SektorSection />`'s
  * pattern):
  *
- *   1. `loading` → `<CategoryGridSkeleton />` under a loading
- *      header so the strip height stays consistent.
- *   2. `error`   → `<CategoryGridError />` with a retry button
- *      that re-runs `useCoinCategories`'s fetch.
- *   3. `ready` + `categories.length === 0` → `<EmptyState />`.
- *   4. `ready` + data → the populated grid of
- *      `<CategoryListItem />` cards in a 1-col / 2-col grid
- *      so the section reads as a card grid on wider viewports
- *      and a stacked list on narrow ones.
+ *   1. `loading` (initial fetch, `skip === 0`) → full
+ *      `<CategoryGridSkeleton />` under a loading header.
+ *   2. `error` (initial fetch, `skip === 0`) → full
+ *      `<CategoryGridError />` with a retry button.
+ *   3. `ready` + `accumulated.length === 0` → `<EmptyState />`.
+ *   4. `ready` + data → the populated grid followed by
+ *      `<CategoryLoadMore />` when there's still more to fetch.
  *
  * Sub-widgets live in sibling files so this stays an orchestrator:
  *
- *   - `<CategoryGridHeader />` — title strip (inline below).
+ *   - `<CategoryGridHeader />`  — title strip (inline below).
  *   - `<CategoryGridSkeleton />` — `CategoryGridSkeleton.tsx`.
- *   - `<CategoryGridError />`   — `CategoryGridError.tsx`.
- *   - `<CategoryListItem />`    — `CategoryListItem.tsx`.
+ *   - `<CategoryGridError />`    — `CategoryGridError.tsx`.
+ *   - `<CategoryLoadMore />`     — `CategoryLoadMore.tsx`.
+ *   - `<CategoryListItem />`     — `CategoryListItem.tsx`.
  */
 export function CategoryGrid() {
-  const { state, refetch } = useCoinCategories();
+  const [skip, setSkip] = useState(0);
+  const [accumulated, setAccumulated] = useState<CoinCategory[]>([]);
+  const [hasMore, setHasMore] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
+  /** Tracks the last `skip` we've already applied to
+   *  `accumulated`, so a re-render of the same page (e.g. when
+   *  the auth `user` flips and the hook re-fetches the same
+   *  page) doesn't append a duplicate row. */
+  const lastAppliedSkipRef = useRef(-1);
 
-  if (state.kind === "loading") {
+  const { state, refetch } = useCoinCategories(PAGE_SIZE, skip);
+
+  // When the hook lands on `ready`, fold its page into the
+  // accumulated list. `skip === 0` replaces (first page);
+  // later skips append (with a dedupe pass on the id, so a
+  // re-fetch of the same page on auth flip is a no-op instead
+  // of a duplicate row).
+  useEffect(() => {
+    if (state.kind !== "ready") return;
+    if (lastAppliedSkipRef.current === skip) return;
+    lastAppliedSkipRef.current = skip;
+
+    if (skip === 0) {
+      setAccumulated(state.categories);
+    } else {
+      setAccumulated((prev) => {
+        const seen = new Set(prev.map((c) => c.id));
+        const fresh = state.categories.filter((c) => !seen.has(c.id));
+        return [...prev, ...fresh];
+      });
+      setIsLoadingMore(false);
+      setLoadMoreError(null);
+    }
+    setHasMore(state.categories.length === PAGE_SIZE);
+  }, [state, skip]);
+
+  // Track load-more errors separately from the initial-fetch
+  // error so the error branch below only fires for the very
+  // first page request.
+  useEffect(() => {
+    if (state.kind !== "error" || skip === 0) return;
+    if (lastAppliedSkipRef.current === skip) return;
+    lastAppliedSkipRef.current = skip;
+    setIsLoadingMore(false);
+    setLoadMoreError(state.message);
+  }, [state, skip]);
+
+  const handleLoadMore = () => {
+    setIsLoadingMore(true);
+    setLoadMoreError(null);
+    setSkip((s) => s + PAGE_SIZE);
+  };
+
+  // Initial loading — full skeleton.
+  if (skip === 0 && state.kind === "loading") {
     return (
       <section aria-label="Kategori koin" aria-busy="true">
         <CategoryGridHeader count={null} />
@@ -46,7 +115,8 @@ export function CategoryGrid() {
     );
   }
 
-  if (state.kind === "error") {
+  // Initial error — full error shell with retry.
+  if (skip === 0 && state.kind === "error") {
     return (
       <section aria-label="Kategori koin">
         <CategoryGridHeader count={null} />
@@ -55,19 +125,26 @@ export function CategoryGrid() {
     );
   }
 
-  const { categories } = state;
-
   return (
     <section aria-label="Kategori koin">
-      <CategoryGridHeader count={categories.length} />
-      {categories.length === 0 ? (
+      <CategoryGridHeader count={accumulated.length} />
+      {accumulated.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className={GRID_CLASSES}>
-          {categories.map((cat) => (
-            <CategoryListItem key={cat.id} cat={cat} />
-          ))}
-        </div>
+        <>
+          <div className={GRID_CLASSES}>
+            {accumulated.map((cat) => (
+              <CategoryListItem key={cat.id} cat={cat} />
+            ))}
+          </div>
+          {hasMore && (
+            <CategoryLoadMore
+              onClick={handleLoadMore}
+              loading={isLoadingMore}
+              error={loadMoreError !== null}
+            />
+          )}
+        </>
       )}
     </section>
   );

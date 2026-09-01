@@ -8,11 +8,9 @@
  * surface stays narrow.
  *
  * Public widgets:
- *   - `<TopMovers />`            — Top Gainer + Top Looser section
- *   - `<CategoryGrid />`         — categories card grid
- *   - `<BrowseAllDisclaimer />`  — bottom-of-section link to /trending
+ *   - `<TopMovers />`    — Top Gainer + Top Looser section
+ *   - `<CategoryGrid />` — categories card grid with load more
  */
 
 export { TopMovers } from "./TopMovers/TopMovers";
 export { CategoryGrid } from "./CategoryGrid/CategoryGrid";
-export { BrowseAllDisclaimer } from "./BrowseAllDisclaimer";
