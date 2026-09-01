@@ -1,8 +1,8 @@
 import { Shimmer } from "@/components/Shimmer";
 
-/** Loading skeleton for the full category list — mirrors the
- *  real list's outer container (border + divider) and each
- *  `<CategoryListItem />`'s header + group shape so the layout
+/** Loading skeleton for the full category grid — mirrors the
+ *  real grid's `1 col / 2 col` layout and each
+ *  `<CategoryListItem />`'s header + group shape so the page
  *  doesn't reflow when data lands.
  *
  *  Renders 10 list items (matches `useCoinCategories`'s
@@ -10,7 +10,7 @@ import { Shimmer } from "@/components/Shimmer";
  *  per group × 2 groups (gainer + looser) = 6 rows per item. */
 export function CategoryGridSkeleton() {
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-2 gap-3">
       {Array.from({ length: 10 }).map((_, i) => (
         <ItemSkeleton key={`skel-${i}`} />
       ))}

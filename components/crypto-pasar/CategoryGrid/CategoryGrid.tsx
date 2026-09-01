@@ -7,10 +7,10 @@ import { CategoryGridError } from "./CategoryGridError";
 import { CategoryGridSkeleton } from "./CategoryGridSkeleton";
 import { CategoryListItem } from "./CategoryListItem";
 
-const LIST_CLASSES = "space-y-3";
+const GRID_CLASSES = "grid grid-cols-1 gap-3 sm:grid-cols-2";
 
 /**
- * Pasar tab's category list — one `<CategoryListItem />` per
+ * Pasar tab's category grid — one `<CategoryListItem />` per
  * entry returned by `GET coin-category/?limit=10&skip=0` via
  * `useCoinCategories`.
  *
@@ -22,9 +22,10 @@ const LIST_CLASSES = "space-y-3";
  *   2. `error`   → `<CategoryGridError />` with a retry button
  *      that re-runs `useCoinCategories`'s fetch.
  *   3. `ready` + `categories.length === 0` → `<EmptyState />`.
- *   4. `ready` + data → the populated list of
- *      `<CategoryListItem />` rows inside a single bordered
- *      container so the dividers read as one continuous block.
+ *   4. `ready` + data → the populated grid of
+ *      `<CategoryListItem />` cards in a 1-col / 2-col grid
+ *      so the section reads as a card grid on wider viewports
+ *      and a stacked list on narrow ones.
  *
  * Sub-widgets live in sibling files so this stays an orchestrator:
  *
@@ -62,7 +63,7 @@ export function CategoryGrid() {
       {categories.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className={LIST_CLASSES}>
+        <div className={GRID_CLASSES}>
           {categories.map((cat) => (
             <CategoryListItem key={cat.id} cat={cat} />
           ))}
@@ -107,10 +108,12 @@ function CategoryGridHeader({ count }: { count: number | null }) {
   );
 }
 
-/** Empty-state shell — used when the API returns no categories. */
+/** Empty-state shell — used when the API returns no categories.
+ *  Spans the full grid width on wider viewports so the empty
+ *  message reads as one centered block, not a half-width tile. */
 function EmptyState() {
   return (
-    <div className="rounded-lg border border-border bg-bg-secondary px-4 py-10 text-center">
+    <div className="rounded-lg border border-border bg-bg-secondary px-4 py-10 text-center sm:col-span-2">
       <p className="text-[12.5px] text-text-muted">
         Belum ada data kategori koin.
       </p>
