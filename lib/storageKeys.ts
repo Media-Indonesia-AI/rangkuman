@@ -76,6 +76,12 @@ export const STORAGE_KEYS = {
   // ── /saham page state ─────────────────────────────────────────
   /** Active sub-tab on `/saham` (`"recap" | "sektor"`). */
   sahamTab: "rangkuman-news:saham-tab",
+
+  // ── /crypto page state ────────────────────────────────────────
+  /** Active sub-tab on `/crypto` (`"top" | "pasar"`). Mirrors the
+   *  `/saham` pattern — lands the visitor back on whichever pillar
+   *  they were viewing before refresh or back-navigation. */
+  cryptoTab: "rangkuman-news:crypto-tab",
 } as const;
 
 /** Every sessionStorage key the app uses. Kept on its own object

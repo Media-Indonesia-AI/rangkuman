@@ -1,13 +1,10 @@
 "use client";
 
-import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import {
-  CryptoSubNav,
-  type CryptoSubNavValue,
-} from "@/components/CryptoSubNav";
+import { CryptoSubNav } from "@/components/CryptoSubNav";
 import { CryptoInfoBar } from "@/components/CryptoInfoBar";
+import { useCryptoTabSession } from "@/lib/hooks/useCryptoTabSession";
 import { CryptoRecapTab } from "./CryptoRecapTab";
 import { CryptoPasarTab } from "./CryptoPasarTab";
 
@@ -15,7 +12,7 @@ import { CryptoPasarTab } from "./CryptoPasarTab";
  * `/crypto` page — orchestrator only. Composes:
  *   - `<Navbar />` / `<Footer />` — chrome,
  *   - `<CryptoSubNav />` — the Recap | Pasar tab switcher (state
- *     owned here),
+ *     owned here, persisted via `useCryptoTabSession`),
  *   - `<CryptoInfoBar />` — F&G gauge + 3 sparklines strip,
  *   - `<CryptoRecapTab />` — editorial pillar (live topic feed +
  *     lead / sedang-terjadi / cerita-lain layers),
@@ -26,10 +23,12 @@ import { CryptoPasarTab } from "./CryptoPasarTab";
  * `CryptoPage` is purely a chrome-and-switching shell.
  *
  * `CryptoPage` is a client component because it owns the
- * sub-tab state.
+ * sub-tab state. The state lives in localStorage so a refresh
+ * or back-navigation lands the visitor on whichever pillar
+ * they were viewing last — see `useCryptoTabSession`.
  */
 export default function CryptoPage() {
-  const [subTab, setSubTab] = useState<CryptoSubNavValue>("top");
+  const [subTab, setSubTab] = useCryptoTabSession();
 
   return (
     <>
@@ -41,9 +40,14 @@ export default function CryptoPage() {
           Rangkuman &mdash; Crypto: Berita Crypto Hari Ini
         </h1>
 
-        {/* Sub-nav (Recap | Pasar) — replaces section header */}
+        {/* Sub-nav (Recap | Pasar) — replaces section header. Hidden
+         *  during the pre-hydration render (`subTab === null`) so
+         *  the page renders a chrome shell without flashing the
+         *  default "top" tab when the persisted choice is "pasar". */}
         <div className="flex items-center justify-start pt-1">
-          <CryptoSubNav active={subTab} onChange={setSubTab} />
+          {subTab !== null && (
+            <CryptoSubNav active={subTab} onChange={setSubTab} />
+          )}
         </div>
 
         {/* 1-line info bar — F&G gauge + 3 sparklines (BTC/ETH/SOL) */}
