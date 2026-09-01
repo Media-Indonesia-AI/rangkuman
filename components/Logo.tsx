@@ -35,7 +35,7 @@ export function Logo({
   withRing = false,
 }: LogoProps) {
   const theme = useTheme();
-  const src = theme === "dark" ? "/orange.png" : "/blue.png";
+  const src = theme === "dark" ? "/orange.svg" : "/blue.svg";
 
   const width = size;
   const height = size;

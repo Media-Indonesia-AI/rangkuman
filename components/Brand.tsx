@@ -13,6 +13,13 @@ interface BrandProps {
    * useful in compact contexts like the navbar.
    */
   full?: boolean;
+  /**
+   * Subtle ring around the icon. Defaults to `logoSize >= 40 && !full`
+   * (auto-on for larger non-full lockups, e.g. the footer). Pass
+   * explicitly to override — e.g. the navbar uses a 42px icon but
+   * doesn't want the ring.
+   */
+  withRing?: boolean;
   /** Optional extra className for the outer Link. */
   className?: string;
 }
@@ -34,6 +41,7 @@ export function Brand({
   tagline = false,
   logoSize = 32,
   full = false,
+  withRing,
   className,
 }: BrandProps) {
   return (
@@ -42,7 +50,11 @@ export function Brand({
       aria-label="Rangkuman.news — beranda"
       className={cn("group inline-flex items-center gap-2", className)}
     >
-      <Logo size={logoSize} full={full} withRing={logoSize >= 40 && !full} />
+      <Logo
+        size={logoSize}
+        full={full}
+        withRing={withRing ?? (logoSize >= 40 && !full)}
+      />
 
       {!full && (
         <span
