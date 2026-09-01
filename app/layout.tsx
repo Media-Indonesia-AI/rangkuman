@@ -70,12 +70,12 @@ export const metadata: Metadata = {
     // any browser/OS chrome.
     icon: [
       {
-        url: "/favicon-light.svg",
+        url: "/blue.svg",
         type: "image/svg+xml",
         media: "(prefers-color-scheme: light)",
       },
       {
-        url: "/favicon-dark.svg",
+        url: "/orange.svg",
         type: "image/svg+xml",
         media: "(prefers-color-scheme: dark)",
       },

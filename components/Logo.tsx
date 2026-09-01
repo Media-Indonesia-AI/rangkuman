@@ -15,13 +15,13 @@ interface LogoProps {
 /**
  * Rangkuman.news logo — uses the brand assets in `public/`:
  *
- * - `biru.svg`   — blue R icon, light theme
- * - `orange.svg` — orange R icon, dark theme
+ * - `blue.png`   — blue R icon, light theme
+ * - `orange.png` — orange R icon, dark theme
  *
  * Theme handling:
  * The icon picks the blue or orange variant based on the site's
  * `.dark` class on `<html>` via `useTheme()`. SSR + first client
- * render default to light (`biru.svg`) to match the `:root` palette;
+ * render default to light (`blue.png`) to match the `:root` palette;
  * the hook re-renders with the correct variant once the theme is known.
  *
  * Both files are square (1:1) — the wordmark stays composed in React
@@ -35,7 +35,7 @@ export function Logo({
   withRing = false,
 }: LogoProps) {
   const theme = useTheme();
-  const src = theme === "dark" ? "/orange.svg" : "/biru.svg";
+  const src = theme === "dark" ? "/orange.png" : "/blue.png";
 
   const width = size;
   const height = size;

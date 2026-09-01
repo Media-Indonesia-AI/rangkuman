@@ -155,8 +155,11 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/80">
       <nav className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
-        {/* Brand logo + name */}
-        <Brand logoSize={32} />
+        {/* Brand logo + name — 42px lockup but explicitly opt out
+            of the auto-ring (which Brand only adds for size ≥ 40
+            by default) so the icon sits flush against the navbar
+            background. */}
+        <Brand logoSize={42} withRing={false} />
 
         {/* Main links — visible on every screen size so the user
             can reach Saham / Crypto from the navbar directly,
