@@ -7,7 +7,7 @@ import { CategoryCard } from "./CategoryCard";
 import { CategoryGridError } from "./CategoryGridError";
 import { CategoryGridSkeleton } from "./CategoryGridSkeleton";
 
-const GRID_CLASSES = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4";
+const GRID_CLASSES = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
 
 /**
  * Pasar tab's category grid — one `<CategoryCard />` per entry
