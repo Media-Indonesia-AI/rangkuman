@@ -1,15 +1,14 @@
 /**
- * Full USD formatter for aggregate metrics (24h volume, market
- * cap) in `<CategoryListItem />`'s header strip. Renders the
- * raw number with `en-US` thousand grouping and no decimals so
- * the magnitude reads exactly (no `T` / `B` / `M` suffix). The
- * `formatPrice` helper still handles per-coin prices, which
- * collapse to a small handful of decimals — this one stays
- * uncompressed on purpose so aggregate market metrics stay
- * accurate enough for editorial comparison.
+ * Compact USD formatter — collapses to `$X.XB` / `$X.XT` for the
+ * volume / market-cap blurbs in `<CategoryListItem />`'s header
+ * strip so both metrics fit on one row. Falls back to `$X` below
+ * a million.
  */
-export function formatFullUsd(value: number): string {
-  return `$${value.toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
+export function formatUsd(value: number): string {
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9) return `$${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6) return `$${(value / 1e6).toFixed(2)}M`;
+  return `$${value.toFixed(0)}`;
 }
 
 /**

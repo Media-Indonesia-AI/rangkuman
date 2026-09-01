@@ -1,7 +1,7 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import type { CoinCategory } from "@/lib/api";
 import { CategoryCoinRow } from "./CategoryCoinRow";
-import { formatFullUsd } from "./formatters";
+import { formatUsd } from "./formatters";
 
 interface CategoryListItemProps {
   /** One category returned by `GET coin-category/`. The list
@@ -16,8 +16,8 @@ interface CategoryListItemProps {
  * One row in the Pasar tab's category list. Replaces the old
  * card grid with a stacked, list-friendly layout:
  *
- *   WORLD LIBERTY FINANCIAL PORTFOLIO    Vol 24h     $609,880,000,000
- *                                        Kap. Pasar  $1,200,000,000,000
+ *   WORLD LIBERTY FINANCIAL PORTFOLIO    Vol 24h  $609,88B
+ *                                        Kap. Pasar $1,20T
  *   ↑ Gainer
  *     [icon] BTC   Bitcoin          $0,14   +4,12%
  *     [icon] LINK  Chainlink        $11,38  +2,05%
@@ -32,9 +32,9 @@ interface CategoryListItemProps {
  * with a `border-b` divider underneath so the category name
  * reads as a distinct block from the coin rows. The right side
  * of the header stacks the category's 24h volume above its
- * market cap (`Kap. Pasar`) using `formatFullUsd` so both
- * metrics render their full magnitude (no `T` / `B` / `M`
- * suffix) with `en-US` thousand grouping. Each metric line
+ * market cap (`Kap. Pasar`) using `formatUsd` so both metrics
+ * collapse to `$X.XB` / `$X.XT` / `$X.XM` and fit on a single
+ * row without crowding the category name. Each metric line
  * pairs a semi-bold default-color label with the value so the
  * eye lands on the "what" first and reads the "how much"
  * second. The gainer and looser groups are stacked under mini
@@ -56,11 +56,11 @@ export function CategoryListItem({ cat }: CategoryListItemProps) {
         <div className="shrink-0 text-right font-mono text-[12px] leading-tight">
           <div>
             <span className="font-semibold text-text-secondary">Vol 24h</span>{" "}
-            {formatFullUsd(cat.volume_24h)}
+            {formatUsd(cat.volume_24h)}
           </div>
           <div>
             <span className="font-semibold text-text-secondary">Kap. Pasar</span>{" "}
-            {formatFullUsd(cat.market_cap)}
+            {formatUsd(cat.market_cap)}
           </div>
         </div>
       </header>

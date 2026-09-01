@@ -73,7 +73,12 @@ function CoinRowSkeleton() {
         <Shimmer className="h-3 w-12" />
         <Shimmer className="h-2 w-10" />
       </div>
-      <Shimmer className="h-5 w-14 rounded-sm" />
+      <div className="flex shrink-0 flex-col items-end gap-0.5">
+        <span className="font-mono text-[8.5px] uppercase tracking-widest text-text-faint">
+          1D
+        </span>
+        <Shimmer className="h-5 w-14 shrink-0 rounded-sm" />
+      </div>
     </div>
   );
 }

@@ -20,13 +20,15 @@ interface CategoryCoinRowProps {
 /**
  * One coin row inside a `<CategoryListItem />` group:
  *
- *   [icon]  BTC  Bitcoin          $11.38   +2,05%   ╱╲╱╲╱╱╲╱
+ *   [icon]  BTC  Bitcoin          $11.38   +2,05%   1D
+ *                                                   ╱╲╱╲╱╱╲╱
  *
  * Layout (left → right):
  *
  *   1. **Icon** — coin's logo (CDN URL, rounded full).
  *   2. **Ticker** — bold uppercase ticker on the baseline.
- *   3. **Name** — full ticker name, truncates if it overflows.
+ *   3. **Name** — full ticker name, truncates if it overflows
+ *      via `flex-1 min-w-0 truncate`.
  *   4. **Price** — right-aligned, locale-formatted via
  *      `formatPrice` (the same formatter the `/crypto` page
  *      uses for its ticker card so the two surfaces match).
@@ -45,7 +47,9 @@ interface CategoryCoinRowProps {
  *      price is at or above the first, red otherwise. While the
  *      fetch is in flight the slot shows a pulsing shimmer so
  *      the row height stays stable and the swap doesn't cause
- *      a vertical shift.
+ *      a vertical shift. A tiny `1D` period label sits above
+ *      the chart in `text-text-faint` so the time window is
+ *      clear without competing with the chart itself.
  *
  * The whole row is a `<Link>` to `/crypto/{ticker}` so the
  * click hit area covers the full row, mirroring the
@@ -101,15 +105,21 @@ export function CategoryCoinRow({ coin }: CategoryCoinRowProps) {
           {formatPriceChange(coin.price_change)}
         </span>
       </span>
-      <SparklineChart
-        data={prices}
-        positive={positive}
-        isLoading={loading}
-        height={20}
-        showArea={false}
-        showDots={false}
-        className="w-14"
-      />
+      {/* Trailing 1D sparkline + period label */}
+      <div className="flex shrink-0 flex-col items-end gap-0.5">
+        <span className="font-mono text-[8.5px] uppercase tracking-widest text-text-faint">
+          1D
+        </span>
+        <SparklineChart
+          data={prices}
+          positive={positive}
+          isLoading={loading}
+          height={20}
+          showArea={false}
+          showDots={false}
+          className="w-14"
+        />
+      </div>
     </Link>
   );
 }
