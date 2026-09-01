@@ -1,7 +1,7 @@
 <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="4000" viewBox="0 0 4000 4000" enable-background="new 0 0 4000 4000" xml:space="preserve" height="4000">
 <defs>
   <clipPath id="rounded-corners">
-    <rect width="4000" height="4000" rx="400" ry="400"/>
+    <rect width="4000" height="4000" rx="800" ry="800"/>
   </clipPath>
 </defs>
 <g clip-path="url(#rounded-corners)">
