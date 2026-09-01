@@ -23,8 +23,8 @@ export function FaviconSync() {
   useEffect(() => {
     if (typeof document === "undefined") return;
 
-    const LIGHT = "/favicon-light.svg";
-    const DARK = "/favicon-dark.svg";
+    const LIGHT = "/blue.svg";
+    const DARK = "/orange.svg";
 
     const apply = () => {
       const isDark = document.documentElement.classList.contains("dark");
