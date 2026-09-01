@@ -1,0 +1,104 @@
+import { TrendingDown, TrendingUp } from "lucide-react";
+import type { CoinCategory } from "@/lib/api";
+import { CategoryCoinRow } from "./CategoryCoinRow";
+import { formatUsd } from "./formatters";
+
+interface CategoryListItemProps {
+  /** One category returned by `GET coin-category/`. The list
+   *  renders one item per category — header (category name +
+   *  24h volume), then two stacked groups (gainer + looser),
+   *  each rendering every coin the API returned for that
+   *  group via `<CategoryCoinRow />`. */
+  cat: CoinCategory;
+}
+
+/**
+ * One row in the Pasar tab's category list. Replaces the old
+ * card grid with a stacked, list-friendly layout:
+ *
+ *   WORLD LIBERTY FINANCIAL PORTFOLIO          Vol 24h $609,88B
+ *   ↑ Gainer
+ *     [icon] BTC   Bitcoin              $0,14
+ *     [icon] LINK  Chainlink            $11,38
+ *     [icon] AVAX  Avalanche             $7,26
+ *   ↓ Looser
+ *     [icon] ETH   Ethereum          $2.460
+ *     [icon] ENA   Ethena              $0,15
+ *     [icon] AAVE  Aave                $124
+ *
+ * Header sits in its own `bg-bg-tertiary` strip (theme-aware
+ * token — the same one `<SektorCard />` uses for its header)
+ * with a `border-b` divider underneath so the category name
+ * reads as a distinct block from the coin rows. The gainer
+ * and looser groups are stacked under mini section headers
+ * (with the project's `TrendingUp` / `TrendingDown` icons
+ * tinted to bullish / bearish) and split by a thin `border-t`
+ * divider so the two groups read as separate buckets without
+ * the whole card turning into three bordered boxes.
+ */
+export function CategoryListItem({ cat }: CategoryListItemProps) {
+  return (
+    <article className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
+      <header className="flex items-baseline justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
+        <h3 className="font-mono text-[13px] font-bold uppercase tracking-wider text-text-primary">
+          {cat.name}
+        </h3>
+        <span className="font-mono text-[10px] text-text-muted">
+          Vol 24h {formatUsd(cat.volume_24h)}
+        </span>
+      </header>
+
+      <div className="px-3.5 py-3">
+        <CoinGroup
+          heading="Gainer"
+          tone="bullish"
+          Icon={TrendingUp}
+          coins={cat.top_gainers}
+        />
+        <div className="my-2.5 border-t border-border" aria-hidden />
+        <CoinGroup
+          heading="Looser"
+          tone="bearish"
+          Icon={TrendingDown}
+          coins={cat.top_losers}
+        />
+      </div>
+    </article>
+  );
+}
+
+interface CoinGroupProps {
+  heading: string;
+  tone: "bullish" | "bearish";
+  Icon: typeof TrendingUp;
+  coins: import("@/lib/api").CoinTickerItem[];
+}
+
+/** One bucket (gainer or loser) inside the category item.
+ *  Empty buckets fall back to a quiet em-dash so the section
+ *  header still renders and the layout doesn't collapse. */
+function CoinGroup({ heading, tone, Icon, coins }: CoinGroupProps) {
+  return (
+    <div>
+      <p
+        className={
+          tone === "bullish"
+            ? "mb-1 flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-bullish"
+            : "mb-1 flex items-center gap-1 font-mono text-[10px] font-semibold uppercase tracking-widest text-bearish"
+        }
+      >
+        <Icon className="h-3 w-3" aria-hidden />
+        {heading}
+      </p>
+      {coins.length === 0 ? (
+        <p className="font-mono text-[10.5px] text-text-faint">—</p>
+      ) : (
+        <div className="space-y-0.5">
+          {coins.map((coin) => (
+            <CategoryCoinRow key={coin.ticker} coin={coin} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

@@ -1,53 +1,67 @@
 import { Shimmer } from "@/components/Shimmer";
 
-/** Loading skeleton for the full category grid — mirrors the
- *  real grid's responsive breakpoints (`sm:2 lg:3 xl:4`) and
- *  the `<CategoryCard />` body shape so the layout doesn't
- *  reflow when data lands.
+/** Loading skeleton for the full category list — mirrors the
+ *  real list's outer container (border + divider) and each
+ *  `<CategoryListItem />`'s header + group shape so the layout
+ *  doesn't reflow when data lands.
  *
- *  Card count matches `useCoinCategories`'s default `limit`
- *  (10) — same as `<TopMoversSkeleton />`'s choice to mirror
- *  its hook's default. */
+ *  Renders 10 list items (matches `useCoinCategories`'s
+ *  default `limit`). Each item has 3 coin-row placeholders
+ *  per group × 2 groups (gainer + looser) = 6 rows per item. */
 export function CategoryGridSkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-3">
       {Array.from({ length: 10 }).map((_, i) => (
-        <CardSkeleton key={`skel-${i}`} />
+        <ItemSkeleton key={`skel-${i}`} />
       ))}
     </div>
   );
 }
 
-/** Skeleton card mirroring `<CategoryCard />`'s header strip +
- *  body blurb + two-column top movers block. */
-function CardSkeleton() {
+/** Skeleton list item — header strip (category name + volume,
+ *  on the same `bg-bg-tertiary` background the real header uses)
+ *  then two group blocks (gainer + looser) split by the same
+ *  hairline divider, each with three coin-row placeholders. */
+function ItemSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-bg-secondary">
-      <div className="flex items-start justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
-        <div className="flex items-center gap-2">
-          <Shimmer className="h-7 w-7 rounded" />
-          <div className="space-y-1.5">
-            <Shimmer className="h-3 w-24" />
-            <Shimmer className="h-2 w-14" />
-          </div>
-        </div>
+      <div className="flex items-baseline justify-between gap-2 border-b border-border bg-bg-tertiary px-3.5 py-2.5">
+        <Shimmer className="h-3 w-40" />
+        <Shimmer className="h-2 w-16" />
       </div>
-      <div className="space-y-1.5 px-3.5 pt-2.5">
-        <Shimmer className="h-2.5 w-full" />
-        <Shimmer className="h-2.5 w-2/3" />
+      <div className="px-3.5 py-3">
+        <GroupSkeleton />
+        <div className="my-2.5 border-t border-border" aria-hidden />
+        <GroupSkeleton />
       </div>
-      <div className="mt-2.5 grid grid-cols-2 gap-3 border-t border-border px-3.5 py-2.5">
-        <div className="space-y-1.5">
-          <Shimmer className="h-2.5 w-14" />
-          <Shimmer className="h-2.5 w-16" />
-          <Shimmer className="h-2.5 w-12" />
-        </div>
-        <div className="space-y-1.5">
-          <Shimmer className="h-2.5 w-14" />
-          <Shimmer className="h-2.5 w-16" />
-          <Shimmer className="h-2.5 w-12" />
-        </div>
+    </div>
+  );
+}
+
+/** Skeleton for one bucket (gainer or looser) — mini header
+ *  strip + three coin-row placeholders. */
+function GroupSkeleton() {
+  return (
+    <div>
+      <Shimmer className="mb-1.5 h-2.5 w-14" />
+      <div className="space-y-1">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <CoinRowSkeleton key={i} />
+        ))}
       </div>
+    </div>
+  );
+}
+
+/** Skeleton for one coin row — small round icon + ticker pill +
+ *  name line + price pill. */
+function CoinRowSkeleton() {
+  return (
+    <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1">
+      <Shimmer className="h-5 w-5 rounded-full" />
+      <Shimmer className="h-3 w-10" />
+      <Shimmer className="h-2.5 flex-1" />
+      <Shimmer className="h-3 w-12" />
     </div>
   );
 }

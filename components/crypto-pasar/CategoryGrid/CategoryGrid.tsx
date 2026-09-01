@@ -3,15 +3,15 @@
 import { Coins } from "lucide-react";
 import { Shimmer } from "@/components/Shimmer";
 import { useCoinCategories } from "@/lib/hooks/useCoinCategories";
-import { CategoryCard } from "./CategoryCard";
 import { CategoryGridError } from "./CategoryGridError";
 import { CategoryGridSkeleton } from "./CategoryGridSkeleton";
+import { CategoryListItem } from "./CategoryListItem";
 
-const GRID_CLASSES = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
+const LIST_CLASSES = "space-y-3";
 
 /**
- * Pasar tab's category grid — one `<CategoryCard />` per entry
- * returned by `GET coin-category/?limit=10&skip=0` via
+ * Pasar tab's category list — one `<CategoryListItem />` per
+ * entry returned by `GET coin-category/?limit=10&skip=0` via
  * `useCoinCategories`.
  *
  * Render branches, in priority order (mirrors `<SektorSection />`'s
@@ -22,13 +22,16 @@ const GRID_CLASSES = "grid gap-3 sm:grid-cols-2 lg:grid-cols-3";
  *   2. `error`   → `<CategoryGridError />` with a retry button
  *      that re-runs `useCoinCategories`'s fetch.
  *   3. `ready` + `categories.length === 0` → `<EmptyState />`.
- *   4. `ready` + data → the populated `<CategoryCard />` grid.
+ *   4. `ready` + data → the populated list of
+ *      `<CategoryListItem />` rows inside a single bordered
+ *      container so the dividers read as one continuous block.
  *
  * Sub-widgets live in sibling files so this stays an orchestrator:
  *
  *   - `<CategoryGridHeader />` — title strip (inline below).
  *   - `<CategoryGridSkeleton />` — `CategoryGridSkeleton.tsx`.
  *   - `<CategoryGridError />`   — `CategoryGridError.tsx`.
+ *   - `<CategoryListItem />`    — `CategoryListItem.tsx`.
  */
 export function CategoryGrid() {
   const { state, refetch } = useCoinCategories();
@@ -59,9 +62,9 @@ export function CategoryGrid() {
       {categories.length === 0 ? (
         <EmptyState />
       ) : (
-        <div className={GRID_CLASSES}>
+        <div className={LIST_CLASSES}>
           {categories.map((cat) => (
-            <CategoryCard key={cat.id} cat={cat} />
+            <CategoryListItem key={cat.id} cat={cat} />
           ))}
         </div>
       )}
@@ -69,8 +72,7 @@ export function CategoryGrid() {
   );
 }
 
-/** Section header strip — "Kategori Koin" label + count meta +
- *  right-aligned "Sorted by market cap" hint.
+/** Section header strip — "Kategori Koin" label + count meta.
  *
  *  When `count` is `null` (loading), the count text and sub-label
  *  are replaced with shimmers so the strip height stays consistent
@@ -101,9 +103,6 @@ function CategoryGridHeader({ count }: { count: number | null }) {
           </p>
         )}
       </div>
-      <span className="font-mono text-[10px] text-text-faint">
-        Sorted by market cap
-      </span>
     </header>
   );
 }
