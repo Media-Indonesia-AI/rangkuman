@@ -59,8 +59,10 @@ function GroupSkeleton() {
 }
 
 /** Skeleton for one coin row — small round icon + ticker pill +
- *  name line + price pill + price-change pill underneath, so the
- *  loading row matches the populated row's right-side stack. */
+ *  name line + price pill + price-change pill underneath +
+ *  trailing sparkline placeholder, so the loading row matches
+ *  the populated row's full width including the 1D chart
+ *  strip at the end. */
 function CoinRowSkeleton() {
   return (
     <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1">
@@ -71,6 +73,7 @@ function CoinRowSkeleton() {
         <Shimmer className="h-3 w-12" />
         <Shimmer className="h-2 w-10" />
       </div>
+      <Shimmer className="h-5 w-14 rounded-sm" />
     </div>
   );
 }
