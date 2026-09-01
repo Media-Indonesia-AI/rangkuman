@@ -12,6 +12,7 @@
 
 import { request } from "./client";
 import type {
+  CoinCategoriesResponse,
   CoinTickerItem,
   CoinTopTickersResponse,
 } from "./types/coin";
@@ -39,6 +40,31 @@ export function getCoinTopTickers(limit = 6): Promise<CoinTopTickersResponse> {
   const params = new URLSearchParams({ limit: String(limit) });
   return request<CoinTopTickersResponse>(
     `coin/top-tickers/?${params.toString()}`,
+    { method: "GET" },
+  );
+}
+
+/**
+ * Fetch the paginated list of coin categories, each with its 24h
+ * volume, aggregate market cap, and the day's top gainers / losers
+ * within that category.
+ *
+ *   - `limit` controls page size (default 10).
+ *   - `skip` is the offset into the category list — useful for
+ *     "load more" pagination. The endpoint does not currently
+ *     expose a total count, so consumers that need a "has more"
+ *     signal typically infer it from `data.length === limit`.
+ */
+export function getCoinCategories(
+  limit = 10,
+  skip = 0,
+): Promise<CoinCategoriesResponse> {
+  const params = new URLSearchParams({
+    limit: String(limit),
+    skip: String(skip),
+  });
+  return request<CoinCategoriesResponse>(
+    `coin-category/?${params.toString()}`,
     { method: "GET" },
   );
 }

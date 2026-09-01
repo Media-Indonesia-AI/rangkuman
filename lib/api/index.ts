@@ -129,7 +129,11 @@ export type {
 } from "./types/watchlist";
 
 // Coin
-export type { CoinTickerItem } from "./types/coin";
+export type {
+  CoinCategoriesResponse,
+  CoinCategory,
+  CoinTickerItem,
+} from "./types/coin";
 
 // Broadcast settings
 export type {

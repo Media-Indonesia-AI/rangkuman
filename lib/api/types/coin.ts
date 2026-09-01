@@ -39,3 +39,37 @@ export interface CoinTopTickerGroup {
 export interface CoinTopTickersResponse {
   data: CoinTopTickerGroup[];
 }
+
+/** One category returned by `GET coin-category/?limit=...&skip=...`.
+ *  A category groups coins by theme (e.g. "World Liberty Financial
+ *  Portfolio") and surfaces the day's biggest winners / losers
+ *  within that group. The nested `top_gainers` / `top_losers` rows
+ *  reuse the `CoinTickerItem` shape — same fields, just scoped to
+ *  the category. */
+export interface CoinCategory {
+  /** Backend-assigned category id (MongoDB-style ObjectId as string). */
+  id: string;
+  /** URL-safe slug, used as the category identifier in routes
+   *  (e.g. `"world-liberty-financial-portfolio"`). */
+  slug: string;
+  /** Display name shown in the UI. */
+  name: string;
+  /** Aggregate 24h trading volume in USD across the category. */
+  volume_24h: number;
+  /** Aggregate market cap in USD across the category. */
+  market_cap: number;
+  /** Biggest positive movers within the category. May be empty on
+   *  a quiet session but the field is always present. */
+  top_gainers: CoinTickerItem[];
+  /** Biggest negative movers within the category. May be empty on
+   *  a quiet session but the field is always present. */
+  top_losers: CoinTickerItem[];
+}
+
+/** Wire format for `GET coin-category/?limit=...&skip=...`. The
+ *  `{ data: [...] }` envelope mirrors every other paginated list
+ *  endpoint (e.g. `CoinTopTickersResponse`) so consumers can treat
+ *  it uniformly. */
+export interface CoinCategoriesResponse {
+  data: CoinCategory[];
+}

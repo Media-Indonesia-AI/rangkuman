@@ -60,3 +60,4 @@ export {
   subscribeUserInformationInvalidate,
 } from "./users";
 export { loadCoinTopTickers } from "./coin-top-tickers";
+export { loadCoinCategories } from "./coin-categories";
