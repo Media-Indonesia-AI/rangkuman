@@ -68,12 +68,15 @@ function CoinColumn({
 }
 
 /** One coin row: rank · ticker (linked to `/crypto/{ticker}`)
- *  · optional full name · signed percent change.
+ *  on top, full name below it, signed percent change right-
+ *  aligned with the ticker line.
  *
- *  Matches `<SektorCard />`'s `<StockRow />` shape so the two
- *  grids read as one design language — only the color tokens
- *  and percent precision differ (crypto 2 decimals to match
- *  the rest of the Pasar tab). */
+ *  Ticker + name stack vertically (via `flex-col`) instead of
+ *  sharing a single line — gives the human-readable name room
+ *  to truncate independently without crowding the price change.
+ *  `items-start` keeps the rank and percent pinned to the top
+ *  edge so they align with the ticker line, not the name line
+ *  below it. */
 function CoinRow({
   coin,
   rank,
@@ -83,24 +86,26 @@ function CoinRow({
 }) {
   const positive = coin.price_change >= 0;
   return (
-    <li className="flex items-center gap-2">
-      <span className="font-mono text-[10px] font-semibold text-text-faint num-tabular">
+    <li className="flex items-start gap-2">
+      <span className="shrink-0 font-mono text-[10px] font-semibold text-text-faint num-tabular">
         #{rank}
       </span>
-      <Link
-        href={`/crypto/${coin.ticker}`}
-        className="font-mono text-[11.5px] font-semibold text-text-primary hover:text-brand"
-      >
-        {coin.ticker.toUpperCase()}
-      </Link>
-      {coin.ticker_name && (
-        <span className="flex-1 truncate text-[10.5px] text-text-muted">
-          {coin.ticker_name}
-        </span>
-      )}
+      <div className="flex min-w-0 flex-1 flex-col">
+        <Link
+          href={`/crypto/${coin.ticker}`}
+          className="font-mono text-[11.5px] font-semibold text-text-primary hover:text-brand"
+        >
+          {coin.ticker.toUpperCase()}
+        </Link>
+        {coin.ticker_name && (
+          <span className="truncate text-[10px] text-text-muted">
+            {coin.ticker_name}
+          </span>
+        )}
+      </div>
       <span
         className={cn(
-          "font-mono text-[11px] font-semibold num-tabular",
+          "shrink-0 font-mono text-[11px] font-semibold num-tabular",
           positive ? "text-bullish" : "text-bearish",
         )}
       >
