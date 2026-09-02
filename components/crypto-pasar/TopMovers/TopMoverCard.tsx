@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { CoinTickerItem } from "@/lib/api";
 import { formatPrice } from "../formatters";
@@ -12,9 +11,12 @@ interface TopMoverCardProps {
  * Compact coin card on the Pasar tab's Top Movers grid.
  *
  * Layout: image avatar (CoinGecko CDN) + ticker / name (left),
- * price / change (right). The whole card is a single `<Link>`
- * to `/crypto/{ticker}` so the click hit area covers the whole
- * pill.
+ * price / change (right).
+ *
+ * The card is intentionally non-interactive (no `<Link>` wrapper,
+ * no hover border / brand tint) — it reads as a passive data
+ * card on the Pasar overview, not a clickable entry point.
+ * Per-coin navigation is available on the `/crypto` listing.
  *
  * `bg-bg-tertiary` on the image gives a placeholder color when
  * the CDN hasn't resolved yet, so the card height stays stable
@@ -23,10 +25,7 @@ interface TopMoverCardProps {
 export function TopMoverCard({ coin }: TopMoverCardProps) {
   const positive = coin.price_change >= 0;
   return (
-    <Link
-      href={`/crypto/${coin.ticker}`}
-      className="group flex items-center gap-2 rounded-lg border border-border bg-bg-secondary px-3 py-2.5 transition-colors hover:border-border-strong"
-    >
+    <div className="flex items-center gap-2 rounded-lg border border-border bg-bg-secondary px-3 py-2.5">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={coin.image}
@@ -37,7 +36,7 @@ export function TopMoverCard({ coin }: TopMoverCardProps) {
         className="h-6 w-6 shrink-0 rounded-full bg-bg-tertiary"
       />
       <div className="min-w-0 flex-1">
-        <div className="truncate font-mono text-[13px] font-bold uppercase tracking-tight text-text-primary group-hover:text-brand">
+        <div className="truncate font-mono text-[13px] font-bold uppercase tracking-tight text-text-primary">
           {coin.ticker}
         </div>
         <div className="truncate text-[10.5px] text-text-muted">
@@ -58,6 +57,6 @@ export function TopMoverCard({ coin }: TopMoverCardProps) {
           {coin.price_change.toFixed(2)}%
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

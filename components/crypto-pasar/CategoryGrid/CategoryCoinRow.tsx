@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { CoinTickerItem } from "@/lib/api";
 import { formatPrice } from "@/components/crypto-page/cryptoFormatters";
 import { SparklineChart } from "@/components/SparklineChart";
@@ -11,9 +10,11 @@ interface CategoryCoinRowProps {
    *  is a remote CoinGecko CDN asset (passed through as a plain
    *  `<img>` so it works without a next/image loader setup —
    *  the rest of the crypto widgets follow the same pattern).
-   *  `ticker` drives the link to `/crypto/{ticker}` and is also
-   *  used to fetch the per-coin 1D price history for the
-   *  trailing sparkline. */
+   *  `ticker` is used to fetch the per-coin 1D price history for
+   *  the trailing sparkline. The row itself is intentionally
+   *  not a link — the surrounding category context is the
+   *  navigational unit, and in-row taps compete with the parent
+   *  category's other affordances. */
   coin: CoinTickerItem;
 }
 
@@ -55,9 +56,11 @@ interface CategoryCoinRowProps {
  *      shimmer so the row height stays stable and the swap
  *      to the real chart doesn't cause a vertical shift.
  *
- * The whole row is a `<Link>` to `/crypto/{ticker}` so the
- * click hit area covers the full row, mirroring the
- * `<CoinTickerCard />` convention.
+ * The row is intentionally non-interactive (no `<Link>` wrapper,
+ * no hover affordance) so it reads as a passive data row inside
+ * the surrounding category context — not a primary click target.
+ * Users who want the per-coin page navigate via the row on the
+ * `/crypto` listing instead, where the entry point is unambiguous.
  */
 export function CategoryCoinRow({ coin }: CategoryCoinRowProps) {
   const { state: histState } = useCoinHistorical(coin.ticker, "1D");
@@ -77,10 +80,7 @@ export function CategoryCoinRow({ coin }: CategoryCoinRowProps) {
       : coin.price_change >= 0;
 
   return (
-    <Link
-      href={`/crypto/${coin.ticker}`}
-      className="flex items-center gap-2.5 rounded-md px-1.5 py-1 transition-colors hover:bg-bg-tertiary/40"
-    >
+    <div className="flex items-center gap-2.5 rounded-md px-1.5 py-1">
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={coin.image}
@@ -123,6 +123,6 @@ export function CategoryCoinRow({ coin }: CategoryCoinRowProps) {
           className="w-14"
         />
       </div>
-    </Link>
+    </div>
   );
 }
