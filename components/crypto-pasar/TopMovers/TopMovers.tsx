@@ -18,9 +18,6 @@ function TopMoversHeader() {
             Top Movers
           </h2>
         </div>
-        <p className="text-[11px] text-text-muted">
-          Koin dengan perubahan harga terbesar
-        </p>
       </div>
     </header>
   );

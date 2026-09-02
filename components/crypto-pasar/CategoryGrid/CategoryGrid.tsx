@@ -125,7 +125,7 @@ export function CategoryGrid() {
   if (skip === 0 && state.kind === "loading") {
     return (
       <section aria-label="Kategori koin" aria-busy="true">
-        <CategoryGridHeader count={null} />
+        <CategoryGridHeader />
         <CategoryGridSkeleton />
       </section>
     );
@@ -135,7 +135,7 @@ export function CategoryGrid() {
   if (skip === 0 && state.kind === "error") {
     return (
       <section aria-label="Kategori koin">
-        <CategoryGridHeader count={null} />
+        <CategoryGridHeader />
         <CategoryGridError message={state.message} onRetry={refetch} />
       </section>
     );
@@ -143,7 +143,7 @@ export function CategoryGrid() {
 
   return (
     <section aria-label="Kategori koin">
-      <CategoryGridHeader count={accumulated.length} />
+      <CategoryGridHeader />
       {accumulated.length === 0 ? (
         <EmptyState />
       ) : (
@@ -172,8 +172,7 @@ export function CategoryGrid() {
  *  a shimmer so the strip height stays consistent across the
  *  loading → ready transition. Treating `null` as the loading
  *  signal means callers don't need a separate `loading` flag. */
-function CategoryGridHeader({ count }: { count: number | null }) {
-  const loading = count === null;
+function CategoryGridHeader() {
   return (
     <header className="mb-3 flex items-end justify-between border-b border-border-strong pb-1.5">
       <div>
@@ -183,13 +182,6 @@ function CategoryGridHeader({ count }: { count: number | null }) {
             Kategori Koin
           </h2>
         </div>
-        {loading ? (
-          <Shimmer className="mt-0.5 h-3 w-44" />
-        ) : (
-          <p className="text-[11px] text-text-muted">
-            Top gainer &amp; looser per kategori
-          </p>
-        )}
       </div>
     </header>
   );
