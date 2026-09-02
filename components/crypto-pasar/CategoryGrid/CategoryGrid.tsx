@@ -166,13 +166,12 @@ export function CategoryGrid() {
   );
 }
 
-/** Section header strip — "Kategori Koin" label + count meta.
+/** Section header strip — "Kategori Koin" label + sub-label.
  *
- *  When `count` is `null` (loading), the count text and sub-label
- *  are replaced with shimmers so the strip height stays consistent
- *  across the loading → ready transition. Treating `null` as the
- *  loading signal means callers don't need a separate `loading`
- *  flag. */
+ *  When `count` is `null` (loading), the sub-label is replaced with
+ *  a shimmer so the strip height stays consistent across the
+ *  loading → ready transition. Treating `null` as the loading
+ *  signal means callers don't need a separate `loading` flag. */
 function CategoryGridHeader({ count }: { count: number | null }) {
   const loading = count === null;
   return (
@@ -183,11 +182,6 @@ function CategoryGridHeader({ count }: { count: number | null }) {
           <h2 className="font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
             Kategori Koin
           </h2>
-          {!loading && (
-            <span className="font-mono text-[10.5px] text-text-muted">
-              · {count} kategori pasar crypto
-            </span>
-          )}
         </div>
         {loading ? (
           <Shimmer className="mt-0.5 h-3 w-44" />
