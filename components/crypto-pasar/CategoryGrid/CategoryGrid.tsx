@@ -71,6 +71,16 @@ export function CategoryGrid() {
   // of a duplicate row).
   useEffect(() => {
     if (state.kind !== "ready") return;
+    // The hook's `state` lags behind `skip`: when `skip` advances
+    // for a "load more", the hook keeps returning the previous
+    // page's `ready` data until its own fetch settles. Bail out
+    // here so we don't (a) apply the previous page's rows to the
+    // new page, and (b) poison `lastAppliedSkipRef.current` with
+    // the new skip before the real new data arrives — that
+    // poisoning was the original bug, where the second page's
+    // items never landed on `accumulated` because the dedupe
+    // guard below then thought the page had already been applied.
+    if (state.skip !== skip) return;
     if (lastAppliedSkipRef.current === skip) return;
     lastAppliedSkipRef.current = skip;
 
@@ -93,6 +103,12 @@ export function CategoryGrid() {
   // first page request.
   useEffect(() => {
     if (state.kind !== "error" || skip === 0) return;
+    // Same stale-state guard as the ready-side effect above —
+    // without it, an error from a previous `skip` would mark
+    // the current `skip` as "applied" and the next real error
+    // (or success) for the current `skip` would be silently
+    // dropped by the dedupe guard below.
+    if (state.skip !== skip) return;
     if (lastAppliedSkipRef.current === skip) return;
     lastAppliedSkipRef.current = skip;
     setIsLoadingMore(false);
