@@ -81,16 +81,6 @@ export function RecapStockSection({
   topicId,
   className,
 }: RecapStockSectionProps) {
-  const user = useCurrentUser();
-
-  if (user === null) {
-    return (
-      <div className={className}>
-        <RecapLoginPrompt />
-      </div>
-    );
-  }
-
   const trendingCount = trendingLoading ? null : trending.length;
 
   return (
