@@ -2,7 +2,7 @@ import type { HeadlineDetail } from "@/lib/api";
 import { MarketSnapshotCompact } from "@/components/MarketSnapshotCompact";
 import { RelatedStoriesList } from "@/components/RelatedStoriesList";
 
-interface SorotanDetailSidebarProps {
+interface HeadlineDetailSidebarProps {
   /** Story id to exclude from related list (passed through). */
   storyId: string;
   /** Full live headline detail — forwarded to `<RelatedStoriesList />`
@@ -25,10 +25,10 @@ interface SorotanDetailSidebarProps {
  * the page renders, so the grid stays symmetric regardless of
  * which card is hydrated.
  */
-export function SorotanDetailSidebar({
+export function HeadlineDetailSidebar({
   storyId,
   currentHeadline,
-}: SorotanDetailSidebarProps) {
+}: HeadlineDetailSidebarProps) {
   return (
     <aside className="min-w-0 space-y-4 lg:col-span-4">
       <div className="lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto lg:pr-1">

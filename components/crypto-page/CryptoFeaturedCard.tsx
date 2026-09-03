@@ -9,8 +9,8 @@ interface CryptoFeaturedCardProps {
 }
 
 /**
- * "Sorotan" featured card — the largest card on the `/crypto`
- * page. Renders a single `<Link>` to `/sorotan/detail/{id}` wrapping:
+ * "Headline" featured card — the largest card on the `/crypto`
+ * page. Renders a single `<Link>` to `/headline/detail/{id}` wrapping:
  *   - a gradient hero strip with the coin flag + ticker chip and
  *     a `LIVE` badge,
  *   - the story headline + summary.
@@ -22,7 +22,7 @@ interface CryptoFeaturedCardProps {
 export function CryptoFeaturedCard({ story }: CryptoFeaturedCardProps) {
   return (
     <article className="group relative overflow-hidden rounded-lg border border-border-strong bg-bg-secondary">
-      <Link href={`/sorotan/detail/${story.id}`} className="block">
+      <Link href={`/headline/detail/${story.id}`} className="block">
         {/* Gradient header */}
         <div
           className="relative h-28 w-full overflow-hidden sm:h-32 bg-gradient-to-br from-amber-500/30 via-amber-600/20 to-bg-secondary"

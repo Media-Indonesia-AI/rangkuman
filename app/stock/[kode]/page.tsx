@@ -34,7 +34,7 @@ interface PageProps {
  * the ticker — better than letting Next.js fall back to the root
  * layout's generic brand metadata.
  *
- * Mirrors the structure of `app/sorotan/detail/[id]/page.tsx` and
+ * Mirrors the structure of `app/headline/detail/[id]/page.tsx` and
  * `app/stock/[kode]/[recapDate]/page.tsx`, including the
  * `await params` (Next.js 15) and the 160-char description clamp
  * from `lib/util/clampDescription`.

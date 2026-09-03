@@ -92,12 +92,12 @@ export function CryptoRecapTab() {
 
   return (
     <>
-      {/* 🔥 LAYER 1: SOROTAN — 1 big card (live or fallback) */}
+      {/* 🔥 LAYER 1: HEADLINE — 1 big card (live or fallback) */}
       {lead && (
-        <section aria-label="Sorotan" className="mt-4">
+        <section aria-label="Headline" className="mt-4">
           <CryptoSectionHeader
             icon={<Flame className="h-3 w-3" aria-hidden />}
-            title="Sorotan"
+            title="Headline"
             subtitle="Cerita paling penting hari ini"
             count="1 cerita"
           />

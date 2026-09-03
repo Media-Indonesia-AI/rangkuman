@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 
-interface SorotanDetailBreadcrumbProps {
+interface HeadlineDetailBreadcrumbProps {
   /** Back-link label — derived by the route entry from the inbound
    *  `Referer` header so the copy follows where the visitor came
    *  from (e.g. "Kembali ke Crypto" when the previous page was
@@ -22,9 +22,9 @@ interface SorotanDetailBreadcrumbProps {
  * the most common entry points but the click action is
  * history-driven, not href-driven.
  */
-export function SorotanDetailBreadcrumb({
+export function HeadlineDetailBreadcrumb({
   backLabel,
-}: SorotanDetailBreadcrumbProps) {
+}: HeadlineDetailBreadcrumbProps) {
   const router = useRouter();
 
   return (

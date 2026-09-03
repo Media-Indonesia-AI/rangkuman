@@ -1,13 +1,13 @@
 "use client";
 
-interface SorotanDetailSummaryProps {
+interface HeadlineDetailSummaryProps {
   /** 1-2 sentence summary, rendered as the lead paragraph. */
   summary: string;
 }
 
 /** "Apa yang terjadi" section — the lead paragraph that tells the
  *  reader the gist of the story in one breath. */
-export function SorotanDetailSummary({ summary }: SorotanDetailSummaryProps) {
+export function HeadlineDetailSummary({ summary }: HeadlineDetailSummaryProps) {
   return (
     <section
       aria-label="Apa yang terjadi"

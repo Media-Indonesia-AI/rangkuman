@@ -125,7 +125,7 @@ export function coinTickerToEntry(item: {
  *  dangling URL. */
 export function cryptoRecapHref(kode: string): string {
   const storyId = COIN_KODE_TO_STORY_ID[kode];
-  return storyId ? `/sorotan/detail/${storyId}` : `/stock/${kode}`;
+  return storyId ? `/headline/detail/${storyId}` : `/stock/${kode}`;
 }
 
 /** Mock stock rows pre-shaped as `TickerRow`. The live hook

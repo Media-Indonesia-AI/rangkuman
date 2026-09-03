@@ -76,7 +76,7 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
           link. The visible hover state comes from `group-hover`
           styles driven by the `<li>`'s group class. */}
       <Link
-        href={`/sorotan/detail/${story.id}`}
+        href={`/headline/detail/${story.id}`}
         onClick={() =>
           track(EVENTS.latest_headline_click, {
             story_id: story.id,
@@ -135,7 +135,7 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
             re-enables pointer events on this wrapper (the
             surrounding content wrapper is `pointer-events-none`
             so clicks fall through to the overlay link). URL
-            points at the sorotan detail page for this story
+            points at the headline detail page for this story
             so receivers land on the same headline. `tone` is
             omitted so the button follows the current theme —
             same as the parent card's `bg-bg-secondary`
@@ -144,7 +144,7 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
           <ShareButton
             variant="xs"
             title={story.title}
-            url={`${SITE_URL}/sorotan/detail/${story.id}`}
+            url={`${SITE_URL}/headline/detail/${story.id}`}
             surface="latest_headlines_row"
           />
         </div>

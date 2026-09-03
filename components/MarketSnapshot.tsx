@@ -29,7 +29,7 @@ interface MarketSnapshotProps {
  * - Format: small label / big value / colored change row
  *
  * Used by /global/ and /crypto/ as the "Pasar Hari Ini" / "Bursa Global" widget
- * between Sorotan and Sedang Terjadi.
+ * between Headline and Sedang Terjadi.
  */
 export function MarketSnapshot({
   metrics,

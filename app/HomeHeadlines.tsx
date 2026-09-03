@@ -14,12 +14,12 @@ import { Shimmer } from "@/components/Shimmer";
 import { getRelativeTime } from "@/lib/util/formatDate";
 
 /** Total stories to fetch for the homepage rail. Matches the sum
- *  of the two visible layers below — 1 (Sorotan) + 14 (Berita
+ *  of the two visible layers below — 1 (Headline) + 14 (Berita
  *  Terkini) — so the entire above-the-fold rail lands in a single
  *  network round-trip. */
 const HEADLINES_LIMIT = 15;
 
-/** Size of the lead "Sorotan" slot at the top of the homepage. */
+/** Size of the lead "Headline" slot at the top of the homepage. */
 const LAYER_1_SIZE = 1;
 
 /** Set of category slugs we recognise on `StoryItem.topics`. Used
@@ -131,13 +131,13 @@ function storyItemToHighlight(
 function HomeHeadlinesSkeleton() {
   return (
     <>
-      {/* 🔥 LAYER 1: SOROTAN — 1 large card */}
-      <section aria-label="Sorotan" aria-busy className="mt-4">
+      {/* 🔥 LAYER 1: HEADLINE — 1 large card */}
+      <section aria-label="Headline" aria-busy className="mt-4">
         <div className="mb-3 flex items-end justify-between border-b-2 border-text-primary pb-1.5">
           <div>
             <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
               <Flame className="h-3 w-3" aria-hidden />
-              Sorotan
+              Headline
             </h2>
             <p className="mt-0.5 text-[11px] text-text-muted">
               Cerita paling penting hari ini
@@ -206,7 +206,7 @@ function HomeHeadlinesSkeleton() {
 }
 
 /**
- * The live homepage rail — Sorotan (1) + Berita Terkini (14)
+ * The live homepage rail — Headline (1) + Berita Terkini (14)
  * sourced from `useHeadlines(15)`. Lives in a client component
  * because the hook owns `useEffect` / `useState` state; the
  * surrounding server component (`app/HomePage.tsx`) stays untouched
@@ -236,14 +236,14 @@ export function HomeHeadlines() {
 
   return (
     <>
-      {/* 🔥 LAYER 1: SOROTAN — 1 berita paling penting, card besar full-width */}
+      {/* 🔥 LAYER 1: HEADLINE — 1 berita paling penting, card besar full-width */}
       {leadStory && (
-        <section aria-label="Sorotan" className="mt-4">
+        <section aria-label="Headline" className="mt-4">
           <div className="mb-3 flex items-end justify-between border-b-2 border-text-primary pb-1.5">
             <div>
               <h2 className="inline-flex items-center gap-1.5 font-mono text-[10px] font-semibold uppercase tracking-widest text-text-secondary">
                 <Flame className="h-3 w-3" aria-hidden />
-                Sorotan
+                Headline
               </h2>
               <p className="mt-0.5 text-[11px] text-text-muted">
                 Cerita paling penting hari ini

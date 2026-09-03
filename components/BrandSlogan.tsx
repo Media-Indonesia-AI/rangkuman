@@ -1,6 +1,6 @@
 /**
  * BrandSlogan — the brand tagline presented prominently.
- * Use at the top of the homepage, above the Sorotan section.
+ * Use at the top of the homepage, above the Headline section.
  *
  * Why this exists:
  * - The footer slogan is at the bottom (user might not scroll).

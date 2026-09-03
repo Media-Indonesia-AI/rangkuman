@@ -13,7 +13,7 @@
  * Callers that want a different ceiling can pass `maxChars`.
  *
  * Used by the `generateMetadata` exports in:
- *   - `app/sorotan/detail/[id]/page.tsx`
+ *   - `app/headline/detail/[id]/page.tsx`
  *   - `app/story/[id]/page.tsx`
  *   - `app/stock/[kode]/page.tsx`
  *   - `app/stock/[kode]/[recapDate]/page.tsx`

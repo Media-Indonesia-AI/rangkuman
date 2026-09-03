@@ -14,7 +14,7 @@ interface CryptoSectionHeaderProps {
 
 /**
  * Section header shared by every layer of the `/crypto` page —
- * Sorotan, Berita Terkini, and the Pasar tab's "Top Movers".
+ * Headline, Berita Terkini, and the Pasar tab's "Top Movers".
  * Lays out as a left-aligned title+subtitle pair
  * (`border-b border-border-strong`) with a right-aligned count.
  *

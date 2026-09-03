@@ -12,7 +12,7 @@ import { SITE_URL } from "@/lib/og";
  *  here. */
 export type PrimaryCategoryConfig = (typeof CATEGORY_CONFIG)[keyof typeof CATEGORY_CONFIG];
 
-interface SorotanDetailHeaderProps {
+interface HeadlineDetailHeaderProps {
   story: Highlight;
   primary: PrimaryCategoryConfig;
 }
@@ -27,10 +27,10 @@ const HERO_GRADIENT_CLASS = "bg-hero-global";
  * Server component: the underlying `<ShareButton>` is the only
  * client island and handles its own state.
  */
-export function SorotanDetailHeader({
+export function HeadlineDetailHeader({
   story,
   primary,
-}: SorotanDetailHeaderProps) {
+}: HeadlineDetailHeaderProps) {
   // Affected categories are derived directly from
   // `story.affectedCategories` (the closed `Category[]` union on
   // `Highlight`) and looked up against `CATEGORY_CONFIG` for label
@@ -117,8 +117,8 @@ export function SorotanDetailHeader({
             <ShareButton
               tone="light"
               title={story.title}
-              url={`${SITE_URL}/sorotan/detail/${story.id}`}
-              surface="sorotan_detail_header"
+              url={`${SITE_URL}/headline/detail/${story.id}`}
+              surface="headline_detail_header"
             />
           </div>
         </div>

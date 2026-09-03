@@ -41,7 +41,7 @@
  * Trade-off: the headline list covers every published headline
  * (saham, crypto, etc.) rather than only the Story listings.
  * For SEO purposes this is the right surface — each card on
- * the home page links to `/sorotan/detail/[id]/`, so each
+ * the home page links to `/headline/detail/[id]/`, so each
  * headline id is a real indexable page. Walking a wider surface
  * gives Google a complete URL inventory of the site.
  *
@@ -82,7 +82,7 @@ const PAGE_SIZE = 10;
 export const MAX_HEADLINE_PAGES = 500;
 
 export interface HeadlineEntry {
-  /** Headline id — used as `/sorotan/detail/[id]/` slug. */
+  /** Headline id — used as `/headline/detail/[id]/` slug. */
   id: string;
   /** Headline title — only set when the caller needs it (e.g.
    *  Google's `<news:title>`). The standard sitemap doesn't
@@ -140,7 +140,7 @@ function resolveOrigin(): string {
  *   - Stops after `MAX_HEADLINE_PAGES` to bound the build cost.
  *
  * Each entry maps to a real indexable page at
- * `/sorotan/detail/[id]/` — the same URL the homepage cards
+ * `/headline/detail/[id]/` — the same URL the homepage cards
  * link to. */
 export async function walkHeadlines(
   options: { includeTitle?: boolean; includeKeywords?: boolean } = {},

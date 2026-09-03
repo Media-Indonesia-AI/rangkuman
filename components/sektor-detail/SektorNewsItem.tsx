@@ -55,7 +55,7 @@ function articleHref(sourceUrl: string): string {
  * publisher's article URL (`story.source_url`, normalized via
  * `articleHref` so bare hostnames get `https://` prepended).
  * Same convention as `<ArticlesByMediaWidget />` and
- * `<SorotanDetailSources />` — the click takes the reader straight
+ * `<HeadlineDetailSources />` — the click takes the reader straight
  * to the source article rather than to an internal recap page.
  * The parent stock ticker shown in the body header is just
  * context, not a sub-link target.

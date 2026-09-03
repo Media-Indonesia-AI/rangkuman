@@ -13,14 +13,14 @@ import { getRelativeTime } from "@/lib/util/formatDate";
 import { CATEGORY_CONFIG, type Category, type Highlight, type StoryEvent } from "@/lib/mock/highlights";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { SorotanDetailBreadcrumb } from "./SorotanDetailBreadcrumb";
-import { SorotanDetailHeader, type PrimaryCategoryConfig } from "./SorotanDetailHeader";
-import { SorotanDetailSummary } from "./SorotanDetailSummary";
-import { SorotanDetailTags } from "./SorotanDetailTags";
-import { SorotanDetailKeyData } from "./SorotanDetailKeyData";
-import { SorotanDetailTimeline } from "./SorotanDetailTimeline";
-import { SorotanDetailSources } from "./SorotanDetailSources";
-import { SorotanDetailSidebar } from "./SorotanDetailSidebar";
+import { HeadlineDetailBreadcrumb } from "./HeadlineDetailBreadcrumb";
+import { HeadlineDetailHeader, type PrimaryCategoryConfig } from "./HeadlineDetailHeader";
+import { HeadlineDetailSummary } from "./HeadlineDetailSummary";
+import { HeadlineDetailTags } from "./HeadlineDetailTags";
+import { HeadlineDetailKeyData } from "./HeadlineDetailKeyData";
+import { HeadlineDetailTimeline } from "./HeadlineDetailTimeline";
+import { HeadlineDetailSources } from "./HeadlineDetailSources";
+import { HeadlineDetailSidebar } from "./HeadlineDetailSidebar";
 
 /** The crypto detail route is gated to a single primary category;
  *  pull its display config straight from the design-system
@@ -28,7 +28,7 @@ import { SorotanDetailSidebar } from "./SorotanDetailSidebar";
  *  of the app. */
 const PRIMARY_CATEGORY: PrimaryCategoryConfig = CATEGORY_CONFIG.crypto;
 
-export interface SorotanDetailPageProps {
+export interface HeadlineDetailPageProps {
   /** Headline ID — same as the route's `[id]` segment. Drives both
    *  the `useHeadlineId` (parent headline) and `useListStory`
    *  (related stories) fetches. */
@@ -60,7 +60,7 @@ function formatTime(iso: string): string {
 
 /** Empty-state placeholder returned while `useHeadlineId` is still
  *  loading. Widgets naturally render nothing for fields they don't
- *  have (`SorotanDetailKeyData` returns `null` for empty arrays, etc.)
+ *  have (`HeadlineDetailKeyData` returns `null` for empty arrays, etc.)
  *  so the loading window is brief and unflashy. */
 function emptyDisplayStory(storyId: string): Highlight {
   return {
@@ -93,7 +93,7 @@ function emptyDisplayStory(storyId: string): Highlight {
  * Fields the API doesn't expose yet (`keyData`, `rank`, `flag`,
  * `readTime`) get sensible defaults so the corresponding widgets
  * either render with what they have or naturally fall back to
- * empty (e.g. `SorotanDetailKeyData` already renders `null` when
+ * empty (e.g. `HeadlineDetailKeyData` already renders `null` when
  * `points.length === 0`).
  *
  * `events[]` is built from the `stories` array (each story →
@@ -139,7 +139,7 @@ function buildDisplayStory(
     // `StoryItem.keywords: string[]` contract) or the richer
     // `HeadlineKeyword[]` object form used by the `last-7-days`
     // endpoint (`{id, label, value, description, sentiment}`).
-    // `SorotanDetailTags` (and the rest of the consumer chain) treats
+    // `HeadlineDetailTags` (and the rest of the consumer chain) treats
     // this field as a flat `string[]`, so we normalize here at the
     // orchestrator boundary — picking `.label` when an entry is an
     // object, falling back to the raw string otherwise. Without
@@ -157,7 +157,7 @@ function buildDisplayStory(
     tickers: liveDetail.primary_ticker_code
       ? [liveDetail.primary_ticker_code]
       : [],
-    // `rank` is a Sorotan-home-feed concept; `1` keeps the breadcrumb consistent.
+    // `rank` is a Headline-home-feed concept; `1` keeps the breadcrumb consistent.
     rank: 1,
     flag: undefined,
     events,
@@ -166,7 +166,7 @@ function buildDisplayStory(
 }
 
 /**
- * `/sorotan/detail/[id]` detail page — thin client-side orchestrator
+ * `/headline/detail/[id]` detail page — thin client-side orchestrator
  * that owns ALL data fetching for the route.
  *
  * Two fetches fire on mount:
@@ -183,14 +183,14 @@ function buildDisplayStory(
  * `story`-driven API — none of them need to know whether a field
  * is live or not.
  *
- * The route entry (`app/sorotan/detail/[id]/page.tsx`) is a thin
+ * The route entry (`app/headline/detail/[id]/page.tsx`) is a thin
  * wrapper that just passes `params.id` here + handles
  * `generateMetadata` (a server-only API call).
  *
  * Layout: sticky right rail (`lg:col-span-4`) + main column
  * (`lg:col-span-8`). On smaller breakpoints the sidebar stacks below.
  */
-export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps) {
+export function HeadlineDetailPage({ storyId, backLabel }: HeadlineDetailPageProps) {
   const { detail: liveDetail } = useHeadlineId();
 
   // Server-side `generateMetadata` runs against the same API host
@@ -247,30 +247,30 @@ export function SorotanDetailPage({ storyId, backLabel }: SorotanDetailPageProps
           Rangkuman &mdash; Cerita: {displayStory.title}
         </h1>
 
-        <SorotanDetailBreadcrumb backLabel={backLabel} />
+        <HeadlineDetailBreadcrumb backLabel={backLabel} />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:gap-8">
           {/* MAIN COLUMN */}
           <article className="min-w-0 lg:col-span-8">
-            <SorotanDetailHeader
+            <HeadlineDetailHeader
               story={displayStory}
               primary={primary}
             />
 
-            <SorotanDetailSummary summary={displayStory.summary} />
-            <SorotanDetailKeyData keywords={liveDetail?.keywords ?? []} />
-            <SorotanDetailTags tags={displayStory.tags} />
+            <HeadlineDetailSummary summary={displayStory.summary} />
+            <HeadlineDetailKeyData keywords={liveDetail?.keywords ?? []} />
+            <HeadlineDetailTags tags={displayStory.tags} />
 
-            <SorotanDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
+            <HeadlineDetailTimeline events={displayStory.events} sourceCount={displayStory.sourceCount} />
 
-            <SorotanDetailSources
+            <HeadlineDetailSources
               stories={stories}
               isLoading={isLoadingStories}
             />
           </article>
 
           {/* SIDEBAR (sticky on lg+) — fetches its own data */}
-          <SorotanDetailSidebar
+          <HeadlineDetailSidebar
             storyId={displayStory.id}
             currentHeadline={liveDetail}
           />

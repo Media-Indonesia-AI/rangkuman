@@ -235,7 +235,7 @@
   }
 
   /* =========================================================
-     Hero gradient backgrounds per category (Sorotan section)
+     Hero gradient backgrounds per category (Headline section)
      Subtle: opacity handled by parent, not here.
 
      Theme-aware: light mode (`:root` below) gets a medium-tone
@@ -291,7 +291,7 @@
     border: 1px solid rgba(255, 255, 255, 0.06);
   }
 
-  /* Dot grid pattern overlay (for Sorotan section background) */
+  /* Dot grid pattern overlay (for Headline section background) */
   .pattern-dot-grid {
     background-image: radial-gradient(
       circle,

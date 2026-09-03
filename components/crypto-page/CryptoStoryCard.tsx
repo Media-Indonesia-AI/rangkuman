@@ -15,7 +15,7 @@ interface CryptoStoryCardProps {
 /**
  * One row in the "Sedang Terjadi" (2-column) or "Cerita Lain"
  * (3-column, `compact`) grids on the `/crypto` page. Renders a
- * single `<Link>` to `/sorotan/detail/{id}` wrapping:
+ * single `<Link>` to `/headline/detail/{id}` wrapping:
  *   - a thin amber hairline,
  *   - the coin flag + ticker + time-ago row,
  *   - the headline,
@@ -29,7 +29,7 @@ interface CryptoStoryCardProps {
 export function CryptoStoryCard({ story, compact = false }: CryptoStoryCardProps) {
   return (
     <article className="group flex h-full flex-col overflow-hidden rounded-lg border border-border bg-bg-secondary transition-all hover:border-border-strong">
-      <Link href={`/sorotan/detail/${story.id}`} className="flex h-full flex-col">
+      <Link href={`/headline/detail/${story.id}`} className="flex h-full flex-col">
         <div className="relative flex h-1.5 w-full bg-gradient-to-r from-amber-500/40 to-amber-700/10" aria-hidden />
         <div className="flex flex-1 flex-col gap-2 p-3.5 sm:p-4">
           <div className="flex items-center justify-between gap-2">

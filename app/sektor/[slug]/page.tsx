@@ -19,7 +19,7 @@ export function generateStaticParams() {
  * because the sectors API isn't yet auth-free — keeping it mocked
  * means SEO metadata is built at compile time without a server-side
  * fetcher. Mirrors the structure of
- * `app/sorotan/detail/[id]/page.tsx`: `await params` (Next.js 15),
+ * `app/headline/detail/[id]/page.tsx`: `await params` (Next.js 15),
  * `alternates: { canonical }`, 160-char description clamp.
  */
 export async function generateMetadata({ params }: PageProps) {

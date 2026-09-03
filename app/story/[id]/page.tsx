@@ -32,9 +32,9 @@ interface PageProps {
  * Note: the `Rangkuman` brand prefix is intentionally NOT applied
  * here — story detail pages stand on their own (the headline
  * carries the topic), so the tab / share preview shows just the
- * headline. Mirrors `app/sorotan/detail/[id]/page.tsx`.
+ * headline. Mirrors `app/headline/detail/[id]/page.tsx`.
  *
- * Mirrors the structure of `app/sorotan/detail/[id]/page.tsx`,
+ * Mirrors the structure of `app/headline/detail/[id]/page.tsx`,
  * including the `await params` (Next.js 15) and the 160-char
  * description clamp.
  */
@@ -111,7 +111,7 @@ interface RefererData {
 /**
  * Map the inbound `Referer` header to a back link AND a topic
  * hint. Mirrors the entry-point list from
- * `app/sorotan/detail/[id]/page.tsx`. Known entry points today:
+ * `app/headline/detail/[id]/page.tsx`. Known entry points today:
  *
  *   - `/story`, `/story/[id]` — the listing
  *     (`app/story/StoryPage.tsx`) and the sidebar's

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { SorotanDetailPage } from "@/components/sorotan-detail";
+import { HeadlineDetailPage } from "@/components/headline-detail";
 import { loadHeadlineById } from "@/lib/api/cache";
 import { clampDescription } from "@/lib/util/clampDescription";
 
@@ -57,8 +57,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   // preview on a clean sentence boundary instead of mid-word.
   const clippedDescription = clampDescription(description);
   // Relative paths resolve against metadataBase. `trailingSlash: true`
-  // in next.config.js means the canonical URL is served at `/sorotan/detail/[id]/`.
-  const canonical = `/sorotan/detail/${id}/`;
+  // in next.config.js means the canonical URL is served at `/headline/detail/[id]/`.
+  const canonical = `/headline/detail/${id}/`;
   return {
     title: `${headline}`,
     description: clippedDescription,
@@ -89,8 +89,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
  *   - `/saham`                — recap tab on `/app/saham/page.tsx`
  *   - `/stock/[kode]`         — `<NewsTimeline />` on the stock page
  *                               (`app/stock/[kode]/StockDetailPage.tsx`)
- *   - `/sorotan`, `/sorotan/detail/[id]` — inter-detail hops and
- *                               a future `/sorotan` listing (none
+ *   - `/headline`, `/headline/detail/[id]` — inter-detail hops and
+ *                               a future `/headline` listing (none
  *                               exists yet, but the path is used
  *                               by `StoryHero` / `RelatedStoriesList`
  *                               sidebar links between detail pages)
@@ -125,8 +125,8 @@ function backLinkFromReferer(referer: string | null): BackLink {
       }
       return FALLBACK;
     }
-    if (path === "/sorotan" || path.startsWith("/sorotan/")) {
-      return { label: "Kembali ke Sorotan", href: "/" };
+    if (path === "/headline" || path.startsWith("/headline/")) {
+      return { label: "Kembali ke Headline", href: "/" };
     }
     if (path === "/" || path === "") {
       return { label: "Kembali ke Beranda", href: "/" };
@@ -139,7 +139,7 @@ function backLinkFromReferer(referer: string | null): BackLink {
 
 /**
  * Thin route entry — defers ALL data fetching to the client-side
- * `<SorotanDetailPage storyId={...} />` orchestrator. The orchestrator
+ * `<HeadlineDetailPage storyId={...} />` orchestrator. The orchestrator
  * owns `useHeadlineId()` (parent headline) + `useListStory(headline_id)`
  * (related stories) and composes them into a `Highlight` shape that
  * the page widgets consume.
@@ -159,11 +159,11 @@ function backLinkFromReferer(referer: string | null): BackLink {
  * so it follows where the visitor came from instead of being
  * hardcoded.
  */
-export default function SorotanDetailRoutePage({ params }: PageProps) {
+export default function HeadlineDetailRoutePage({ params }: PageProps) {
   const referer = headers().get("referer");
   const backLink = backLinkFromReferer(referer);
   return (
-    <SorotanDetailPage
+    <HeadlineDetailPage
       storyId={params.id}
       backLabel={backLink.label}
     />

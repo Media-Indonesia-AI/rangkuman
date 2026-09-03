@@ -6,7 +6,7 @@ import { Shimmer } from "@/components/Shimmer";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import type { EmbeddedStory, StoryArticle } from "@/lib/api";
 
-interface SorotanDetailSourcesProps {
+interface HeadlineDetailSourcesProps {
   /** Stories fetched via `useListStory(headline_id)`. The widget
    *  flattens each story's `articles[]` and groups by
    *  `source_name` to build the media-grouped view. The same
@@ -48,7 +48,7 @@ const SHIMMER_ARTICLES_PER_GROUP = 2;
 
 /** Skeleton shown while stories are in flight. Mirrors the real
  *  group + article-row structure so the layout doesn't shift. */
-function SorotanDetailSourcesShimmer() {
+function HeadlineDetailSourcesShimmer() {
   return (
     <div className="space-y-3">
       {Array.from({ length: SHIMMER_GROUP_COUNT }).map((_, i) => (
@@ -75,7 +75,7 @@ function SorotanDetailSourcesShimmer() {
 }
 
 /**
- * "Daftar sumber" — articles grouped by media for the sorotan detail
+ * "Daftar sumber" — articles grouped by media for the headline detail
  * page. Mirrors the structure of `ArticlesByMediaWidget` on the
  * stock side:
  *
@@ -92,10 +92,10 @@ function SorotanDetailSourcesShimmer() {
  * orchestrator already has on its hands (it feeds the timeline
  * section as well), so no extra fetch is issued here.
  */
-export function SorotanDetailSources({
+export function HeadlineDetailSources({
   stories,
   isLoading = false,
-}: SorotanDetailSourcesProps) {
+}: HeadlineDetailSourcesProps) {
   const user = useCurrentUser();
   if (!user) return null;
 
@@ -113,7 +113,7 @@ export function SorotanDetailSources({
       </header>
 
       {isLoading ? (
-        <SorotanDetailSourcesShimmer />
+        <HeadlineDetailSourcesShimmer />
       ) : grouped.length > 0 ? (
         <div className="space-y-3">
           {grouped.map(({ media, items }) => (

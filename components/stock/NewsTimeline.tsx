@@ -202,14 +202,14 @@ export function NewsTimeline({ className }: NewsTimelineProps) {
                         key={s.id}
                         className="rounded-md border border-border bg-bg-tertiary/40 p-2.5 transition-colors hover:border-border-strong hover:bg-bg-tertiary"
                       >
-                        {/* Whole-row link to the Sorotan detail page
+                        {/* Whole-row link to the Headline detail page
                             for this headline. The `<Link>` wraps
                             the chips + title so a click anywhere on
                             the row navigates; `aria-label` gives
                             screen readers the headline text since
                             the link has no visible link copy. */}
                         <Link
-                          href={`/sorotan/detail/${s.id}`}
+                          href={`/headline/detail/${s.id}`}
                           aria-label={s.title}
                           className="block"
                         >

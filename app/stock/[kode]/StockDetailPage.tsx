@@ -53,7 +53,7 @@ export default function StockDetailPage({ params }: PageProps) {
 
   // Sync the browser tab title with the current ticker so the
   // address bar / tab strip reflects the page the visitor is on.
-  // Mirrors the same pattern in `/sorotan/detail/[id]` — the
+  // Mirrors the same pattern in `/headline/detail/[id]` — the
   // page is a "use client" component, so there's no server-side
   // `generateMetadata` to set the title; without this effect the
   // tab would stay on the global layout default ("Rangkuman")

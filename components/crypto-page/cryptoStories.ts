@@ -3,7 +3,7 @@
  * widgets (not in `lib/mock/crypto.ts`) because the page-level
  * stories carry page-specific display fields (`timeAgo`, `readTime`,
  * `flag`, the per-story title/summary) that are unrelated to the
- * structured `CoinRecap` archive consumed by `/sorotan/detail/[id]` and
+ * structured `CoinRecap` archive consumed by `/headline/detail/[id]` and
  * `/crypto/{date}` views.
  */
 
@@ -36,7 +36,7 @@ export interface CryptoStory {
 
 /** Mocked stories for the `/crypto` page — one per active coin
  *  recap, sorted recency-desc. Six stories today so the layout can
- *  exercise all three layers (Sorotan / Sedang Terjadi / Cerita
+ *  exercise all three layers (Headline / Sedang Terjadi / Cerita
  *  Lain) without branching on `length`. */
 export const CRYPTO_PAGE_STORIES: CryptoStory[] = [
   {

@@ -1,5 +1,5 @@
 /**
- * Highlight / Sorotan data for the new Rangkuman homepage.
+ * Highlight / Headline data for the new Rangkuman homepage.
  * Each story is a curated, multi-source summary across business, economy,
  * stocks, policy, global, and commodities categories.
  *
@@ -74,7 +74,7 @@ export interface Highlight {
    *  mock-shaped `Highlight`s without a primary ticker leave it
    *  `undefined` and the rail falls back to the category label. */
   primary_ticker_code?: string;
-  /** Importance rank 1-5 (1 = most important). Used to sort Sorotan. */
+  /** Importance rank 1-5 (1 = most important). Used to sort Headline. */
   rank: number;
   /** Chronological timeline of events in this story. */
   events: StoryEvent[];
@@ -1385,12 +1385,12 @@ export function getStoriesByCategory(category: Category): Highlight[] {
   return STORIES_BY_CATEGORY[category] ?? [];
 }
 
-/** Get the top N highlights (for Sorotan section on homepage). */
+/** Get the top N highlights (for Headline section on homepage). */
 export function getTopHighlights(n: number = 5): Highlight[] {
   return [...TODAY_HIGHLIGHTS].sort((a, b) => a.rank - b.rank).slice(0, n);
 }
 
-/** Get a single highlight by id (for /sorotan/detail/[id]).
+/** Get a single highlight by id (for /headline/detail/[id]).
  *
  *  Searches the FULL story catalog (today's top stories + per-category
  *  archives) so it stays consistent with `generateStaticParams` —
