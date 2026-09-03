@@ -31,3 +31,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# generated sitemaps — produced at container start by
+# `scripts/build-sitemaps.mjs` (via `instrumentation.ts`) and
+# refreshed every 15 min by the in-process cron. Never commit
+# these — they're a runtime artifact, not source.
+/public/sitemap.xml
+/public/page-sitemap.xml
+/public/news-sitemap.xml
