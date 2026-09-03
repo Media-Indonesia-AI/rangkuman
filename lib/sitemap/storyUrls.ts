@@ -94,6 +94,12 @@ export interface HeadlineEntry {
    *  ship the field (older responses) — callers fall back to
    *  `now`. */
   updatedAt?: Date;
+  /** Pre-joined keyword labels (e.g. `["bbri", "laba",
+   *  "perbankan"]`) for `<news:keywords>`. Only populated
+   *  when the caller asks — the standard sitemap doesn't
+   *  need them and we don't want to pay the join cost on
+   *  every entry. */
+  keywords?: string[];
 }
 
 /** Build the absolute origin the walker should hit. Pulls from
@@ -137,9 +143,10 @@ function resolveOrigin(): string {
  * `/sorotan/detail/[id]/` — the same URL the homepage cards
  * link to. */
 export async function walkHeadlines(
-  options: { includeTitle?: boolean } = {},
+  options: { includeTitle?: boolean; includeKeywords?: boolean } = {},
 ): Promise<HeadlineEntry[]> {
   const includeTitle = options.includeTitle ?? false;
+  const includeKeywords = options.includeKeywords ?? false;
   const entries: HeadlineEntry[] = [];
   const origin = resolveOrigin();
 
@@ -183,6 +190,15 @@ export async function walkHeadlines(
         : undefined;
       const entry: HeadlineEntry = { id: item.id, updatedAt };
       if (includeTitle) entry.title = item.title;
+      if (includeKeywords) {
+        // `<news:keywords>` wants a flat comma-joined string,
+        // so we project to `label`s and drop empty entries —
+        // an empty label in the middle would create `,,` and
+        // Google treats that as malformed input.
+        entry.keywords = (item.keywords ?? [])
+          .map((k) => k?.label?.trim())
+          .filter((label): label is string => Boolean(label));
+      }
       entries.push(entry);
     }
     if (items.length < PAGE_SIZE) break;
