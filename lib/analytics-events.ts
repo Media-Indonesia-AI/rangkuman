@@ -72,6 +72,39 @@ export const EVENTS = {
   saham_tab_recap_view: "saham_tab_saham_view",
   saham_tab_sektor_view: "saham_tab_sektor_view",
 
+  // Crypto sub-tabs — same rationale as the saham sub-tab
+  // events: the URL is stable across tab switches (Recap vs
+  // Pasar is client-side localStorage state), so the global
+  // `page_view` tracker misses them. `crypto_*` prefix keeps
+  // these tab-specific events easy to filter in the GA4
+  // event report.
+  crypto_tab_recap_view: "crypto_tab_recap_view",
+  crypto_tab_pasar_view: "crypto_tab_pasar_view",
+
+  // Trending page — `/trending`. `trending_page_view` fires
+  // once per mount; `trending_item_click` fires per row click
+  // and includes `recap_date` so reports can split by snapshot.
+  trending_page_view: "trending_page_view",
+  trending_item_click: "trending_item_click",
+
+  // Latest headlines — the live timeline on /saham's mobile
+  // strip and desktop sidebar. `latest_headline_click` fires
+  // when a story row is opened; `latest_headline_scroll`
+  // fires once per session when the timeline first scrolls
+  // (the user has actually engaged the list, not just
+  // glanced at it).
+  latest_headline_click: "latest_headline_click",
+  latest_headline_scroll: "latest_headline_scroll",
+
+  // Top Movers clicks — fires per card click on the two
+  // top-movers strips. `crypto_top_mover_click` is the Pasar
+  // tab's gainer/looser grid; `saham_top_mover_click` is the
+  // mobile index-movers strip on /saham. `tone` (bullish /
+  // bearish) and `position` (0-based index within the group)
+  // split the report by which side of the split was tapped.
+  crypto_top_mover_click: "crypto_top_mover_click",
+  saham_top_mover_click: "saham_top_mover_click",
+
   // Share
   share_open: "share_open",
   share_copy_link: "share_copy_link",

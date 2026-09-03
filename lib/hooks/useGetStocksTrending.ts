@@ -50,6 +50,14 @@ export function useGetStocksTrending(
   data: StockTrendingItem[];
   isLoading: boolean;
   refresh: () => void;
+  /** ISO date (`YYYY-MM-DD`) actually used by the fetch —
+   *  frozen once per mount via `useState(() => hariIniIso())`,
+   *  or the explicit `date` prop when the caller supplied one.
+   *  Consumers that need to attach it to per-row GA4 events
+   *  (e.g. trending item click) should read this instead of
+   *  recomputing today locally — the hook's freeze keeps it
+   *  stable across re-renders. */
+  effectiveDate: string;
 } {
   // Freeze the *default* only — `useState(() => hariIniIso())`
   // runs once at mount. An explicit `date` prop is used as-is so
@@ -87,5 +95,5 @@ export function useGetStocksTrending(
     setRefreshKey((current) => current + 1);
   }, []);
 
-  return { data, isLoading, refresh };
+  return { data, isLoading, refresh, effectiveDate };
 }

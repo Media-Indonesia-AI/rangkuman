@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useGetStocksTrending } from "@/lib/hooks/useGetStocksTrending";
+import { EVENTS, track } from "@/lib/analytics-events";
 import { TrendingPageHeader } from "./TrendingPageHeader";
 import { TrendingStatStrip } from "./TrendingStatStrip";
 import { TrendingList } from "./TrendingList";
@@ -33,8 +35,21 @@ import { computeTrendingStats } from "./trendingStats";
  * Client component because the hook owns its own fetch + state.
  */
 export default function TrendingPage() {
-  const { data: rows, isLoading } = useGetStocksTrending();
+  const { data: rows, isLoading, effectiveDate } = useGetStocksTrending();
   const stats = computeTrendingStats(rows);
+
+  // One-shot page-view tracking. Distinct from the global
+  // `page_view` because the page-level event carries the
+  // snapshot date — GA4's report can then split
+  // "visits per snapshot date" alongside the existing per-URL
+  // pageview stream. Fires after mount only (not on every
+  // render) so re-renders during the fetch don't double-count.
+  useEffect(() => {
+    track(EVENTS.trending_page_view, { recap_date: effectiveDate });
+    // effectiveDate is stable per mount (the hook freezes it
+    // via useState(() => hariIniIso())) — safe to omit.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>
@@ -60,7 +75,7 @@ export default function TrendingPage() {
           rowCount={rows.length}
         />
 
-        <TrendingList rows={rows} isLoading={isLoading} />
+        <TrendingList rows={rows} isLoading={isLoading} recapDate={effectiveDate} />
 
         {/* Footer note */}
         <p className="mt-4 text-center font-mono text-[10.5px] text-text-muted">

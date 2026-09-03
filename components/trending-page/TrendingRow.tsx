@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SentimentBadge } from "@/components/SentimentBadge";
 import type { StockTrendingItem } from "@/lib/api";
+import { EVENTS, track } from "@/lib/analytics-events";
 import { toSentimen } from "@/lib/util/sentiment";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,10 @@ interface TrendingRowProps {
    *  component — the data payload from the API doesn't carry
    *  a rank field, so it's derived from the list index. */
   rank: number;
+  /** ISO date (`YYYY-MM-DD`) of the trending snapshot this row
+   *  belongs to. Forwarded to the GA4 click event so reports
+   *  can split clicks per snapshot. */
+  recapDate: string;
 }
 
 /**
@@ -51,7 +56,7 @@ interface TrendingRowProps {
  * chevron — mirrors the whole-link convention used by
  * `<SektorTopStockCard />` and `<CommodityTile />`.
  */
-export function TrendingRow({ item: r, rank }: TrendingRowProps) {
+export function TrendingRow({ item: r, rank, recapDate }: TrendingRowProps) {
   const href = `/stock/${r.ticker}`;
   const isUp = r.pct_change >= 0;
   const changeSign = isUp ? "▲ +" : "▼ ";
@@ -61,6 +66,13 @@ export function TrendingRow({ item: r, rank }: TrendingRowProps) {
     <li>
       <Link
         href={href}
+        onClick={() =>
+          track(EVENTS.trending_item_click, {
+            ticker: r.ticker,
+            rank,
+            recap_date: recapDate,
+          })
+        }
         className="group block px-3 py-3 transition-colors hover:bg-bg-tertiary/60 sm:grid sm:grid-cols-[40px_1fr_60px_120px_120px] sm:items-center sm:gap-3 sm:px-4 sm:py-3"
       >
         {/* Mobile card layout (stacked vertically) */}
