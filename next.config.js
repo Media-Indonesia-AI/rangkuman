@@ -8,6 +8,15 @@ const nextConfig = {
   images: { unoptimized: true },
   reactStrictMode: true,
   trailingSlash: true,
+  // Opt in to Next.js 14's instrumentation hook — without this
+  // flag, `instrumentation.ts` is silently ignored (the config
+  // is baked into `.next/standalone/server.js` as
+  // `"instrumentationHook": false`, confirmed by reading the
+  // built artifact). The sitemap-regeneration cron lives in
+  // `instrumentation.ts`, so this flag is load-bearing.
+  experimental: {
+    instrumentationHook: true,
+  },
 };
 
 export default nextConfig;
