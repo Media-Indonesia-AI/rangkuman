@@ -4,6 +4,7 @@ import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import type { StoryItem } from "@/lib/api";
 import type { Sentimen } from "@/lib/mock/recaps";
+import { EVENTS, track } from "@/lib/analytics-events";
 import { toSentimen } from "@/lib/util/sentiment";
 import { cn } from "@/lib/utils";
 import { getRelativeTime } from "@/lib/util/formatDate";
@@ -76,6 +77,12 @@ export function LatestHeadlinesRow({ story, isLast }: LatestHeadlinesRowProps) {
           styles driven by the `<li>`'s group class. */}
       <Link
         href={`/sorotan/detail/${story.id}`}
+        onClick={() =>
+          track(EVENTS.latest_headline_click, {
+            story_id: story.id,
+            ticker: story.primary_ticker_code ?? "",
+          })
+        }
         aria-label={story.title}
         className="absolute inset-0 z-0"
       />

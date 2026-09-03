@@ -10,6 +10,7 @@ import {
 import type { StoryFilter, StoryItem } from "@/lib/api";
 import { loadHeadlines, loadTopic } from "@/lib/api/cache";
 import { findCryptoTopicId } from "@/lib/util/topicId";
+import { EVENTS, track } from "@/lib/analytics-events";
 import { LatestHeadlinesHeader } from "./LatestHeadlinesHeader";
 import { LatestHeadlinesRow } from "./LatestHeadlinesRow";
 import { LatestHeadlinesSkeleton } from "./LatestHeadlinesSkeleton";
@@ -119,6 +120,11 @@ export function LatestHeadlines() {
   // array (the filter never changes after the initial resolve).
   const filtersRef = useRef<StoryFilter[]>([]);
   const listRef = useRef<HTMLOListElement | null>(null);
+  // Latched true the first time the timeline actually scrolls —
+  // the GA4 scroll event fires once per widget-mount so we don't
+  // double-count per scroll-tick (the `onScroll` handler fires
+  // every frame during a drag).
+  const hasFiredScroll = useRef(false);
 
   // Sequential fetch: load topics to resolve the crypto topic_id,
   // then load headlines with the derived exclusion filter. Same
@@ -200,8 +206,25 @@ export function LatestHeadlines() {
   // lengths this widget reaches.
   const handleScroll = useCallback(
     (e: UIEvent<HTMLOListElement>) => {
-      if (isLoadingMore || !hasMore) return;
       const el = e.currentTarget;
+
+      // One-shot scroll-engagement tracker. Fires the first time
+      // the user actually scrolls the timeline (i.e. `scrollTop
+      // > 0`) — distinguishes "the timeline is on screen" from
+      // "the user engaged with the timeline". Latched so
+      // subsequent scroll ticks during pagination don't
+      // double-count.
+      if (!hasFiredScroll.current && el.scrollTop > 0) {
+        hasFiredScroll.current = true;
+        track(EVENTS.latest_headline_scroll);
+      }
+
+      // Bail out of the pagination fetch if a request is in
+      // flight or the dataset is exhausted. Run AFTER the
+      // scroll-engagement tracker above so a pagination-driven
+      // programmatic scroll still fires the GA4 event.
+      if (isLoadingMore || !hasMore) return;
+
       const distanceToBottom =
         el.scrollHeight - (el.scrollTop + el.clientHeight);
       if (distanceToBottom > END_REACHED_THRESHOLD_PX) return;

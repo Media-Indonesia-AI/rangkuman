@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { TrendingUp, RefreshCw, AlertCircle } from "lucide-react";
 import { type IndexMoverItem } from "@/lib/api";
+import { EVENTS, track } from "@/lib/analytics-events";
 import { useIndexMovers } from "@/lib/hooks/useIndexMovers";
 import { LoginPromptOverlay } from "../LoginPromptOverlay";
 import { cn } from "@/lib/utils";
@@ -122,12 +123,14 @@ function MoverRow({ rows, loading, title, tone }: MoverRowProps) {
             ))
           : rows.length === 0
             ? null
-            : rows.map((s) => (
+            : rows.map((s, idx) => (
                 <StockCard
                   key={s.ticker}
                   ticker={s.ticker}
                   companyName={s.company_name}
                   percentChange={s.percent_change}
+                  tone={tone}
+                  position={idx}
                 />
               ))}
       </div>
@@ -139,10 +142,18 @@ function StockCard({
   ticker,
   companyName,
   percentChange,
+  tone,
+  position,
 }: {
   ticker: string;
   companyName: string;
   percentChange: number;
+  /** Leading / Lagging — threaded from the parent
+   *  `<MoverRow />` so the GA4 click event can split reports
+   *  by which side of the split was tapped. */
+  tone: "bullish" | "bearish";
+  /** 0-based position within the Leading / Lagging group. */
+  position: number;
 }) {
   const positive = percentChange >= 0;
   const colorClass = positive ? "text-bullish" : "text-bearish";
@@ -150,6 +161,13 @@ function StockCard({
   return (
     <Link
       href={href}
+      onClick={() =>
+        track(EVENTS.saham_top_mover_click, {
+          ticker,
+          tone: tone === "bullish" ? "leading" : "lagging",
+          position,
+        })
+      }
       className="flex min-w-0 flex-col gap-0.5 rounded-md border border-border bg-bg-tertiary px-2.5 py-1.5 transition-colors hover:border-border-strong"
     >
       <span className="font-mono text-[12px] font-semibold text-text-primary">

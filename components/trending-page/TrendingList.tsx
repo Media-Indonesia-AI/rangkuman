@@ -12,6 +12,10 @@ interface TrendingListProps {
   /** Human-readable aria-label for the surrounding `<section>`.
    *  Matches the prior copy: "Daftar 20 saham trending". */
   ariaLabel?: string;
+  /** ISO date (`YYYY-MM-DD`) of the trending snapshot the rows
+   *  belong to. Forwarded to each `<TrendingRow />` so the
+   *  per-row GA4 click event can split reports by snapshot. */
+  recapDate: string;
 }
 
 /** Skeleton placeholder that mirrors the desktop table layout
@@ -49,6 +53,7 @@ export function TrendingList({
   rows,
   isLoading = false,
   ariaLabel = "Daftar 20 saham trending",
+  recapDate,
 }: TrendingListProps) {
   return (
     <section
@@ -78,7 +83,12 @@ export function TrendingList({
           Array.from({ length: 5 }).map((_, i) => <TrendingRowSkeleton key={i} />)
         ) : rows.length > 0 ? (
           rows.map((r, i) => (
-            <TrendingRow key={r.ticker} item={r} rank={i + 1} />
+            <TrendingRow
+              key={r.ticker}
+              item={r}
+              rank={i + 1}
+              recapDate={recapDate}
+            />
           ))
         ) : null}
       </ol>

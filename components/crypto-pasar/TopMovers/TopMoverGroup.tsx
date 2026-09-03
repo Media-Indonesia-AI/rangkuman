@@ -53,8 +53,8 @@ export function TopMoverGroup({
         </span>
       </div>
       <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-3">
-        {coins.map((c) => (
-          <TopMoverCard key={c.ticker} coin={c} />
+        {coins.map((c, idx) => (
+          <TopMoverCard key={c.ticker} coin={c} tone={tone} position={idx} />
         ))}
       </div>
     </div>
