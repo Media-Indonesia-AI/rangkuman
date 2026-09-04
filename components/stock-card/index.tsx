@@ -4,12 +4,10 @@ import { StockCardCompact } from "./StockCardCompact";
 import { StockCardFeatured } from "./StockCardFeatured";
 import { StockCardFeed } from "./StockCardFeed";
 import { StockCardList } from "./StockCardList";
-import { getStockByKode, type Saham } from "@/lib/mock/stocks";
 import type { DailyRecap } from "@/lib/recap";
 
 export interface StockCardProps {
   recap: DailyRecap;
-  stock?: Saham;
   variant?: "feed" | "featured" | "compact" | "list";
   className?: string;
   rank?: number;
@@ -23,9 +21,9 @@ export interface StockCardProps {
 
 /**
  * `<StockCard />` — the public entry point. Thin dispatcher that
- * builds the deep-link href (with optional `?id=` query) and
- * delegates to the per-variant implementation under the
- * `stock-card/` folder.
+ * builds the deep-link href (with optional `recapDate` path
+ * segment) and delegates to the per-variant implementation under
+ * the `stock-card/` folder.
  *
  * Variants live in their own files so each card shape is
  * independently scannable / editable without paging through a
@@ -39,11 +37,6 @@ export interface StockCardProps {
  * Shared widgets (`<StockCardHero />`, `<StockCardActions />`,
  * `<StockCardFooter />`, `<StockCardOverlayLink />`) live alongside
  * the variants and are imported by whichever variant needs them.
- *
- * The local `getStockByKode` lookup is intentionally commented
- * out — recap data is already complete (ticker, sentiment,
- * counts) and falling back to the static stock catalog would
- * reintroduce dead `Saham` data the variant files don't render.
  */
 export function StockCard({
   recap,
@@ -60,11 +53,6 @@ export function StockCard({
   const href = recapDate
     ? `/stock/${recap.sahamKode}/${recapDate}`
     : `/stock/${recap.sahamKode}`;
-
-  // `stock` is accepted for API parity with the original monolith
-  // but the variants render the recap directly; the unused lookup
-  // is intentionally not run. Reference kept to silence unused-var.
-  void getStockByKode;
 
   switch (variant) {
     case "compact":

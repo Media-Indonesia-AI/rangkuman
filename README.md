@@ -141,18 +141,6 @@ rangkuman-news/
 │   └── ...                           # Plus ~30 more
 │
 ├── lib/
-│   ├── mock/                         # ALL mock data lives here
-│   │   ├── highlights.ts             # 50 stories with events, keyData, affectedCategories
-│   │   ├── stocks.ts                 # 34 stocks
-│   │   ├── recaps.ts                 # 3 days of recap stories
-│   │   ├── sector-stocks.ts          # 12 sectors with stocks
-│   │   ├── crypto.ts                 # 12 coins, 8 categories, 3 days recaps
-│   │   ├── policy-tracker.ts         # 8 trending policy topics
-│   │   ├── policy-stories.ts         # 3-4 stories per policy topic
-│   │   ├── category-widgets.ts       # MacroIndicators + WorldIndices
-│   │   ├── commodities.ts            # Commodity prices
-│   │   └── ...                       # 10+ more
-│   │
 │   ├── hooks/                        # React hooks (client-side)
 │   │   ├── useAuth.ts                # Mock auth state
 │   │   ├── useWatchlist.ts
@@ -362,23 +350,21 @@ Helper: `buildPageMetadata()` di `lib/og.ts` untuk konsistensi OG tags.
 ## Common tasks
 
 ### Update content (text, prices, stocks)
-```bash
-# 1. Edit lib/mock/*.ts
-# 2. Rebuild
-npm run build
-# 3. Deploy (lihat DEPLOY.md)
-```
 
-### Add a new policy topic
-1. Edit `lib/mock/policy-tracker.ts` → tambah entry di `POLICY_TOPICS`
-2. Tambah stories di `lib/mock/policy-stories.ts`
-3. `/kebijakan/[slug]/` auto-generates via `generateStaticParams()`
+Content is sourced from the backend API now — there is no local mock
+catalog. Changes happen server-side on the data source
+(`/stocks/stock/trending`, `/stocks/stock/{kode}`, etc.). For
+widget-level shape tweaks, edit the wire → domain mapper in the
+host page (e.g. `mapStockTrendingItemToRecap` in
+`components/saham/PalingBanyakDiberitakan.tsx`) or the `DailyRecap`
+type in `lib/recap.ts`.
 
 ### Add a new crypto coin
-1. Coin catalog & top-tickers come from `GET coin/ticker/` and
-   `GET coin/top-tickers/` (`lib/api/coin.ts`). New coins surface
-   automatically once the backend ships them — no client-side edit
-   needed.
+
+Coin catalog & top-tickers come from `GET coin/ticker/` and
+`GET coin/top-tickers/` (`lib/api/coin.ts`). New coins surface
+automatically once the backend ships them — no client-side edit
+needed.
 
 ### Tambah halaman baru
 1. `mkdir -p app/[nama]`

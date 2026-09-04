@@ -67,11 +67,11 @@ export function useTopTickerRows(effectiveLabel: string | undefined): {
 
   // Memoize the resolved source so the downstream slice doesn't
   // churn on every parent re-render — `apiStocks.map(...)`
-  // produces a fresh array each call. No mock fallback now that
-  // `lib/mock/stocks` is out of the ticker: the marquee renders
-  // nothing while the backend load is in flight (or after an
-  // error / an empty success), matching the backend-first
-  // contract the crypto branch and every other widget follows.
+  // produces a fresh array each call. No mock fallback: the
+  // marquee renders nothing while the backend load is in flight
+  // (or after an error / an empty success), matching the
+  // backend-first contract the crypto branch and every other
+  // widget follows.
   const stockSource: TickerRow[] = useMemo(
     () => apiStocks.map(tickerToEntry),
     [apiStocks],

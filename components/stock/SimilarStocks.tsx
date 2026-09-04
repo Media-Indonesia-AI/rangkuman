@@ -10,8 +10,10 @@ interface SimilarStocksProps {
   loading?: boolean;
 }
 
-/** Internal shape — both the mock `Saham` and the API `RelatedStock`
- *  get normalized here so the JSX only deals with one shape. */
+/** Internal shape — the API `RelatedStock` is normalized here so
+ *  the JSX only deals with one shape. (Older drafts also had to
+ *  bridge a mock `Saham` shape; the mock catalog is gone now and
+ *  only the API path remains.) */
 interface NormalizedStock {
   ticker: string;
   companyName: string;

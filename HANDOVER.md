@@ -178,8 +178,12 @@ rangkuman-news/
 │   └── kerjasama/  disclaimer/  privasi/  ...  (7 static info pages)
 │
 ├── components/                       # ~58 React components
-├── lib/mock/                         # All mock data
-├── lib/hooks/                        # localStorage-backed hooks
+├── lib/                              # Pure helpers + types (no mock data — backend-driven)
+│   ├── api/                          # Request/cache layer
+│   ├── hooks/                        # localStorage-backed hooks
+│   ├── highlight.ts                  # Headline-detail domain types
+│   ├── recap.ts                      # DailyRecap domain types
+│   └── util/                         # formatters, mappers, helpers
 ├── public/                           # Logo SVG, favicon, OG image
 └── tailwind.config.ts                # Color tokens via CSS vars
 ```
@@ -196,7 +200,6 @@ rangkuman-news/
 | `package.json` | Dependencies, scripts, name, version |
 | `app/globals.css` | Color tokens (light/dark), tailwind base |
 | `tailwind.config.ts` | Tailwind config, theme tokens |
-| `lib/mock/*.ts` | All content data — edit di sini untuk update |
 | `public/logo*.svg` | Logo files |
 | `app/layout.tsx` | Root layout, fonts, OG metadata |
 | `DEPLOY.md` | Platform-specific deploy instructions |
@@ -207,15 +210,13 @@ rangkuman-news/
 
 ### Edit data (prices, stocks, news)
 
-1. Edit file di `lib/mock/`
-2. `npm run build`
-3. Deploy
-
-Contoh: ganti harga BBCA
-```ts
-// lib/mock/stocks.ts
-{ kode: "BBCA", harga: 9875, change: 2.22, ... }
-```
+Data is sourced from the backend API now — there is no mock catalog
+to edit locally. Changes happen server-side on the data source
+(`/stocks/stock/trending`, `/stocks/stock/{kode}`, etc.). For
+widget-level shape tweaks, edit the wire → domain mapper in the
+host page (e.g. `mapStockTrendingItemToRecap` in
+`components/saham/PalingBanyakDiberitakan.tsx`) or the
+`DailyRecap` type in `lib/recap.ts`.
 
 ### Edit color
 
