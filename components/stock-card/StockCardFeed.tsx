@@ -25,8 +25,8 @@ interface StockCardFeedProps {
 
 /**
  * Feed (default) `<StockCard />` variant — the dense, vertically
- * stacked card used in feeds like `<PalingBanyakDiberitakan />`
- * and `<HomeFeed />`. Mirrors a CryptoSlate-style news row:
+ * stacked card used in feeds like `<PalingBanyakDiberitakan />`.
+ * Mirrors a CryptoSlate-style news row:
  *
  *   ┌──────────────────────────────────────────────────┐
  *   │ ▓▓▓▓▓ accent bar (sector hue gradient) ▓▓▓▓▓▓▓▓ │
