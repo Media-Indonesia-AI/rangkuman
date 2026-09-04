@@ -8,14 +8,23 @@
  * single owner.
  *
  * Branch behavior:
- *   - `"saham"`           → every row in `stockSource` (live, with
- *                           mock fallback).
+ *   - `"saham"`           → every row in `stockSource`.
  *   - `"crypto"`          → every row in `cryptoSource`.
  *   - anything else       → first 10 of each side, then merged
  *                           into a single list via Fisher–Yates
  *                           shuffle so the marquee shows stocks
  *                           and crypto interleaved rather than
  *                           "stocks then crypto".
+ *
+ * Both source feeds expose their own `{ data, isLoading }` shape
+ * (see `useTickers` / `useCoinTicker`). The `isLoading` flag this
+ * hook surfaces is the OR across whichever feeds the active branch
+ * actually consumes — the orchestrator renders nothing while any
+ * required feed is in flight, and reveals the populated marquee
+ * with an `animate-fade-up` keyframe once they all settle. The
+ * mock catalog remains the fallback for the empty-success case
+ * (a 200 with no rows) so the stocks branch never collapses to a
+ * blank strip after a successful fetch.
  *
  * Per-source slice keeps the wire order untouched; the shuffle
  * runs only on the cross-list merge. The shuffle is also
@@ -36,24 +45,32 @@ import {
 } from "./tickerData";
 
 /**
- * Returns the row set the visitor actually sees, after picking the
- * branch (`saham` / `crypto` / combined) and applying the
- * cross-list shuffle.
+ * Returns the row set the visitor actually sees plus a loading
+ * flag the orchestrator reads to hide the widget during the
+ * network round-trip and trigger the reveal animation on success.
  *
  * @param effectiveLabel Resolved label: `"saham"` / `"crypto"` /
  *                       anything else (including `undefined`)
  *                       routes to the combined branch.
  */
-export function useTopTickerRows(effectiveLabel: string | undefined): TickerRow[] {
+export function useTopTickerRows(effectiveLabel: string | undefined): {
+  rows: TickerRow[];
+  isLoading: boolean;
+} {
   // Both feed hooks are called unconditionally so the combined
   // branch has both lists ready when the user lands on a
-  // non-specific label.
-  const apiStocks = useTickers();
-  const apiCoins = useCoinTicker();
+  // non-specific label. Each returns its own `{ data, isLoading }`
+  // — we collapse them to the unified `{ rows, isLoading }` shape
+  // the orchestrator consumes.
+  const { data: apiStocks, isLoading: stocksLoading } = useTickers();
+  const { data: apiCoins, isLoading: coinsLoading } = useCoinTicker();
 
   // Memoize the resolved source so the downstream slice doesn't
   // churn on every parent re-render — `apiStocks.map(...)`
-  // produces a fresh array each call.
+  // produces a fresh array each call. Mock fallback only kicks in
+  // when the live feed is empty *after* it has loaded — the
+  // orchestrator's loading gate hides the widget earlier, so the
+  // mock never flashes during the in-flight phase.
   const stockSource: TickerRow[] = useMemo(
     () =>
       apiStocks.length > 0 ? apiStocks.map(tickerToEntry) : mockStockRows,
@@ -102,5 +119,17 @@ export function useTopTickerRows(effectiveLabel: string | undefined): TickerRow[
     );
   }, [effectiveLabel, stockSource, cryptoSource]);
 
-  return rows;
+  // Loading gate is `OR` across whichever feeds the active branch
+  // actually consumes — a `"saham"` branch doesn't gate on the
+  // crypto feed (and vice versa) so the widget can reveal once
+  // the stock ticker has responded even if the coin ticker is
+  // still pending or has errored.
+  const isLoading =
+    effectiveLabel === "crypto"
+      ? coinsLoading
+      : effectiveLabel === "saham"
+        ? stocksLoading
+        : stocksLoading || coinsLoading;
+
+  return { rows, isLoading };
 }
