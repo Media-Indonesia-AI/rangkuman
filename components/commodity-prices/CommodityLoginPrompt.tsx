@@ -22,10 +22,6 @@ export function CommodityLoginPrompt() {
         <p className="text-[14px] font-semibold text-text-primary">
           Masuk dulu untuk lihat harga komoditas
         </p>
-        <p className="max-w-sm text-[12.5px] leading-relaxed text-text-muted">
-          Update harian &amp; penggerak IHSG cuma tersedia buat member yang sudah masuk.
-          Daftar gratis, gak pake kartu kredit.
-        </p>
       </div>
 
       <div className="flex items-center gap-2">

@@ -4,14 +4,14 @@ import Link from "next/link";
 import { Building2, LogIn, UserPlus } from "lucide-react";
 
 /**
- * Inline auth gate for `<SektorSection />`. Shown to anonymous
- * visitors in place of the sector grid (sentiment, top 3 stocks,
- * avg change), so they get a clear "login to see this" CTA instead
+ * Inline auth gate for `<SektorSection />`. Shown in place of the
+ * sector grid when the sectors endpoint returns `401` — covers
+ * both anonymous visitors and expired sessions on the auth-gated
+ * route. The user gets a clear "login to see this" CTA instead
  * of silently seeing nothing.
  *
- * Style mirrors `WatchlistEmptyState` (dashed border, soft bg,
+ * Style mirrors `CommodityLoginPrompt` (dashed border, soft bg,
  * centered icon + title + CTA pair) for cross-widget consistency.
- * The `Building2` icon matches the section's own header chip.
  */
 export function SektorLoginPrompt() {
   return (
@@ -22,11 +22,7 @@ export function SektorLoginPrompt() {
 
       <div className="space-y-1">
         <p className="text-[14px] font-semibold text-text-primary">
-          Masuk dulu untuk lihat Sektor dan Komoditas
-        </p>
-        <p className="max-w-sm text-[12.5px] leading-relaxed text-text-muted">
-          Sentimen, saham unggulan, dan rata-rata perubahan harian cuma tersedia
-          buat member. Daftar gratis, gak pake kartu kredit.
+          Masuk dulu untuk lihat sektor IHSG
         </p>
       </div>
 

@@ -13,5 +13,6 @@
  */
 
 export { SektorSection } from "./SektorSection";
+export { SektorGrid } from "./SektorGrid";
 export { SektorCard } from "./SektorCard";
 export { hueText, hueBg, hueBorder } from "./hueStyles";
