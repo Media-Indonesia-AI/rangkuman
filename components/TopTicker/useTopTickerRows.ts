@@ -21,10 +21,11 @@
  * hook surfaces is the OR across whichever feeds the active branch
  * actually consumes — the orchestrator renders nothing while any
  * required feed is in flight, and reveals the populated marquee
- * with an `animate-fade-up` keyframe once they all settle. The
- * mock catalog remains the fallback for the empty-success case
- * (a 200 with no rows) so the stocks branch never collapses to a
- * blank strip after a successful fetch.
+ * with an `animate-fade-up` keyframe once they all settle. Both
+ * branches now rely on the live feed alone; an empty success
+ * response leaves the marquee empty rather than swapping in a
+ * mock catalog, matching the backend-first contract every other
+ * widget already follows.
  *
  * Per-source slice keeps the wire order untouched; the shuffle
  * runs only on the cross-list merge. The shuffle is also
@@ -39,7 +40,6 @@ import type { TickerRow } from "./types";
 import {
   TOP_N_PER_SIDE,
   coinTickerToEntry,
-  mockStockRows,
   shuffle,
   tickerToEntry,
 } from "./tickerData";
@@ -67,20 +67,21 @@ export function useTopTickerRows(effectiveLabel: string | undefined): {
 
   // Memoize the resolved source so the downstream slice doesn't
   // churn on every parent re-render — `apiStocks.map(...)`
-  // produces a fresh array each call. Mock fallback only kicks in
-  // when the live feed is empty *after* it has loaded — the
-  // orchestrator's loading gate hides the widget earlier, so the
-  // mock never flashes during the in-flight phase.
+  // produces a fresh array each call. No mock fallback now that
+  // `lib/mock/stocks` is out of the ticker: the marquee renders
+  // nothing while the backend load is in flight (or after an
+  // error / an empty success), matching the backend-first
+  // contract the crypto branch and every other widget follows.
   const stockSource: TickerRow[] = useMemo(
-    () =>
-      apiStocks.length > 0 ? apiStocks.map(tickerToEntry) : mockStockRows,
+    () => apiStocks.map(tickerToEntry),
     [apiStocks],
   );
 
-  // Crypto branch: no mock fallback now that `lib/mock/crypto`
-  // is gone — the marquee renders nothing while the backend
-  // load is in flight (or after an error), matching the
-  // backend-first contract every other widget already follows.
+  // Crypto branch: same backend-first contract as the stocks
+  // branch — no mock fallback, no shimmer placeholder. The
+  // orchestrator's loading gate hides the widget during the
+  // in-flight phase and the empty-success case leaves the
+  // marquee blank.
   const cryptoSource: TickerRow[] = useMemo(
     () => apiCoins.map(coinTickerToEntry),
     [apiCoins],

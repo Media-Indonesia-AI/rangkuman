@@ -7,7 +7,6 @@
  * coin ticker) into one `TickerRow` so the render loop never
  * has to special-case the source.
  */
-import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
 import { COIN_KODE_TO_STORY_ID } from "@/components/crypto-page/cryptoStories";
 import type { TickerRow } from "./types";
 
@@ -75,17 +74,6 @@ export function tickerToEntry(t: {
   };
 }
 
-/** Adapter: mock stock catalog → TickerRow. */
-export function stockMockToEntry(s: Saham): TickerRow {
-  return {
-    kind: "stock",
-    kode: s.kode,
-    nama: s.nama,
-    price: s.price,
-    changePercent: s.changePercent,
-  };
-}
-
 /** Adapter: live coin ticker wire shape → TickerRow.
  *  Wire shape ships lowercase tickers (`"btc"`); the rest of the
  *  app's recap-id lookup is keyed on the uppercase form. */
@@ -114,8 +102,3 @@ export function cryptoRecapHref(kode: string): string {
   const storyId = COIN_KODE_TO_STORY_ID[kode];
   return storyId ? `/headline/detail/${storyId}` : `/stock/${kode}`;
 }
-
-/** Mock stock rows pre-shaped as `TickerRow`. The live hook
- *  returns this same shape so the row-source has one type.
- *  Used as the fallback when `useTickers()` returns empty. */
-export const mockStockRows: TickerRow[] = mockStocks.map(stockMockToEntry);
