@@ -29,16 +29,6 @@ interface StockAboutPanelProps {
  * card. Keeping it independent from the peer list makes it easier
  * to reorder, hide, or restyle either block on its own.
  *
- * The Coverage row is driven by the headline-scoped fetches
- * `useHeadlineDetail()` + `useHeadlineStories()` — same pair
- * `<AggregateSummary />` reads — so the counts stay in sync with
- * the rest of the page:
- *   - **artikel** = `detail.stories.length`
- *   - **media**   = unique `source_name` count across all
- *                   `stories[].articles[]`, derived via `useMemo`
- *                   so the Set walk only runs when `stories`
- *                   changes.
- *
  * Placeholder behavior matches the original inline JSX so the
  * page keeps rendering gracefully while its data hooks are still
  * in flight:
@@ -48,11 +38,6 @@ interface StockAboutPanelProps {
  *   - `media === 0`        → renders just `"<n> artikel"`
  *   - `media > 0`          → renders `"<n> artikel · <m> media"`
  *     (same shape as the count chip in `<AggregateSummary />`)
- *
- * **Must be rendered inside `<HeadlineDetailProvider>` and
- * `<HeadlineStoriesProvider>`** — the coverage row reads from both
- * contexts. The stock detail page already wraps the entire right
- * rail in those providers, so no extra wiring is required.
  */
 export function StockAboutPanel({
   kode,

@@ -15,7 +15,6 @@ import { PriceChart30d } from "@/components/stock/PriceChart30d";
 import { KeyMetrics } from "@/components/stock/KeyMetrics";
 import { NewsTimeline } from "@/components/stock/NewsTimeline";
 import { Last7DaysHeadlinesProvider } from "@/components/stock/Last7DaysHeadlinesProvider";
-import { HeadlineStoriesProvider } from "@/components/stock/HeadlineStoriesProvider";
 import { EmitenStories } from "@/components/saham";
 import { useTickerInformation } from "@/lib/hooks/useTickerInformation";
 
@@ -76,10 +75,6 @@ export default function StockDetailPage({ params }: PageProps) {
       <Navbar />
 
       <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-6 sm:px-6">
-        {/* Single headline-scoped /stories fetch shared by
-            SentimentSparkline, NewsTimeline, ArticlesByMediaWidget,
-            and AggregateSummary. */}
-        <HeadlineStoriesProvider>
         {/* FIX 4: Sr-only H1 for SEO */}
         <h1 className="sr-only">
           Rangkuman &mdash; Saham {'N/A'} ({kode})
@@ -137,9 +132,9 @@ export default function StockDetailPage({ params }: PageProps) {
                 <SentimentSparkline />
               </Last7DaysHeadlinesProvider>
 
-              {/* Articles grouped by media — data-driven via the
-                  shared headline-scoped stories fetched once by
-                  <HeadlineStoriesProvider>. */}
+              {/* Articles grouped by media — driven by the
+                  ticker-info payload (same source as the aggregate
+                  summary). */}
               <ArticlesByMediaWidget articles={tickerInfo?.articles ?? []} />
             </div>
 
@@ -172,7 +167,6 @@ export default function StockDetailPage({ params }: PageProps) {
               />
             </aside>
           </div>
-        </HeadlineStoriesProvider>
       </main>
       <Footer />
     </>

@@ -20,9 +20,8 @@ import {
 } from "./LatestHeadlinesTail";
 
 /** Per-page request `limit`. Kept at 10 — the same default the
- *  backend uses, and the same shape the other headline-scoped
- *  fetches (`HeadlineStoriesProvider`, etc.) already use, so each
- *  page lands on a cache slot shape we already understand. */
+ *  backend uses, so each page lands on a cache slot shape we already
+ *  understand. */
 const PAGE_LIMIT = 10;
 
 /** Topic fetch filter — empty list asks for the full topic
@@ -51,8 +50,7 @@ const END_REACHED_THRESHOLD_PX = 80;
  *     — footer feedback while paginating / once the dataset ends.
  *
  * The widget asks the backend for `PAGE_LIMIT` rows per request.
- * The fetch happens in two steps, mirroring
- * `<HeadlineDetailProvider />`:
+ * The fetch happens in two steps:
  *
  *   1. `loadTopic()` first — pulls the topic catalogue so we can
  *      derive the crypto `topic_id` via `findCryptoTopicId()`
@@ -92,12 +90,10 @@ export function LatestHeadlines() {
   // ── Two-step fetch state ───────────────────────────────────────
   // The sequential fetch (loadTopic → loadHeadlines) isn't
   // expressible through a single hook, so we manage the in-flight
-  // / settled flags here the same way `<HeadlineDetailProvider />`
-  // does for its headline-by-id resolution (loadHeadlines →
-  // loadHeadlineById). `loading` stays true until *both* steps
-  // have settled (success or failure), so the skeleton below
-  // covers the entire window — including the brief handoff
-  // between the two requests — with no flicker.
+  // / settled flags here directly. `loading` stays true until
+  // *both* steps have settled (success or failure), so the
+  // skeleton below covers the entire window — including the
+  // brief handoff between the two requests — with no flicker.
   const [loading, setLoading] = useState(true);
   // Initial-load success flag — once the headline fetch settles we
   // stop showing the shimmer even if the result is empty (an empty
@@ -127,9 +123,7 @@ export function LatestHeadlines() {
   const hasFiredScroll = useRef(false);
 
   // Sequential fetch: load topics to resolve the crypto topic_id,
-  // then load headlines with the derived exclusion filter. Same
-  // shape as `<HeadlineDetailProvider />`'s
-  // `loadHeadlines(…) → loadHeadlineById(…)` chain.
+  // then load headlines with the derived exclusion filter.
   useEffect(() => {
     let cancelled = false;
 
@@ -159,10 +153,6 @@ export function LatestHeadlines() {
         filtersRef.current = filters;
 
         // Step 2: load headlines with the crypto topic excluded.
-        // Same chain shape as `<HeadlineDetailProvider />`: the
-        // first response is consumed inside this `.then` to
-        // extract an id, and the second fetch is fired with that
-        // id in hand.
         return loadHeadlines(PAGE_LIMIT, 0, filters)
           .then((res) => {
             if (cancelled) return;

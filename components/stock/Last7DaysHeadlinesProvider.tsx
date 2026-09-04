@@ -39,10 +39,9 @@ const Last7DaysHeadlinesContext = createContext<Last7DaysHeadlinesContextValue>(
  * 308 + 200 redirect pair only fires once per page load instead of
  * being amplified by N mounts.
  *
- * Patterned after `<HeadlineStoriesProvider>`: the default context
- * value is `{ headlines: [], isLoading: false }` so consumers
- * rendered outside a provider degrade to their fallback paths
- * without an extra null check.
+ * The default context value is `{ headlines: [], isLoading: false }`
+ * so consumers rendered outside a provider degrade to their fallback
+ * paths without an extra null check.
  *
  * `todayIso` is computed once here and exposed via context so the
  * children can highlight the matching day without each one having
@@ -50,10 +49,10 @@ const Last7DaysHeadlinesContext = createContext<Last7DaysHeadlinesContextValue>(
  * default — the provider omits the optional `date` arg, letting the
  * cache layer default to today for the fetch.
  *
- * Patterned after `<HeadlineStoriesProvider>`: the default context
- * value carries a sentinel `todayIso` so consumers rendered outside
- * a provider degrade to their fallback paths without an extra null
- * check (the "today" highlight simply never matches `FALLBACK_TODAY`).
+ * The default context value carries a sentinel `todayIso` so
+ * consumers rendered outside a provider degrade to their fallback
+ * paths without an extra null check (the "today" highlight simply
+ * never matches `FALLBACK_TODAY`).
  */
 export function Last7DaysHeadlinesProvider({
   kode,

@@ -74,11 +74,10 @@ interface TopicsProviderProps {
  * directly in the root layout so any descendant page can read
  * the same shared state without prop-drilling.
  *
- * Patterned after `<HeadlineDetailProvider />` and
- * `<HeadlineStoriesProvider />` on the stock detail page: a
- * dedicated context for a resource that's read by more than one
- * page (here, `/saham` General News Feed + `/crypto` page), so
- * both pull from one fetch instead of each issuing their own.
+ * Topics is a dedicated context for a resource that's read by more
+ * than one page (here, `/saham` General News Feed + `/crypto`
+ * page), so both pull from one fetch instead of each issuing their
+ * own.
  */
 export function TopicsProvider({ children }: TopicsProviderProps) {
   // `useCurrentUser()` returns `undefined` on first paint (still

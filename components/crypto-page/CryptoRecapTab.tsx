@@ -34,7 +34,7 @@ import {
  *     (slug match → name match → first-topic fallback),
  *   - the live `useHeadlines(topic_id=…)` fetch with memoized
  *     filters (the same array-identity gotcha covered for
- *     `HeadlineStoriesProvider` / `useListStory`),
+ *     `useListStory`),
  *   - the live-when-available / mock-fallback source picking
  *     and the slice into the lead + Berita Terkini cluster,
  *   - the empty-state row — it lives here because it only

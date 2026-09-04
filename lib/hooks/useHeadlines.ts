@@ -25,8 +25,7 @@ import { loadHeadlines } from "@/lib/api/cache";
  * `topic_id` from `<TopicsProvider />` hasn't resolved). While
  * disabled, the hook returns `{ data: [], isLoading: false }` — the
  * data is cleared so stale results from a previous mount don't leak
- * through once the gate opens. Mirrors the `useListStory` /
- * `HeadlineStoriesProvider` convention.
+ * through once the gate opens. Mirrors the `useListStory` convention.
  *
  * @param limit   How many stories to fetch (default 10, matching the
  *                backend's default).

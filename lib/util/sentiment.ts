@@ -7,9 +7,7 @@
  * `DailyRecap.sentimen`, …) speak the Indonesian `Sentimen` vocabulary
  * (`"positif" | "netral" | "negatif"`).
  *
- * This is the single place that maps between them. It replaces the
- * three previously-duplicated local mappers in `HeadlineSentimentBadge`,
- * `PalingBanyakDiberitakan`, and `LatestHeadlines`.
+ * This is the single place that maps between them.
  */
 
 import type { StorySentiment, TrendingSentiment } from "@/lib/api";

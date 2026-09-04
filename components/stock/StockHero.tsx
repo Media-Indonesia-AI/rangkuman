@@ -41,10 +41,6 @@ interface StockHeroProps {
  * overlay, the ticker chip + sentiment badge, and the
  * big-ticker / price / change layout.
  *
- * The sentiment badge reads via `useHeadlineDetail()` from the
- * outer `<HeadlineDetailProvider>`. **This widget must be rendered
- * inside that provider.**
- *
  * Placeholder behavior when data is missing (`isLoading === false`):
  *   - `chip == null`        → falls back to `kode`
  *   - `companyName == null` → renders `"N/A"`
