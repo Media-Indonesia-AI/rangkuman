@@ -4,6 +4,7 @@ import { BarChart3, TrendingDown, TrendingUp } from "lucide-react";
 import { useCoinTopTickers } from "@/lib/hooks/useCoinTopTickers";
 import { TopMoverGroup } from "./TopMoverGroup";
 import { TopMoversError } from "./TopMoversError";
+import { TopMoversLoginPrompt } from "./TopMoversLoginPrompt";
 import { TopMoversSkeleton } from "./TopMoversSkeleton";
 
 /** Section header strip — outer "Top Movers 24 jam" title. The
@@ -28,19 +29,31 @@ function TopMoversHeader() {
  * `top-gainer` and `top-looser` groups via `useCoinTopTickers`
  * and renders them as two stacked sub-sections. Renders one of:
  *
- *   - `loading` → `<TopMoversSkeleton />`
- *   - `error`   → `<TopMoversError />` with retry
- *   - `ready`   → `<TopMoverGroup />` × 2 (gainer, loser)
+ *   - `loading`           → `<TopMoversSkeleton />`
+ *   - `error` + `401`     → `<TopMoversLoginPrompt />`. The
+ *      endpoint is auth-gated, so a logged-out visitor or an
+ *      expired session both land here; the prompt replaces
+ *      the gainer/loser grid with a clear "log in" CTA.
+ *   - `error` (any other) → `<TopMoversError />` with retry
+ *   - `ready`             → `<TopMoverGroup />` × 2 (gainer, loser)
  */
 export function TopMovers() {
   const { state, refetch } = useCoinTopTickers();
+
+  // 401 short-circuit — same convention as
+  // `<MobileTopMovers />` / `<LeftSidebar />`: surface the
+  // login prompt instead of the generic error panel so the
+  // user sees a clear "log in to see this" CTA.
+  const isUnauthorized = state.kind === "error" && state.status === 401;
+  const isOtherError = state.kind === "error" && state.status !== 401;
 
   return (
     <section aria-label="Top movers">
       <TopMoversHeader />
 
       {state.kind === "loading" && <TopMoversSkeleton />}
-      {state.kind === "error" && (
+      {isUnauthorized && <TopMoversLoginPrompt />}
+      {isOtherError && (
         <TopMoversError message={state.message} onRetry={refetch} />
       )}
       {state.kind === "ready" && (

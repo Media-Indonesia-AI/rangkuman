@@ -10,10 +10,11 @@ interface TopMoversErrorProps {
 
 /**
  * Failure shell for the Top Movers section — single panel with
- * an icon, the API error message, and a retry button. A 401 is
- * surfaced the same way as a real failure: the hook's other
- * branches (loading / ready) handle the silent-logged-out case
- * upstream if needed.
+ * an icon, the API error message, and a retry button. Only
+ * rendered for non-401 errors; `<TopMoversLoginPrompt />` takes
+ * over the 401 branch so a logged-out visitor or expired
+ * session sees a clear "log in" CTA instead of a generic
+ * failure panel with a "coba lagi" button that won't help.
  */
 export function TopMoversError({ message, onRetry }: TopMoversErrorProps) {
   return (
