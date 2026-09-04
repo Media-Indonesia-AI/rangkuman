@@ -131,7 +131,7 @@ rangkuman-news/
 │   │   ├── SektorDetailEmpty.tsx       # 404 defensive fallback
 │   │   └── index.ts                    # barrel
 │   │
-│   ├── DatePicker.tsx  DateTabs.tsx  DateDivider.tsx
+│   ├── DatePicker.tsx  DateDivider.tsx
 │   ├── ShareButton.tsx
 │   ├── SearchBar.tsx  ThemeToggle.tsx
 │   ├── InfoPage.tsx                  # Template for static legal/about pages
