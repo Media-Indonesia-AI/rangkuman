@@ -5,17 +5,20 @@ import type { StoryFilter, StoryTopic } from "@/lib/api";
 import { loadTopic } from "@/lib/api/cache";
 
 /**
- * Data hook for the topic-tab menu on the General News Feed.
- * Wraps `loadTopic()` (the request-deduping cache wrapper) with React
- * state + a cancel-on-unmount guard.
+ * Data hook for the layout-level topic catalogue. The primary
+ * caller is `<TopicsProvider />` (mounted once in `app/layout.tsx`
+ * above the page tree) which serves the result to every
+ * descendant through `useTopicsContext()`. Wraps `loadTopic()`
+ * (the request-deduping cache wrapper) with React state + a
+ * cancel-on-unmount guard.
  *
  * Concurrent mounts (React 18 strict-mode double-invoke, or two
- * `<GeneralNewsFeed />` instances on the same page) share a single
+ * `<TopicsProvider />` instances on the same page) share a single
  * network round-trip — the second call gets the same
  * `Promise<TopicResponse>` back from the `inflightTopics` Map.
  *
  * On error the hook returns an empty array so consumers can fall back
- * to their mock / hardcoded category list without an extra null-check
+ * to their hardcoded category list without an extra null-check
  * — same convention as `useHeadlines` and `useTrendingStories`.
  * The `isLoading` flag flips to `false` once the fetch settles either
  * way, so the widget can drop its shimmer.
