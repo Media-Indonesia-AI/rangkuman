@@ -258,7 +258,7 @@ Cerita direpresentasikan sebagai sequence of events. Setiap story punya:
 - `keyData: KeyData[]` (data penting, e.g. "+2.3%" / "Rp 9.875")
 - `flag?` (country/chain emoji untuk identifier)
 
-Lihat `lib/mock/highlights.ts` untuk schema lengkap.
+Lihat `lib/mock/highlights.ts` untuk type schema (`Highlight`, `StoryEvent`, `Category`, `CATEGORY_CONFIG`). Story datanya sendiri datang dari `useHeadlines` / `useHeadlineId` — tidak ada mock catalog lagi.
 
 ### 4. Categories (6 navigasi utama)
 
