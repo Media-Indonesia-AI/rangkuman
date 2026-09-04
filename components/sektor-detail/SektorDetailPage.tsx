@@ -40,11 +40,11 @@ interface PageProps {
  *   - `./SektorDetailEmpty`     (defensive 404 fallback)
  *
  * Note on `generateMetadata` / `generateStaticParams`: those
- * stay in the sibling `app/sektor/[slug]/page.tsx` and still
- * source from the mock catalog for SEO purposes. Migrating
- * them to live data is a separate concern — they'd need a
- * server-side fetcher that resolves to the slug list at
- * build time.
+ * stay in the sibling `app/sektor/[slug]/page.tsx` and now
+ * source from the live `GET stocks/sectors` endpoint via
+ * `loadSectors()` + `mapSector()` — same as this client
+ * orchestrator, just resolved server-side for SEO at build
+ * time.
  */
 export default function SektorDetailPage({ params }: PageProps) {
   // Larger limit than the home-page default (3) — the detail page
