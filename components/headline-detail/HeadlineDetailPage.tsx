@@ -10,7 +10,7 @@ import type {
   StoryFilter,
 } from "@/lib/api";
 import { getRelativeTime } from "@/lib/util/formatDate";
-import { CATEGORY_CONFIG, type Category, type Highlight, type StoryEvent } from "@/lib/mock/highlights";
+import { CATEGORY_CONFIG, type Category, type Highlight, type StoryEvent } from "@/lib/highlight";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { HeadlineDetailBreadcrumb } from "./HeadlineDetailBreadcrumb";

@@ -1,5 +1,5 @@
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
-import type { KeyDataPoint } from "@/lib/mock/highlights";
+import type { KeyDataPoint } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 import { KeywordItem, type StorySentiment } from "@/lib/api/types/story";
 

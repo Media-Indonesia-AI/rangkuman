@@ -3,29 +3,31 @@
  * (StoryHero, StoryEditorial, StoryTimeline, RelatedStoriesList, the
  * headline-detail orchestrator, etc.).
  *
- * The mock story catalog (`TODAY_HIGHLIGHTS`, `STORIES_BY_CATEGORY`)
- * that used to live here has been removed — every homepage /
- * detail widget now consumes the live `/api/v1/headlines/` and
- * `/api/v1/headlines/<id>/` responses via the `useHeadlines` and
- * `useHeadlineId` hooks and adapts the wire shape into `Highlight`
- * at the orchestrator boundary (see `storyItemToHighlight` in
- * `app/HomeHeadlines.tsx`, `buildDisplayStory` in
- * `components/headline-detail/HeadlineDetailPage.tsx`, and
- * `storyItemToHighlight` in `components/RelatedStoriesList.tsx`).
+ * These are adapter-output shapes — every widget consumes them
+ * after a wire-shape (`StoryItem`, `HeadlineDetail`) gets translated
+ * by an adapter at the orchestrator boundary:
  *
- * What stays here:
- *   - `Category`, `StoryEvent`, `KeyDataPoint`, `Highlight` — the
- *     shared adapter-output shapes those widgets consume.
- *   - `CATEGORY_CONFIG` — design-system label + icon + color tokens
- *     keyed by `Category` so every widget reads the same palette.
+ *   - `storyItemToHighlight` in `app/HomeHeadlines.tsx`
+ *   - `buildDisplayStory`     in `components/headline-detail/HeadlineDetailPage.tsx`
+ *   - `storyItemToHighlight`  in `components/RelatedStoriesList.tsx`
+ *
+ * `CATEGORY_CONFIG` is the design-system label + icon + color token
+ * table keyed by `Category` so every widget reads the same palette.
  *
  * `KeywordItem` is re-exported from the wire type module so
  * `Highlight.keywords?: KeywordItem[]` resolves to the canonical
  * shape without forcing every importer to add a separate
  * `@/lib/api/types/story` import.
+ *
+ * History: this module used to live at `lib/mock/highlights.ts`
+ * and carry a 1,200+ line mock story catalog. The catalog was
+ * removed when every homepage / detail widget moved to live
+ * `/api/v1/headlines/` and `/api/v1/headlines/<id>/` — what
+ * stayed behind was the shared types + the per-category palette,
+ * hence the move out of `lib/mock/` into the top-level `lib/`.
  */
 
-import type { KeywordItem } from "../api/types/story";
+import type { KeywordItem } from "./api/types/story";
 
 export type { KeywordItem };
 

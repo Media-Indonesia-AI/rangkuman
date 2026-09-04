@@ -1,4 +1,4 @@
-import type { StoryEvent } from "@/lib/mock/highlights";
+import type { StoryEvent } from "@/lib/highlight";
 import { StoryTimeline } from "@/components/StoryTimeline";
 
 interface HeadlineDetailTimelineProps {

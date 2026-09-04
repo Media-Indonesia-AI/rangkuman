@@ -8,7 +8,7 @@ import {
   CATEGORY_CONFIG,
   type Category,
   type Highlight,
-} from "@/lib/mock/highlights";
+} from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 import { getRelativeTime } from "@/lib/util/formatDate";
 import { useTopicsContext } from "./topics-provider";

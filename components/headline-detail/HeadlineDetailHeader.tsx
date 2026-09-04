@@ -1,7 +1,7 @@
 "use client";
 
 import { Newspaper, Tag } from "lucide-react";
-import { CATEGORY_CONFIG, type Highlight } from "@/lib/mock/highlights";
+import { CATEGORY_CONFIG, type Highlight } from "@/lib/highlight";
 import { ShareButton } from "@/components/ShareButton";
 import { cn } from "@/lib/utils";
 import { SITE_URL } from "@/lib/og";

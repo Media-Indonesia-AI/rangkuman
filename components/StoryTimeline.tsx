@@ -1,5 +1,5 @@
 import { Clock, Tag } from "lucide-react";
-import { CATEGORY_CONFIG, type StoryEvent } from "@/lib/mock/highlights";
+import { CATEGORY_CONFIG, type StoryEvent } from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
 interface StoryTimelineProps {

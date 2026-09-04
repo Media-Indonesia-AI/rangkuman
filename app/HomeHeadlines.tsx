@@ -6,7 +6,7 @@ import { useHeadlines } from "@/lib/hooks/useHeadlines";
 import {
   type Highlight,
   type Category,
-} from "@/lib/mock/highlights";
+} from "@/lib/highlight";
 import { StoryHero } from "@/components/StoryHero";
 import { StoryEditorial } from "@/components/StoryEditorial";
 import { EmitenStories } from "@/components/saham";
@@ -28,7 +28,7 @@ const LAYER_1_SIZE = 1;
  *  we don't recognise falls back to `"saham"` so the
  *  `CATEGORY_CONFIG[category]` lookup inside those widgets never
  *  returns `undefined`. Mirrors the seven `Category` union members
- *  declared in `lib/mock/highlights.ts`. */
+ *  declared in `lib/highlight.ts`. */
 const KNOWN_CATEGORY_SLUGS: Category[] = [
   "saham",
   "bisnis",

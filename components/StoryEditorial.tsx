@@ -5,7 +5,7 @@ import {
   CATEGORY_CONFIG,
   type Highlight,
   type Category,
-} from "@/lib/mock/highlights";
+} from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
 interface StoryEditorialProps {

@@ -4,7 +4,7 @@ import * as Icons from "lucide-react";
 import {
   CATEGORY_CONFIG,
   type Highlight,
-} from "@/lib/mock/highlights";
+} from "@/lib/highlight";
 import { cn } from "@/lib/utils";
 
 interface StoryHeroProps {
