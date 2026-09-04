@@ -48,29 +48,17 @@ const ARIA_LABEL = "Sektor IHSG";
  *   4. real data       → the populated `<SektorCard />` grid.
  */
 export function SektorSection({
-  showCommodities = true,
   className,
 }: SektorSectionProps) {
-  const user = useCurrentUser();
   const { data, isLoading } = useSectors();
-
-  if (user === null) {
-    return (
-      <div className={className}>
-        <SektorLoginPrompt />
-      </div>
-    );
-  }
 
   const sectors = isLoading ? [] : (data ?? []).map(mapSector);
 
   return (
     <div className={className}>
-      {showCommodities && (
-        <div className="mb-6">
+      <div className="mb-6">
           <CommodityPrices />
-        </div>
-      )}
+      </div>
 
       <section aria-label={ARIA_LABEL} className="mt-2" aria-busy={isLoading}>
         <SectionHeader count={isLoading ? null : sectors.length} />

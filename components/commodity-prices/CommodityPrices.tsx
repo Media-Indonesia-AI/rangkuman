@@ -34,12 +34,19 @@ interface CommodityPricesProps {
  * rendered here is guaranteed to have at least one tile.
  *
  * Render branches:
- *   1. anonymous user     → login prompt (`CommodityLoginPrompt`)
+ *   1. fetch returned `401` → login prompt (`CommodityLoginPrompt`).
+ *      The commodity endpoint is auth-gated, so a logged-out
+ *      visitor or an expired session both land here. The prompt
+ *      replaces the grid entirely so the user sees a clear "log
+ *      in to see this" CTA instead of silently seeing nothing.
  *   2. fetch still in flight → renders `null` (no skeleton, no
  *      header) — the section appears only once data lands, so
  *      the user never sees a half-populated layout
- *   3. data is empty      → empty-state shell (`CommodityPricesEmpty`)
- *   4. real data          → the populated grid (this function),
+ *   3. fetch failed (any non-401 status) → still renders `null`,
+ *      matching the silent "no data" default the hook returns on
+ *      error
+ *   4. data is empty      → empty-state shell (`CommodityPricesEmpty`)
+ *   5. real data          → the populated grid (this function),
  *      wrapped in the `animate-fade-up` keyframe so the section
  *      fades + slides in over 280ms when it first mounts
  *      (defined in `tailwind.config.ts` under
@@ -59,18 +66,13 @@ interface CommodityPricesProps {
  *   - `./CommodityPricesEmpty`
  */
 export function CommodityPrices({ filter }: CommodityPricesProps) {
-  // Auth gate: the `/commodities/commodity-categories` endpoint is
-  // member-only — anonymous visitors get a 401, which the hook
-  // currently swallows and the widget silently renders as an empty
-  // grid (or the empty-state shell on `length === 0`). We replace
-  // the whole tree with a login prompt for anonymous visitors so the
-  // auth requirement is explicit. `useCurrentUser()` is `undefined`
-  // during hydration (no flash), `null` when logged out, and a
-  // `User` once authenticated.
-  const user = useCurrentUser();
-  const { data, isLoading } = useCommodityCategories();
+  const { data, isLoading, status } = useCommodityCategories();
 
-  if (user === null) {
+  // 401 — the commodity endpoint is auth-gated, so a logged-out
+  // visitor or an expired session both end up here. Swap the
+  // grid for the login prompt so the user gets a clear
+  // "log in to see this" CTA instead of silently seeing nothing.
+  if (status === 401) {
     return <CommodityLoginPrompt />;
   }
 
