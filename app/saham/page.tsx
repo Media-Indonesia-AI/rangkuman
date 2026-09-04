@@ -66,9 +66,10 @@ export default function SahamPage() {
     <>
       <Navbar />
 
-      <h1 className="sr-only">{PAGE_TITLE}</h1>
+      <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-4 md:max-w-4xl lg:max-w-6xl lg:px-8">
+        <h1 className="sr-only">{PAGE_TITLE}</h1>
 
-      <div className="mx-auto max-w-7xl px-4 pt-3 sm:px-6 sm:pt-4">
+        <div className="flex items-center justify-start pt-1">
         <SahamSubTabs active={subTab} onChange={setSubTab} />
       </div>
 
@@ -84,10 +85,9 @@ export default function SahamPage() {
       )}
 
       {subTab === "sektor" && (
-        <main className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5">
-          <SektorSection />
-        </main>
+        <SektorSection />
       )}
+        </main>      
       <Footer />
     </>
   );

@@ -88,8 +88,12 @@ export function RecapStockSection({
       {/* Top strip — market mood + mobile top movers + mobile
           headlines. Desktop pushes the per-widget blocks into the
           side rails below, so this strip is intentionally mobile-
-          scoped (`xl:hidden` on the headlines block). */}
-      <div className="mx-auto max-w-7xl px-4 pt-4 sm:px-6 sm:pt-5">
+          scoped (`xl:hidden` on the headlines block).
+
+          Width + horizontal padding come from the page-level
+          `<main>` in `app/saham/page.tsx`; this wrapper only adds
+          vertical breathing room above the strip. */}
+      <div className="pt-4 sm:pt-5">
         <MarketMood />
         <div className="mt-3">
           <MobileTopMovers />
@@ -99,9 +103,16 @@ export function RecapStockSection({
         </div>
       </div>
 
-      <main
+      {/* Recap body — watchlist + 3-column grid (left rail /
+          feed / right rail). `relative z-10` keeps it above the
+          ambient background gradient; vertical spacing (pt/pb)
+          only, since the page main owns the horizontal padding
+          and max-width. `<div>` (not `<main>`) because the page
+          already has a `<main>` and a second one would be
+          invalid HTML. */}
+      <div
         aria-label="Recap harian saham"
-        className="relative z-10 mx-auto max-w-7xl px-4 pb-16 pt-4 sm:px-6 sm:pt-5"
+        className="relative z-10 pb-16 pt-4 sm:pt-5"
       >
         {/* Watchlist preview — renders `null` when empty so
             logged-out visitors and new accounts skip this row
@@ -154,7 +165,7 @@ export function RecapStockSection({
             </div>
           </div>
         </div>
-      </main>
+      </div>
     </div>
   );
 }
