@@ -5,7 +5,7 @@ import { StockCardFeatured } from "./StockCardFeatured";
 import { StockCardFeed } from "./StockCardFeed";
 import { StockCardList } from "./StockCardList";
 import { getStockByKode, type Saham } from "@/lib/mock/stocks";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap } from "@/lib/recap";
 
 export interface StockCardProps {
   recap: DailyRecap;

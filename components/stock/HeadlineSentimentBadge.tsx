@@ -3,7 +3,7 @@
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { useHeadlineDetail } from "./HeadlineDetailProvider";
 import { toSentimen } from "@/lib/util/sentiment";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 
 /**
  * Sentiment badge for the stock hero. Prefers the deep-linked

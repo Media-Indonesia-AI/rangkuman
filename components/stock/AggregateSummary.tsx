@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { DatePicker } from "@/components/DatePicker";
 import { Shimmer } from "@/components/Shimmer";
 import { todayIsoDate } from "@/lib/util/formatDate";
-import type { DailyRecap, Sumber } from "@/lib/mock/recaps";
+import type { DailyRecap, Sumber } from "@/lib/recap";
 import type { TickerArticles } from "@/lib/api/types/stocks";
 import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";

@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import type { HeadlineLast7DaysItem } from "@/lib/api";
 
 /** Page-size for the cross-ticker multi-date stories listing. Mirrors

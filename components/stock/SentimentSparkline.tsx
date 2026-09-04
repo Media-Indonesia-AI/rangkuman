@@ -3,7 +3,7 @@
 import { TrendingUp, Minus, TrendingDown } from "lucide-react";
 import { useMemo } from "react";
 import { format, parseISO } from "date-fns";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import type { HeadlineLast7DaysItem } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";

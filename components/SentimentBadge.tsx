@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import { TrendingUp, Minus, TrendingDown } from "lucide-react";
 
 interface SentimentBadgeProps {

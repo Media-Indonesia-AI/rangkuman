@@ -3,7 +3,7 @@
 import { ArrowUpRight, Flame, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import type { StockTrendingItem } from "@/lib/api";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap } from "@/lib/recap";
 import { hariIniIso } from "@/lib/util/formatDate";
 import { toSentimen } from "@/lib/util/sentiment";
 import { Shimmer } from "../Shimmer";

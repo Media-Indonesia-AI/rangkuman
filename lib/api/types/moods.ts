@@ -4,7 +4,7 @@ import {
   TrendingUp,
   type LucideIcon,
 } from "lucide-react";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 
 // ─── MARKET MOOD ────────────────────────────────────────────────
 
@@ -65,7 +65,7 @@ export interface MarketMoodResponse {
 // API band → UI bucket mapping, the per-bucket styling, and the
 // per-bucket text color all live in one file. Trade-off: this types
 // module now depends on `lucide-react` (for the icon components) and
-// `@/lib/mock/recaps` (for `Sentimen`). The dependency is one-way
+// `@/lib/recap` (for `Sentimen`). The dependency is one-way
 // (moods → icon/recap) and stable, so the cost is small.
 
 /** Per-bucket styling for the mood badge — text, background, border,

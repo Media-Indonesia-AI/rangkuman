@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils";
-import type { Sumber } from "@/lib/mock/recaps";
+import type { Sumber } from "@/lib/recap";
 import { initialsOf } from "@/lib/util/formatMedia";
 
 interface SourceBarProps {

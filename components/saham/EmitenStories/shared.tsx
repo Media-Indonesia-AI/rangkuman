@@ -7,7 +7,7 @@
 import { TrendingDown, TrendingUp } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toSentimen } from "@/lib/util/sentiment";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import type { HeadlineLast7DaysItem } from "@/lib/api";
 
 /** Visual style per sentiment — pill colors + status dot. */

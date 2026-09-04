@@ -26,9 +26,9 @@ import type { HeadlineDetail, StoryFilter } from "@/lib/api";
  *   3. If absent, falls back to the most recent headline for `kode`:
  *      calls `loadHeadlines(1, 0, [{primary_ticker_code, eq, kode}])`,
  *      takes the first story's id, then calls `loadHeadlineById(id)`
- *      on it. The list endpoint is the same one `ArsipSingkat` uses
- *      (different `limit`, so a separate cache slot), so a warm cache
- *      still skips the network round-trip.
+ *      on it. The list endpoint is shared across the page (different
+ *      `limit`s land on separate cache slots), so a warm cache still
+ *      skips the network round-trip.
  *
  * The result is exposed via context so any consumer in the subtree
  * (the hero sentiment badge today, a headline detail section later)
@@ -78,9 +78,10 @@ function HeadlineDetailFetcher({ kode, children }: HeadlineDetailProviderProps) 
     if (!id) {
       // No deep link — derive an id from the latest headlines for
       // this ticker so consumers like the hero sentiment badge still
-      // have a context. The list endpoint is the same one
-      // `<ArsipSingkat>` uses (different `limit`, so a separate cache
-      // slot); a warm cache still skips the network round-trip.
+      // have a context. The list endpoint shares its cache slot with
+      // other pages that ask the same `primary_ticker_code` filter
+      // (different `limit`s land on separate slots); a warm cache
+      // still skips the network round-trip.
       const fallbackFilters: StoryFilter[] = [
         { field: "primary_ticker_code", operator: "eq", value: kode },
       ];

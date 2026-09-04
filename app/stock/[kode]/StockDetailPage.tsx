@@ -145,12 +145,6 @@ export default function StockDetailPage({ params }: PageProps) {
 
             {/* Right rail */}
             <aside className="space-y-5">
-              {/* Live headlines for this ticker, falling back to the
-                  older mock recaps when the fetch returns empty. Self-
-                  contained in <ArsipSingkat> so it shares the same data
-                  conventions as LatestHeadlines. */}
-              {/* <ArsipSingkat kode={kode} /> */}
-
               {/* "Tentang {kode}" info card. Sektor / Harga / Perubahan are
                   wired to the live ticker info; Coverage stays as
                   the widget's default "0 media, 0 artikel"

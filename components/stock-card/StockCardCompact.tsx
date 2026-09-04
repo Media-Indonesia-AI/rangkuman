@@ -3,7 +3,7 @@
 import { SentimentBadge } from "@/components/SentimentBadge";
 import { StockCardOverlayLink } from "./StockCardOverlayLink";
 import { cn } from "@/lib/utils";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap } from "@/lib/recap";
 
 interface StockCardCompactProps {
   /** Recap data — `sahamKode`, `sentimen`, `jumlahBerita`, and

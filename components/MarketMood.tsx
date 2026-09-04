@@ -6,7 +6,7 @@ import {
   sentimentConfig,
 } from "@/lib/api";
 import { useMarketMoodData } from "@/lib/hooks/useMarketMoodData";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import { cn } from "@/lib/utils";
 import { MarketMoodCell } from "./MarketMoodCell";
 import {

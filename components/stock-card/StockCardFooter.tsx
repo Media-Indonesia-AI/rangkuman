@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { SourceBar } from "@/components/SourceBar";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap } from "@/lib/recap";
 
 interface StockCardFooterProps {
   /** Source list from the recap, forwarded to `<SourceBar />` for

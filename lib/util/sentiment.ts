@@ -13,7 +13,7 @@
  */
 
 import type { StorySentiment, TrendingSentiment } from "@/lib/api";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 
 /** English API sentiment → Indonesian UI `Sentimen`. Both API unions
  *  (`StorySentiment`, `TrendingSentiment`) are structurally identical,

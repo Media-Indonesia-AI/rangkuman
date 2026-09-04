@@ -8,7 +8,7 @@ import { StockCardOverlayLink } from "./StockCardOverlayLink";
 import { cn } from "@/lib/utils";
 import { formatSingkat } from "@/lib/util/formatDate";
 import { pickHeroGradient } from "@/lib/util/heroGradient";
-import type { DailyRecap } from "@/lib/mock/recaps";
+import type { DailyRecap } from "@/lib/recap";
 
 interface StockCardFeedProps {
   /** Recap data — every field is rendered on the card. */

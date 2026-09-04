@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { BookOpen } from "lucide-react";
 import type { StoryItem } from "@/lib/api";
-import type { Sentimen } from "@/lib/mock/recaps";
+import type { Sentimen } from "@/lib/recap";
 import { EVENTS, track } from "@/lib/analytics-events";
 import { toSentimen } from "@/lib/util/sentiment";
 import { cn } from "@/lib/utils";
