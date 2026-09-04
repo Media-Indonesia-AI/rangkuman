@@ -106,7 +106,6 @@ rangkuman-news/
 │   ├── MacroIndicators.tsx           # IHSG, USD/IDR, dll untuk /ekonomi/
 │   ├── WorldIndices.tsx              # S&P 500, Nikkei, dll untuk /global/
 │   │
-│   ├── CryptoInfoBar.tsx             # 1-line crypto info (F&G, sparklines, BTC.D)
 │   ├── CryptoSubNav.tsx              # /crypto/ Recap | Pasar tabs
 │   ├── sektor/                       # /saham/ sub-tab sector grid (no standalone /sektor/ route)
 │   │   ├── SektorSection.tsx          # section + grid orchestration
@@ -270,7 +269,7 @@ Lihat `lib/mock/highlights.ts` untuk schema lengkap.
 | `ekonomi` | Ekonomi | MacroIndicators (IHSG, USD/IDR, BI Rate, dll) |
 | `kebijakan` | Kebijakan | PolicyTracker (8 trending topics) |
 | `global` | Global | WorldIndices + MarketSnapshot |
-| `crypto` | Crypto | CryptoInfoBar + sub-tab Recap/Pasar |
+| `crypto` | Crypto | sub-tab Recap/Pasar |
 
 ### 5. localStorage schema
 
@@ -376,9 +375,10 @@ npm run build
 3. `/kebijakan/[slug]/` auto-generates via `generateStaticParams()`
 
 ### Add a new crypto coin
-1. Edit `lib/mock/crypto.ts` → tambah entry di `COINS` + `COIN_CATEGORIES`
-2. Tambah recap di `coinRecaps`
-3. Update `STORIES_BY_CATEGORY.crypto` di `lib/mock/highlights.ts`
+1. Coin catalog & top-tickers come from `GET coin/ticker/` and
+   `GET coin/top-tickers/` (`lib/api/coin.ts`). New coins surface
+   automatically once the backend ships them — no client-side edit
+   needed.
 
 ### Tambah halaman baru
 1. `mkdir -p app/[nama]`

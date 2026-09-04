@@ -1,14 +1,12 @@
 /**
  * Pure data transforms for `TopTicker` — entry mappers, the
- * cross-list shuffle, the crypto recap-href lookup, and the
- * resolved mocks. No React, no I/O — easy to unit-test in
- * isolation.
+ * cross-list shuffle, and the crypto recap-href lookup. No
+ * React, no I/O — easy to unit-test in isolation.
  *
- * Entry mappers normalize the three wire shapes (live stock ticker,
- * mock stock, live coin ticker) into one `TickerRow` so the render
- * loop never has to special-case the source.
+ * Entry mappers normalize the live wire shapes (stock ticker,
+ * coin ticker) into one `TickerRow` so the render loop never
+ * has to special-case the source.
  */
-import { COINS, type Coin } from "@/lib/mock/crypto";
 import { stocks as mockStocks, type Saham } from "@/lib/mock/stocks";
 import { COIN_KODE_TO_STORY_ID } from "@/components/crypto-page/cryptoStories";
 import type { TickerRow } from "./types";
@@ -77,17 +75,6 @@ export function tickerToEntry(t: {
   };
 }
 
-/** Adapter: mock coin catalog → TickerRow. */
-export function coinToEntry(c: Coin): TickerRow {
-  return {
-    kind: "crypto",
-    kode: c.kode,
-    nama: c.nama,
-    price: c.price,
-    changePercent: c.changePercent,
-  };
-}
-
 /** Adapter: mock stock catalog → TickerRow. */
 export function stockMockToEntry(s: Saham): TickerRow {
   return {
@@ -129,8 +116,6 @@ export function cryptoRecapHref(kode: string): string {
 }
 
 /** Mock stock rows pre-shaped as `TickerRow`. The live hook
- *  returns this same shape so the row-source has one type. */
+ *  returns this same shape so the row-source has one type.
+ *  Used as the fallback when `useTickers()` returns empty. */
 export const mockStockRows: TickerRow[] = mockStocks.map(stockMockToEntry);
-
-/** Mock coin rows pre-shaped as `TickerRow`. */
-export const mockCoinRows: TickerRow[] = COINS.map(coinToEntry);

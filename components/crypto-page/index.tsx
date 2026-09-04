@@ -3,7 +3,6 @@
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { CryptoSubNav } from "@/components/CryptoSubNav";
-import { CryptoInfoBar } from "@/components/CryptoInfoBar";
 import { useCryptoTabSession } from "@/lib/hooks/useCryptoTabSession";
 import { CryptoRecapTab } from "./CryptoRecapTab";
 import { CryptoPasarTab } from "./CryptoPasarTab";
@@ -13,11 +12,9 @@ import { CryptoPasarTab } from "./CryptoPasarTab";
  *   - `<Navbar />` / `<Footer />` — chrome,
  *   - `<CryptoSubNav />` — the Recap | Pasar tab switcher (state
  *     owned here, persisted via `useCryptoTabSession`),
- *   - `<CryptoInfoBar />` — F&G gauge + 3 sparklines strip,
  *   - `<CryptoRecapTab />` — editorial pillar (live topic feed +
  *     lead / sedang-terjadi / cerita-lain layers),
- *   - `<CryptoPasarTab />` — market pillar (Top Movers +
- *     Categories).
+ *   - `<CryptoPasarTab />` — market pillar (Categories).
  *
  * Each tab widget owns its own data fetching and rendering —
  * `CryptoPage` is purely a chrome-and-switching shell.
@@ -49,9 +46,6 @@ export default function CryptoPage() {
             <CryptoSubNav active={subTab} onChange={setSubTab} />
           )}
         </div>
-
-        {/* 1-line info bar — F&G gauge + 3 sparklines (BTC/ETH/SOL) */}
-        {/* <CryptoInfoBar className="mt-3" /> */}
 
         {subTab === "top" && <CryptoRecapTab />}
         {subTab === "pasar" && <CryptoPasarTab />}

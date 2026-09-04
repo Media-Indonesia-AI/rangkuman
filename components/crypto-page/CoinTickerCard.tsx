@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { Coin } from "@/lib/mock/crypto";
+import type { Coin } from "./cryptoFormatters";
 import { cn } from "@/lib/utils";
 import { formatPrice, HUE_BG } from "./cryptoFormatters";
 import { COIN_KODE_TO_STORY_ID } from "./cryptoStories";

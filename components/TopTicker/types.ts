@@ -23,10 +23,10 @@ export type TopTickerLabel = "saham" | "crypto" | (string & {});
 export type TopTickerVariant = "stocks" | "crypto" | "home";
 
 /** Unified row shape — both the stock and crypto feeds land here
- *  via `tickerToEntry` / `coinToEntry` / `coinTickerToEntry`. The
- *  `kind` tag drives the per-row `href` (stocks → `/stock/<kode>`,
- *  crypto → the recap-detail story-id lookup) without forcing the
- *  render loop to special-case the link shape. */
+ *  via `tickerToEntry` / `coinTickerToEntry`. The `kind` tag
+ *  drives the per-row `href` (stocks → `/stock/<kode>`, crypto
+ *  → the recap-detail story-id lookup) without forcing the render
+ *  loop to special-case the link shape. */
 export interface TickerRow {
   kind: "stock" | "crypto";
   kode: string;

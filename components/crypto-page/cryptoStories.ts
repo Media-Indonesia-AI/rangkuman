@@ -7,7 +7,7 @@
  * `/crypto/{date}` views.
  */
 
-import type { Sentimen } from "@/lib/mock/crypto";
+import type { Sentimen } from "@/lib/mock/recaps";
 import type { StoryItem } from "@/lib/api";
 import { toSentimen } from "@/lib/util/sentiment";
 import { getRelativeTime } from "@/lib/util/formatDate";

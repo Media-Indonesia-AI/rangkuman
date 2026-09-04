@@ -30,7 +30,6 @@ import type { TickerRow } from "./types";
 import {
   TOP_N_PER_SIDE,
   coinTickerToEntry,
-  mockCoinRows,
   mockStockRows,
   shuffle,
   tickerToEntry,
@@ -61,8 +60,12 @@ export function useTopTickerRows(effectiveLabel: string | undefined): TickerRow[
     [apiStocks],
   );
 
+  // Crypto branch: no mock fallback now that `lib/mock/crypto`
+  // is gone — the marquee renders nothing while the backend
+  // load is in flight (or after an error), matching the
+  // backend-first contract every other widget already follows.
   const cryptoSource: TickerRow[] = useMemo(
-    () => (apiCoins.length > 0 ? apiCoins.map(coinTickerToEntry) : mockCoinRows),
+    () => apiCoins.map(coinTickerToEntry),
     [apiCoins],
   );
 
