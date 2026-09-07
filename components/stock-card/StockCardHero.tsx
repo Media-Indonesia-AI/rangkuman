@@ -54,7 +54,13 @@ export function StockCardHero({
       className={cn(
         "relative block shrink-0 overflow-hidden",
         isFeatured
-          ? "w-[120px] sm:w-[160px]"
+          // Featured renders at every width, so the 120px hero shares
+          // a flex row with the card body on 320px screens. Cap it at
+          // a fraction of the container so the text column always
+          // keeps usable space instead of being squeezed to nothing.
+          ? "w-[min(120px,30%)] sm:w-[160px]"
+          // Non-featured is `hidden` below `sm` (640px), so a fixed
+          // 150px is never in play on narrow viewports.
           : "hidden w-[150px] sm:block",
       )}
       aria-hidden

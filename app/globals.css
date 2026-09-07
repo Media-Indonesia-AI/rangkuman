@@ -170,6 +170,27 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* Text scaling.
+   *
+   * Android Chrome applies "font boosting" — it silently inflates
+   * text it judges too small for the viewport, independent of the
+   * user's own font-size setting. That inflation is unpredictable
+   * and breaks fixed-height rows (e.g. the navbar's `h-14`) and the
+   * many explicit `text-[13px]` / `text-[10px]` sizes this design
+   * relies on. Pinning to 100% opts out of the heuristic.
+   *
+   * This does NOT stop the user's own OS-level font-size or browser
+   * zoom from taking effect — those remain fully honoured, which is
+   * why it can be set safely without an accessibility cost.
+   *
+   * `-webkit-` for Safari/Chrome, `-moz-` for Firefox, unprefixed
+   * for forward compatibility. */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
   /* Focus ring */
   *:focus-visible {
     @apply outline-none ring-2 ring-brand ring-offset-2;

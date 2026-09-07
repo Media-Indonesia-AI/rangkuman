@@ -219,7 +219,12 @@ export function DatePicker({
         <div
           role="dialog"
           aria-label="Pilih tanggal"
-          className="absolute left-0 top-full z-50 mt-1.5 w-[280px] rounded-lg border border-border bg-bg-secondary p-3 shadow-2xl"
+          /* Fluid up to 280px, but never wider than the viewport
+             minus the page gutter (`px-4` on both sides = 2rem).
+             Absolutely-positioned, so it can't inherit a parent's
+             width — without the cap it overflows on 320px-wide
+             screens (Galaxy Fold closed, older budget Androids). */
+          className="absolute left-0 top-full z-50 mt-1.5 w-[min(280px,calc(100vw-2rem))] rounded-lg border border-border bg-bg-secondary p-3 shadow-2xl"
         >
           {/* Month nav */}
           <div className="mb-2 flex items-center justify-between">

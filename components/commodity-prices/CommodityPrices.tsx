@@ -110,7 +110,10 @@ export function CommodityPrices({ filter }: CommodityPricesProps) {
       // `fade-up` keyframe: opacity 0 → 1, translateY(6px) → 0,
       // 280ms ease-out, `both` so the starting state holds before
       // the animation runs (no flash of fully-opaque content).
-      className="animate-fade-up"
+      // `mt-6` matches the top gap `CommodityLoginPrompt` already
+      // sets, so the section sits at the same offset whichever
+      // branch renders.
+      className="mt-6 animate-fade-up"
     >
       {/* Header — compact, single line */}
       <header className="mb-2 flex items-end justify-between gap-3 border-b border-border-strong pb-1.5">

@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Suspense } from "react";
 import { NewsletterFloatingPill } from "@/components/NewsletterFloatingPill";
@@ -24,6 +24,28 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
   variable: "--font-mono",
 });
+
+/**
+ * Viewport contract for every route.
+ *
+ * `width: device-width` + `initialScale: 1` make the layout measure
+ * itself in CSS pixels rather than a synthetic ~980px desktop canvas,
+ * so mobile-first Tailwind breakpoints resolve against the real
+ * viewport. (These match Next.js's own defaults — declared here so
+ * the contract is explicit and survives a Next.js default change.)
+ *
+ * Deliberately NO `maximumScale` / `userScalable: false`: pinning
+ * either one disables pinch-zoom, which fails WCAG 2.1 SC 1.4.4
+ * (Level AA) and is flagged by Lighthouse. iOS Safari has ignored
+ * `user-scalable=no` since iOS 10 regardless, so locking scale costs
+ * accessibility without buying cross-platform consistency. Layout
+ * that breaks under zoom is a fluid-width bug — fix the width, not
+ * the user's ability to zoom.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://rangkuman.news"),
