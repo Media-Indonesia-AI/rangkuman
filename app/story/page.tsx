@@ -5,6 +5,7 @@ export const metadata: Metadata = {
   title: "Stock Story · Rangkuman",
   description:
     "Cerita perkembangan emiten pilihan dalam jangka panjang: akuisisi, transformasi digital, ekspansi, dan lain-lain.",
+  alternates: { canonical: "/story/" },
   openGraph: {
     title: "Stock Story · Rangkuman",
     description: "Cerita perkembangan emiten dalam jangka panjang.",
