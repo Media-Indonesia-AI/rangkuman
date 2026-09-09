@@ -56,6 +56,17 @@ export const metadata: Metadata = {
     description:
       "Rangkuman bisnis & ekonomi Indonesia dari 11 sumber, dikurasi AI.",
   },
+  // Self-referencing canonical for the homepage. `saham`, `crypto`,
+  // and `trending` are client-rendered and inherit this metadata, so
+  // they get a self-canonical too (Google can then treat the apex
+  // HTTPS URL as the definitive one — fixing the "Duplicate without
+  // user-selected canonical" report on http://rangkuman.news/).
+  // Child routes that need a different canonical (headline detail,
+  // stock, sektor, kontak-kerjasama) override `alternates.canonical`
+  // in their own `generateMetadata`.
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     // Two favicons, one per `prefers-color-scheme`. Browsers that
     // respect the media query (Safari, Firefox, Chrome on macOS /

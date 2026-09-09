@@ -4,10 +4,11 @@ export const metadata: Metadata = {
   title: "Syarat & Ketentuan · Rangkuman",
   description:
     "Syarat & Ketentuan penggunaan Rangkuman — aturan main, hak pengguna, dan batasan layanan.",
+  alternates: { canonical: "/syarat-ketentuan/" },
   openGraph: {
     title: "Syarat & Ketentuan · Rangkuman",
     description: "Aturan main & batasan layanan Rangkuman.",
-    url: "https://rangkuman.news/syarat-ketentuan",
+    url: "https://rangkuman.news/syarat-ketentuan/",
     siteName: "Rangkuman",
     locale: "id_ID",
     type: "website",
