@@ -81,11 +81,14 @@ export default function SahamPage() {
           recapDate={effectiveDate}
           onDateChange={setIsoDate}
           topicId={sahamTopicId ?? undefined}
+          className="pt-8 sm:pt-4 lg:pt-6"
         />
       )}
 
       {subTab === "sektor" && (
-        <SektorSection />
+        <SektorSection 
+          className="pt-8 sm:pt-4 lg:pt-6"
+        />
       )}
         </main>      
       <Footer />

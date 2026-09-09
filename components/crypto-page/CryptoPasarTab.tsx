@@ -14,7 +14,7 @@ import { CryptoSection } from "@/components/CryptoSection";
  */
 export function CryptoPasarTab() {
   return (
-    <div className="mt-5 space-y-6">
+    <div className="mt-5 space-y-6 pt-8 sm:mt-6 sm:space-y-8 lg:mt-8 lg:space-y-10">
       {/* Categories */}
       <CryptoSection />
     </div>

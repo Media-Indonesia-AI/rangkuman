@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Inbox, Flame, ClipboardList } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { StoryFilter } from "@/lib/api";
 import { useTopicsContext } from "@/components/topics-provider";
 import { useHeadlines } from "@/lib/hooks/useHeadlines";
@@ -90,11 +91,32 @@ export function CryptoRecapTab() {
   const lead = sourceStories[0];
   const beritaTerkini = sourceStories.slice(1);
 
+  // Mirror the bar's idle/scrolled chrome state so the recap
+  // content can match its top padding. At scroll 0 the bar
+  // carries extra `pb-8` (visible breathing room below the
+  // pill) and no backdrop, so we hold the first section of the
+  // tab a little further from the bar; once the user starts
+  // scrolling and the bar becomes a compact translucent strip,
+  // the tab content pulls back up to its natural top.
+  const [hasChrome, setHasChrome] = useState(false);
+
+  useEffect(() => {
+    const update = () => setHasChrome(window.scrollY > 0);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, []);
+
   return (
-    <>
+    <div
+      className={cn(
+        "transition-[padding]",
+        hasChrome ? "pt-4" : "pt-10",
+      )}
+    >
       {/* 🔥 LAYER 1: HEADLINE — 1 big card (live or fallback) */}
       {lead && (
-        <section aria-label="Headline" className="mt-4">
+        <section aria-label="Headline">
           <CryptoSectionHeader
             icon={<Flame className="h-3 w-3" aria-hidden />}
             title="Headline"
@@ -155,6 +177,6 @@ export function CryptoRecapTab() {
           </p>
         </div>
       )}
-    </>
+    </div>
   );
 }
