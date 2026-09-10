@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { cn } from "@/lib/utils";
+import { cn, scrollToTop } from "@/lib/utils";
 
 export type CryptoSubNavValue = "top" | "pasar";
 
@@ -126,9 +126,16 @@ export function CryptoSubNav({ active, onChange, className }: CryptoSubNavProps)
                 type="button"
                 role="tab"
                 aria-selected={isActive}
-                onClick={() => onChange(t.value)}
+                onClick={() => {
+                onChange(t.value);
+                // Wait ~300ms so the user perceives the new tab
+                // opening before the smooth scroll starts — long
+                // enough to register the swap, short enough to
+                // still feel responsive.
+                setTimeout(() => scrollToTop(), 300);
+              }}
                 className={cn(
-                  "rounded px-4 py-2 text-sm font-semibold transition-colors",
+                  "rounded px-4 py-2 text-sm font-semibold smooth-element",
                   isActive
                     ? "bg-bg-tertiary text-text-primary"
                     : "text-text-muted hover:text-text-primary",

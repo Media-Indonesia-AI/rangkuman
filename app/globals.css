@@ -189,6 +189,7 @@
     -webkit-text-size-adjust: 100%;
     -moz-text-size-adjust: 100%;
     text-size-adjust: 100%;
+    scroll-behavior: smooth;
   }
 
   /* Focus ring */
@@ -337,5 +338,12 @@
       rgba(255, 255, 255, 0.12) 50%,
       transparent 100%
     );
+  }
+
+  /* Add this class to any element you want to animate.
+     Used by the tab-strip scroll-to-top action so the click
+     feedback shares the same easing as the page scroll. */
+  .smooth-element {
+    transition: all 1000ms cubic-bezier(0.4, 0.0, 0.2, 1.0);
   }
 }

@@ -58,3 +58,13 @@ export function slugify(text: string): string {
     .replace(/\s+/g, "-")
     .slice(0, 80);
 }
+
+/** Smoothly scroll the window to the top.
+ *  Falls back to an instant jump when the user has requested
+ *  reduced motion. */
+export function scrollToTop(): void {
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}

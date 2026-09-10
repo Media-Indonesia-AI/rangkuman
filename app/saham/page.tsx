@@ -70,8 +70,8 @@ export default function SahamPage() {
         <h1 className="sr-only">{PAGE_TITLE}</h1>
 
         <div className="flex items-center justify-start pt-1">
-        <SahamSubTabs active={subTab} onChange={setSubTab} />
-      </div>
+          <SahamSubTabs active={subTab} onChange={setSubTab} />
+        </div>
 
       {subTab === "recap" && (
         <RecapStockSection
@@ -81,13 +81,13 @@ export default function SahamPage() {
           recapDate={effectiveDate}
           onDateChange={setIsoDate}
           topicId={sahamTopicId ?? undefined}
-          className="pt-8 sm:pt-4 lg:pt-6"
+          className="pt-8 sm:pt-6 lg:pt-6"
         />
       )}
 
       {subTab === "sektor" && (
         <SektorSection 
-          className="pt-8 sm:pt-4 lg:pt-6"
+          className="pt-8 sm:pt-6 lg:pt-6"
         />
       )}
         </main>      
