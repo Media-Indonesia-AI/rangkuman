@@ -66,7 +66,7 @@ export default function SahamPage() {
     <>
       <Navbar />
 
-      <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-4 md:max-w-4xl lg:max-w-6xl lg:px-8">
+      <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-4 md:max-w-4xl lg:max-w-7xl lg:px-8">
         <h1 className="sr-only">{PAGE_TITLE}</h1>
 
         <div className="flex items-center justify-start pt-1">

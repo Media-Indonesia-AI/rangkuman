@@ -11,7 +11,7 @@ export default function HomePage() {
     <>
       <Navbar />
 
-      <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-6xl lg:px-8">
+      <main className="relative z-10 mx-auto max-w-3xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 md:max-w-4xl lg:max-w-7xl lg:px-8">
         {/* FIX 4: Sr-only H1 for SEO — visible heading is in section labels below */}
         <h1 className="sr-only">
           Rangkuman &mdash; Baca lebih sedikit, tahu lebih banyak
