@@ -152,6 +152,20 @@ export function Navbar() {
     return pathname.startsWith(href);
   };
 
+  // 1. Start with a safe default size for the server render (e.g., mobile size 32)
+  const [logoSize, setLogoSize] = useState(32);
+
+  useEffect(() => {
+    // 2. Update the logo size based on the actual window width after mount
+    const updateLogoSize = () => {
+      setLogoSize(window.innerWidth >= 1024 ? 42 : 32);
+    };
+
+    updateLogoSize();
+    window.addEventListener("resize", updateLogoSize);
+    return () => window.removeEventListener("resize", updateLogoSize);
+  }, []);
+
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/80">
       <nav className="mx-auto flex h-14 max-w-7xl items-center gap-3 px-4 sm:gap-6 sm:px-6">
@@ -159,7 +173,7 @@ export function Navbar() {
             of the auto-ring (which Brand only adds for size ≥ 40
             by default) so the icon sits flush against the navbar
             background. */}
-        <Brand logoSize={window.innerWidth >= 1024 ? 42 : 32} withRing={false} />
+        <Brand logoSize={logoSize} withRing={false} />
 
         {/* Main links — visible on every screen size so the user
             can reach Saham / Crypto from the navbar directly,
