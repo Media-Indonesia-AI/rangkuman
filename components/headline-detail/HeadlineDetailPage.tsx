@@ -241,7 +241,7 @@ export function HeadlineDetailPage({ storyId, backLabel }: HeadlineDetailPagePro
     <>
       <Navbar />
 
-      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-6xl lg:px-8">
+      <main className="relative z-10 mx-auto max-w-5xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-7xl lg:px-8">
         {/* sr-only H1 — story title is the page context, brand is the H1 */}
         <h1 className="sr-only">
           Rangkuman &mdash; Cerita: {displayStory.title}

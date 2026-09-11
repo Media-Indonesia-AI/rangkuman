@@ -185,7 +185,7 @@ function StoryPageContent() {
     <>
       <Navbar />
 
-      <main className="relative z-10 mx-auto max-w-4xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-6xl lg:px-8">
+      <main className="relative z-10 mx-auto max-w-4xl px-4 pb-16 pt-3 sm:px-6 sm:pt-5 lg:max-w-7xl lg:px-8">
         {/* Sr-only H1 for SEO */}
         <h1 className="sr-only">{h1Text}</h1>
 
