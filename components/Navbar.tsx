@@ -191,7 +191,7 @@ export function Navbar() {
 
         {/* Search bar — sits between nav and right actions */}
         <div className="ml-auto hidden flex-1 justify-center sm:flex sm:max-w-md">
-          <SearchBar />
+          {user && <SearchBar />}
         </div>
 
         {/* Right side actions */}
