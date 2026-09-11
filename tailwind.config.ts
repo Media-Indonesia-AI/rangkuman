@@ -109,6 +109,9 @@ const config: Config = {
         "fade-up": "fade-up 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both",
         "pulse-dot": "pulse-dot 1.5s ease-in-out infinite",
       },
+      screens: {
+        'xs': '390px',
+      },
     },
   },
   plugins: [],

@@ -48,7 +48,7 @@ const PROFILE_MENU_SECTIONS: {
       { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
       { href: "/profile/whatsapp/", label: "Kirim Berita ke WhatsApp", Icon: MessageCircle },
     ],
-  },
+  }
 ];
 
 /** Shared className for the drawer's profile menu links. Pulled
@@ -196,7 +196,9 @@ export function Navbar() {
 
         {/* Right side actions */}
         <div className="ml-auto flex items-center gap-2 sm:ml-2">
-          <ThemeToggle />
+          <div className="hidden xs:inline-flex">
+            <ThemeToggle />
+          </div>
 
           {user ? (
             // Profile pill — hidden on mobile because the same
@@ -349,6 +351,14 @@ export function Navbar() {
                 ))}
               </Fragment>
             ))}
+
+            <div className="xs:hidden" >
+              <li className="border-t border-border pt-1.5" />
+              <div className="flex justify-between items-center w-full pb-1.5 px-3">
+                <span className="text-sm font-medium text-text-secondary">Theme</span>
+                <ThemeToggle />
+              </div>
+            </div>
 
           {/* Logout — pinned at the bottom of the menu list so the
               destructive action is the last thing the user sees,
