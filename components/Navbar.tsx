@@ -159,7 +159,7 @@ export function Navbar() {
             of the auto-ring (which Brand only adds for size ≥ 40
             by default) so the icon sits flush against the navbar
             background. */}
-        <Brand logoSize={42} withRing={false} />
+        <Brand logoSize={window.innerWidth >= 1024 ? 42 : 32} withRing={false} />
 
         {/* Main links — visible on every screen size so the user
             can reach Saham / Crypto from the navbar directly,

@@ -58,9 +58,7 @@ export function Brand({
 
       {!full && (
         <span
-          className="flex items-baseline whitespace-nowrap"
-          style={{ fontSize: logoSize >= 40 ? 18 : 14 }}
-        >
+          className="flex items-baseline whitespace-nowrap text-[13px] sm:text-[16px] lg:text-[18px]">
           <span className="font-semibold tracking-tight text-text-primary">
             Rangkuman
           </span>
