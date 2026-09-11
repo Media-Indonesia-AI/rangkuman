@@ -191,12 +191,12 @@ export function Navbar() {
 
         {/* Search bar — sits between nav and right actions */}
         <div className="ml-auto hidden flex-1 justify-center sm:flex sm:max-w-md">
-          {user && <SearchBar />}
+          {user && <SearchBar className="hidden md:inline-flex" />}
         </div>
 
         {/* Right side actions */}
         <div className="ml-auto flex items-center gap-2 sm:ml-2">
-          <div className="hidden xs:inline-flex">
+          <div className="hidden md:inline-flex">
             <ThemeToggle />
           </div>
 
@@ -222,7 +222,7 @@ export function Navbar() {
           ) : (
             <Link
               href="/login"
-              className="inline-flex h-9 items-center rounded-md bg-brand px-3 text-[13px] font-semibold text-bg-primary transition-colors hover:bg-brand-hover"
+              className="hidden md:inline-flex h-9 items-center rounded-md bg-brand px-3 text-[13px] font-semibold text-bg-primary transition-colors hover:bg-brand-hover"
             >
               Masuk
             </Link>
@@ -233,14 +233,14 @@ export function Navbar() {
               (no profile/watchlist/logout entries), so the toggle
               would just open a near-empty panel — the "Masuk"
               button next to it is the action they actually need. */}
-          {user && (
+          {/* {user && ( */}
             <button
               type="button"
               onClick={() => setMenuOpen((v) => !v)}
               aria-label={menuOpen ? "Tutup menu" : "Buka menu"}
               aria-expanded={menuOpen}
               aria-controls="mobile-menu"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden"
+              className={'inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-bg-secondary text-text-primary transition-colors hover:border-border-strong md:hidden'}
             >
               {menuOpen ? (
                 <X className="h-4 w-4" aria-hidden />
@@ -248,7 +248,7 @@ export function Navbar() {
                 <Menu className="h-4 w-4" aria-hidden />
               )}
             </button>
-          )}
+          {/* )} */}
         </div>
       </nav>
 
@@ -307,21 +307,13 @@ export function Navbar() {
         )}
       >
         {/* Mobile search */}
+        {user && (
         <div className="border-b border-border px-4 py-3">
           <SearchBar />
-        </div>
+        </div>  
+        )}
+        
         <ul className="space-y-1 px-4 py-3">
-          {!user && (
-            <li>
-              <Link
-                href="/login"
-                className="flex items-center justify-between rounded-md bg-brand-soft px-3 py-2.5 text-[14px] font-medium text-brand"
-              >
-                <span>Masuk / Daftar</span>
-              </Link>
-            </li>
-          )}
-
           {/* Profile menu items — only visible when logged in.
               Each section (header + link rows) is rendered from
               `PROFILE_MENU_SECTIONS`, so the structure flows from
@@ -329,7 +321,7 @@ export function Navbar() {
               rows share `DRAWER_LINK_CLASSES` + the `aria-current`
               derived from the active pathname so they stay in
               sync. */}
-          {user &&
+          {user && 
             PROFILE_MENU_SECTIONS.map(({ section, items }) => (
               <Fragment key={section}>
                 <li className="px-2 pt-3 pb-1">
@@ -352,12 +344,25 @@ export function Navbar() {
               </Fragment>
             ))}
 
-            <div className="xs:hidden" >
-              <li className="border-t border-border pt-1.5" />
+            <div className="md:hidden" >
+              {user && (
+                <li className="border-t border-border pt-1.5" />
+              )}
               <div className="flex justify-between items-center w-full pb-1.5 px-3">
                 <span className="text-sm font-medium text-text-secondary">Theme</span>
                 <ThemeToggle />
               </div>
+
+              {!user && (
+            <li>
+              <Link
+                href="/login"
+                className="flex items-center justify-between rounded-md bg-brand-soft px-3 py-2.5 text-[14px] font-medium text-brand"
+              >
+                <span>Masuk / Daftar</span>
+              </Link>
+            </li>
+          )}
             </div>
 
           {/* Logout — pinned at the bottom of the menu list so the
