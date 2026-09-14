@@ -2,6 +2,7 @@
 
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
+import { articleHref, isUrl } from "@/lib/util/linkify";
 import { Shimmer } from "@/components/Shimmer";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import type { EmbeddedStory, StoryArticle } from "@/lib/api";
@@ -20,12 +21,6 @@ interface HeadlineDetailSourcesProps {
 interface MediaGroup {
   media: string;
   items: StoryArticle[];
-}
-
-// `source_url` may arrive as either a hostname (`market.bisnis.com`)
-// or a full canonical URL. Anchor `href` needs a scheme, so we normalize.
-function articleHref(sourceUrl: string): string {
-  return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
 }
 
 /** Flatten `stories → articles` and bucket them by `source_name`,
@@ -143,29 +138,49 @@ export function HeadlineDetailSources({
                 </span>
               </header>
               <ul className="divide-y divide-border">
-                {items.map((a) => (
-                  <li key={`${a.title}::${a.source_url}`}>
-                    <a
-                      href={articleHref(a.source_url)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group block px-4 py-3 transition-colors hover:bg-bg-tertiary"
-                    >
-                      <h4 className="text-[14px] font-semibold leading-snug text-text-primary group-hover:text-brand">
-                        {a.title}
-                        <ArrowUpRight
-                          className="ml-1 inline-block h-3 w-3 text-text-muted opacity-0 transition-opacity group-hover:opacity-100"
-                          aria-hidden
-                        />
-                      </h4>
-                      {a.excerpt && (
-                        <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
-                          {a.excerpt}
-                        </p>
+                {items.map((a) => {
+                  // Verify the URL is an actual http(s) URL before
+                  // mounting an `<a>` — gates out empty values, bare
+                  // hostnames that haven't been normalized, and any
+                  // malformed / hostile scheme the wire might hand us.
+                  const hasSourceUrl = isUrl(a.source_url);
+                  return (
+                    <li key={`${a.title}::${a.source_url}`}>
+                      {hasSourceUrl ? (
+                        <a
+                          href={articleHref(a.source_url)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group block px-4 py-3 transition-colors hover:bg-bg-tertiary"
+                        >
+                          <h4 className="text-[14px] font-semibold leading-snug text-text-primary group-hover:text-brand">
+                            {a.title}
+                            <ArrowUpRight
+                              className="ml-1 inline-block h-3 w-3 text-text-muted opacity-0 transition-opacity group-hover:opacity-100"
+                              aria-hidden
+                            />
+                          </h4>
+                          {a.excerpt && (
+                            <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
+                              {a.excerpt}
+                            </p>
+                          )}
+                        </a>
+                      ) : (
+                        <div className="block px-4 py-3">
+                          <h4 className="text-[14px] font-semibold leading-snug text-text-primary">
+                            {a.title}
+                          </h4>
+                          {a.excerpt && (
+                            <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
+                              {a.excerpt}
+                            </p>
+                          )}
+                        </div>
                       )}
-                    </a>
-                  </li>
-                ))}
+                    </li>
+                  );
+                })}
               </ul>
             </div>
           ))}

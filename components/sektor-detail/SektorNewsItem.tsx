@@ -2,6 +2,7 @@
 
 import { Minus, TrendingDown, TrendingUp } from "lucide-react";
 import type { TickerArticles } from "@/lib/api";
+import { articleHref, isUrl } from "@/lib/util/linkify";
 import type { SektorDisplayStock } from "@/lib/util/sectorMappers";
 import { cn } from "@/lib/utils";
 
@@ -16,16 +17,6 @@ interface SektorNewsItemProps {
    *  company name header and the byline's directional icon. Just
    *  context — the row itself links to the article, not the stock. */
   stock: SektorDisplayStock;
-}
-
-/** Normalize a publisher `source_url` to a fully-qualified `https://`
- *  URL. The wire sometimes hands us a bare hostname (e.g.
- *  `market.bisnis.com`); we prepend the protocol in that case so
- *  the browser treats the click as an external link instead of a
- *  same-origin navigation. Same convention as
- *  `<ArticlesByMediaWidget />`. */
-function articleHref(sourceUrl: string): string {
-  return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
 }
 
 /**
@@ -68,6 +59,10 @@ export function SektorNewsItem({ story, stock }: SektorNewsItemProps) {
   const stockPositive = stock.changePercent > 0;
   const stockFlat = stock.changePercent === 0;
 
+  // Verify before mounting the click target — empty / malformed /
+  // hostile URLs fall through to the non-clickable `<div>` branch
+  // below so the cursor + hover affordance don't lie.
+  const hasSourceUrl = isUrl(story.source_url);
   // Click target — the publisher's article URL, normalized via
   // `articleHref`. Opens in a new tab so the reader keeps their
   // place on the sector detail page.
@@ -89,54 +84,75 @@ export function SektorNewsItem({ story, stock }: SektorNewsItemProps) {
   // on a fallback (em-dash) without the chip collapsing.
   const timeLabel = formatTimeOfDay(story.recap_date);
 
+  // Body classes — same border / padding in both branches so the
+  // row layout doesn't shift when a row is non-clickable. The
+  // active branch adds the `group` utility + hover affordance;
+  // the disabled branch drops them so the cursor + shadow don't
+  // suggest a clickable surface.
+  const baseClassName =
+    "flex items-stretch gap-4 overflow-hidden rounded-lg border border-border bg-bg-secondary px-4 py-3";
+  const activeClassName =
+    "group transition-all hover:border-border-strong hover:shadow-card-hover";
+  const tickerClassName = hasSourceUrl
+    ? "font-mono text-[14px] font-bold leading-tight tracking-tight text-text-primary group-hover:text-brand"
+    : "font-mono text-[14px] font-bold leading-tight tracking-tight text-text-primary";
+
+  const rowContent = (
+    <>
+      {/* Left rail — publication time (HH:MM) */}
+      <div className="flex shrink-0 items-start pt-0.5">
+        <span className="font-mono text-[10px] font-semibold text-text-faint num-tabular">
+          {timeLabel || "—"}
+        </span>
+      </div>
+
+      {/* Body column — ticker + title + content + source byline */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-2">
+          <h3 className={tickerClassName}>{stock.kode}</h3>
+          {stock.nama && (
+            <span className="truncate text-[11px] text-text-muted">
+              {stock.nama}
+            </span>
+          )}
+        </div>
+        {story.title && (
+          <p className="mt-1.5 line-clamp-2 text-[13px] font-medium leading-snug text-text-primary">
+            {story.title}
+          </p>
+        )}
+        {story.content && (
+          <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
+            {story.content}
+          </p>
+        )}
+        {story.source_name && (
+          <div className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[10px] num-tabular text-text-faint">
+            <DirectionIcon
+              className={cn("h-3 w-3 shrink-0", directionColor)}
+              aria-hidden
+            />
+            <span className="truncate">{story.source_name}</span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
   return (
     <li className="list-none">
-      <a
-        href={href}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="group flex items-stretch gap-4 overflow-hidden rounded-lg border border-border bg-bg-secondary px-4 py-3 transition-all hover:border-border-strong hover:shadow-card-hover"
-      >
-        {/* Left rail — publication time (HH:MM) */}
-        <div className="flex shrink-0 items-start pt-0.5">
-          <span className="font-mono text-[10px] font-semibold text-text-faint num-tabular">
-            {timeLabel || "—"}
-          </span>
-        </div>
-
-        {/* Body column — ticker + title + content + source byline */}
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline gap-2">
-            <h3 className="font-mono text-[14px] font-bold leading-tight tracking-tight text-text-primary group-hover:text-brand">
-              {stock.kode}
-            </h3>
-            {stock.nama && (
-              <span className="truncate text-[11px] text-text-muted">
-                {stock.nama}
-              </span>
-            )}
-          </div>
-          {story.title && (
-            <p className="mt-1.5 line-clamp-2 text-[13px] font-medium leading-snug text-text-primary">
-              {story.title}
-            </p>
-          )}
-          {story.content && (
-            <p className="mt-1 line-clamp-2 text-[12px] leading-snug text-text-muted">
-              {story.content}
-            </p>
-          )}
-          {story.source_name && (
-            <div className="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[10px] num-tabular text-text-faint">
-              <DirectionIcon
-                className={cn("h-3 w-3 shrink-0", directionColor)}
-                aria-hidden
-              />
-              <span className="truncate">{story.source_name}</span>
-            </div>
-          )}
-        </div>
-      </a>
+      {hasSourceUrl ? (
+        <a
+          href={href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`${baseClassName} ${activeClassName}`}
+        >
+          {rowContent}
+        </a>
+      ) : (
+        <div className={baseClassName}>{rowContent}</div>
+      )}
     </li>
   );
 }

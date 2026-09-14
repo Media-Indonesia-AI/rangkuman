@@ -2,13 +2,10 @@
 
 import { ArrowUpRight, Newspaper } from "lucide-react";
 import { initialsOf } from "@/lib/util/formatMedia";
+import { articleHref, isUrl } from "@/lib/util/linkify";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { cn } from "@/lib/utils";
 import type { TickerArticles } from "@/lib/api/types/stocks";
-
-function articleHref(sourceUrl: string): string {
-  return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
-}
 
 interface ArticlesByMediaWidgetProps {
   articles: TickerArticles[];
@@ -65,7 +62,11 @@ export function ArticlesByMediaWidget({
               </header>
               <ul className="divide-y divide-border">
                 {items.map((article) => {
-                  const hasSourceUrl = Boolean(article.source_url?.trim());
+                  // Verify the URL is an actual http(s) URL before
+                  // mounting an `<a>` — gates out empty values, bare
+                  // hostnames that haven't been normalized, and any
+                  // malformed / hostile scheme the wire might hand us.
+                  const hasSourceUrl = isUrl(article.source_url);
                   const content = (
                     <>
                       <h4

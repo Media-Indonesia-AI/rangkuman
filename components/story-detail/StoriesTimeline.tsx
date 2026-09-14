@@ -3,6 +3,7 @@ import { id as idLocale } from "date-fns/locale";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
 import { Shimmer } from "@/components/Shimmer";
 import { cn } from "@/lib/utils";
+import { isUrl } from "@/lib/util/linkify";
 import { getRelativeTime, hariIniIso } from "@/lib/util/formatDate";
 import type { EmbeddedStory } from "@/lib/api";
 import { articleHref, sentimentMeta, SectionHeader } from "./shared";
@@ -306,7 +307,9 @@ function StoryCard({ story }: { story: EmbeddedStory }) {
 /** Article preview link — title in bold, source + relative time
  *  in muted mono. Rendered as a `border-t` divider inside the
  *  story card so it reads as a sub-block of the same card rather
- *  than a nested rectangle. */
+ *  than a nested rectangle. Falls back to a non-clickable `<div>`
+ *  when `sourceUrl` fails `isUrl(...)` validation, so an empty /
+ *  malformed / hostile URL never becomes a click target. */
 function ArticlePreview({
   title,
   sourceName,
@@ -318,13 +321,13 @@ function ArticlePreview({
   sourceUrl: string;
   relativeTime: string;
 }) {
-  return (
-    <a
-      href={articleHref(sourceUrl)}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="mt-1.5 block border-t border-border pt-1.5 transition-colors hover:border-brand/40"
-    >
+  // Verify the URL is an actual http(s) URL before mounting an
+  // `<a>` — gates out empty values, bare hostnames that haven't
+  // been normalized, and any malformed / hostile scheme the wire
+  // might hand us.
+  const hasSourceUrl = isUrl(sourceUrl);
+  const inner = (
+    <>
       <p className="text-[11.5px] font-semibold leading-snug text-text-primary">
         {title || "n/a"}
       </p>
@@ -333,6 +336,23 @@ function ArticlePreview({
         <span className="px-1">·</span>
         <span>{relativeTime}</span>
       </p>
+    </>
+  );
+  if (!hasSourceUrl) {
+    return (
+      <div className="mt-1.5 block border-t border-border pt-1.5">
+        {inner}
+      </div>
+    );
+  }
+  return (
+    <a
+      href={articleHref(sourceUrl)}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="mt-1.5 block border-t border-border pt-1.5 transition-colors hover:border-brand/40"
+    >
+      {inner}
     </a>
   );
 }

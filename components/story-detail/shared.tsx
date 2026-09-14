@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { CheckCircle2, XCircle, Eye } from "lucide-react";
+import { articleHref } from "@/lib/util/linkify";
 import type { StorySentiment } from "@/lib/api";
 
 /** Status icon per sentiment. The API returns `primary_sentiment`
@@ -47,12 +48,10 @@ export const sentimentMeta: Record<
   },
 };
 
-/** `source_url` may arrive as either a hostname (`market.bisnis.com`)
- *  or a full canonical URL. Anchor `href` needs a scheme, so we
- *  normalize. */
-export function articleHref(sourceUrl: string): string {
-  return /^https?:\/\//i.test(sourceUrl) ? sourceUrl : `https://${sourceUrl}`;
-}
+/** Re-export of `articleHref` from `@/lib/util/linkify`. Lives here
+ *  so the story-detail widgets can keep their `./shared` import
+ *  path; the implementation is the single source in `linkify.ts`. */
+export { articleHref };
 
 /** Muted "n/a" marker for fields the API doesn't yet return.
  *  Stays consistent across the page so missing-data cells read as

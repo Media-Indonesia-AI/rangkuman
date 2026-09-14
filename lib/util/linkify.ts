@@ -45,3 +45,50 @@ export function linkifyText(text: string): LinkifySegment[] {
   }
   return segments;
 }
+
+/**
+ * True when `value` is a fully-qualified `http(s)` URL the `URL`
+ * constructor can parse. Bare hostnames (`market.bisnis.com`),
+ * protocol-relative URLs (`//evil.com/x`), non-http schemes
+ * (`javascript:`, `data:`, `mailto:`), and empty / whitespace
+ * input all return false — the news-app surface only ever opens
+ * http(s) article links, so non-http schemes must not be treated
+ * as navigable URLs.
+ *
+ * Use this as the gate before mounting an external `<a>` click
+ * target, so a malformed or hostile `source_url` doesn't end up
+ * in the rendered `href`.
+ */
+export function isUrl(value: string): boolean {
+  const trimmed = value?.trim();
+  if (!trimmed) return false;
+  let parsed: URL;
+  try {
+    parsed = new URL(trimmed);
+  } catch {
+    return false;
+  }
+  return parsed.protocol === "http:" || parsed.protocol === "https:";
+}
+
+/**
+ * Normalize a publisher `source_url` into a safe `<a href>` value.
+ *
+ * - Already an http(s) URL → returned as-is.
+ * - Anything else non-empty → `https://` is prepended (the wire
+ *   often hands us bare hostnames like `market.bisnis.com`).
+ * - Empty / whitespace-only input → `""`, so the anchor's `href`
+ *   is a no-op and the click does nothing. Pairs with `isUrl`
+ *   for the "should we even render this link?" decision upstream.
+ *
+ * Bare-hostname prepending is intentionally lossy: we don't try
+ * to parse-and-rebuild the value, just slap a scheme on it. A
+ * truly garbage value (`"foo bar baz"`) still becomes
+ * `https://foo bar baz` — `isUrl` is the right gate for catching
+ * those, not this helper.
+ */
+export function articleHref(sourceUrl: string): string {
+  const trimmed = sourceUrl?.trim();
+  if (!trimmed) return "";
+  return isUrl(trimmed) ? trimmed : `https://${trimmed}`;
+}
