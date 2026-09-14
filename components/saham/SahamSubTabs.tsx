@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn, scrollToTop } from "@/lib/utils";
+import { useMobileMenuOpen } from "@/lib/hooks/useMobileMenuOpen";
 
 export type SahamTab = "recap" | "sektor";
 
@@ -37,6 +38,12 @@ function findNavbar(): HTMLElement | null {
 export function SahamSubTabs({ active, onChange, className }: SahamSubTabsProps) {
   // Portal needs `document.body`, which only exists after mount.
   const [mounted, setMounted] = useState(false);
+
+  // When the mobile menu drawer is open the bar drops to `z-30` so
+  // the drawer (sitting inside the navbar's stacking context at
+  // root z-40) visibly covers the pill. Closed state keeps the
+  // original `z-50` so the bar still floats above scrolled content.
+  const menuOpen = useMobileMenuOpen();
 
   // Pixels from viewport top to the pill's top edge. We keep this
   // in state so the pill's `style.top` reflects the navbar's live
@@ -108,7 +115,8 @@ export function SahamSubTabs({ active, onChange, className }: SahamSubTabsProps)
         //   - at scroll 0: no bg, no border — the bar just sits
         //     between the navbar and page content as a transparent
         //     centered pill, no double-seam with the navbar.
-        "fixed left-0 right-0 z-50 transition-colors",
+        "fixed left-0 right-0 transition-colors",
+        menuOpen ? "z-30" : "z-50",
         hasChrome
           ? "border-b border-border bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/80"
           : "border-b border-transparent",

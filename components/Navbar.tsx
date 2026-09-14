@@ -95,6 +95,23 @@ export function Navbar() {
     };
   }, [menuOpen]);
 
+  // Mirror the menu's open state onto `<html>` so portal'd consumers
+  // (sub-tab bars rendered to `document.body`, which escape the
+  // React tree) can react via `useMobileMenuOpen` instead of needing
+  // a Context provider lifted into the root layout. The class is
+  // removed on cleanup so route changes / Escape / outside-click
+  // closes all restore the closed state — same shape as the
+  // body-scroll-lock effect above.
+  useEffect(() => {
+    const html = document.documentElement;
+    if (menuOpen) {
+      html.classList.add("mobile-menu-open");
+    }
+    return () => {
+      html.classList.remove("mobile-menu-open");
+    };
+  }, [menuOpen]);
+
   // Close on click outside the drawer. The navbar is z-40 above
   // the backdrop (z-30), so clicks on the navbar don't reach the
   // backdrop's onClick — this listener catches them. Three
