@@ -81,8 +81,6 @@ export function RecapStockSection({
   topicId,
   className,
 }: RecapStockSectionProps) {
-  const trendingCount = trendingLoading ? null : trending.length;
-
   return (
     <div className={className}>
       {/* Top strip — market mood + mobile top movers + mobile
@@ -130,7 +128,7 @@ export function RecapStockSection({
           {/* Feed column */}
           <div className="min-w-0">
             <section className="space-y-5">
-              <SectionHeader count={trendingCount} />
+              <SectionHeader />
 
               {/* Featured story + list rows — owns its own loading
                   and empty branches. `storyLimit={3}` matches the
@@ -171,22 +169,14 @@ export function RecapStockSection({
 }
 
 /** Section title strip — `Flame` icon + "Recap Harian" label +
- *  count meta + H2 (the day's recap tagline). When `count` is
- *  `null` (loading), the meta row drops the count so the strip
- *  height stays consistent. */
-function SectionHeader({ count }: { count: number | null }) {
-  const loading = count === null;
+ *  H2 (the day's recap tagline). */
+function SectionHeader() {
   return (
     <header className="mb-3 flex flex-wrap items-end justify-between gap-2 border-b border-border-strong pb-2">
       <div>
         <div className="mb-0.5 flex items-center gap-1.5">
           <Flame className="h-3.5 w-3.5 text-brand" aria-hidden />
           <span className="label text-text-secondary">Recap Harian</span>
-          {!loading && (
-            <span className="font-mono text-[10.5px] text-text-muted">
-              · {count} emiten
-            </span>
-          )}
         </div>
         <h2 className="text-[15px] font-bold tracking-tight text-text-primary">
           Cerita &amp; saham yang paling banyak diberitakan
