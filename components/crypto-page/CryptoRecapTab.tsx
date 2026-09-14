@@ -67,7 +67,7 @@ export function CryptoRecapTab() {
     [topicId],
   );
   const { data: liveHeadlines } = useHeadlines(
-    10,
+    15,
     0,
     topicFilters,
     topicId !== null,
