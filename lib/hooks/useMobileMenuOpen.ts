@@ -10,8 +10,12 @@ import { useEffect, useState } from "react";
  *
  *  Mirrors the `.dark` / `useTheme` precedent (`lib/hooks/useTheme.ts`)
  *  — same writer pattern (toggled in a Navbar effect), same reader
- *  pattern (observer on `<html>`'s `class` attribute). */
-const CLASS_NAME = "mobile-menu-open";
+ *  pattern (observer on `<html>`'s `class` attribute).
+ *
+ *  Exported so the writer side (`Navbar`) can import the same
+ *  literal instead of duplicating it — keeps the two ends of the
+ *  channel from drifting on a rename. */
+export const MOBILE_MENU_OPEN_CLASS = "mobile-menu-open";
 
 /**
  * Whether the mobile menu drawer is currently open.
@@ -28,10 +32,10 @@ export function useMobileMenuOpen(): boolean {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    setOpen(document.documentElement.classList.contains(CLASS_NAME));
+    setOpen(document.documentElement.classList.contains(MOBILE_MENU_OPEN_CLASS));
 
     const observer = new MutationObserver(() => {
-      setOpen(document.documentElement.classList.contains(CLASS_NAME));
+      setOpen(document.documentElement.classList.contains(MOBILE_MENU_OPEN_CLASS));
     });
     observer.observe(document.documentElement, {
       attributes: true,
