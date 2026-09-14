@@ -97,11 +97,13 @@ export default function ProfilePage() {
           icon={UserIcon}
           value={user.name}
           onEdit={handleNotImplemented("name")}
+          noEdit={true}
         />
         <InfoRow
           label="Email"
           icon={Mail}
           value={user.email}
+          noEdit={true}
           rightAdornment={
             user.isEmailVerified ? (
               <span className="inline-flex items-center gap-0.5 rounded-full border border-bullish-line bg-bullish-soft px-1.5 py-0.5 font-mono text-[9.5px] font-semibold uppercase tracking-widest text-bullish">
@@ -120,6 +122,7 @@ export default function ProfilePage() {
           label="Username"
           icon={UserIcon}
           value={user.username}
+          noEdit={true}
           onEdit={handleNotImplemented("username")}
         />
         <InfoRow
