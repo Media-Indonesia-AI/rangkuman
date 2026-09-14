@@ -30,17 +30,24 @@ function articleHref(sourceUrl: string): string {
 
 /** Flatten `stories → articles` and bucket them by `source_name`,
  *  preserving first-seen order so the most-cited media lands on
- *  top of the list. */
+ *  top of the list. Articles sharing a `source_url` inside the
+ *  same media bucket are dropped — the same link can be referenced
+ *  from multiple stories, and we only want it listed once. */
 function groupArticlesByMedia(stories: EmbeddedStory[]): MediaGroup[] {
-  const groups = new Map<string, StoryArticle[]>();
+  const groups = new Map<string, { items: StoryArticle[]; seen: Set<string> }>();
   for (const story of stories) {
     for (const article of story.articles ?? []) {
-      const bucket = groups.get(article.source_name);
-      if (bucket) bucket.push(article);
-      else groups.set(article.source_name, [article]);
+      let entry = groups.get(article.source_name);
+      if (!entry) {
+        entry = { items: [], seen: new Set() };
+        groups.set(article.source_name, entry);
+      }
+      if (entry.seen.has(article.source_url)) continue;
+      entry.seen.add(article.source_url);
+      entry.items.push(article);
     }
   }
-  return Array.from(groups, ([media, items]) => ({ media, items }));
+  return Array.from(groups, ([media, { items }]) => ({ media, items }));
 }
 
 const SHIMMER_GROUP_COUNT = 3;
