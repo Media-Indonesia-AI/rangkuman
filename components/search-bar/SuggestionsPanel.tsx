@@ -1,6 +1,7 @@
 "use client";
 
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
+import { BelowMinimumHint } from "./BelowMinimumHint";
 import { EmptySearchState } from "./EmptySearchState";
 import { LoadingState } from "./LoadingState";
 import { SuggestionsList } from "./SuggestionsList";
@@ -16,6 +17,14 @@ interface SuggestionsPanelProps {
    *  meaningless once the endpoint is known to be
    *  auth-gated. */
   isUnauthorized: boolean;
+  /** True when the query is non-empty but still under the
+   *  minimum length. The panel renders a validation hint
+   *  in this state instead of firing the (wasteful)
+   *  search request. */
+  belowMinimum: boolean;
+  /** Minimum query length, threaded down so the hint copy
+   *  auto-updates if the threshold ever changes. */
+  minLength: number;
   results: { href: string; label: string; hint: string }[];
   activeIdx: number;
   onPick: (item: { href: string; label: string; hint: string }) => void;
@@ -25,17 +34,20 @@ interface SuggestionsPanelProps {
 }
 
 /** Dropdown that appears under the input while the user is
- *  actively searching. Dispatches one of four body states in
+ *  actively searching. Dispatches one of five body states in
  *  priority order:
- *    1. `401` + logged out → login prompt overlay
- *    2. loading            → spinner message
- *    3. error / no results → "no results" with "see all"
- *    4. otherwise          → suggestion rows */
+ *    1. `401` + logged out  → login prompt overlay
+ *    2. below minimum       → validation hint
+ *    3. loading             → spinner message
+ *    4. error / no results  → "no results" with "see all"
+ *    5. otherwise           → suggestion rows */
 export function SuggestionsPanel({
   query,
   isLoading,
   error,
   isUnauthorized,
+  belowMinimum,
+  minLength,
   results,
   activeIdx,
   onPick,
@@ -61,6 +73,8 @@ export function SuggestionsPanel({
         <div className="relative min-h-[140px]">
           <LoginPromptOverlay title="Login untuk mencari saham" />
         </div>
+      ) : belowMinimum ? (
+        <BelowMinimumHint minLength={minLength} />
       ) : isLoading ? (
         <LoadingState />
       ) : results.length === 0 || error ? (

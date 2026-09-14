@@ -36,6 +36,16 @@ interface SearchBarProps {
  *  from the `q` query param. */
 const FREE_TEXT_SEARCH_PATH = "/search/";
 
+/** Minimum query length required before we fire the suggestion
+ *  API or treat the form as submittable. The backend's
+ *  `/stocks/search` endpoint is happy to handle 1-char queries,
+ *  but they return noisy results (every ticker starting with
+ *  that letter) and they cost a round-trip on every keystroke —
+ *  gating at 2 chars kills both problems for almost no UX cost.
+ *  Exported so `<BelowMinimumHint />` can render the threshold
+ *  in its copy without duplicating the literal. */
+export const MIN_QUERY_LENGTH = 2;
+
 /** Build the free-text search URL for `query`. Centralized so
  *  the form-submit branch and the "lihat semua" link can't
  *  drift apart. */
@@ -139,7 +149,11 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
 
   const submitFreeText = (text: string) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    // Defence in depth — `handleSubmit` already guards on the
+    // min-length rule, but the "lihat semua" link inside the
+    // dropdown can call this directly with whatever the user
+    // has typed. Bailing here keeps both paths consistent.
+    if (trimmed.length < MIN_QUERY_LENGTH) return;
     track(EVENTS.search_submit, { mode: "free_text", query: trimmed });
     setOpen(false);
     router.push(buildFreeTextSearchUrl(trimmed));
@@ -147,6 +161,11 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    // Block the form from navigating with an under-threshold
+    // query. The inline error message below the input already
+    // tells the user why nothing happened; this is the
+    // programmatic half of the same contract.
+    if (query.trim().length < MIN_QUERY_LENGTH) return;
     const suggestion = stockResults[activeIdx];
     if (suggestion) {
       // Suggestion branch — the form submit picked the active
@@ -187,11 +206,20 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
     }
   };
 
-  const showPanel = open && query.trim().length > 0;
+  const trimmedLength = query.trim().length;
+  // Panel renders for any non-empty query. The dispatch inside
+  // `<SuggestionsPanel />` then picks the right body — the
+  // below-minimum hint for 1 char, results / loading / empty
+  // for 2+ chars. Keeping the show-panel gate at "has typed
+  // something" means the user sees validation feedback the
+  // moment they fall under threshold, instead of the panel
+  // silently staying closed.
+  const showPanel = open && trimmedLength > 0;
+  const belowMinimum = trimmedLength < MIN_QUERY_LENGTH;
 
   return (
     <div ref={containerRef} className={cn("relative w-full max-w-md", className)}>
-      <form onSubmit={handleSubmit} role="search">
+      <form onSubmit={handleSubmit} role="search" noValidate>
         <SearchInput
           inputRef={inputRef}
           value={query}
@@ -215,6 +243,8 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
           isLoading={isLoading}
           error={error}
           isUnauthorized={isUnauthorized}
+          belowMinimum={belowMinimum}
+          minLength={MIN_QUERY_LENGTH}
           results={stockResults}
           activeIdx={activeIdx}
           onPick={navigate}
