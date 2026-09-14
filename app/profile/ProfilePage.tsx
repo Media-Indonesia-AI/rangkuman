@@ -139,7 +139,7 @@ export default function ProfilePage() {
       {/* Ganti password — separate action row below the info table.
           Disabled "Coming soon" affordance so the user knows the
           entry point exists even though the API doesn't yet. */}
-      <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-bg-secondary p-3.5">
+      {/* <section className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-border bg-bg-secondary p-3.5">
         <div className="min-w-0">
           <p className="text-[13px] font-semibold text-text-primary">
             Ganti password
@@ -156,7 +156,7 @@ export default function ProfilePage() {
           <KeyRound className="h-3.5 w-3.5" aria-hidden />
           Ganti password
         </button>
-      </section>
+      </section> */}
 
       {/* ID badge — bottom of the section. Useful for support
           inquiries ("here's my user ID"). */}
