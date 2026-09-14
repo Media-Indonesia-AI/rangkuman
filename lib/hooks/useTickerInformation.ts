@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { TickerInformation } from "@/lib/api";
 import { loadTickerInformation } from "@/lib/api/cache";
 import { todayIsoDate } from "../api/client";
+import { hariIniIso } from "../util/formatDate";
 
 /**
  * Data hook for `GET stocks/ticker-information/{ticker}`.
@@ -30,14 +31,15 @@ import { todayIsoDate } from "../api/client";
  * @param ticker  Ticker code, e.g. `"ANTM"`. Uppercased inside
  *                `loadTickerInformation`, so callers can pass any
  *                case.
- * @param date    Optional ISO date (`YYYY-MM-DD`) for the recap
- *                day to fetch. When omitted, the API treats the
- *                request as "today". Callers that already have a
- *                date segment from the URL pass it through.
+ * @param date    ISO date (`YYYY-MM-DD`) for the recap day to
+ *                fetch. Defaults to `todayIsoDate()` so callers
+ *                without a recap date segment in the URL still
+ *                land on today's snapshot. Callers that have a
+ *                date segment pass it through verbatim.
  */
 export function useTickerInformation(
   ticker: string,
-  date?: string,
+  date: string = hariIniIso(),
 ): { data: TickerInformation | null; isLoading: boolean } {
   const [data, setData] = useState<TickerInformation | null>(null);
   const [isLoading, setIsLoading] = useState(true);
