@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, TrendingUp, ArrowRight, X } from "lucide-react";
 import { useStocksSearch } from "@/lib/hooks/useStocksSearch";
+import { SEARCH_DROPDOWN_OPEN_CLASS } from "@/lib/hooks/useSearchDropdownOpen";
 import { useCurrentUser } from "@/lib/hooks/useAuth";
 import { track, EVENTS } from "@/lib/analytics-events";
 import { LoginPromptOverlay } from "@/components/LoginPromptOverlay";
@@ -95,6 +96,21 @@ export function SearchBar({ className, placeholder = "Cari saham" }: SearchBarPr
     };
     document.addEventListener("mousedown", onClick);
     return () => document.removeEventListener("mousedown", onClick);
+  }, [open]);
+
+  // Mirror the dropdown's open state onto `<html>` so portal'd
+  // consumers (sub-tab bars rendered to `document.body`, which
+  // escape the React tree) can react via `useSearchDropdownOpen`
+  // instead of needing a Context provider. The class is removed
+  // on cleanup so outside-click / Escape / pick-suggestion closes
+  // all restore the closed state. Mirrors the
+  // `MOBILE_MENU_OPEN_CLASS` writer pattern.
+  useEffect(() => {
+    if (!open) return;
+    document.documentElement.classList.add(SEARCH_DROPDOWN_OPEN_CLASS);
+    return () => {
+      document.documentElement.classList.remove(SEARCH_DROPDOWN_OPEN_CLASS);
+    };
   }, [open]);
 
   // Global ⌘K / Ctrl+K to focus the input from anywhere.

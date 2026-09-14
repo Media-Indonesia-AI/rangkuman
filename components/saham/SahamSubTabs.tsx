@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { cn, scrollToTop } from "@/lib/utils";
 import { useMobileMenuOpen } from "@/lib/hooks/useMobileMenuOpen";
+import { useSearchDropdownOpen } from "@/lib/hooks/useSearchDropdownOpen";
 
 export type SahamTab = "recap" | "sektor";
 
@@ -39,11 +40,15 @@ export function SahamSubTabs({ active, onChange, className }: SahamSubTabsProps)
   // Portal needs `document.body`, which only exists after mount.
   const [mounted, setMounted] = useState(false);
 
-  // When the mobile menu drawer is open the bar drops to `z-30` so
-  // the drawer (sitting inside the navbar's stacking context at
-  // root z-40) visibly covers the pill. Closed state keeps the
-  // original `z-50` so the bar still floats above scrolled content.
+  // When the mobile menu drawer OR the search suggestions dropdown
+  // is open the bar drops to `z-30`. Both overlays are trapped
+  // inside the navbar's stacking context (root z-40 via its
+  // backdrop-filter) so they can't beat us at root z-50 — the bar
+  // must step out of their way. Closed state keeps the original
+  // `z-50` so the bar still floats above scrolled content.
   const menuOpen = useMobileMenuOpen();
+  const searchOpen = useSearchDropdownOpen();
+  const occluded = menuOpen || searchOpen;
 
   // Pixels from viewport top to the pill's top edge. We keep this
   // in state so the pill's `style.top` reflects the navbar's live
@@ -116,7 +121,7 @@ export function SahamSubTabs({ active, onChange, className }: SahamSubTabsProps)
         //     between the navbar and page content as a transparent
         //     centered pill, no double-seam with the navbar.
         "fixed left-0 right-0 transition-colors",
-        menuOpen ? "z-30" : "z-50",
+        occluded ? "z-30" : "z-50",
         hasChrome
           ? "border-b border-border bg-bg-primary/95 backdrop-blur supports-[backdrop-filter]:bg-bg-primary/80"
           : "border-b border-transparent",
