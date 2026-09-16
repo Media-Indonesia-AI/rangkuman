@@ -35,7 +35,7 @@ export function Footer() {
         </div>
 
         <div className="mt-8 flex flex-col gap-2 border-t border-border pt-5 text-[11px] text-text-muted sm:flex-row sm:items-center sm:justify-between">
-          <span>© 2026 Rangkuman.news · Jakarta · 🇮🇩</span>
+          <span>© 2026 Rangkuman.news · PT Kami Amat Kaya · All rights reserved · Jakarta · 🇮🇩</span>
           <span>Konten untuk tujuan edukasi, bukan rekomendasi investasi.</span>
         </div>
       </div>
