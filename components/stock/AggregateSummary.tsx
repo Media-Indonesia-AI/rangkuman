@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { LinkifiedText } from "@/components/LinkifiedText";
 import { ShareButton } from "@/components/ShareButton";
 import { SourceBar } from "@/components/SourceBar";
+import { WatchlistButton } from "@/components/watchlist/WatchlistButton";
 import { SITE_URL } from "@/lib/og";
 
 /** Sentiment → icon mapping. Lives here (rather than in the page) so
@@ -149,6 +150,24 @@ export function AggregateSummary({
           <Shimmer className="!bg-bg-tertiary/60 h-3 w-28" />
         ) : (
           <div className="flex items-center gap-2">
+            {/* Watchlist toggle — sits to the LEFT of the share
+                button so the two card actions read as a single
+                group on the right edge of the header. Sizing
+                (`h-7 w-7`, same border radius) matches
+                <ShareButton />'s compact variant so they sit
+                flush. The button's own loading state (via
+                `useGetWatchlist`) drives the in-flight spinner;
+                when the button itself isn't ready yet it falls
+                back to a disabled state — no shimmer needed
+                here since `AggregateSummary`'s own `isLoading`
+                already covers the full right-side placeholder
+                above. `surface` matches the share button's
+                value so both card actions land in the same
+                GA4 funnel segment. */}
+            <WatchlistButton
+              kode={kode}
+              surface="stock_aggregate_summary"
+            />
             {/* Share button — sits at the right edge of the
                 header row so visitors can share the recap
                 directly from the card they're reading. URL is

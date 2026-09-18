@@ -55,9 +55,7 @@ export default function ProfileLayout({
     if (typeof document === "undefined") return;
     const label = pathname.startsWith("/profile/top-up")
       ? "Top Up"
-      : pathname.startsWith("/profile/whatsapp")
-        ? "WhatsApp"
-        : "Profil";
+      : "Profil";
     document.title = `Rangkuman - ${label}`;
     return () => {
       if (typeof document === "undefined") return;

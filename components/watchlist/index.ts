@@ -10,3 +10,4 @@ export { WatchlistStockCard } from "./WatchlistStockCard";
 export { WatchlistStockGrid } from "./WatchlistStockGrid";
 export { AddStockDialog } from "./AddStockDialog";
 export { LogoutConfirmDialog } from "./LogoutConfirmDialog";
+export { WatchlistButton } from "./WatchlistButton";

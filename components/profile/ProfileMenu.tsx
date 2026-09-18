@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ListChecks,
-  MessageCircle,
   User,
   Wallet,
   type LucideIcon,
@@ -21,7 +20,7 @@ interface ProfileMenuProps {
 
 /** Menu items — single source of truth for the sidebar nav and
  *  the mobile pill row. Grouped into two sections so the
- *  account-related tabs (Akun / Top Up / WhatsApp) stay visually
+ *  account-related tabs (Akun / Top Up) stay visually
  *  distinct from the read-only content lists (Watchlist /
  *  Berita Tersimpan). The active-state lookup matches by `href`
  *  per item, so a deep-link to `/profile/top-up/` lights up only
@@ -49,11 +48,6 @@ const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
  *  just adds a discoverability path so the user can reach them
  *  from the profile area too. */
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
-  {
-    href: "/profile/whatsapp/",
-    label: "Kirim Berita ke WhatsApp",
-    Icon: MessageCircle,
-  },
   { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
 ];
 

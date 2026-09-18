@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { Check, Link2, MessageCircle, Send, Share2, X } from "lucide-react";
+import { Check, Link2, Send, Share2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/lib/hooks/useTheme";
 import { track, EVENTS } from "@/lib/analytics-events";
@@ -16,7 +16,7 @@ import { track, EVENTS } from "@/lib/analytics-events";
 interface ShareButtonProps {
   /** Full URL to share (e.g. "https://rangkuman.news/stock/BBCA"). */
   url: string;
-  /** Title/text used for WhatsApp & Telegram. */
+  /** Title/text used for the Telegram share message. */
   title: string;
   /** Variant affects padding — "xs" for tight list rows,
    *  "compact" for card overlays, "default" for standalone. */
@@ -62,16 +62,16 @@ interface PopoverPos {
   placement: "top" | "bottom";
 }
 
-const POPOVER_WIDTH = 176; // w-44
+const POPOVER_WIDTH = 120; // w-30
 const POPOVER_GAP = 6; // mt-1.5
 const VIEWPORT_EDGE = 8;
 
-/** Max characters of the share-message title. WhatsApp / Telegram
- *  previews truncate aggressively (Telegram's preview text caps
- *  around 100 chars), so we cap the source text here to keep
- *  previews within the preview's natural rendering and avoid
- *  receivers seeing a fragmented title. The cap ends with `…`
- *  so the truncation is signalled rather than silent. */
+/** Max characters of the share-message title. Telegram previews
+ *  truncate aggressively (Telegram's preview text caps around
+ *  100 chars), so we cap the source text here to keep previews
+ *  within the preview's natural rendering and avoid receivers
+ *  seeing a fragmented title. The cap ends with `…` so the
+ *  truncation is signalled rather than silent. */
 const SHARE_TITLE_MAX_LENGTH = 150;
 
 /** Clamp `value` to `SHARE_TITLE_MAX_LENGTH` characters, appending
@@ -191,23 +191,6 @@ export function ShareButton({
       setOpen(false);
     }
   }, [url, surface]);
-
-  const handleWhatsApp = useCallback(() => {
-    // BUGFIX: prior version computed `clampTitle(title)` here
-    // but never included it in the wa.me URL — only the URL
-    // went out, so receivers never saw the headline. WhatsApp
-    // accepts `?text=` and concatenates with newlines; the
-    // title on the first line and the URL on the second is
-    // what the platform renders by default.
-    const text = clampTitle(title);
-    track(EVENTS.share_whatsapp, { surface });
-    window.open(
-      `https://wa.me/?text=${encodeURIComponent(`${text}\n${url}`)}`,
-      "_blank",
-      "noopener,noreferrer",
-    );
-    setOpen(false);
-  }, [title, url, surface]);
 
   const handleTelegram = useCallback(() => {
     // BUGFIX (same as WhatsApp above). Telegram has separate
@@ -344,9 +327,9 @@ export function ShareButton({
         </button>
       </div>
       {/* Icon-only actions rendered as a single horizontal
-          strip — three buttons share the row's width via
-          `flex-1`. No dividers between cells; visual separation
-          is provided by the `border-t` against the header above. */}
+          strip — two buttons share the row's width via `flex-1`.
+          No dividers between cells; visual separation is provided
+          by the `border-t` against the header above. */}
       <div className="flex border-t border-border">
         <button
           type="button"
@@ -361,16 +344,6 @@ export function ShareButton({
           ) : (
             <Link2 className="h-3.5 w-3.5 text-text-secondary" aria-hidden />
           )}
-        </button>
-        <button
-          type="button"
-          role="menuitem"
-          onClick={handleWhatsApp}
-          aria-label="WhatsApp"
-          title="WhatsApp"
-          className="flex flex-1 items-center justify-center py-2 transition-colors hover:bg-bg-tertiary"
-        >
-          <MessageCircle className="h-3.5 w-3.5 text-[#25D366]" aria-hidden />
         </button>
         <button
           type="button"

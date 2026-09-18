@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   ListChecks,
-  MessageCircle,
   User,
   Wallet,
   type LucideIcon,
@@ -31,11 +30,6 @@ type MenuLink = {
 const ACCOUNT_MENU: ReadonlyArray<MenuLink> = [
   { href: "/profile/", label: "Akun", Icon: User },
   { href: "/profile/top-up/", label: "Top Up", Icon: Wallet },
-  {
-    href: "/profile/whatsapp/",
-    label: "WhatsApp",
-    Icon: MessageCircle,
-  },
 ];
 const LISTS_MENU: ReadonlyArray<MenuLink> = [
   { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },

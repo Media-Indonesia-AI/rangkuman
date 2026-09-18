@@ -8,7 +8,6 @@ import {
 import Link from "next/link";
 import {
   ListChecks,
-  MessageCircle,
   User,
   Wallet,
   type LucideIcon,
@@ -39,7 +38,6 @@ const PROFILE_MENU_SECTIONS: {
     section: "Konten",
     items: [
       { href: "/watchlist/", label: "Watchlist", Icon: ListChecks },
-      { href: "/profile/whatsapp/", label: "Kirim Berita ke WhatsApp", Icon: MessageCircle },
     ],
   },
 ];
