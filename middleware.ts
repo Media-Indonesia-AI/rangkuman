@@ -62,16 +62,41 @@ export async function middleware(request: NextRequest) {
       duplex: "half",
     });
 
-    // Read the upstream body fully into a buffer. We pre-decode
-    // any `content-encoding` (e.g. gzip) here so the buffer we
-    // hand NextResponse is plain JSON/text. NextResponse then
-    // does its own negotiation based on the incoming request's
-    // `Accept-Encoding`, and crucially does NOT have to inherit
-    // the upstream's `content-encoding` header — that would
-    // otherwise pair a freshly-recompressed body with the
-    // upstream's encoding label, producing the `zstd body + gzip
-    // header` mismatch the browser was choking on.
-    const body = await upstream.arrayBuffer();
+    // Statuses that MUST NOT carry a message body per RFC 7231
+    // (and 304 per RFC 7232). The backend has historically
+    // shipped `DELETE /watchlist/` as `204 No Content` with a
+    // plain-text body (e.g. `"Watchlist entry removed."`) — a
+    // spec violation that the framework happily relays back
+    // through the CDN. Two compounding bugs make this leak out
+    // as a `502` to the browser:
+    //   1. Node's `undici` fetch throws when the caller tries
+    //      to read the body of a 204/205/304 response, so the
+    //      previous "read every upstream body" path surfaced
+    //      as a 502 from the catch block below.
+    //   2. Even if you skip the read, the WHATWG fetch spec
+    //      (which `NextResponse` inherits) requires these
+    //      "null-body statuses" to be constructed with a
+    //      literal `null` body — passing `new ArrayBuffer(0)`
+    //      trips a `Response constructor: Invalid response
+    //      status code 204` validation throw.
+    // So: skip the body read AND hand NextResponse a `null`
+    // body for these statuses. `lib/api/client.ts` already
+    // treats `res.status === 204` as a body-less success and
+    // returns `null as T`, so the existing client flow keeps
+    // working.
+    const NO_BODY_STATUSES = new Set([204, 205, 304]);
+    const body = NO_BODY_STATUSES.has(upstream.status)
+      ? null
+      : // Read the upstream body fully into a buffer. We pre-decode
+        // any `content-encoding` (e.g. gzip) here so the buffer we
+        // hand NextResponse is plain JSON/text. NextResponse then
+        // does its own negotiation based on the incoming request's
+        // `Accept-Encoding`, and crucially does NOT have to inherit
+        // the upstream's `content-encoding` header — that would
+        // otherwise pair a freshly-recompressed body with the
+        // upstream's encoding label, producing the `zstd body + gzip
+        // header` mismatch the browser was choking on.
+        await upstream.arrayBuffer();
     const responseHeaders = new Headers(upstream.headers);
     // Drop transport framing and any content-encoding label so
     // NextResponse negotiates compression itself from a clean
